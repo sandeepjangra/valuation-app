@@ -1,0 +1,387 @@
+<!-- Main Report Form Container -->
+<div class="report-form-container">
+  
+  <!-- Section 1: Header (10%) -->
+  <div class="header-section">
+    <div class="header-content">
+      <div class="title-section">
+        <mat-icon class="report-icon">description</mat-icon>
+        <div class="title-text">
+          <h1>Property Valuation Report</h1>
+          <p class="subtitle">Complete valuation form with dynamic fields</p>
+        </div>
+      </div>
+      
+      <div class="progress-section">
+        <div class="progress-info">
+          <span class="progress-text">Form Progress: {{formProgress}}%</span>
+          <mat-progress-bar mode="determinate" [value]="formProgress" class="progress-bar"></mat-progress-bar>
+        </div>
+        
+        <div class="action-buttons">
+          <button mat-raised-button color="primary" (click)="onSaveProgress()">
+            <mat-icon>save</mat-icon>
+            Save Progress
+          </button>
+          <button mat-raised-button color="accent" (click)="onPreviewReport()">
+            <mat-icon>preview</mat-icon>
+            Preview
+          </button>
+          <button mat-raised-button color="warn" (click)="onSubmitReport()">
+            <mat-icon>send</mat-icon>
+            Submit Report
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 2: Common Fields (45%) -->
+  <div class="common-fields-section">
+    <div class="section-header">
+      <mat-icon>dynamic_form</mat-icon>
+      <h2>Common Fields (MongoDB Content-Based Layout)</h2>
+    </div>
+    
+    <div class="fields-container">
+      <form [formGroup]="reportForm" class="fields-form">
+        
+        <!-- Content-Based Layout - No Grouping, MongoDB Sort Order -->
+        <div class="content-based-grid">
+          <!-- Debug info -->
+          <div *ngIf="sortedCommonFields.length === 0" class="debug-info">
+            Loading MongoDB fields... ({{commonFields.length}} raw fields loaded)
+          </div>
+          
+          <div 
+            *ngFor="let field of sortedCommonFields; trackBy: trackByFieldId" 
+            class="field-item"
+            [attr.data-field-type]="field.fieldType"
+            [attr.data-field-name]="field.technicalName"
+            [ngClass]="getFieldSizeClass(field)">
+            
+            <!-- Dynamic field rendering based on field type -->
+            <ng-container [ngSwitch]="field.fieldType">
+              
+              <!-- Text Input -->
+              <mat-form-field *ngSwitchCase="'text'" appearance="outline" class="compact-field">
+                <mat-label>{{field.uiDisplayName}}</mat-label>
+                <input 
+                  matInput 
+                  [formControlName]="field.technicalName"
+                  [placeholder]="field.placeholder || ''"
+                  [required]="field.isRequired">
+                <mat-error *ngIf="reportForm.get(field.technicalName)?.hasError('required')">
+                  {{field.uiDisplayName}} is required
+                </mat-error>
+              </mat-form-field>
+
+              <!-- Date Input -->
+              <mat-form-field *ngSwitchCase="'date'" appearance="outline" class="compact-field">
+                <mat-label>{{field.uiDisplayName}}</mat-label>
+                <input 
+                  matInput 
+                  [matDatepicker]="picker"
+                  [formControlName]="field.technicalName"
+                  [placeholder]="field.placeholder || ''"
+                  [required]="field.isRequired">
+                <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                <mat-datepicker #picker></mat-datepicker>
+              </mat-form-field>
+
+              <!-- Select Dropdown -->
+              <mat-form-field *ngSwitchCase="'select'" appearance="outline" class="compact-field">
+                <mat-label>{{field.uiDisplayName}}</mat-label>
+                <mat-select 
+                  [formControlName]="field.technicalName"
+                  [required]="field.isRequired">
+                  <mat-option *ngFor="let option of field.options" [value]="option.value">
+                    {{option.label}}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <!-- Dynamic Bank Selection -->
+              <mat-form-field *ngSwitchCase="'select_dynamic'" appearance="outline" class="compact-field">
+                <mat-label>{{field.uiDisplayName}}</mat-label>
+                <mat-select 
+                  [formControlName]="field.technicalName"
+                  [required]="field.isRequired"
+                  (selectionChange)="handleDynamicFieldChange(field, $event.value)">
+                  <mat-option *ngFor="let bank of banks" [value]="bank.bankCode">
+                    {{bank.bankName}}
+                  </mat-option>
+                  <mat-option *ngFor="let branch of selectedBankBranches" [value]="branch.branchId">
+                    {{branch.branchName}}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <!-- Email Input -->
+              <mat-form-field *ngSwitchCase="'email'" appearance="outline" class="compact-field">
+                <mat-label>{{field.uiDisplayName}}</mat-label>
+                <input 
+                  matInput 
+                  type="email"
+                  [formControlName]="field.technicalName"
+                  [placeholder]="field.placeholder || ''"
+                  [required]="field.isRequired">
+              </mat-form-field>
+
+              <!-- Phone Input -->
+              <mat-form-field *ngSwitchCase="'tel'" appearance="outline" class="compact-field">
+                <mat-label>{{field.uiDisplayName}}</mat-label>
+                <input 
+                  matInput 
+                  type="tel"
+                  [formControlName]="field.technicalName"
+                  [placeholder]="field.placeholder || ''"
+                  [required]="field.isRequired">
+              </mat-form-field>
+
+              <!-- Number Input -->
+              <mat-form-field *ngSwitchCase="'number'" appearance="outline" class="compact-field">
+                <mat-label>{{field.uiDisplayName}}</mat-label>
+                <input 
+                  matInput 
+                  type="number"
+                  [formControlName]="field.technicalName"
+                  [placeholder]="field.placeholder || ''"
+                  [required]="field.isRequired">
+              </mat-form-field>
+
+              <!-- Textarea -->
+              <mat-form-field *ngSwitchCase="'textarea'" appearance="outline" class="compact-field">
+                <mat-label>{{field.uiDisplayName}}</mat-label>
+                <textarea 
+                  matInput 
+                  rows="1"
+                  [formControlName]="field.technicalName"
+                  [placeholder]="field.placeholder || ''"
+                  [required]="field.isRequired">
+                </textarea>
+              </mat-form-field>
+
+            </ng-container>
+          </div>
+        </div>
+        
+      </form>
+    </div>
+  </div>
+
+  <!-- Section 3: Bank-Specific Fields with Tabs (45%) -->
+  <div class="bank-specific-section">
+    <div class="section-header">
+      <mat-icon>account_balance</mat-icon>
+      <h2>Bank Specific Fields</h2>
+    </div>
+    
+    <div class="fields-container">
+      <mat-tab-group class="bank-tabs" animationDuration="300ms">
+        
+        <!-- Tab 1: Property Details -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">description</mat-icon>
+            Property Details
+          </ng-template>
+          
+          <div class="tab-content">
+            <div class="mixed-grid">
+              <div class="field-item half-width">
+                <mat-form-field appearance="outline">
+                  <mat-label>Property Value (₹)</mat-label>
+                  <input matInput type="number" placeholder="Enter property value">
+                </mat-form-field>
+              </div>
+              <div class="field-item half-width">
+                <mat-form-field appearance="outline">
+                  <mat-label>Market Rate (₹/sq ft)</mat-label>
+                  <input matInput type="number" placeholder="Enter market rate">
+                </mat-form-field>
+              </div>
+              <div class="field-item full-width">
+                <mat-form-field appearance="outline">
+                  <mat-label>Property Description</mat-label>
+                  <textarea matInput rows="3" placeholder="Enter property description"></textarea>
+                </mat-form-field>
+              </div>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- Tab 2: Valuation Details -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">assessment</mat-icon>
+            Valuation Details
+          </ng-template>
+          
+          <div class="tab-content">
+            <div class="mixed-grid">
+              <div class="field-item third-width">
+                <mat-form-field appearance="outline">
+                  <mat-label>Carpet Area (sq ft)</mat-label>
+                  <input matInput type="number" placeholder="Enter carpet area">
+                </mat-form-field>
+              </div>
+              <div class="field-item third-width">
+                <mat-form-field appearance="outline">
+                  <mat-label>Built-up Area (sq ft)</mat-label>
+                  <input matInput type="number" placeholder="Enter built-up area">
+                </mat-form-field>
+              </div>
+              <div class="field-item third-width">
+                <mat-form-field appearance="outline">
+                  <mat-label>Valuation Method</mat-label>
+                  <mat-select>
+                    <mat-option value="comparison">Comparison Approach</mat-option>
+                    <mat-option value="cost">Cost Approach</mat-option>
+                    <mat-option value="income">Income Approach</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- Tab 3: Documentation -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">photo_library</mat-icon>
+            Documentation
+          </ng-template>
+          
+          <div class="tab-content">
+            <div class="mixed-grid">
+              <div class="field-item half-width">
+                <mat-form-field appearance="outline">
+                  <mat-label>Title Deed Number</mat-label>
+                  <input matInput placeholder="Enter title deed number">
+                </mat-form-field>
+              </div>
+              <div class="field-item half-width">
+                <mat-form-field appearance="outline">
+                  <mat-label>Registration Date</mat-label>
+                  <input matInput [matDatepicker]="regDatePicker">
+                  <mat-datepicker-toggle matIconSuffix [for]="regDatePicker"></mat-datepicker-toggle>
+                  <mat-datepicker #regDatePicker></mat-datepicker>
+                </mat-form-field>
+              </div>
+              <div class="field-item full-width">
+                <mat-form-field appearance="outline">
+                  <mat-label>Legal Status</mat-label>
+                  <textarea matInput rows="3" placeholder="Enter legal status details"></textarea>
+                </mat-form-field>
+              </div>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- Tab 4: Financial Analysis -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">calculate</mat-icon>
+            Financial Analysis
+          </ng-template>
+          
+          <div class="tab-content">
+            <div class="mixed-grid">
+              <div class="field-item third-width">
+                <mat-form-field appearance="outline">
+                  <mat-label>Comparable 1 Rate (₹/sq ft)</mat-label>
+                  <input matInput type="number" placeholder="Enter rate">
+                </mat-form-field>
+              </div>
+              <div class="field-item third-width">
+                <mat-form-field appearance="outline">
+                  <mat-label>Comparable 2 Rate (₹/sq ft)</mat-label>
+                  <input matInput type="number" placeholder="Enter rate">
+                </mat-form-field>
+              </div>
+              <div class="field-item third-width">
+                <mat-form-field appearance="outline">
+                  <mat-label>Depreciation (%)</mat-label>
+                  <input matInput type="number" placeholder="Enter depreciation">
+                </mat-form-field>
+              </div>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- Tab 5: Risk Assessment -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">analytics</mat-icon>
+            Risk Assessment
+          </ng-template>
+          
+          <div class="tab-content">
+            <div class="mixed-grid">
+              <div class="field-item half-width">
+                <mat-form-field appearance="outline">
+                  <mat-label>Risk Factor</mat-label>
+                  <mat-select>
+                    <mat-option value="low">Low Risk</mat-option>
+                    <mat-option value="medium">Medium Risk</mat-option>
+                    <mat-option value="high">High Risk</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+              <div class="field-item half-width">
+                <mat-form-field appearance="outline">
+                  <mat-label>Marketability</mat-label>
+                  <mat-select>
+                    <mat-option value="excellent">Excellent</mat-option>
+                    <mat-option value="good">Good</mat-option>
+                    <mat-option value="average">Average</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+              <div class="field-item full-width">
+                <mat-form-field appearance="outline">
+                  <mat-label>Risk Comments</mat-label>
+                  <textarea matInput rows="3" placeholder="Enter risk assessment comments"></textarea>
+                </mat-form-field>
+              </div>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- Tab 6: Final Summary -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">summarize</mat-icon>
+            Final Summary
+          </ng-template>
+          
+          <div class="tab-content">
+            <div class="mixed-grid">
+              <div class="field-item half-width">
+                <mat-form-field appearance="outline">
+                  <mat-label>Final Valuation (₹)</mat-label>
+                  <input matInput type="number" placeholder="Enter final valuation">
+                </mat-form-field>
+              </div>
+              <div class="field-item half-width">
+                <mat-form-field appearance="outline">
+                  <mat-label>Forced Sale Value (₹)</mat-label>
+                  <input matInput type="number" placeholder="Enter forced sale value">
+                </mat-form-field>
+              </div>
+              <div class="field-item full-width">
+                <mat-form-field appearance="outline">
+                  <mat-label>Valuer Remarks</mat-label>
+                  <textarea matInput rows="4" placeholder="Enter final remarks and recommendations"></textarea>
+                </mat-form-field>
+              </div>
+            </div>
+          </div>
+        </mat-tab>
+
+      </mat-tab-group>
+    </div>
+  </div>
+  
+</div>

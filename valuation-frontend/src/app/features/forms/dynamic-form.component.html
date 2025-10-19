@@ -1,0 +1,242 @@
+<div class="dynamic-form-container">
+  @if (isLoading) {
+    <div class="loading-container">
+      <mat-spinner diameter="50"></mat-spinner>
+      <p>Loading form template...</p>
+    </div>
+  } @else if (template) {
+    
+    <!-- Form Header with Unique Color -->
+    <div class="form-header-section">
+      <div class="header-content">
+        <div class="header-left">
+          <h1 class="form-title">{{ template.name }}</h1>
+          <p class="form-subtitle">{{ template.description }}</p>
+        </div>
+        <div class="header-right">
+          <div class="form-status">
+            <mat-icon>description</mat-icon>
+            <span>Draft</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <form [formGroup]="dynamicForm" (ngSubmit)="onSubmit()" class="dynamic-form">
+      
+      <!-- Compact Form Sections -->
+      <div class="form-content">
+        <mat-accordion multi="false" class="form-sections">
+          @for (section of template.sections; track section.id) {
+            @if (section.visible) {
+              <mat-expansion-panel 
+                [expanded]="section.expanded"
+                class="form-section compact-section">
+                
+                <mat-expansion-panel-header class="compact-header">
+                  <mat-panel-title class="section-title">
+                    <mat-icon class="section-icon">{{ getSectionIcon(section.id) }}</mat-icon>
+                    {{ section.title }}
+                  </mat-panel-title>
+                  <mat-panel-description class="section-description">
+                    {{ section.description }}
+                  </mat-panel-description>
+                </mat-expansion-panel-header>
+
+                <div class="section-content compact-content">
+                  <div class="fields-grid compact-grid">
+                    @for (field of section.fields; track field.id) {
+                      @if (isFieldVisible(field)) {
+                        <div class="field-container compact-field" [class]="'grid-size-' + field.gridSize">
+                          
+                          <!-- Text Input -->
+                          @if (field.type === 'text' || field.type === 'email' || field.type === 'tel') {
+                            <mat-form-field appearance="outline" class="compact-form-field">
+                              <mat-label>{{ field.label }}@if (field.required) {*}</mat-label>
+                              <input 
+                                matInput 
+                                [formControlName]="field.name"
+                                [placeholder]="field.placeholder || ''"
+                                [readonly]="field.readonly || false"
+                                [type]="field.type">
+                              @if (getFieldError(field)) {
+                                <mat-error>{{ getFieldError(field) }}</mat-error>
+                              }
+                            </mat-form-field>
+                          }
+
+                          <!-- Textarea -->
+                          @if (field.type === 'textarea') {
+                            <mat-form-field appearance="outline" class="compact-form-field">
+                              <mat-label>{{ field.label }}@if (field.required) {*}</mat-label>
+                              <textarea 
+                                matInput 
+                                [formControlName]="field.name"
+                                [placeholder]="field.placeholder || ''"
+                                [readonly]="field.readonly || false"
+                                rows="2">
+                              </textarea>
+                              @if (getFieldError(field)) {
+                                <mat-error>{{ getFieldError(field) }}</mat-error>
+                              }
+                            </mat-form-field>
+                          }
+
+                          <!-- Number Input -->
+                          @if (field.type === 'number') {
+                            <mat-form-field appearance="outline" class="compact-form-field">
+                              <mat-label>{{ field.label }}@if (field.required) {*}</mat-label>
+                              <input 
+                                matInput 
+                                type="number"
+                                [formControlName]="field.name"
+                                [placeholder]="field.placeholder || ''"
+                                [readonly]="field.readonly || false"
+                                [min]="field.validation?.min || null"
+                                [max]="field.validation?.max || null">
+                              @if (field.name.includes('latitude') || field.name.includes('longitude')) {
+                                <button 
+                                  mat-icon-button 
+                                  matSuffix 
+                                  type="button"
+                                  (click)="getCurrentLocation()"
+                                  title="Get current location"
+                                  class="location-btn">
+                                  <mat-icon>my_location</mat-icon>
+                                </button>
+                              }
+                              @if (getFieldError(field)) {
+                                <mat-error>{{ getFieldError(field) }}</mat-error>
+                              }
+                            </mat-form-field>
+                          }
+
+                          <!-- Date Input -->
+                          @if (field.type === 'date') {
+                            <mat-form-field appearance="outline" class="compact-form-field">
+                              <mat-label>{{ field.label }}@if (field.required) {*}</mat-label>
+                              <input 
+                                matInput 
+                                [matDatepicker]="picker"
+                                [formControlName]="field.name"
+                                [readonly]="field.readonly || false">
+                              <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                              <mat-datepicker #picker></mat-datepicker>
+                              @if (getFieldError(field)) {
+                                <mat-error>{{ getFieldError(field) }}</mat-error>
+                              }
+                            </mat-form-field>
+                          }
+
+                          <!-- Select Dropdown -->
+                          @if (field.type === 'select') {
+                            <mat-form-field appearance="outline" class="compact-form-field">
+                              <mat-label>{{ field.label }}@if (field.required) {*}</mat-label>
+                              <mat-select [formControlName]="field.name">
+                                @for (option of field.options; track option.value) {
+                                  <mat-option [value]="option.value">
+                                    {{ option.label }}
+                                  </mat-option>
+                                }
+                              </mat-select>
+                              @if (getFieldError(field)) {
+                                <mat-error>{{ getFieldError(field) }}</mat-error>
+                              }
+                            </mat-form-field>
+                          }
+
+                          <!-- Checkbox -->
+                          @if (field.type === 'checkbox') {
+                            <div class="checkbox-field compact-checkbox">
+                              <mat-checkbox 
+                                [formControlName]="field.name"
+                                [disabled]="field.readonly || false">
+                                {{ field.label }}@if (field.required) {*}
+                              </mat-checkbox>
+                              @if (getFieldError(field)) {
+                                <div class="field-error">{{ getFieldError(field) }}</div>
+                              }
+                            </div>
+                          }
+
+                          <!-- Radio Buttons -->
+                          @if (field.type === 'radio' && field.options) {
+                            <div class="radio-field compact-radio">
+                              <label class="field-label">{{ field.label }}@if (field.required) {*}</label>
+                              <mat-radio-group [formControlName]="field.name" class="radio-group">
+                                @for (option of field.options; track option.value) {
+                                  <mat-radio-button [value]="option.value">
+                                    {{ option.label }}
+                                  </mat-radio-button>
+                                }
+                              </mat-radio-group>
+                              @if (getFieldError(field)) {
+                                <div class="field-error">{{ getFieldError(field) }}</div>
+                              }
+                            </div>
+                          }
+
+                        </div>
+                      }
+                    }
+                  </div>
+                </div>
+              </mat-expansion-panel>
+            }
+          }
+        </mat-accordion>
+      </div>
+
+      <!-- Compact Sticky Actions -->
+      @if (!readonly) {
+        <div class="form-actions compact-actions">
+          <div class="actions-container">
+            <button 
+              mat-raised-button 
+              type="button"
+              (click)="onSave()"
+              [disabled]="isSaving || isSubmitting"
+              class="save-button">
+              @if (isSaving) {
+                <ng-container>
+                  <mat-spinner diameter="18"></mat-spinner>
+                  <span>Saving...</span>
+                </ng-container>
+              } @else {
+                <ng-container>
+                  <mat-icon>save</mat-icon>
+                  <span>Save Draft</span>
+                </ng-container>
+              }
+            </button>
+
+            <button 
+              mat-raised-button 
+              color="primary"
+              type="submit"
+              [disabled]="isSaving || isSubmitting || dynamicForm.invalid"
+              class="submit-button">
+              @if (isSubmitting) {
+                <ng-container>
+                  <mat-spinner diameter="18"></mat-spinner>
+                  <span>Submitting...</span>
+                </ng-container>
+              } @else {
+                <ng-container>
+                  <mat-icon>send</mat-icon>
+                  <span>Submit Form</span>
+                </ng-container>
+              }
+            </button>
+          </div>
+        </div>
+      }
+
+    </form>
+  } @else {
+    <div class="error-container">
+      <mat-icon color="warn">error</mat-icon>
+      <p>Failed to load form template</p>
+    </div>
+  }
+</div>
