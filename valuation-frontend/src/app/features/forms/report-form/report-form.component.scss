@@ -157,6 +157,8 @@
   flex-wrap: wrap;
   gap: 4px;
   align-items: flex-start;
+  /* Ensure fields flow properly without gaps */
+  align-content: flex-start;
 }
 
 .debug-info {
@@ -199,6 +201,9 @@
   &.size-full {
     width: 100%;
     flex-basis: 100%;
+    /* Force full width fields to break to new line */
+    flex-grow: 1;
+    margin: 2px 0;
   }
 }
 

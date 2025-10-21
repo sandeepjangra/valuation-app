@@ -135,9 +135,52 @@ export class ReportFormComponent implements OnInit {
       return a.sortOrder - b.sortOrder;
     });
     
+    // Fix any sortOrder gaps to ensure smooth flow
+    this.fixSortOrderGaps();
+    
     console.log('Fields sorted by custom group order and sortOrder:', 
       this.sortedCommonFields.map(f => `${f.fieldGroup}.${f.sortOrder}: ${f.uiDisplayName}`)
     );
+  }
+
+  private fixSortOrderGaps(): void {
+    // Group fields by fieldGroup
+    const groupedFields: { [key: string]: CommonField[] } = {};
+    this.sortedCommonFields.forEach(field => {
+      if (!groupedFields[field.fieldGroup]) {
+        groupedFields[field.fieldGroup] = [];
+      }
+      groupedFields[field.fieldGroup].push(field);
+    });
+
+    // Fix sortOrder gaps within each group
+    Object.keys(groupedFields).forEach(groupName => {
+      const fields = groupedFields[groupName];
+      fields.sort((a, b) => a.sortOrder - b.sortOrder);
+      
+      // Renumber to remove gaps
+      fields.forEach((field, index) => {
+        field.sortOrder = index + 1;
+      });
+    });
+
+    // Re-sort the entire array
+    const groupOrder = ['basic_info', 'bank_details', 'applicant_details', 'declaration', 'property_location', 'property_classification', 'valuer_details', 'coordinates'];
+    const groupPriority: { [key: string]: number } = {};
+    groupOrder.forEach((group, index) => {
+      groupPriority[group] = index;
+    });
+
+    this.sortedCommonFields.sort((a, b) => {
+      const groupA = groupPriority[a.fieldGroup] ?? 999;
+      const groupB = groupPriority[b.fieldGroup] ?? 999;
+      
+      if (groupA !== groupB) {
+        return groupA - groupB;
+      }
+      
+      return a.sortOrder - b.sortOrder;
+    });
   }
 
   getFieldSizeClass(field: CommonField): string {
@@ -211,6 +254,8 @@ export class ReportFormComponent implements OnInit {
   onBranchSelectionChange(branchId: string): void {
     const branch = this.selectedBankBranches.find(b => b.branchId === branchId);
     if (branch) {
+      // Set the branch name instead of ID for better readability
+      this.reportForm.get('branch_details')?.setValue(branch.branchName);
       this.reportForm.get('branch_ifsc')?.setValue(branch.ifscCode);
       // You can format the address here
       const addressText = `${branch.address?.street || ''}, ${branch.address?.city || ''}, ${branch.address?.state || ''} - ${branch.address?.pincode || ''}`;
