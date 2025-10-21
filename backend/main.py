@@ -184,7 +184,7 @@ async def get_common_fields() -> JSONResponse:
         logger.error(f"Error fetching common fields: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch common fields")
 
-@app.post("/api/common-fields/refresh")
+@app.post("/api/common-form-fields/refresh-cache")
 async def refresh_common_fields_cache() -> JSONResponse:
     """Refresh the common fields cache (admin only)"""
     global COMMON_FIELDS_CACHE, CACHE_TIMESTAMP
@@ -200,6 +200,7 @@ async def refresh_common_fields_cache() -> JSONResponse:
             content={
                 "message": "Cache refreshed successfully",
                 "fields_count": len(fields),
+                "fields": json.loads(json.dumps(fields, default=json_serializer)),
                 "refreshed_at": datetime.now(timezone.utc).isoformat()
             }
         )
@@ -207,6 +208,67 @@ async def refresh_common_fields_cache() -> JSONResponse:
     except Exception as e:
         logger.error(f"Error refreshing common fields cache: {e}")
         raise HTTPException(status_code=500, detail="Failed to refresh cache")
+
+@app.get("/api/admin/cache-status")
+async def get_cache_status() -> JSONResponse:
+    """Get cache status information for admin dashboard"""
+    global COMMON_FIELDS_CACHE, CACHE_TIMESTAMP
+    try:
+        cache_age_minutes = 0
+        is_cache_active = False
+        
+        if CACHE_TIMESTAMP:
+            cache_age = datetime.now(timezone.utc) - CACHE_TIMESTAMP
+            cache_age_minutes = int(cache_age.total_seconds() / 60)
+            is_cache_active = cache_age < CACHE_DURATION
+        
+        # Get field counts
+        total_count = len(COMMON_FIELDS_CACHE) if COMMON_FIELDS_CACHE else 0
+        active_count = 0
+        
+        if COMMON_FIELDS_CACHE:
+            active_count = sum(1 for field in COMMON_FIELDS_CACHE if field.get('isActive', True))
+        
+        return JSONResponse(
+            content={
+                "active": is_cache_active,
+                "totalCount": total_count,
+                "activeCount": active_count,
+                "ageMinutes": cache_age_minutes,
+                "lastUpdated": CACHE_TIMESTAMP.isoformat() if CACHE_TIMESTAMP else None,
+                "cacheDurationMinutes": int(CACHE_DURATION.total_seconds() / 60),
+                "status": "active" if is_cache_active else "expired" if CACHE_TIMESTAMP else "empty"
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Error getting cache status: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get cache status")
+
+@app.get("/api/common-form-fields")
+async def get_all_common_fields(includeInactive: bool = False) -> JSONResponse:
+    """Get all common form fields with option to include inactive fields for backup"""
+    try:
+        async with MultiDatabaseSession() as db:
+            # Build query based on includeInactive parameter
+            query = {} if includeInactive else {"isActive": True}
+            
+            fields = await db.find_many(
+                "admin", 
+                "common_form_fields", 
+                query, 
+                sort=[("fieldGroup", 1), ("sortOrder", 1)]
+            )
+            
+            logger.info(f"📋 Retrieved {len(fields)} common fields (includeInactive: {includeInactive})")
+            
+            return JSONResponse(
+                content=json.loads(json.dumps(fields, default=json_serializer))
+            )
+            
+    except Exception as e:
+        logger.error(f"Error fetching all common fields: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch common fields")
 
 @app.get("/api/common-fields/group/{group_name}", response_model=List[Dict[str, Any]])
 async def get_common_fields_by_group(group_name: str) -> List[Dict[str, Any]]:

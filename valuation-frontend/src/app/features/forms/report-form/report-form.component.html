@@ -40,17 +40,18 @@
   <div class="common-fields-section">
     <div class="section-header">
       <mat-icon>dynamic_form</mat-icon>
-      <h2>Common Fields (MongoDB Content-Based Layout)</h2>
+      <h2>Common Fields (MongoDB gridSize + Custom Group Order)</h2>
     </div>
     
     <div class="fields-container">
       <form [formGroup]="reportForm" class="fields-form">
         
-        <!-- Content-Based Layout - No Grouping, MongoDB Sort Order -->
+        <!-- Content-Based Layout - MongoDB Sort Order by Groups -->
         <div class="content-based-grid">
           <!-- Debug info -->
           <div *ngIf="sortedCommonFields.length === 0" class="debug-info">
             Loading MongoDB fields... ({{commonFields.length}} raw fields loaded)
+            <br>Latest cache refresh: {{formProgress}}%
           </div>
           
           <div 

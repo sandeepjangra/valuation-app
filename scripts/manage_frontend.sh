@@ -17,6 +17,8 @@ FRONTEND_DIR="$PROJECT_DIR/valuation-frontend"
 PIDFILE="$PROJECT_DIR/.frontend.pid"
 LOGFILE="$PROJECT_DIR/logs/frontend.log"
 FRONTEND_PORT=4200
+BACKEND_PORT=8000
+BACKEND_SCRIPT="$SCRIPT_DIR/manage_server.sh"
 
 # Colors for output
 RED='\033[0;31m'
@@ -74,6 +76,59 @@ setup_node_env() {
     success "Node.js $(node --version) and npm $(npm --version) ready"
 }
 
+# Check if backend is running
+is_backend_running() {
+    if curl -s -f "http://localhost:$BACKEND_PORT/api/health" >/dev/null 2>&1; then
+        return 0
+    fi
+    return 1
+}
+
+# Check and start backend if needed
+ensure_backend_running() {
+    log "🔍 Checking backend status..."
+    
+    if is_backend_running; then
+        success "Backend is already running on port $BACKEND_PORT"
+        return 0
+    fi
+    
+    log "⚠️ Backend not detected, starting backend server..."
+    
+    # Check if backend script exists
+    if [ ! -f "$BACKEND_SCRIPT" ]; then
+        error "Backend management script not found: $BACKEND_SCRIPT"
+        error "Please ensure the backend script exists or start the backend manually"
+        exit 1
+    fi
+    
+    # Start the backend
+    log "🚀 Starting backend server..."
+    "$BACKEND_SCRIPT" start
+    
+    # Wait for backend to be ready
+    log "⏳ Waiting for backend to be ready..."
+    local max_attempts=15
+    local attempt=0
+    
+    while [ $attempt -lt $max_attempts ]; do
+        if is_backend_running; then
+            success "✅ Backend is now running and responding"
+            log "🌐 Backend API: http://localhost:$BACKEND_PORT"
+            log "📚 API Documentation: http://localhost:$BACKEND_PORT/api/docs"
+            return 0
+        fi
+        
+        sleep 2
+        ((attempt++))
+        echo -n "."
+    done
+    
+    echo
+    warning "Backend started but may not be fully ready yet"
+    log "You can check backend status with: $BACKEND_SCRIPT status"
+}
+
 # Check if frontend is running
 is_frontend_running() {
     if [ -f "$PIDFILE" ]; then
@@ -121,6 +176,9 @@ start_frontend() {
         get_frontend_status
         return 0
     fi
+    
+    # Check and ensure backend is running first
+    ensure_backend_running
     
     # Setup Node.js environment
     setup_node_env
@@ -328,7 +386,7 @@ show_help() {
     echo "Usage: $0 {start|stop|restart|status|logs|install|clean-install|help}"
     echo
     echo "Commands:"
-    echo "  start         Start the Angular frontend development server"
+    echo "  start         Start the Angular frontend (auto-starts backend if needed)"
     echo "  stop          Stop the frontend server"
     echo "  restart       Restart the frontend server"
     echo "  status        Show frontend server status"
@@ -337,12 +395,17 @@ show_help() {
     echo "  clean-install Remove node_modules and reinstall dependencies"
     echo "  help          Show this help message"
     echo
+    echo "Auto-Backend Feature:"
+    echo "  When starting the frontend, it automatically checks if the backend"
+    echo "  is running. If not, it will start the backend server first."
+    echo
     echo "Examples:"
-    echo "  $0 start      # Start the frontend server"
+    echo "  $0 start      # Start frontend (and backend if needed)"
     echo "  $0 status     # Check if frontend is running"
     echo "  $0 logs       # View recent logs"
     echo
     echo "Frontend URL: http://localhost:$FRONTEND_PORT"
+    echo "Backend URL: http://localhost:$BACKEND_PORT"
     echo "Log file: $LOGFILE"
     echo
 }

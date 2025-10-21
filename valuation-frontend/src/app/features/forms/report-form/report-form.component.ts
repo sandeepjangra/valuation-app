@@ -103,31 +103,61 @@ export class ReportFormComponent implements OnInit {
   }
 
   sortCommonFields(): void {
-    // Sort fields by sortOrder from MongoDB, then by fieldGroup if needed
-    this.sortedCommonFields = [...this.commonFields].sort((a, b) => {
-      if (a.sortOrder !== b.sortOrder) {
-        return a.sortOrder - b.sortOrder;
-      }
-      return a.fieldGroup.localeCompare(b.fieldGroup);
+    // Define the custom order for field groups
+    const groupOrder = [
+      'basic_info',
+      'bank_details', 
+      'applicant_details',
+      'declaration',
+      'property_location',
+      'property_classification',
+      'valuer_details',
+      'coordinates'  // Additional group found in data
+    ];
+    
+    // Create a mapping for group priority
+    const groupPriority: { [key: string]: number } = {};
+    groupOrder.forEach((group, index) => {
+      groupPriority[group] = index;
     });
+    
+    // Sort fields by custom group order first, then by sortOrder within each group
+    this.sortedCommonFields = [...this.commonFields].sort((a, b) => {
+      // First, sort by custom group order
+      const groupA = groupPriority[a.fieldGroup] ?? 999; // Unknown groups go to end
+      const groupB = groupPriority[b.fieldGroup] ?? 999;
+      
+      if (groupA !== groupB) {
+        return groupA - groupB;
+      }
+      
+      // Then, sort by sortOrder within the same group
+      return a.sortOrder - b.sortOrder;
+    });
+    
+    console.log('Fields sorted by custom group order and sortOrder:', 
+      this.sortedCommonFields.map(f => `${f.fieldGroup}.${f.sortOrder}: ${f.uiDisplayName}`)
+    );
   }
 
   getFieldSizeClass(field: CommonField): string {
-    const fieldName = field.technicalName.toLowerCase();
-    const fieldType = field.fieldType;
-    const uiName = field.uiDisplayName.toLowerCase();
+    // Use gridSize from MongoDB instead of hardcoded logic
+    const gridSize = field.gridSize || 6; // Default to 6 if not specified
     
-    // Content-based sizing logic
-    if (fieldType === 'textarea' || uiName.includes('address') || uiName.includes('description')) {
-      return 'size-full'; // Full width
-    } else if (fieldName.includes('pin') || fieldName.includes('ifsc') || uiName.includes('code')) {
-      return 'size-small'; // ~120px
-    } else if (fieldName.includes('phone') || fieldName.includes('contact') || fieldName.includes('registration')) {
-      return 'size-medium'; // ~180px
-    } else if (fieldType === 'date' || fieldType === 'select' || fieldType === 'select_dynamic') {
-      return 'size-medium'; // ~180px
+    // Convert gridSize to CSS class
+    // MongoDB uses 12-column grid system (like Bootstrap)
+    // gridSize 12 = full width, gridSize 6 = half width, gridSize 4 = third width, etc.
+    
+    if (gridSize >= 12) {
+      return 'size-full';     // Full width (100%)
+    } else if (gridSize >= 8) {
+      return 'size-large';    // Large width (~66%)
+    } else if (gridSize >= 6) {
+      return 'size-normal';   // Normal width (~50%)
+    } else if (gridSize >= 4) {
+      return 'size-medium';   // Medium width (~33%)
     } else {
-      return 'size-normal'; // ~250px
+      return 'size-small';    // Small width (~25%)
     }
   }
 
