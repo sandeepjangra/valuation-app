@@ -1,13 +1,10 @@
 {
   "metadata": {
-    "generated_at": "2025-10-23T14:57:16.062557+00:00",
-    "collection_name": "common_fields",
-    "total_documents": 7,
-    "version": "1.0",
-    "database": "valuation_admin",
-    "source_collection": "common_form_fields"
+    "generated_at": "2025-10-24T15:14:07.527376+00:00",
+    "total_fields": 7,
+    "version": "1.0"
   },
-  "documents": [
+  "fields": [
     {
       "_id": "68fa41fa7cb7c7ce7f3f8bd1",
       "fieldId": "report_reference_number",
@@ -21,11 +18,11 @@
         "pattern": "^[A-Z]{2,4}[0-9]{4,8}$",
         "maxLength": 20
       },
-      "gridSize": 6,
+      "gridSize": 4,
       "sortOrder": 1,
       "isActive": true,
-      "createdAt": "2025-10-23T14:55:54.012000",
-      "updatedAt": "2025-10-23T14:55:54.012000",
+      "createdAt": "2025-10-23 14:55:54.012000",
+      "updatedAt": "2025-10-23 14:55:54.012000",
       "version": 1,
       "createdBy": "system_recreate",
       "metadata": {
@@ -48,11 +45,11 @@
         "maxDate": "today",
         "minDate": "2020-01-01"
       },
-      "gridSize": 6,
+      "gridSize": 4,
       "sortOrder": 2,
       "isActive": true,
-      "createdAt": "2025-10-23T14:55:54.012000",
-      "updatedAt": "2025-10-23T14:55:54.012000",
+      "createdAt": "2025-10-23 14:55:54.012000",
+      "updatedAt": "2025-10-23 14:55:54.012000",
       "version": 1,
       "createdBy": "system_recreate",
       "metadata": {
@@ -74,11 +71,11 @@
         "maxDate": "today",
         "minDate": "2020-01-01"
       },
-      "gridSize": 6,
+      "gridSize": 4,
       "sortOrder": 3,
       "isActive": true,
-      "createdAt": "2025-10-23T14:55:54.012000",
-      "updatedAt": "2025-10-23T14:55:54.012000",
+      "createdAt": "2025-10-23 14:55:54.012000",
+      "updatedAt": "2025-10-23 14:55:54.012000",
       "version": 1,
       "createdBy": "system_recreate",
       "metadata": {
@@ -126,11 +123,11 @@
       ],
       "placeholder": "Select valuation purpose",
       "helpText": "Reason for conducting this property valuation",
-      "gridSize": 6,
+      "gridSize": 4,
       "sortOrder": 4,
       "isActive": true,
-      "createdAt": "2025-10-23T14:55:54.012000",
-      "updatedAt": "2025-10-23T14:55:54.012000",
+      "createdAt": "2025-10-23 14:55:54.012000",
+      "updatedAt": "2025-10-23 14:55:54.012000",
       "version": 1,
       "createdBy": "system_recreate",
       "metadata": {
@@ -153,11 +150,11 @@
         "maxLength": 100,
         "pattern": "^[a-zA-Z\\s\\.]+$"
       },
-      "gridSize": 6,
+      "gridSize": 4,
       "sortOrder": 5,
       "isActive": true,
-      "createdAt": "2025-10-23T14:55:54.012000",
-      "updatedAt": "2025-10-23T14:55:54.012000",
+      "createdAt": "2025-10-23 14:55:54.012000",
+      "updatedAt": "2025-10-23 14:55:54.012000",
       "version": 1,
       "createdBy": "system_recreate",
       "metadata": {
@@ -176,11 +173,11 @@
       "isReadonly": true,
       "placeholder": "Bank name (selected from previous page)",
       "helpText": "Name of the lending bank/financial institution (auto-populated from selection)",
-      "gridSize": 6,
+      "gridSize": 4,
       "sortOrder": 6,
       "isActive": true,
-      "createdAt": "2025-10-23T14:55:54.012000",
-      "updatedAt": "2025-10-23T14:55:54.012000",
+      "createdAt": "2025-10-23 14:55:54.012000",
+      "updatedAt": "2025-10-23 14:55:54.012000",
       "version": 1,
       "createdBy": "system_recreate",
       "metadata": {
@@ -211,11 +208,11 @@
       "isRequired": true,
       "placeholder": "Select branch",
       "helpText": "Choose the specific bank branch for this application",
-      "gridSize": 6,
+      "gridSize": 4,
       "sortOrder": 7,
       "isActive": true,
-      "createdAt": "2025-10-23T14:55:54.012000",
-      "updatedAt": "2025-10-23T14:55:54.012000",
+      "createdAt": "2025-10-23 14:55:54.012000",
+      "updatedAt": "2025-10-23 14:55:54.012000",
       "version": 1,
       "createdBy": "system_recreate",
       "metadata": {

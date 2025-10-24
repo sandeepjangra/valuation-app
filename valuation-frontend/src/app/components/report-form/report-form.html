@@ -2,19 +2,18 @@
   <!-- Header Section -->
   <div class="page-header">
     <div class="header-content">
-      <button class="back-button" (click)="goBackToSelection()">
-        ← Back to Selection
-      </button>
+      <div class="left-section">
+        <div class="template-name" *ngIf="selectedTemplateName">
+          <span class="template-label">{{ selectedTemplateName }}</span>
+        </div>
+      </div>
       <div class="header-info">
         <h1 class="page-title">Property Valuation for {{ selectedBankName }}</h1>
-        <div class="template-info" *ngIf="selectedTemplateName">
-          <span class="template-chip">
-            Template: {{ selectedTemplateName }}
-          </span>
-          <span class="property-type-chip" *ngIf="selectedPropertyType">
-            {{ selectedPropertyType | titlecase }} Property
-          </span>
-        </div>
+      </div>
+      <div class="right-section">
+        <button class="back-button" (click)="goBackToSelection()">
+          ← Back to Selection
+        </button>
       </div>
     </div>
   </div>
@@ -27,9 +26,28 @@
       <div class="section-header">
         <h2 class="section-title">Common Information</h2>
         <p class="section-subtitle">Basic details required for all valuation reports</p>
+        <button type="button" (click)="refreshCommonFields()" class="refresh-button" style="margin-top: 10px; padding: 5px 10px; background: #8b5cf6; color: white; border: none; border-radius: 4px; cursor: pointer;">
+          🔄 Refresh Fields (Debug)
+        </button>
       </div>
       
-      <div class="fields-grid">
+      <!-- Loading indicator -->
+      <div *ngIf="isLoading" class="loading-indicator">
+        <div class="loading-spinner"></div>
+        <p>Loading form fields from server...</p>
+      </div>
+      
+      <!-- Debug Info -->
+      <div *ngIf="!isLoading" style="background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 4px; font-family: monospace; font-size: 12px;">
+        <strong>🐛 Debug Info:</strong><br>
+        Fields loaded: {{ commonFields.length }}<br>
+        <div *ngFor="let field of commonFields.slice(0, 3)" style="margin: 2px 0;">
+          {{ field.uiDisplayName }}: gridSize={{ field.gridSize }} → CSS: grid-{{ field.gridSize }}
+        </div>
+        <div *ngIf="commonFields.length > 3">... and {{ commonFields.length - 3 }} more fields</div>
+      </div>
+      
+      <div *ngIf="!isLoading" class="fields-grid">
         <div *ngFor="let field of commonFields" 
              [class]="'field-container grid-' + field.gridSize"
              [class.field-error]="isFieldInvalid(field.fieldId)">

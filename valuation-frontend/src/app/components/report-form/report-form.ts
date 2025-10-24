@@ -2,11 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { CommonField, BankBranch } from '../../models';
 
 @Component({
   selector: 'app-report-form',
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, HttpClientModule],
   templateUrl: './report-form.html',
   styleUrl: './report-form.css',
 })
@@ -31,7 +32,8 @@ export class ReportForm implements OnInit {
   constructor(
     private router: Router,
     private route: ActivatedRoute,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private http: HttpClient
   ) {
     this.reportForm = this.fb.group({});
   }
@@ -40,6 +42,15 @@ export class ReportForm implements OnInit {
     this.loadQueryParams();
     this.loadCommonFields();
     this.loadBankBranches();
+    
+    // Log current timestamp for debugging - Updated to trigger hot reload
+    console.log('🕒 ReportForm component initialized at:', new Date().toISOString());
+  }
+
+  // Method to manually refresh data (for debugging)
+  refreshCommonFields() {
+    console.log('🔄 Manual refresh triggered');
+    this.loadCommonFields();
   }
 
   loadQueryParams() {
@@ -61,133 +72,172 @@ export class ReportForm implements OnInit {
   }
 
   loadCommonFields() {
-    // Embedded common fields data from backend/data/common_fields.json
-    const commonFieldsData = {
-      documents: [
-        {
-          "_id": "68fa41fa7cb7c7ce7f3f8bd1",
-          "fieldId": "report_reference_number",
-          "technicalName": "report_reference_number",
-          "uiDisplayName": "Report Reference Number",
-          "fieldType": "text" as const,
-          "isRequired": true,
-          "placeholder": "Enter report reference number",
-          "helpText": "Unique reference number for this valuation report",
-          "validation": {
-            "pattern": "^[A-Z]{2,4}[0-9]{4,8}$",
-            "maxLength": 20
-          },
-          "gridSize": 6,
-          "sortOrder": 1,
-          "isActive": true
+    // Fetch common fields data dynamically from backend API
+    this.isLoading = true;
+    
+    // Add cache-busting parameter to ensure fresh data
+    const timestamp = new Date().getTime();
+    const apiUrl = `http://localhost:8000/api/common-fields?t=${timestamp}`;
+    
+    console.log('🔄 Fetching common fields from API with cache-busting:', apiUrl);
+    
+    this.http.get<CommonField[]>(apiUrl)
+      .subscribe({
+        next: (fields) => {
+          console.log('✅ Raw API Response:', fields);
+          console.log('📊 GridSize values from API:');
+          fields.forEach(field => {
+            console.log(`  ${field.uiDisplayName}: gridSize=${field.gridSize} (CSS class: grid-${field.gridSize})`);
+          });
+          
+          // Filter active fields and sort by sortOrder
+          this.commonFields = fields
+            .filter(field => field.isActive)
+            .sort((a, b) => a.sortOrder - b.sortOrder);
+
+          console.log('📋 Processed common fields:', this.commonFields);
+          this.buildFormControls();
+          this.isLoading = false;
         },
-        {
-          "_id": "68fa41fa7cb7c7ce7f3f8bd2",
-          "fieldId": "valuation_date",
-          "technicalName": "valuation_date",
-          "uiDisplayName": "Valuation Date",
-          "fieldType": "date" as const,
-          "isRequired": true,
-          "defaultValue": "today",
-          "placeholder": "Select valuation date",
-          "helpText": "Date when the property valuation was conducted",
-          "validation": {
-            "maxDate": "today",
-            "minDate": "2020-01-01"
-          },
-          "gridSize": 6,
-          "sortOrder": 2,
-          "isActive": true
-        },
-        {
-          "_id": "68fa41fa7cb7c7ce7f3f8bd3",
-          "fieldId": "inspection_date",
-          "technicalName": "inspection_date",
-          "uiDisplayName": "Inspection Date",
-          "fieldType": "date" as const,
-          "isRequired": true,
-          "placeholder": "Select inspection date",
-          "helpText": "Date when the property was physically inspected",
-          "validation": {
-            "maxDate": "today",
-            "minDate": "2020-01-01"
-          },
-          "gridSize": 6,
-          "sortOrder": 3,
-          "isActive": true
-        },
-        {
-          "_id": "68fa41fa7cb7c7ce7f3f8bd4",
-          "fieldId": "valuation_purpose",
-          "technicalName": "valuation_purpose",
-          "uiDisplayName": "Valuation Purpose",
-          "fieldType": "select" as const,
-          "isRequired": true,
-          "options": [
-            { "value": "home_loan", "label": "Home Loan" },
-            { "value": "mortgage_loan", "label": "Mortgage Loan" },
-            { "value": "insurance", "label": "Insurance Purpose" },
-            { "value": "legal_settlement", "label": "Legal Settlement" },
-            { "value": "sale_purchase", "label": "Sale/Purchase" },
-            { "value": "stamp_duty", "label": "Stamp Duty Assessment" },
-            { "value": "other", "label": "Other" }
-          ],
-          "placeholder": "Select valuation purpose",
-          "helpText": "Reason for conducting this property valuation",
-          "gridSize": 6,
-          "sortOrder": 4,
-          "isActive": true
-        },
-        {
-          "_id": "68fa41fa7cb7c7ce7f3f8bd5",
-          "fieldId": "applicant_name",
-          "technicalName": "applicant_name",
-          "uiDisplayName": "Applicant Name",
-          "fieldType": "text" as const,
-          "isRequired": true,
-          "placeholder": "Enter applicant's full name",
-          "helpText": "Full name of the loan applicant/property owner",
-          "validation": {
-            "minLength": 3,
-            "maxLength": 100,
-            "pattern": "^[a-zA-Z\\s\\.]+$"
-          },
-          "gridSize": 6,
-          "sortOrder": 5,
-          "isActive": true
-        },
-        {
-          "_id": "68fa41fa7cb7c7ce7f3f8bd6",
-          "fieldId": "bank_name",
-          "technicalName": "bank_name",
-          "uiDisplayName": "Bank Name",
-          "fieldType": "text" as const,
-          "isRequired": true,
-          "isReadonly": true,
-          "placeholder": "Bank name (selected from previous page)",
-          "helpText": "Name of the lending bank/financial institution (auto-populated from selection)",
-          "gridSize": 6,
-          "sortOrder": 6,
-          "isActive": true
-        },
-        {
-          "_id": "68fa41fa7cb7c7ce7f3f8bd7",
-          "fieldId": "bank_branch",
-          "technicalName": "bank_branch",
-          "uiDisplayName": "Bank Branch",
-          "fieldType": "select" as const,
-          "isRequired": true,
-          "placeholder": "Select branch",
-          "helpText": "Choose the specific bank branch for this application",
-          "gridSize": 6,
-          "sortOrder": 7,
-          "isActive": true
+        error: (error) => {
+          console.error('❌ Error loading common fields:', error);
+          console.log('🔄 Falling back to embedded data...');
+          
+          // Fallback to embedded data if API fails
+          this.loadCommonFieldsFallback();
+          this.isLoading = false;
         }
-      ]
-    };
+      });
+  }
+
+  loadCommonFieldsFallback() {
+    // Fallback embedded data (in case API is not available)
+    console.log('📦 Using fallback embedded common fields data');
+    
+    const fallbackFields: CommonField[] = [
+      {
+        "_id": "68fa41fa7cb7c7ce7f3f8bd1",
+        "fieldId": "report_reference_number",
+        "technicalName": "report_reference_number",
+        "uiDisplayName": "Report Reference Number",
+        "fieldType": "text" as const,
+        "isRequired": true,
+        "placeholder": "Enter report reference number",
+        "helpText": "Unique reference number for this valuation report",
+        "validation": {
+          "pattern": "^[A-Z]{2,4}[0-9]{4,8}$",
+          "maxLength": 20
+        },
+        "gridSize": 4,
+        "sortOrder": 1,
+        "isActive": true
+      },
+      {
+        "_id": "68fa41fa7cb7c7ce7f3f8bd2",
+        "fieldId": "valuation_date",
+        "technicalName": "valuation_date",
+        "uiDisplayName": "Valuation Date",
+        "fieldType": "date" as const,
+        "isRequired": true,
+        "defaultValue": "today",
+        "placeholder": "Select valuation date",
+        "helpText": "Date when the property valuation was conducted",
+        "validation": {
+          "maxDate": "today",
+          "minDate": "2020-01-01"
+        },
+        "gridSize": 4,
+        "sortOrder": 2,
+        "isActive": true
+      },
+      {
+        "_id": "68fa41fa7cb7c7ce7f3f8bd3",
+        "fieldId": "inspection_date",
+        "technicalName": "inspection_date",
+        "uiDisplayName": "Inspection Date",
+        "fieldType": "date" as const,
+        "isRequired": true,
+        "placeholder": "Select inspection date",
+        "helpText": "Date when the property was physically inspected",
+        "validation": {
+          "maxDate": "today",
+          "minDate": "2020-01-01"
+        },
+        "gridSize": 4,
+        "sortOrder": 3,
+        "isActive": true
+      },
+      {
+        "_id": "68fa41fa7cb7c7ce7f3f8bd4",
+        "fieldId": "valuation_purpose",
+        "technicalName": "valuation_purpose",
+        "uiDisplayName": "Valuation Purpose",
+        "fieldType": "select" as const,
+        "isRequired": true,
+        "options": [
+          { "value": "home_loan", "label": "Home Loan" },
+          { "value": "mortgage_loan", "label": "Mortgage Loan" },
+          { "value": "insurance", "label": "Insurance Purpose" },
+          { "value": "legal_settlement", "label": "Legal Settlement" },
+          { "value": "sale_purchase", "label": "Sale/Purchase" },
+          { "value": "stamp_duty", "label": "Stamp Duty Assessment" },
+          { "value": "other", "label": "Other" }
+        ],
+        "placeholder": "Select valuation purpose",
+        "helpText": "Reason for conducting this property valuation",
+        "gridSize": 4,
+        "sortOrder": 4,
+        "isActive": true
+      },
+      {
+        "_id": "68fa41fa7cb7c7ce7f3f8bd5",
+        "fieldId": "applicant_name",
+        "technicalName": "applicant_name",
+        "uiDisplayName": "Applicant Name",
+        "fieldType": "text" as const,
+        "isRequired": true,
+        "placeholder": "Enter applicant's full name",
+        "helpText": "Full name of the loan applicant/property owner",
+        "validation": {
+          "minLength": 3,
+          "maxLength": 100,
+          "pattern": "^[a-zA-Z\\s\\.]+$"
+        },
+        "gridSize": 4,
+        "sortOrder": 5,
+        "isActive": true
+      },
+      {
+        "_id": "68fa41fa7cb7c7ce7f3f8bd6",
+        "fieldId": "bank_name",
+        "technicalName": "bank_name",
+        "uiDisplayName": "Bank Name",
+        "fieldType": "text" as const,
+        "isRequired": true,
+        "isReadonly": true,
+        "placeholder": "Bank name (selected from previous page)",
+        "helpText": "Name of the lending bank/financial institution (auto-populated from selection)",
+        "gridSize": 4,
+        "sortOrder": 6,
+        "isActive": true
+      },
+      {
+        "_id": "68fa41fa7cb7c7ce7f3f8bd7",
+        "fieldId": "bank_branch",
+        "technicalName": "bank_branch",
+        "uiDisplayName": "Bank Branch",
+        "fieldType": "select" as const,
+        "isRequired": true,
+        "placeholder": "Select branch",
+        "helpText": "Choose the specific bank branch for this application",
+        "gridSize": 4,
+        "sortOrder": 7,
+        "isActive": true
+      }
+    ];
 
     // Filter active fields and sort by sortOrder
-    this.commonFields = commonFieldsData.documents
+    this.commonFields = fallbackFields
       .filter(field => field.isActive)
       .sort((a, b) => a.sortOrder - b.sortOrder);
 
@@ -196,6 +246,13 @@ export class ReportForm implements OnInit {
 
   buildFormControls() {
     const formControls: any = {};
+    
+    // Debug log the fields being used for form building
+    console.log('🏗️ Building form with fields:', this.commonFields.map(f => ({
+      name: f.uiDisplayName,
+      gridSize: f.gridSize,
+      cssClass: `grid-${f.gridSize}`
+    })));
     
     this.commonFields.forEach(field => {
       const validators = [];
