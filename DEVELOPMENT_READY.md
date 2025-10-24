@@ -53,7 +53,8 @@ black .
 
 ### Development URLs (when services are running):
 - **Backend API:** https://localhost:5001/api
-- **Angular App:** http://localhost:4200
+- **Backend API:** http://localhost:8000
+- **API Documentation:** http://localhost:8000/api/docs
 - **React App:** http://localhost:3000
 - **Blazor App:** https://localhost:5000
 - **Jupyter Lab:** http://localhost:8888
@@ -64,10 +65,10 @@ black .
 1. **Update Node.js to v20 LTS** (current: 16.13.0)
 2. **Update .NET to 8.0 LTS** (current: 6.0.100)
 3. **Install MongoDB 7.0+**
-4. **Choose primary frontend** (Angular/React/Blazor)
+4. **Choose API client** (Postman/Insomnia/curl)
 
 ### Technology Upgrade Path:
-- **Frontend:** Angular 11 → Angular 18
+- **Backend:** Python FastAPI (latest)
 - **Backend:** .NET 6 → .NET 8
 - **Database:** Setup MongoDB 7.0+
 - **Node.js:** v16 → v20 LTS

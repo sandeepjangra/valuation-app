@@ -58,18 +58,15 @@ check_docker() {
 
 # Build images
 build_images() {
-    log "🔨 Building Valuation Application Images"
-    echo "========================================"
+    log "🔨 Building Valuation Application Backend Image"
+    echo "=============================================="
     
     cd "$PROJECT_DIR"
     
     log "1️⃣ Building Backend Image..."
     docker build -t valuation-backend ./backend
     
-    log "2️⃣ Building Frontend Image..."
-    docker build -t valuation-frontend ./valuation-frontend
-    
-    success "🎉 All images built successfully!"
+    success "🎉 Backend image built successfully!"
     
     log "📋 Built Images:"
     docker images | grep valuation
@@ -77,18 +74,15 @@ build_images() {
 
 # Build production images
 build_prod_images() {
-    log "🔨 Building Production Images"
-    echo "=============================="
+    log "🔨 Building Production Backend Image"
+    echo "==================================="
     
     cd "$PROJECT_DIR"
     
     log "1️⃣ Building Production Backend Image..."
     docker build -f ./backend/Dockerfile.prod -t valuation-backend:prod ./backend
     
-    log "2️⃣ Building Production Frontend Image..."
-    docker build -t valuation-frontend:prod ./valuation-frontend
-    
-    success "🎉 Production images built successfully!"
+    success "🎉 Production backend image built successfully!"
     
     log "📋 Built Images:"
     docker images | grep valuation
@@ -118,7 +112,6 @@ start_containers() {
     
     echo
     log "🌐 Application URLs:"
-    log "   • Frontend: http://localhost"
     log "   • Backend API: http://localhost:8000"
     log "   • API Docs: http://localhost:8000/api/docs"
 }
@@ -177,8 +170,8 @@ cleanup() {
     docker-compose down -v
     
     log "2️⃣ Removing images..."
-    docker rmi valuation-backend valuation-frontend 2>/dev/null || true
-    docker rmi valuation-backend:prod valuation-frontend:prod 2>/dev/null || true
+    docker rmi valuation-backend 2>/dev/null || true
+    docker rmi valuation-backend:prod 2>/dev/null || true
     
     log "3️⃣ Pruning system..."
     docker system prune -f
@@ -227,7 +220,6 @@ show_help() {
     echo "Logging Commands:"
     echo "  logs          Show logs from all containers"
     echo "  logs backend  Show only backend logs"
-    echo "  logs frontend Show only frontend logs"
     echo
     echo "Examples:"
     echo "  $0 build              # Build all images"
@@ -237,7 +229,6 @@ show_help() {
     echo "  $0 cleanup            # Clean up everything"
     echo
     echo "Quick Links (after starting):"
-    echo "  Frontend:     http://localhost"
     echo "  Backend API:  http://localhost:8000"
     echo "  API Docs:     http://localhost:8000/api/docs"
     echo

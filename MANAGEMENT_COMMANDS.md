@@ -1,34 +1,31 @@
 # Valuation Application - Management Commands Quick Reference
 
-## 🚀 **Full Stack Management** (Recommended)
+## 🚀 **Backend Management** (API Only)
 
 ### Unified Script (`./scripts/manage_app.sh`)
 ```bash
-# Start both frontend and backend
+# Start backend only
 ./scripts/manage_app.sh start
 
-# Stop both services
+# Stop backend service
 ./scripts/manage_app.sh stop
 
-# Restart both services
+# Restart backend service
 ./scripts/manage_app.sh restart
 
-# Check status of both services
+# Check status of backend service
 ./scripts/manage_app.sh status
 
 # Quick health check
 ./scripts/manage_app.sh health
 
-# View logs from both services
+# View backend logs
 ./scripts/manage_app.sh logs
 
 # View only backend logs
 ./scripts/manage_app.sh logs backend
 
-# View only frontend logs
-./scripts/manage_app.sh logs frontend
-
-# Install dependencies for both services
+# Install backend dependencies
 ./scripts/manage_app.sh install
 
 # Complete development setup (first time)
@@ -37,7 +34,7 @@
 
 ---
 
-## 🔧 **Individual Service Management**
+## 🔧 **Backend API Management**
 
 ### Backend API (`./scripts/manage_server.sh`)
 ```bash
@@ -50,27 +47,15 @@
 ./scripts/manage_server.sh test       # Test endpoints
 ```
 
-### Frontend (`./scripts/manage_frontend.sh`)
-```bash
-# Frontend operations
-./scripts/manage_frontend.sh start           # Start Angular dev server
-./scripts/manage_frontend.sh stop            # Stop frontend
-./scripts/manage_frontend.sh restart         # Restart frontend
-./scripts/manage_frontend.sh status          # Frontend status
-./scripts/manage_frontend.sh logs            # Frontend logs
-./scripts/manage_frontend.sh install         # Install npm dependencies
-./scripts/manage_frontend.sh clean-install   # Clean install dependencies
-```
-
 ---
 
 ## 🌐 **Application URLs**
 
 | Service | URL | Description |
 |---------|-----|-------------|
-| **Frontend** | http://localhost:4200 | Angular application |
 | **Backend API** | http://localhost:8000 | FastAPI backend |
 | **API Documentation** | http://localhost:8000/api/docs | Swagger UI docs |
+| **API Redoc** | http://localhost:8000/api/redoc | ReDoc documentation |
 
 ---
 
@@ -110,9 +95,6 @@
 ```bash
 # Install/update all dependencies
 ./scripts/manage_app.sh install
-
-# Clean install frontend dependencies
-./scripts/manage_frontend.sh clean-install
 ```
 
 ---
@@ -120,13 +102,13 @@
 ## ⚡ **Quick Commands**
 
 ```bash
-# Start everything
+# Start backend
 ./scripts/manage_app.sh start
 
 # Check status
 ./scripts/manage_app.sh status
 
-# Stop everything
+# Stop backend
 ./scripts/manage_app.sh stop
 ```
 
@@ -147,7 +129,7 @@
 ./scripts/manage_app.sh install
 ```
 
-### Services Not Responding
+### Service Not Responding
 ```bash
 # Health check
 ./scripts/manage_app.sh health
@@ -158,12 +140,9 @@
 
 ### View Detailed Logs
 ```bash
-# All logs
+# Backend logs
 ./scripts/manage_app.sh logs
-
-# Specific service logs
 ./scripts/manage_app.sh logs backend
-./scripts/manage_app.sh logs frontend
 ```
 
 ---
@@ -173,12 +152,9 @@
 - **Scripts**: `./scripts/`
   - `manage_app.sh` - Unified management
   - `manage_server.sh` - Backend management  
-  - `manage_frontend.sh` - Frontend management
   
 - **Logs**: `./logs/`
   - `backend.log` - Backend logs
-  - `frontend.log` - Frontend logs
   
 - **PID Files**: 
   - `.backend.pid` - Backend process ID
-  - `.frontend.pid` - Frontend process ID

@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # =============================================================================
-# Valuation Application - Unified Management Script
+# Valuation Application - Backend Management Script
 # =============================================================================
-# Description: Manage both frontend and backend services together
+# Description: Manage backend service
 # Author: AI Assistant
 # Version: 1.0
 # =============================================================================
@@ -14,7 +14,6 @@ set -e  # Exit on any error
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 BACKEND_SCRIPT="$SCRIPT_DIR/manage_server.sh"
-FRONTEND_SCRIPT="$SCRIPT_DIR/manage_frontend.sh"
 
 # Colors for output
 RED='\033[0;31m'
@@ -47,234 +46,135 @@ check_scripts() {
         error "Backend management script not found: $BACKEND_SCRIPT"
         exit 1
     fi
-    
-    if [ ! -f "$FRONTEND_SCRIPT" ]; then
-        error "Frontend management script not found: $FRONTEND_SCRIPT"
-        exit 1
-    fi
 }
 
-# Start both services
-start_all() {
-    log "🚀 Starting Valuation Application (Full Stack)"
-    echo "=================================================="
-    
+# Start backend service
+start_services() {
+    log "🚀 Starting Valuation Application Backend..."
     check_scripts
     
     log "1️⃣ Starting Backend API Server..."
     "$BACKEND_SCRIPT" start
     
-    echo
-    log "2️⃣ Starting Frontend Development Server..."
-    "$FRONTEND_SCRIPT" start
-    
-    echo
-    success "🎉 Valuation Application started successfully!"
+    success "🎉 Backend started successfully!"
     log "🌐 Backend API: http://localhost:8000"
-    log "🌐 Frontend App: http://localhost:4200"
     log "📚 API Documentation: http://localhost:8000/api/docs"
 }
 
-# Stop both services
-stop_all() {
-    log "🛑 Stopping Valuation Application (Full Stack)"
-    echo "================================================="
-    
+# Stop backend service
+stop_services() {
+    log "🛑 Stopping Valuation Application Backend..."
     check_scripts
     
-    log "1️⃣ Stopping Frontend Development Server..."
-    "$FRONTEND_SCRIPT" stop
-    
-    echo
-    log "2️⃣ Stopping Backend API Server..."
+    log "1️⃣ Stopping Backend API Server..."
     "$BACKEND_SCRIPT" stop
     
-    echo
-    success "🛑 Valuation Application stopped successfully!"
+    success "🎉 Backend stopped successfully!"
 }
 
-# Restart both services
-restart_all() {
-    log "🔄 Restarting Valuation Application (Full Stack)"
-    echo "=================================================="
-    
-    stop_all
-    echo
-    start_all
+# Restart backend service
+restart_services() {
+    log "🔄 Restarting Valuation Application Backend..."
+    stop_services
+    sleep 2
+    start_services
 }
 
-# Show status of both services
-status_all() {
+# Get status of backend service
+get_status() {
     log "📊 Valuation Application Status"
-    echo "================================"
-    
     check_scripts
     
-    echo
-    log "🔹 Backend API Status:"
+    log "🔹 Backend Status:"
     "$BACKEND_SCRIPT" status
     
     echo
-    log "🔹 Frontend Status:"
-    "$FRONTEND_SCRIPT" status
-    
-    echo
-    log "📋 Quick Links:"
-    log "   • Frontend: http://localhost:4200"
+    log "🌐 Service URLs:"
     log "   • Backend API: http://localhost:8000"
-    log "   • API Docs: http://localhost:8000/api/docs"
+    log "   • API Documentation: http://localhost:8000/api/docs"
 }
 
-# Show logs from both services
+# Show logs
 show_logs() {
-    local service="${2:-both}"
+    local service="${1:-all}"
     
     case "$service" in
-        backend)
+        backend|all|*)
             log "📋 Backend Logs:"
             "$BACKEND_SCRIPT" logs
-            ;;
-        frontend)
-            log "📋 Frontend Logs:"
-            "$FRONTEND_SCRIPT" logs
-            ;;
-        both|*)
-            log "📋 Backend Logs:"
-            echo "----------------------------------------"
-            "$BACKEND_SCRIPT" logs
-            echo
-            echo
-            log "📋 Frontend Logs:"
-            echo "----------------------------------------"
-            "$FRONTEND_SCRIPT" logs
             ;;
     esac
 }
 
-# Install dependencies for both services
-install_deps() {
-    log "📦 Installing Dependencies (Full Stack)"
-    echo "======================================="
+# Health check
+health_check() {
+    log "🏥 Health Check"
+    check_scripts
     
+    "$BACKEND_SCRIPT" status
+    
+    # Test backend API
+    if curl -s -f "http://localhost:8000/api/health" >/dev/null 2>&1; then
+        success "Backend API is responding"
+    else
+        warning "Backend API is not responding"
+    fi
+}
+
+# Install dependencies
+install_deps() {
+    log "📦 Installing Dependencies"
     check_scripts
     
     log "1️⃣ Installing Backend Dependencies..."
     cd "$PROJECT_DIR"
-    
-    # Activate virtual environment and install Python packages
-    if [ -d "valuation_env" ]; then
-        log "🐍 Activating Python virtual environment..."
-        source valuation_env/bin/activate
-        
-        if [ -f "requirements.txt" ]; then
-            log "📦 Installing Python packages..."
-            pip install -r requirements.txt
-        fi
+    if [ -f "requirements.txt" ]; then
+        pip install -r requirements.txt
+        success "Backend dependencies installed"
     else
-        warning "Python virtual environment not found. Backend dependencies not installed."
+        warning "requirements.txt not found"
     fi
-    
-    echo
-    log "2️⃣ Installing Frontend Dependencies..."
-    "$FRONTEND_SCRIPT" install
-    
-    echo
-    success "📦 All dependencies installed successfully!"
 }
 
 # Development setup
-dev_setup() {
-    log "🛠️ Development Environment Setup"
-    echo "=================================="
-    
-    log "Setting up complete development environment..."
+setup_env() {
+    log "🛠️  Setting up Development Environment"
     
     # Install dependencies
     install_deps
     
-    echo
-    log "🧪 Running health checks..."
+    # Start services
+    start_services
     
-    # Check if we can start services
-    start_all
-    
-    echo
-    log "✅ Development environment ready!"
-    log "🎯 Next steps:"
-    log "   1. Open http://localhost:4200 for the frontend"
-    log "   2. Open http://localhost:8000/api/docs for API documentation"
-    log "   3. Use './scripts/manage_app.sh status' to check service status"
-}
-
-# Quick health check
-health_check() {
-    log "🏥 Health Check"
-    echo "==============="
-    
-    local backend_healthy=false
-    local frontend_healthy=false
-    
-    # Check backend
-    if curl -s -f "http://localhost:8000/api/health" >/dev/null 2>&1; then
-        success "Backend API is healthy"
-        backend_healthy=true
-    else
-        error "Backend API is not responding"
-    fi
-    
-    # Check frontend
-    if curl -s -f "http://localhost:4200" >/dev/null 2>&1; then
-        success "Frontend is healthy"
-        frontend_healthy=true
-    else
-        error "Frontend is not responding"
-    fi
-    
-    if [ "$backend_healthy" = true ] && [ "$frontend_healthy" = true ]; then
-        success "🎉 Full stack application is healthy!"
-    else
-        warning "⚠️ Some services are not responding"
-        log "Run './scripts/manage_app.sh status' for detailed information"
-    fi
+    success "🎉 Development environment setup complete!"
+    log "Backend API is available at: http://localhost:8000"
 }
 
 # Show help
 show_help() {
     echo
-    echo -e "${MAGENTA}Valuation Application - Unified Management Script${NC}"
+    echo -e "${MAGENTA}Valuation Application - Backend Management Script${NC}"
     echo "================================================="
     echo
-    echo "Usage: $0 {start|stop|restart|status|logs|install|setup|health|help} [service]"
+    echo "Usage: $0 {start|stop|restart|status|logs|health|install|setup|help}"
     echo
-    echo "Main Commands:"
-    echo "  start         Start both frontend and backend services"
-    echo "  stop          Stop both frontend and backend services"
-    echo "  restart       Restart both services"
-    echo "  status        Show status of both services"
-    echo "  health        Quick health check for both services"
-    echo
-    echo "Development Commands:"
-    echo "  install       Install dependencies for both services"
+    echo "Commands:"
+    echo "  start         Start the backend service"
+    echo "  stop          Stop the backend service"
+    echo "  restart       Restart the backend service"
+    echo "  status        Show backend service status"
+    echo "  logs [SERVICE] Show logs (backend or all)"
+    echo "  health        Perform health check"
+    echo "  install       Install backend dependencies"
     echo "  setup         Complete development environment setup"
-    echo
-    echo "Logging Commands:"
-    echo "  logs          Show logs from both services"
-    echo "  logs backend  Show only backend logs"
-    echo "  logs frontend Show only frontend logs"
-    echo
-    echo "Individual Service Management:"
-    echo "  Backend:  ./scripts/manage_server.sh {start|stop|status}"
-    echo "  Frontend: ./scripts/manage_frontend.sh {start|stop|status}"
+    echo "  help          Show this help message"
     echo
     echo "Examples:"
-    echo "  $0 start              # Start full application"
-    echo "  $0 status             # Check both services"
-    echo "  $0 logs backend       # View backend logs only"
-    echo "  $0 health             # Quick health check"
-    echo "  $0 setup              # First-time setup"
+    echo "  $0 start      # Start backend"
+    echo "  $0 status     # Check backend status"
+    echo "  $0 logs       # View backend logs"
     echo
-    echo "Quick Links:"
-    echo "  Frontend:     http://localhost:4200"
+    echo "Service URLs:"
     echo "  Backend API:  http://localhost:8000"
     echo "  API Docs:     http://localhost:8000/api/docs"
     echo
@@ -283,28 +183,28 @@ show_help() {
 # Main script logic
 case "${1:-}" in
     start)
-        start_all
+        start_services
         ;;
     stop)
-        stop_all
+        stop_services
         ;;
     restart)
-        restart_all
+        restart_services
         ;;
     status)
-        status_all
+        get_status
         ;;
     logs)
-        show_logs "$@"
+        show_logs "${2:-all}"
+        ;;
+    health)
+        health_check
         ;;
     install)
         install_deps
         ;;
     setup)
-        dev_setup
-        ;;
-    health)
-        health_check
+        setup_env
         ;;
     help|--help|-h)
         show_help

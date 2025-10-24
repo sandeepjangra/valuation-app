@@ -1,0 +1,180 @@
+<div class="new-report-container">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <button class="back-button" (click)="cancelAndGoBack()">
+        ← Back to Dashboard
+      </button>
+      <div class="page-title-section">
+        <h1 class="page-title">Create New Report</h1>
+        <p class="page-subtitle">Select a bank and template to get started</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Progress Indicator -->
+  <div class="progress-steps">
+    <div class="step" [class.active]="step >= 1" [class.completed]="step > 1">
+      <div class="step-number">1</div>
+      <div class="step-label">Select Bank</div>
+    </div>
+    <div class="step-connector" [class.completed]="step > 1"></div>
+    <div class="step" [class.active]="step >= 2" [class.completed]="step > 2">
+      <div class="step-number">2</div>
+      <div class="step-label">Select Template</div>
+    </div>
+    <div class="step-connector" [class.completed]="step > 2"></div>
+    <div class="step" [class.active]="step >= 3">
+      <div class="step-number">3</div>
+      <div class="step-label">Create Report</div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="isLoading">
+    <div class="loading-spinner"></div>
+    <p class="loading-text">Loading banks data...</p>
+  </div>
+
+  <!-- Step 1: Bank Selection -->
+  <div class="step-content" *ngIf="!isLoading && step === 1">
+    <div class="section-header">
+      <h2 class="section-title">Select a Bank</h2>
+      <p class="section-subtitle">Choose the bank for which you want to create a valuation report</p>
+    </div>
+    
+    <div class="banks-grid">
+      <div class="bank-card" 
+           *ngFor="let bank of banks" 
+           (click)="selectBank(bank)"
+           [class.selected]="selectedBank?.bankCode === bank.bankCode">
+        <div class="bank-icon">{{ getBankIcon(bank.bankCode) }}</div>
+        <div class="bank-info">
+          <h3 class="bank-name">{{ bank.bankName }}</h3>
+          <p class="bank-short-name">{{ bank.bankShortName }}</p>
+          <div class="bank-meta">
+            <span class="bank-type">{{ bank.bankType | titlecase }}</span>
+            <span class="template-count" *ngIf="bank.templates">
+              {{ bank.templates.length }} template{{ bank.templates.length !== 1 ? 's' : '' }}
+            </span>
+          </div>
+        </div>
+        <div class="select-indicator">
+          <span class="select-text">Select</span>
+          <span class="arrow">→</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 2: Template Selection -->
+  <div class="step-content" *ngIf="!isLoading && step === 2">
+    <div class="section-header">
+      <button class="back-step-button" (click)="goBack()">
+        ← Back to Bank Selection
+      </button>
+      <h2 class="section-title">Select Template</h2>
+      <p class="section-subtitle">
+        Choose a valuation template for <strong>{{ selectedBank?.bankName }}</strong>
+      </p>
+    </div>
+
+    <div class="selected-bank-info">
+      <div class="bank-chip">
+        <span class="bank-icon">{{ getBankIcon(selectedBank!.bankCode) }}</span>
+        <span class="bank-name">{{ selectedBank?.bankShortName }}</span>
+      </div>
+    </div>
+
+    <div class="templates-grid" *ngIf="availableTemplates.length > 0">
+      <div class="template-card" 
+           *ngFor="let template of availableTemplates" 
+           (click)="selectTemplate(template)"
+           [class.selected]="selectedTemplate?.templateId === template.templateId">
+        <div class="template-header">
+          <div class="template-icon">{{ getPropertyTypeIcon(template.propertyType) }}</div>
+          <div class="template-info">
+            <h3 class="template-name">{{ template.templateName }}</h3>
+            <p class="template-property-type">{{ template.propertyType | titlecase }} Property</p>
+          </div>
+        </div>
+        <div class="template-content">
+          <p class="template-description">{{ template.description }}</p>
+          <div class="template-meta">
+            <span class="template-version">v{{ template.version }}</span>
+            <span class="field-count">{{ template.fields.length }} fields</span>
+          </div>
+        </div>
+        <div class="select-indicator">
+          <span class="select-text">Select</span>
+          <span class="arrow">→</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- No templates available -->
+    <div class="no-templates" *ngIf="availableTemplates.length === 0">
+      <div class="no-templates-icon">📋</div>
+      <h3 class="no-templates-title">No Templates Available</h3>
+      <p class="no-templates-text">
+        {{ selectedBank?.bankName }} doesn't have any specific templates. 
+        You can proceed with a custom form.
+      </p>
+      <button class="proceed-button" (click)="proceedToForm()">
+        Proceed with Custom Form
+      </button>
+    </div>
+  </div>
+
+  <!-- Step 3: Ready to Proceed -->
+  <div class="step-content" *ngIf="!isLoading && step === 3 && selectedTemplate">
+    <div class="section-header">
+      <button class="back-step-button" (click)="goBack()">
+        ← Back to Template Selection
+      </button>
+      <h2 class="section-title">Ready to Create Report</h2>
+      <p class="section-subtitle">Review your selections and proceed to the report form</p>
+    </div>
+
+    <div class="selection-summary">
+      <div class="summary-card">
+        <h3 class="summary-title">Your Selections</h3>
+        
+        <div class="selection-item">
+          <div class="selection-label">Bank:</div>
+          <div class="selection-value">
+            <span class="bank-icon">{{ getBankIcon(selectedBank!.bankCode) }}</span>
+            {{ selectedBank?.bankName }}
+          </div>
+        </div>
+
+        <div class="selection-item">
+          <div class="selection-label">Template:</div>
+          <div class="selection-value">
+            <span class="template-icon">{{ getPropertyTypeIcon(selectedTemplate.propertyType) }}</span>
+            {{ selectedTemplate.templateName }}
+          </div>
+        </div>
+
+        <div class="selection-item">
+          <div class="selection-label">Property Type:</div>
+          <div class="selection-value">{{ selectedTemplate.propertyType | titlecase }}</div>
+        </div>
+
+        <div class="selection-item">
+          <div class="selection-label">Form Fields:</div>
+          <div class="selection-value">{{ selectedTemplate.fields.length }} fields to complete</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="action-buttons">
+      <button class="cancel-button" (click)="cancelAndGoBack()">
+        Cancel
+      </button>
+      <button class="proceed-button primary" (click)="proceedToForm()">
+        Create Report Form
+      </button>
+    </div>
+  </div>
+</div>

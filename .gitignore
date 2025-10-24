@@ -27,14 +27,6 @@ venv/
 env/
 ENV/
 
-# Node.js / Angular
-valuation-frontend/node_modules/
-valuation-frontend/dist/
-valuation-frontend/.angular/
-valuation-frontend/npm-debug.log*
-valuation-frontend/yarn-debug.log*
-valuation-frontend/yarn-error.log*
-
 # IDEs
 .vscode/
 .idea/

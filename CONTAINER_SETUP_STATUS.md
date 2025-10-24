@@ -12,8 +12,7 @@ Container setup was attempted but cannot proceed due to macOS version compatibil
 ✅ **Container Configuration Files**:
 - `backend/Dockerfile` - Development backend container
 - `backend/Dockerfile.prod` - Production backend container
-- `valuation-frontend/Dockerfile` - Frontend container with Nginx
-- `valuation-frontend/nginx.conf` - Nginx configuration
+- `backend/Dockerfile` - Backend container with FastAPI
 - `docker-compose.yml` - Multi-service orchestration
 - `podman-compose.yml` - Podman-specific compose file
 - `.env.container` - Container environment template
@@ -30,7 +29,7 @@ Container setup was attempted but cannot proceed due to macOS version compatibil
 - Continue using current `scripts/manage_app.sh`
 - Deploy directly on servers with:
   - Python virtual environment
-  - Node.js for frontend
+  - Python for backend
   - Nginx as reverse proxy
 
 ### Option 3: Cloud Deployment
@@ -60,7 +59,7 @@ All container configuration files are ready and tested. When you upgrade macOS o
 ## Current Working Setup
 Your current development environment is fully functional:
 - ✅ Backend: `./scripts/manage_server.sh start`
-- ✅ Frontend: `./scripts/manage_frontend.sh start`
+- ✅ Backend: `./scripts/manage_server.sh start`
 - ✅ Full Stack: `./scripts/manage_app.sh start`
 
 ## Recommendation

@@ -554,7 +554,7 @@ This collection will store the standardized field definitions that are common ac
 - `PUT /api/common-fields/{fieldId}` - Update field
 - `DELETE /api/common-fields/{fieldId}` - Delete field
 
-### **Frontend Usage:**
+### **API Usage:**
 - Fields will be fetched from API and rendered dynamically
 - `technicalName` used for form control names and API data
 - `uiDisplayName` used for form labels

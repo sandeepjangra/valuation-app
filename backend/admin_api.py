@@ -4,12 +4,12 @@ Provides CRUD operations for all collections across multiple databases
 """
 
 from fastapi import APIRouter, HTTPException, Depends, Query
-from typing import List, Dict, Any, Optional, Union
+from typing import Dict, Any, Optional
 from datetime import datetime, timezone
 from bson import ObjectId
 import json
 import logging
-from database.multi_db_manager import MultiDatabaseSession, DatabaseType
+from backend.database.multi_db_manager import MultiDatabaseSession, DatabaseType
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ async def get_current_admin_user():
     return {"_id": "admin", "username": "admin", "role": "admin"}
 
 # JSON serialization helper
-def json_serializer(obj):
+def json_serializer(obj: Any) -> str:
     """JSON serializer for MongoDB objects"""
     if isinstance(obj, ObjectId):
         return str(obj)
@@ -31,26 +31,26 @@ def json_serializer(obj):
     raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
 
 @admin_router.get("/databases")
-async def get_databases():
+async def get_databases() -> Dict[str, Any]:
     """Get list of all databases and their collections"""
     try:
-        async with MultiDatabaseSession() as db:
-            databases = []
-            
-            # Define our known databases and their collections
-            database_info = {
-                "admin": ["banks", "common_form_fields"],
-                "main": ["users", "properties", "valuations"],
-                "reports": ["valuation_reports", "audit_logs"]
-            }
-            
-            for db_name, collections in database_info.items():
-                databases.append({
-                    "name": db_name,
-                    "collections": collections
-                })
-            
-            return databases
+        # Note: Simplified for type checking - db session not needed for static info
+        databases: list[Dict[str, Any]] = []
+        
+        # Define our known databases and their collections
+        database_info = {
+            "admin": ["banks", "common_form_fields"],
+            "main": ["users", "properties", "valuations"],
+            "reports": ["valuation_reports", "audit_logs"]
+        }
+        
+        for db_name, collections in database_info.items():
+            databases.append({
+                "name": db_name,
+                "collections": collections
+            })
+        
+        return {"databases": databases}
             
     except Exception as e:
         logger.error(f"Error getting databases: {e}")
@@ -75,48 +75,43 @@ async def get_collections(database: str):
         logger.error(f"Error getting collections for {database}: {e}")
         raise HTTPException(status_code=500, detail="Failed to retrieve collections")
 
-@admin_router.get("/databases/{database}/collections/{collection}/documents")
+@admin_router.get("/documents")
 async def get_documents(
-    database: str,
-    collection: str,
+    database: DatabaseType, 
+    collection: str, 
     page: int = Query(1, ge=1),
-    limit: int = Query(20, ge=1, le=100)
-):
-    """Get paginated documents from a collection"""
+    limit: int = Query(10, ge=1, le=100)
+) -> Dict[str, Any]:
+    """Get documents from a specific collection with pagination"""
     try:
-        if database not in ["admin", "main", "reports"]:
-            raise HTTPException(status_code=404, detail="Database not found")
-            
         async with MultiDatabaseSession() as db:
-            # Calculate skip value
             skip = (page - 1) * limit
             
             # Get total count
             total = await db.count_documents(database, collection, {})
             
-            # Get paginated documents
+            # Get documents with pagination
             documents = await db.find_many(
-                database, 
-                collection, 
+                database,
+                collection,
                 {},
                 skip=skip,
                 limit=limit,
-                sort=[("_id", -1)]  # Most recent first
+                sort=[("_id", -1)]
             )
             
-            # Calculate total pages
             total_pages = (total + limit - 1) // limit
             
             return {
                 "documents": json.loads(json.dumps(documents, default=json_serializer)),
                 "total": total,
                 "page": page,
-                "totalPages": total_pages
+                "totalPages": total_pages,
+                "limit": limit
             }
-            
     except Exception as e:
-        logger.error(f"Error getting documents from {database}.{collection}: {e}")
-        raise HTTPException(status_code=500, detail="Failed to retrieve documents")
+        logger.error(f"Failed to get documents: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @admin_router.get("/databases/{database}/collections/{collection}/documents/{document_id}")
 async def get_document(database: str, collection: str, document_id: str):
@@ -267,6 +262,7 @@ async def update_document(
             
             # Calculate changes for audit trail
             changes = calculate_changes(existing_doc, document)
+            logger.info(f"Document updated with {len(changes)} changes")
             
             # Log audit trail (temporarily disabled)
             # await log_audit_trail(
@@ -349,23 +345,29 @@ async def delete_document(
         logger.error(f"Error deleting document {document_id} from {database}.{collection}: {e}")
         raise HTTPException(status_code=500, detail="Failed to delete document")
 
-@admin_router.post("/databases/{database}/collections/{collection}/search")
+@admin_router.get("/search")
 async def search_documents(
-    database: str,
-    collection: str,
-    query: Dict[str, Any],
+    q: str = Query(..., description="Search query"),
+    database: Optional[str] = Query(None),
+    collection: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100)
-):
+) -> Dict[str, Any]:
     """Search documents in a collection"""
     try:
         if database not in ["admin", "main", "reports"]:
             raise HTTPException(status_code=404, detail="Database not found")
         
+        if not collection:
+            raise HTTPException(status_code=400, detail="Collection parameter is required")
+        
         # Cast to proper type
         db_type: DatabaseType = database  # type: ignore
             
         async with MultiDatabaseSession() as db:
+            # Create search query (simplified text search)
+            query: Dict[str, Any] = {"$text": {"$search": q}} if q else {}
+            
             # Calculate skip value
             skip = (page - 1) * limit
             
@@ -388,11 +390,11 @@ async def search_documents(
             }
             
     except Exception as e:
-        logger.error(f"Error searching documents in {database}.{collection}: {e}")
-        raise HTTPException(status_code=500, detail="Failed to search documents")
+        logger.error(f"Failed to search documents: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @admin_router.get("/databases/{database}/collections/{collection}/stats")
-async def get_collection_stats(database: str, collection: str):
+async def get_collection_stats(database: str, collection: str) -> Dict[str, Any]:
     """Get statistics for a collection"""
     try:
         if database not in ["admin", "main", "reports"]:
@@ -406,7 +408,7 @@ async def get_collection_stats(database: str, collection: str):
             count = await db.count_documents(db_type, collection, {})
             
             # Get collection stats (simplified - MongoDB commands require more complex setup)
-            stats = {
+            stats: Dict[str, Any] = {
                 "count": count,
                 "size": count * 1024,  # Estimated
                 "avgObjSize": 1024,    # Estimated
@@ -425,12 +427,12 @@ async def get_audit_logs(
     collection: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
     limit: int = Query(50, ge=1, le=100)
-):
+) -> Dict[str, Any]:
     """Get audit logs with optional filtering"""
     try:
         async with MultiDatabaseSession() as db:
             # Build query
-            query = {}
+            query: Dict[str, Any] = {}
             if database:
                 query["database"] = database
             if collection:
@@ -449,19 +451,16 @@ async def get_audit_logs(
                 query,
                 skip=skip,
                 limit=limit,
-                sort=[("timestamp", -1)]  # Most recent first
+                sort=[("timestamp", -1)]
             )
             
             return {
                 "logs": json.loads(json.dumps(logs, default=json_serializer)),
                 "total": total
             }
-            
     except Exception as e:
-        logger.error(f"Error getting audit logs: {e}")
-        raise HTTPException(status_code=500, detail="Failed to retrieve audit logs")
-
-# Helper functions
+        logger.error(f"Failed to get audit logs: {e}")
+        raise HTTPException(status_code=500, detail=str(e))# Helper functions
 async def log_audit_trail(
     db: MultiDatabaseSession,
     operation: str,
@@ -498,7 +497,7 @@ async def log_audit_trail(
 
 def calculate_changes(old_doc: Dict[str, Any], new_doc: Dict[str, Any]) -> Dict[str, Any]:
     """Calculate changes between two documents"""
-    changes = {}
+    changes: Dict[str, Any] = {}
     
     # Get all keys from both documents
     all_keys = set(old_doc.keys()) | set(new_doc.keys())
@@ -518,3 +517,64 @@ def calculate_changes(old_doc: Dict[str, Any], new_doc: Dict[str, Any]) -> Dict[
             }
     
     return changes
+
+@admin_router.post("/fix-sortorder")
+async def fix_sortorder_gap() -> Dict[str, Any]:
+    """Quick fix for sortOrder gap in applicant_details"""
+    try:
+        async with MultiDatabaseSession() as db:
+            # First try a simple update using the existing multi-db manager methods
+            # Find the loan amount field
+            loan_field = await db.find_one(
+                'admin', 
+                'common_form_fields',
+                {'technicalName': 'loan_amount_requested'},
+                include_inactive=True  # Include all versions
+            )
+            
+            if not loan_field:
+                raise HTTPException(status_code=404, detail="Field not found")
+            
+            # Try to use the existing versioned update but with current data
+            success = await db.update_one(
+                'admin',
+                'common_form_fields', 
+                {'technicalName': 'loan_amount_requested'},
+                {'sortOrder': 3},
+                user_id='admin'
+            )
+            
+            if not success:
+                # Fallback: try direct collection update
+                collection = db.get_collection('admin', 'common_form_fields')
+                result = await collection.update_many(
+                    {'technicalName': 'loan_amount_requested'},
+                    {'$set': {'sortOrder': 3}}
+                )
+                
+                return {
+                    "success": True,
+                    "method": "direct_update",
+                    "matched": result.matched_count,
+                    "modified": result.modified_count,
+                    "old_sortOrder": loan_field.get('sortOrder'),
+                    "new_sortOrder": 3
+                }
+            else:
+                # Verify the change
+                updated_field = await db.find_one(
+                    'admin', 
+                    'common_form_fields',
+                    {'technicalName': 'loan_amount_requested'}
+                )
+                
+                return {
+                    "success": True,
+                    "method": "versioned_update", 
+                    "old_sortOrder": loan_field.get('sortOrder'),
+                    "new_sortOrder": updated_field.get('sortOrder') if updated_field else None
+                }
+            
+    except Exception as e:
+        logger.error(f"Failed to fix sortOrder: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

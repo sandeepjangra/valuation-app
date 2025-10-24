@@ -14,7 +14,7 @@ services:
       - DATABASE_URL=${DATABASE_URL}
       - MONGODB_URI=${MONGODB_URI}
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
-      - CORS_ORIGINS=http://localhost,http://localhost:80,http://localhost:4200
+      - CORS_ORIGINS=http://localhost,http://localhost:80
     env_file:
       - .env
     volumes:
@@ -31,30 +31,6 @@ services:
       start_period: 40s
     depends_on:
       - mongodb
-
-  # Angular Frontend Service
-  frontend:
-    build:
-      context: ./valuation-frontend
-      dockerfile: Dockerfile
-    container_name: valuation-frontend
-    ports:
-      - "80:80"
-    environment:
-      - API_URL=http://backend:8000
-    volumes:
-      - frontend_logs:/var/log/nginx
-    networks:
-      - valuation-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    depends_on:
-      - backend
 
   # MongoDB Service (optional - if not using Atlas)
   mongodb:
@@ -106,8 +82,6 @@ volumes:
   redis_data:
     driver: local
   backend_logs:
-    driver: local
-  frontend_logs:
     driver: local
 
 # Network for service communication

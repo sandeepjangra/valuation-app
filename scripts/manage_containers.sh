@@ -57,18 +57,15 @@ check_podman() {
 
 # Build images
 build_images() {
-    log "🔨 Building Valuation Application Images"
-    echo "========================================"
+    log "🔨 Building Valuation Application Backend Image"
+    echo "=============================================="
     
     cd "$PROJECT_DIR"
     
     log "1️⃣ Building Backend Image..."
     podman build -t valuation-backend ./backend
     
-    log "2️⃣ Building Frontend Image..."
-    podman build -t valuation-frontend ./valuation-frontend
-    
-    success "🎉 All images built successfully!"
+    success "🎉 Backend image built successfully!"
     
     log "📋 Built Images:"
     podman images | grep valuation
@@ -98,7 +95,6 @@ start_containers() {
     
     echo
     log "🌐 Application URLs:"
-    log "   • Frontend: http://localhost"
     log "   • Backend API: http://localhost:8000"
     log "   • API Docs: http://localhost:8000/api/docs"
 }
@@ -157,7 +153,7 @@ cleanup() {
     podman-compose -f podman-compose.yml down -v
     
     log "2️⃣ Removing images..."
-    podman rmi valuation-backend valuation-frontend 2>/dev/null || true
+    podman rmi valuation-backend 2>/dev/null || true
     
     log "3️⃣ Pruning system..."
     podman system prune -f
@@ -205,7 +201,6 @@ show_help() {
     echo "Logging Commands:"
     echo "  logs          Show logs from all containers"
     echo "  logs backend  Show only backend logs"
-    echo "  logs frontend Show only frontend logs"
     echo
     echo "Examples:"
     echo "  $0 build              # Build all images"
@@ -215,7 +210,6 @@ show_help() {
     echo "  $0 cleanup            # Clean up everything"
     echo
     echo "Quick Links (after starting):"
-    echo "  Frontend:     http://localhost"
     echo "  Backend API:  http://localhost:8000"
     echo "  API Docs:     http://localhost:8000/api/docs"
     echo

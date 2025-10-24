@@ -54,51 +54,7 @@ dotnet build
 dotnet run --project WebApiHost
 ```
 
-### 4. Frontend Setup
-
-#### Angular Frontend
-```bash
-# Navigate to Angular app
-cd src
-
-# Install dependencies
-npm install
-
-# Update to latest Angular version (if needed)
-ng update @angular/core @angular/cli
-
-# Start development server
-ng serve
-```
-
-#### React Frontend
-```bash
-# Navigate to React app
-cd UI/valuvation
-
-# Install dependencies
-npm install
-
-# Update React to latest version
-npm install react@latest react-dom@latest
-
-# Start development server
-npm start
-```
-
-#### Blazor Frontend
-```bash
-# Navigate to Blazor app
-cd UI/blazorUI
-
-# Restore packages
-dotnet restore
-
-# Run Blazor server
-dotnet run
-```
-
-### 5. Database Setup
+### 4. Database Setup
 
 ```bash
 # Start MongoDB (if using local installation)
@@ -111,7 +67,8 @@ docker run -d -p 27017:27017 --name mongodb mongo:7.0
 ## Development URLs
 
 - **Backend API:** https://localhost:5001/api
-- **Angular App:** http://localhost:4200
+- **Backend API:** http://localhost:8000
+- **API Documentation:** http://localhost:8000/api/docs
 - **React App:** http://localhost:3000
 - **Blazor App:** https://localhost:5000
 - **MongoDB:** mongodb://localhost:27017
@@ -158,7 +115,7 @@ docker run -d -p 27017:27017 --name mongodb mongo:7.0
 ## Next Steps
 
 1. Update to latest technology versions
-2. Choose primary frontend technology
+1. Set up backend environment (Python or .NET)
 3. Implement proper authentication
 4. Set up CI/CD pipeline
 5. Add comprehensive testing

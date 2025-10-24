@@ -61,9 +61,10 @@ curl -s http://localhost:8000/api/common-fields | jq length
 
 ## Testing URLs
 
-- **Home**: http://localhost:4200/ (redirects to login)
-- **Login**: http://localhost:4200/login (use admin/admin)
-- **Report Form**: http://localhost:4200/report-form (after login)
+### Application URLs (Development):
+
+- **Backend API**: http://localhost:8000/api/docs (API Documentation)
+- **Health Check**: http://localhost:8000/api/health
 
 ## Debug Information
 

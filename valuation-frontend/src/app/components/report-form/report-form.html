@@ -1,0 +1,195 @@
+<div class="report-form-container">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <button class="back-button" (click)="goBackToSelection()">
+        ← Back to Selection
+      </button>
+      <div class="header-info">
+        <h1 class="page-title">Property Valuation for {{ selectedBankName }}</h1>
+        <div class="template-info" *ngIf="selectedTemplateName">
+          <span class="template-chip">
+            Template: {{ selectedTemplateName }}
+          </span>
+          <span class="property-type-chip" *ngIf="selectedPropertyType">
+            {{ selectedPropertyType | titlecase }} Property
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form Content -->
+  <form [formGroup]="reportForm" (ngSubmit)="onSubmit()" class="report-form">
+    
+    <!-- Common Fields Section -->
+    <div class="form-section">
+      <div class="section-header">
+        <h2 class="section-title">Common Information</h2>
+        <p class="section-subtitle">Basic details required for all valuation reports</p>
+      </div>
+      
+      <div class="fields-grid">
+        <div *ngFor="let field of commonFields" 
+             [class]="'field-container grid-' + field.gridSize"
+             [class.field-error]="isFieldInvalid(field.fieldId)">
+          
+          <!-- Text Input -->
+          <div *ngIf="field.fieldType === 'text'" class="form-field">
+            <label [for]="field.fieldId" class="field-label">
+              {{ field.uiDisplayName }}
+              <span class="required-indicator" *ngIf="field.isRequired">*</span>
+            </label>
+            <input
+              [id]="field.fieldId"
+              type="text"
+              [formControlName]="field.fieldId"
+              [placeholder]="field.placeholder"
+              [readonly]="field.isReadonly"
+              [class.readonly-field]="field.isReadonly"
+              class="form-input"
+            />
+            <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
+            <div class="field-error-message" *ngIf="getFieldError(field.fieldId)">
+              {{ getFieldError(field.fieldId) }}
+            </div>
+          </div>
+
+          <!-- Date Input -->
+          <div *ngIf="field.fieldType === 'date'" class="form-field">
+            <label [for]="field.fieldId" class="field-label">
+              {{ field.uiDisplayName }}
+              <span class="required-indicator" *ngIf="field.isRequired">*</span>
+            </label>
+            <input
+              [id]="field.fieldId"
+              type="date"
+              [formControlName]="field.fieldId"
+              class="form-input"
+            />
+            <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
+            <div class="field-error-message" *ngIf="getFieldError(field.fieldId)">
+              {{ getFieldError(field.fieldId) }}
+            </div>
+          </div>
+
+          <!-- Select Input -->
+          <div *ngIf="field.fieldType === 'select'" class="form-field">
+            <label [for]="field.fieldId" class="field-label">
+              {{ field.uiDisplayName }}
+              <span class="required-indicator" *ngIf="field.isRequired">*</span>
+            </label>
+            
+            <!-- Regular select options -->
+            <select 
+              *ngIf="field.fieldId !== 'bank_branch'"
+              [id]="field.fieldId"
+              [formControlName]="field.fieldId"
+              class="form-select">
+              <option value="">{{ field.placeholder }}</option>
+              <option *ngFor="let option of field.options" [value]="option.value">
+                {{ option.label }}
+              </option>
+            </select>
+            
+            <!-- Bank branch select (dynamic) -->
+            <select 
+              *ngIf="field.fieldId === 'bank_branch'"
+              [id]="field.fieldId"
+              [formControlName]="field.fieldId"
+              class="form-select">
+              <option value="">{{ field.placeholder }}</option>
+              <option *ngFor="let branch of availableBranches" [value]="branch.value">
+                {{ branch.label }}
+              </option>
+            </select>
+            
+            <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
+            <div class="field-error-message" *ngIf="getFieldError(field.fieldId)">
+              {{ getFieldError(field.fieldId) }}
+            </div>
+          </div>
+          
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs Section -->
+    <div class="tabs-section">
+      <div class="tabs-header">
+        <button type="button" 
+                class="tab-button" 
+                [class.active]="activeTab === 'template'"
+                (click)="switchTab('template')">
+          Template Fields
+        </button>
+        <button type="button" 
+                class="tab-button" 
+                [class.active]="activeTab === 'attachments'"
+                (click)="switchTab('attachments')">
+          Attachments
+        </button>
+        <button type="button" 
+                class="tab-button" 
+                [class.active]="activeTab === 'preview'"
+                (click)="switchTab('preview')">
+          Preview
+        </button>
+      </div>
+      
+      <div class="tab-content">
+        <!-- Template Fields Tab -->
+        <div *ngIf="activeTab === 'template'" class="tab-panel">
+          <div class="placeholder-content">
+            <div class="placeholder-icon">📋</div>
+            <h3 class="placeholder-title">Template-Specific Fields</h3>
+            <p class="placeholder-text">
+              Fields specific to {{ selectedTemplateName || 'the selected template' }} will appear here.
+              This section will be implemented in the next phase.
+            </p>
+          </div>
+        </div>
+
+        <!-- Attachments Tab -->
+        <div *ngIf="activeTab === 'attachments'" class="tab-panel">
+          <div class="placeholder-content">
+            <div class="placeholder-icon">📎</div>
+            <h3 class="placeholder-title">Document Attachments</h3>
+            <p class="placeholder-text">
+              Upload property documents, photos, and supporting files here.
+              This section will be implemented in the next phase.
+            </p>
+          </div>
+        </div>
+
+        <!-- Preview Tab -->
+        <div *ngIf="activeTab === 'preview'" class="tab-panel">
+          <div class="placeholder-content">
+            <div class="placeholder-icon">👁️</div>
+            <h3 class="placeholder-title">Report Preview</h3>
+            <p class="placeholder-text">
+              Preview the complete valuation report before submission.
+              This section will be implemented in the next phase.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="form-actions">
+      <div class="action-buttons">
+        <button type="button" class="cancel-button" (click)="onCancel()">
+          Cancel
+        </button>
+        <button type="button" class="save-draft-button" (click)="onSaveDraft()">
+          Save Draft
+        </button>
+        <button type="submit" class="submit-button" [disabled]="reportForm.invalid">
+          Save & Continue
+        </button>
+      </div>
+    </div>
+
+  </form>
+</div>

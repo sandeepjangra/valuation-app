@@ -3,13 +3,20 @@ FastAPI Backend Application for Valuation System
 MongoDB Atlas integration with dynamic form templates
 """
 
+import sys
+import os
+from pathlib import Path
+
+# Add project root to Python path
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
+
 from fastapi import FastAPI, HTTPException, Depends, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 import uvicorn
-import os
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
 from bson import ObjectId
@@ -21,10 +28,14 @@ from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env'))
 
 # Import our database manager (will be available after pip install)
-from database.multi_db_manager import MultiDatabaseSession
+from backend.database.multi_db_manager import MultiDatabaseSession
+
+# Import field file manager
+from backend.utils.field_file_manager import field_file_manager
+from backend.utils.collection_file_manager import collection_file_manager
 
 # Import admin API routes
-from admin_api import admin_router
+from backend.admin_api import admin_router
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -68,7 +79,7 @@ app = FastAPI(
 # CORS Configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.getenv("CORS_ORIGINS", "http://localhost:4200").split(","),
+    allow_origins=os.getenv("CORS_ORIGINS", "http://localhost").split(","),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -121,26 +132,27 @@ async def health_check():
         raise HTTPException(status_code=500, detail="Service unhealthy")
 
 import asyncio
-from datetime import timedelta
 from typing import Optional
 
-# Add caching for common fields
-COMMON_FIELDS_CACHE: Optional[List[Dict[str, Any]]] = None
-CACHE_TIMESTAMP: Optional[datetime] = None
-CACHE_DURATION = timedelta(minutes=15)  # Cache for 15 minutes
+# File-based field management
+async def get_common_fields_from_file() -> List[Dict[str, Any]]:
+    """Get common fields from local JSON file with database fallback"""
+    
+    # Try to read from local file first
+    fields = field_file_manager.read_fields()
+    
+    if fields is not None:
+        # Filter out inactive fields to match database behavior
+        active_fields = [field for field in fields if field.get('isActive', True)]
+        logger.info(f"📋 Loaded {len(active_fields)} active fields from local file (filtered from {len(fields)} total)")
+        return active_fields
+    
+    # Fallback to database if file doesn't exist
+    logger.warning("⚠️ Local fields file not found, falling back to database")
+    return await fetch_fields_from_database()
 
-async def get_cached_common_fields() -> List[Dict[str, Any]]:
-    """Get common fields with caching"""
-    global COMMON_FIELDS_CACHE, CACHE_TIMESTAMP
-    
-    # Check if cache is valid
-    if (COMMON_FIELDS_CACHE is not None and 
-        CACHE_TIMESTAMP is not None and 
-        datetime.now(timezone.utc) - CACHE_TIMESTAMP < CACHE_DURATION):
-        logger.info("📋 Returning cached common fields")
-        return COMMON_FIELDS_CACHE
-    
-    # Cache miss or expired, fetch from database
+async def fetch_fields_from_database() -> List[Dict[str, Any]]:
+    """Fetch fields directly from database"""
     logger.info("🔄 Fetching fresh common fields from database")
     max_retries = 3
     retry_delay = 2
@@ -150,11 +162,7 @@ async def get_cached_common_fields() -> List[Dict[str, Any]]:
             async with MultiDatabaseSession() as db:
                 fields = await db.find_many("admin", "common_form_fields", {"isActive": True}, sort=[("fieldGroup", 1), ("sortOrder", 1)])
                 
-                # Update cache
-                COMMON_FIELDS_CACHE = fields
-                CACHE_TIMESTAMP = datetime.now(timezone.utc)
-                
-                logger.info(f"✅ Cached {len(fields)} common fields")
+                logger.info(f"✅ Fetched {len(fields)} common fields from database")
                 return fields
                 
         except Exception as e:
@@ -167,83 +175,257 @@ async def get_cached_common_fields() -> List[Dict[str, Any]]:
     logger.error("❌ Failed to fetch common fields after all retries")
     return []
 
+async def refresh_fields_to_file() -> bool:
+    """Refresh fields from database and save to local file"""
+    try:
+        logger.info("🔄 Refreshing fields from database to local file...")
+        
+        # Fetch fresh data from database
+        fields = await fetch_fields_from_database()
+        
+        if not fields:
+            logger.error("❌ No fields retrieved from database")
+            return False
+        
+        # Save to local file
+        success = field_file_manager.write_fields(fields)
+        
+        if success:
+            logger.info(f"✅ Successfully refreshed {len(fields)} fields to local file")
+            return True
+        else:
+            logger.error("❌ Failed to write fields to local file")
+            return False
+            
+    except Exception as e:
+        logger.error(f"❌ Error refreshing fields to file: {e}")
+        return False
+
+# SBI Land Property fields management
+async def get_sbi_land_fields_from_file() -> List[Dict[str, Any]]:
+    """Get SBI land property fields from local JSON file"""
+    try:
+        import json
+        import os
+        
+        file_path = os.path.join(os.path.dirname(__file__), "data", "sbi_land_property_details.json")
+        
+        if not os.path.exists(file_path):
+            logger.error(f"❌ SBI land property fields file not found: {file_path}")
+            return []
+        
+        with open(file_path, 'r', encoding='utf-8') as file:
+            data = json.load(file)
+            fields = data.get('fields', [])
+            logger.info(f"📋 Loaded {len(fields)} SBI land property fields from local file")
+            return fields
+            
+    except Exception as e:
+        logger.error(f"❌ Error reading SBI land property fields from file: {e}")
+        return []
+
 # ================================
 # Common Form Fields API
 # ================================
 
 @app.get("/api/common-fields", response_model=List[Dict[str, Any]])
 async def get_common_fields() -> JSONResponse:
-    """Get all common form fields organized by groups with caching"""
+    """Get all common form fields organized by groups from local file"""
     try:
-        fields = await get_cached_common_fields()
+        logger.info("📋 API call received for common fields")
+        fields = await get_common_fields_from_file()
+        logger.info(f"✅ Returning {len(fields)} fields to API clients")
         return JSONResponse(
             content=json.loads(json.dumps(fields, default=json_serializer))
         )
         
     except Exception as e:
-        logger.error(f"Error fetching common fields: {e}")
+        logger.error(f"❌ Error fetching common fields: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch common fields")
 
-@app.post("/api/common-form-fields/refresh-cache")
-async def refresh_common_fields_cache() -> JSONResponse:
-    """Refresh the common fields cache (admin only)"""
-    global COMMON_FIELDS_CACHE, CACHE_TIMESTAMP
+@app.post("/api/common-form-fields/refresh-collection")
+async def refresh_common_fields_collection() -> JSONResponse:
+    """Refresh the common fields collection from database to local file"""
     try:
-        # Clear cache
-        COMMON_FIELDS_CACHE = None
-        CACHE_TIMESTAMP = None
+        # Refresh fields from database to file
+        success = await refresh_fields_to_file()
         
-        # Fetch fresh data
-        fields = await get_cached_common_fields()
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to refresh fields collection")
+        
+        # Get the updated fields and file info
+        fields = await get_common_fields_from_file()
+        file_info = field_file_manager.get_file_info()
         
         return JSONResponse(
             content={
-                "message": "Cache refreshed successfully",
+                "message": "Collection refreshed successfully",
                 "fields_count": len(fields),
-                "fields": json.loads(json.dumps(fields, default=json_serializer)),
+                "file_info": file_info,
                 "refreshed_at": datetime.now(timezone.utc).isoformat()
             }
         )
         
     except Exception as e:
-        logger.error(f"Error refreshing common fields cache: {e}")
-        raise HTTPException(status_code=500, detail="Failed to refresh cache")
+        logger.error(f"Error refreshing common fields collection: {e}")
+        raise HTTPException(status_code=500, detail="Failed to refresh fields collection")
 
-@app.get("/api/admin/cache-status")
-async def get_cache_status() -> JSONResponse:
-    """Get cache status information for admin dashboard"""
-    global COMMON_FIELDS_CACHE, CACHE_TIMESTAMP
+@app.get("/api/admin/collections-status")
+async def get_collections_status() -> JSONResponse:
+    """Get status of all collection files for admin dashboard"""
     try:
-        cache_age_minutes = 0
-        is_cache_active = False
+        logger.info("📊 API call received for collections status")
+        status = collection_file_manager.get_all_collections_status()
+        logger.info(f"✅ Returning status for {len(status)} collections")
+        return JSONResponse(
+            content=json.loads(json.dumps(status, default=json_serializer))
+        )
         
-        if CACHE_TIMESTAMP:
-            cache_age = datetime.now(timezone.utc) - CACHE_TIMESTAMP
-            cache_age_minutes = int(cache_age.total_seconds() / 60)
-            is_cache_active = cache_age < CACHE_DURATION
+    except Exception as e:
+        logger.error(f"❌ Error getting collections status: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get collections status")
+
+@app.post("/api/admin/refresh-collections")
+async def refresh_all_collections() -> JSONResponse:
+    """Refresh all collections from MongoDB to local files with individual error handling"""
+    try:
+        logger.info("🔄 API call received to refresh all collections")
         
-        # Get field counts
-        total_count = len(COMMON_FIELDS_CACHE) if COMMON_FIELDS_CACHE else 0
-        active_count = 0
+        # Get all configured collections
+        collections = list(collection_file_manager.COLLECTIONS_CONFIG.keys())
+        results = {}
+        successful_count = 0
         
-        if COMMON_FIELDS_CACHE:
-            active_count = sum(1 for field in COMMON_FIELDS_CACHE if field.get('isActive', True))
+        # Refresh each collection individually - failures don't stop the process
+        for collection_name in collections:
+            try:
+                logger.info(f"🔄 Refreshing {collection_name}...")
+                success = await collection_file_manager.refresh_collection_from_database(collection_name)
+                results[collection_name] = success
+                if success:
+                    successful_count += 1
+                    logger.info(f"✅ {collection_name} refreshed successfully")
+                else:
+                    logger.warning(f"⚠️ {collection_name} refresh failed")
+            except Exception as e:
+                logger.error(f"❌ Error refreshing {collection_name}: {e}")
+                results[collection_name] = False
+        
+        # Determine overall status
+        total_count = len(collections)
+        if successful_count == total_count:
+            message = f"All collections refreshed successfully: {successful_count}/{total_count}"
+            logger.info(f"✅ {message}")
+        elif successful_count > 0:
+            message = f"Partial refresh completed: {successful_count}/{total_count} successful"
+            logger.warning(f"⚠️ {message}")
+        else:
+            message = f"Refresh failed: 0/{total_count} successful"
+            logger.error(f"❌ {message}")
         
         return JSONResponse(
             content={
-                "active": is_cache_active,
-                "totalCount": total_count,
-                "activeCount": active_count,
-                "ageMinutes": cache_age_minutes,
-                "lastUpdated": CACHE_TIMESTAMP.isoformat() if CACHE_TIMESTAMP else None,
-                "cacheDurationMinutes": int(CACHE_DURATION.total_seconds() / 60),
-                "status": "active" if is_cache_active else "expired" if CACHE_TIMESTAMP else "empty"
+                "message": message,
+                "results": results,
+                "successful_count": successful_count,
+                "total_count": total_count,
+                "refreshed_at": datetime.now(timezone.utc).isoformat()
             }
         )
         
     except Exception as e:
-        logger.error(f"Error getting cache status: {e}")
-        raise HTTPException(status_code=500, detail="Failed to get cache status")
+        logger.error(f"❌ Critical error during collection refresh: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to refresh collections: {str(e)}")
+
+@app.get("/api/admin/collection-data/{collection_name}")
+async def get_collection_data(collection_name: str) -> JSONResponse:
+    """Get data from a specific collection file"""
+    try:
+        logger.info(f"📋 API call received for collection data: {collection_name}")
+        
+        # Validate collection name
+        if collection_name not in collection_file_manager.COLLECTIONS_CONFIG:
+            raise HTTPException(status_code=404, detail=f"Collection '{collection_name}' not found")
+        
+        documents = collection_file_manager.read_collection(collection_name)
+        
+        if documents is None:
+            raise HTTPException(status_code=404, detail=f"Collection file '{collection_name}.json' not found")
+        
+        logger.info(f"✅ Returning {len(documents)} documents from {collection_name}")
+        return JSONResponse(
+            content={
+                "collection": collection_name,
+                "documents": json.loads(json.dumps(documents, default=json_serializer)),
+                "total_count": len(documents)
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error getting collection data for {collection_name}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get collection data for {collection_name}")
+
+@app.post("/api/admin/refresh-collection/{collection_name}")
+async def refresh_single_collection(collection_name: str) -> JSONResponse:
+    """Refresh a single collection from MongoDB to local file"""
+    try:
+        logger.info(f"🔄 API call received to refresh collection: {collection_name}")
+        
+        # Validate collection name
+        if collection_name not in collection_file_manager.COLLECTIONS_CONFIG:
+            raise HTTPException(status_code=404, detail=f"Collection '{collection_name}' not found")
+        
+        success = await collection_file_manager.refresh_collection_from_database(collection_name)
+        
+        if success:
+            # Get updated info
+            info = collection_file_manager.get_collection_info(collection_name)
+            return JSONResponse(
+                content={
+                    "message": f"Collection '{collection_name}' refreshed successfully",
+                    "collection_info": info,
+                    "refreshed_at": datetime.now(timezone.utc).isoformat()
+                }
+            )
+        else:
+            raise HTTPException(status_code=500, detail=f"Failed to refresh collection '{collection_name}'")
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error refreshing collection {collection_name}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to refresh collection {collection_name}")
+
+@app.get("/api/admin/collection-status")
+async def get_collection_status() -> JSONResponse:
+    """Get collection file status information for admin dashboard"""
+    try:
+        # Get file information
+        file_info = field_file_manager.get_file_info()
+        
+        # Get field counts from file
+        fields = await get_common_fields_from_file()
+        total_count = len(fields) if fields else 0
+        active_count = sum(1 for field in fields if field.get('isActive', True)) if fields else 0
+        
+        return JSONResponse(
+            content={
+                "fileExists": file_info.get("file_exists", False),
+                "totalCount": total_count,
+                "activeCount": active_count,
+                "fileSize": file_info.get("file_size", 0),
+                "lastModified": file_info.get("last_modified"),
+                "generatedAt": file_info.get("generated_at"),
+                "version": file_info.get("version"),
+                "status": "available" if file_info.get("file_exists") else "missing"
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Error getting collection status: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get collection status")
 
 @app.get("/api/common-form-fields")
 async def get_all_common_fields(includeInactive: bool = False) -> JSONResponse:
@@ -316,6 +498,73 @@ async def get_common_fields_by_group(group_name: str) -> List[Dict[str, Any]]:
     except Exception as e:
         logger.error(f"Error fetching fields for group {group_name}: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch fields for group")
+
+# ================================
+# SBI Land Property Details API
+# ================================
+
+@app.get("/api/sbi/land-property-fields", response_model=List[Dict[str, Any]])
+async def get_sbi_land_property_fields() -> JSONResponse:
+    """Get all SBI land property form fields organized by groups from local file"""
+    try:
+        logger.info("📋 API call received for SBI land property fields")
+        fields = await get_sbi_land_fields_from_file()
+        logger.info(f"✅ Returning {len(fields)} SBI land fields to API clients")
+        return JSONResponse(
+            content=json.loads(json.dumps(fields, default=json_serializer))
+        )
+        
+    except Exception as e:
+        logger.error(f"❌ Error fetching SBI land property fields: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch SBI land property fields")
+
+@app.get("/api/sbi/land-property-fields/group/{group_name}")
+async def get_sbi_land_property_fields_by_group(group_name: str) -> JSONResponse:
+    """Get SBI land property fields for a specific group"""
+    try:
+        logger.info(f"📋 API call received for SBI land property fields group: {group_name}")
+        all_fields = await get_sbi_land_fields_from_file()
+        group_fields = [field for field in all_fields if field.get('fieldGroup') == group_name]
+        logger.info(f"✅ Returning {len(group_fields)} SBI land fields for group {group_name}")
+        return JSONResponse(
+            content=json.loads(json.dumps(group_fields, default=json_serializer))
+        )
+        
+    except Exception as e:
+        logger.error(f"Error fetching SBI land property fields for group {group_name}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch SBI land property fields for group")
+
+@app.post("/api/sbi/land-property-fields/refresh-collection")
+async def refresh_sbi_land_property_fields_collection() -> JSONResponse:
+    """Refresh the SBI land property fields collection from MongoDB"""
+    try:
+        logger.info("🔄 API call received to refresh SBI land property fields collection")
+        
+        # Use collection_file_manager to refresh from MongoDB
+        success = await collection_file_manager.refresh_collection_from_database("sbi_land_property_details")
+        
+        if success:
+            # Get updated field count
+            fields = await get_sbi_land_fields_from_file()
+            logger.info(f"✅ SBI land property fields collection refreshed successfully with {len(fields)} fields")
+            
+            return JSONResponse(
+                content={
+                    "message": "SBI land property fields collection refreshed successfully",
+                    "success": True,
+                    "fields_count": len(fields),
+                    "bank_code": "SBI",
+                    "property_type": "Land",
+                    "refreshed_at": datetime.now(timezone.utc).isoformat()
+                }
+            )
+        else:
+            logger.error("❌ Failed to refresh SBI land property fields collection")
+            raise HTTPException(status_code=500, detail="Failed to refresh SBI land property fields collection")
+        
+    except Exception as e:
+        logger.error(f"❌ Error refreshing SBI land property fields collection: {e}")
+        raise HTTPException(status_code=500, detail="Failed to refresh SBI land property fields collection")
 
 @app.get("/api/banks/{bank_code}/branches", response_model=List[Dict[str, Any]])
 async def get_bank_branches(bank_code: str) -> List[Dict[str, Any]]:
@@ -476,7 +725,7 @@ async def get_templates_for_bank(bank_code: str) -> List[Dict[str, Any]]:
 async def get_template(template_id: str) -> Dict[str, Any]:
     """Get complete template with form fields"""
     try:
-        # Mock response with detailed template structure matching Angular models
+        # Mock response with detailed template structure for API clients
         if template_id == "property-description-v1":
             return {
                 "id": "property-description-v1",

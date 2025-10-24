@@ -184,7 +184,7 @@ This guide will help you set up MongoDB Atlas cloud database for your Valuation 
 1. ✅ Set up MongoDB Atlas cluster
 2. ✅ Configure environment variables
 3. ✅ Run database setup script
-4. 🔄 Build frontend application (Angular)
+4. 🔄 Build backend application (FastAPI)
 5. 🔄 Implement user authentication
 6. 🔄 Create dynamic form templates
 7. 🔄 Add report generation
