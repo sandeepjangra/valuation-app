@@ -371,6 +371,25 @@ class MultiDatabaseManager:
             include_inactive=include_inactive
         )
     
+    async def aggregate(self, db_type: DatabaseType, collection_name: str, 
+                       pipeline: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Execute aggregation pipeline on a collection"""
+        if not self.is_connected:
+            raise RuntimeError("Database not connected")
+        
+        collection = self.get_collection(db_type, collection_name)
+        
+        # Execute aggregation pipeline
+        cursor = collection.aggregate(pipeline)
+        results = await cursor.to_list(length=None)
+        
+        # Simple ObjectId conversion - just handle the top level
+        for result in results:
+            if "_id" in result:
+                result["_id"] = str(result["_id"])
+        
+        return results
+    
     # ================================
     # Health Check
     # ================================

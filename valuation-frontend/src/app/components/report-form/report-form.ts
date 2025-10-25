@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { CommonField, BankBranch, ProcessedTemplateData, FieldGroup, TemplateField, BankSpecificField } from '../../models';
+import { CommonField, BankBranch, ProcessedTemplateData, FieldGroup, TemplateField, BankSpecificField, BankSpecificTab, BankSpecificSection } from '../../models';
 import { TemplateService } from '../../services/template.service';
 
 @Component({
@@ -28,9 +28,9 @@ export class ReportForm implements OnInit {
   isLoading = false;
   
   // Current active tab
-  activeTab = 'common';
+  activeTab = 'template';  // Default to template tab instead of common
   
-  // Bank-specific sub-tabs
+  // Bank-specific dynamic tabs
   activeBankSpecificTab: string | null = null;
 
   constructor(
@@ -38,7 +38,8 @@ export class ReportForm implements OnInit {
     private route: ActivatedRoute,
     private fb: FormBuilder,
     private http: HttpClient,
-    private templateService: TemplateService
+    private templateService: TemplateService,
+    private cdr: ChangeDetectorRef
   ) {
     this.reportForm = this.fb.group({});
   }
@@ -84,9 +85,11 @@ export class ReportForm implements OnInit {
 
     this.isLoading = true;
     
-    console.log(`🔄 Loading template data for: ${this.selectedBankCode}/${this.selectedTemplateId}`);
+    // Convert templateId to templateCode (uppercase LAND -> lowercase land)
+    const templateCode = this.selectedTemplateId.toLowerCase();
+    console.log(`🔄 Loading template data for: ${this.selectedBankCode}/${templateCode} (converted from ${this.selectedTemplateId})`);
     
-    this.templateService.getAggregatedTemplateFields(this.selectedBankCode, this.selectedTemplateId)
+    this.templateService.getAggregatedTemplateFields(this.selectedBankCode, templateCode)
       .subscribe({
         next: (response) => {
           console.log('✅ Raw aggregated API Response:', response);
@@ -98,7 +101,7 @@ export class ReportForm implements OnInit {
           
           console.log('🏗️ Processed template data:', {
             commonFieldGroups: this.templateData.commonFieldGroups.length,
-            bankSpecificFieldGroups: this.templateData.bankSpecificFieldGroups.length,
+            bankSpecificTabs: this.templateData.bankSpecificTabs.length,
             totalFields: this.templateData.totalFieldCount,
             templateData: this.templateData
           });
@@ -109,6 +112,10 @@ export class ReportForm implements OnInit {
           this.initializeBankSpecificTabs();
           
           this.isLoading = false;
+          
+          // Force change detection to ensure template updates
+          this.cdr.detectChanges();
+          console.log('🔄 Change detection triggered after template data load');
         },
         error: (error) => {
           console.error('❌ Error loading template data:', error);
@@ -158,7 +165,7 @@ export class ReportForm implements OnInit {
     // Debug log the fields being used for form building
     console.log('🏗️ Building form with template data:', {
       commonFields: this.templateData.commonFieldGroups.length,
-      bankSpecificFields: this.templateData.bankSpecificFieldGroups.length,
+      bankSpecificTabs: this.templateData.bankSpecificTabs.length,
       totalFields: this.templateData.totalFieldCount
     });
     
@@ -218,9 +225,9 @@ export class ReportForm implements OnInit {
    * Initialize bank-specific tabs - set first tab as active
    */
   initializeBankSpecificTabs() {
-    const bankSpecificGroups = this.getBankSpecificFieldGroups();
-    if (bankSpecificGroups.length > 0) {
-      this.activeBankSpecificTab = bankSpecificGroups[0].groupName;
+    const bankSpecificTabs = this.getBankSpecificTabs();
+    if (bankSpecificTabs.length > 0) {
+      this.activeBankSpecificTab = bankSpecificTabs[0].tabId;
       console.log('🔧 Initialized bank-specific tab:', this.activeBankSpecificTab);
     }
   }
@@ -285,7 +292,7 @@ export class ReportForm implements OnInit {
               displayName: 'Common Fields',
               fields: fields.filter(field => field.isActive).sort((a, b) => a.sortOrder - b.sortOrder)
             }],
-            bankSpecificFieldGroups: [],
+            bankSpecificTabs: [],
             allFields: fields.filter(field => field.isActive).sort((a, b) => a.sortOrder - b.sortOrder),
             totalFieldCount: fields.filter(field => field.isActive).length
           };
@@ -306,7 +313,7 @@ export class ReportForm implements OnInit {
               version: '1.0'
             },
             commonFieldGroups: [],
-            bankSpecificFieldGroups: [],
+            bankSpecificTabs: [],
             allFields: [],
             totalFieldCount: 0
           };
@@ -408,20 +415,62 @@ export class ReportForm implements OnInit {
     return this.templateData?.commonFieldGroups || [];
   }
 
-  getBankSpecificFieldGroups(): FieldGroup[] {
-    return this.templateData?.bankSpecificFieldGroups || [];
+  getBankSpecificTabs(): BankSpecificTab[] {
+    const tabs = this.templateData?.bankSpecificTabs || [];
+    console.log('🔍 getBankSpecificTabs() called:', {
+      tabsCount: tabs.length,
+      tabs: tabs.map(t => ({ 
+        id: t.tabId, 
+        name: t.tabName, 
+        fieldsCount: t.fields.length,
+        hasSections: t.hasSections,
+        sectionsCount: t.sections?.length || 0 
+      }))
+    });
+    return tabs;
   }
 
   hasCommonFields(): boolean {
-    return this.getCommonFieldGroups().length > 0;
+    if (!this.templateData) {
+      console.log('🔍 hasCommonFields(): No template data yet');
+      return false;
+    }
+    const hasFields = this.getCommonFieldGroups().length > 0;
+    console.log('🔍 hasCommonFields():', {
+      hasFields,
+      commonFieldGroups: this.getCommonFieldGroups().length,
+      templateData: !!this.templateData
+    });
+    return hasFields;
   }
 
   hasBankSpecificFields(): boolean {
-    return this.getBankSpecificFieldGroups().length > 0;
+    if (!this.templateData) {
+      console.log('🔍 hasBankSpecificFields(): No template data yet');
+      return false;
+    }
+    const hasFields = this.getBankSpecificTabs().length > 0;
+    console.log('🔍 hasBankSpecificFields():', {
+      hasFields,
+      bankSpecificTabs: this.getBankSpecificTabs().length,
+      templateData: !!this.templateData
+    });
+    return hasFields;
   }
 
   getTotalFieldCount(): number {
     return this.templateData?.totalFieldCount || 0;
+  }
+
+  // Check if form is ready with controls
+  isFormReady(): boolean {
+    const hasControls = this.reportForm && Object.keys(this.reportForm.controls).length > 0;
+    console.log('🔍 isFormReady():', {
+      hasControls,
+      controlsCount: Object.keys(this.reportForm?.controls || {}).length,
+      templateData: !!this.templateData
+    });
+    return hasControls;
   }
 
   // Tab navigation
@@ -430,9 +479,45 @@ export class ReportForm implements OnInit {
   }
 
   // Bank-specific tab navigation
-  switchBankSpecificTab(tabName: string) {
-    this.activeBankSpecificTab = tabName;
-    console.log('🔄 Switched to bank-specific tab:', tabName);
+  switchBankSpecificTab(tabId: string) {
+    this.activeBankSpecificTab = tabId;
+    console.log('🔄 Switched to bank-specific tab:', tabId);
+  }
+
+  // Get active bank-specific tab data
+  getActiveBankSpecificTab(): BankSpecificTab | null {
+    if (!this.activeBankSpecificTab) return null;
+    const activeTab = this.getBankSpecificTabs().find(tab => tab.tabId === this.activeBankSpecificTab) || null;
+    
+    // Debug logging
+    if (activeTab) {
+      console.log('🔍 Active tab details:', {
+        tabId: activeTab.tabId,
+        tabName: activeTab.tabName,
+        fieldsCount: activeTab.fields.length,
+        hasSections: activeTab.hasSections,
+        sectionsCount: activeTab.sections?.length || 0,
+        fields: activeTab.fields.map(f => ({ id: f.fieldId, name: f.uiDisplayName, type: f.fieldType }))
+      });
+    }
+    
+    return activeTab;
+  }
+
+  // Check if a tab has sections
+  tabHasSections(tab: BankSpecificTab): boolean {
+    return tab.hasSections && (tab.sections?.length || 0) > 0;
+  }
+
+  // Get sections for a tab
+  getTabSections(tab: BankSpecificTab): BankSpecificSection[] {
+    return tab.sections || [];
+  }
+
+  // Get fields for a specific section within a tab
+  getSectionFields(tab: BankSpecificTab, sectionId: string): BankSpecificField[] {
+    const section = tab.sections?.find(s => s.sectionId === sectionId);
+    return section?.fields || [];
   }
 
   // Actions
@@ -462,4 +547,5 @@ export class ReportForm implements OnInit {
   goBackToSelection() {
     this.router.navigate(['/new-report']);
   }
+
 }

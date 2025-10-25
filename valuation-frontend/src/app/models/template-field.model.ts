@@ -32,6 +32,7 @@ export interface BankSpecificField {
   uiDisplayName: string;
   fieldType: FieldType;
   fieldGroup?: string;
+  section?: string; // Added for section support (e.g., 'part_a', 'part_b')
   isRequired: boolean;
   isReadonly?: boolean;
   placeholder?: string;
@@ -48,6 +49,24 @@ export interface BankSpecificField {
   subFields?: BankSpecificField[]; // For group fields
 }
 
+export interface BankSpecificSection {
+  sectionId: string;
+  sectionName: string;
+  sortOrder: number;
+  description?: string;
+  fields: BankSpecificField[];
+}
+
+export interface BankSpecificTab {
+  tabId: string;
+  tabName: string;
+  sortOrder: number;
+  hasSections: boolean;
+  description?: string;
+  fields: BankSpecificField[];
+  sections?: BankSpecificSection[];
+}
+
 export interface AggregatedTemplateResponse {
   templateInfo: {
     templateId: string;
@@ -58,7 +77,7 @@ export interface AggregatedTemplateResponse {
     version: string;
   };
   commonFields: TemplateField[];
-  bankSpecificFields: BankSpecificField[];
+  bankSpecificTabs: BankSpecificTab[];
   aggregatedAt: string;
 }
 
@@ -78,10 +97,23 @@ export interface FieldGroup {
   sortOrder?: number;
 }
 
+export interface FieldGroupSection {
+  id: string;
+  name: string;
+  fields: BankSpecificField[];
+}
+
+export interface FieldGroupTab {
+  id: string;
+  name: string;
+  fields: BankSpecificField[];
+  sections?: FieldGroupSection[];
+}
+
 export interface ProcessedTemplateData {
   templateInfo: TemplateInfo;
   commonFieldGroups: FieldGroup[];
-  bankSpecificFieldGroups: FieldGroup[];
+  bankSpecificTabs: BankSpecificTab[];
   allFields: (TemplateField | BankSpecificField)[];
   totalFieldCount: number;
 }
