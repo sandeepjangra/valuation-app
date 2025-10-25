@@ -116,9 +116,11 @@
 /* Fields Grid */
 .fields-grid {
   display: grid;
-  grid-template-columns: repeat(12, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 20px;
   align-items: start;
+  width: 100%;
+  max-width: 100%;
 }
 
 /* Loading Indicator */
@@ -144,19 +146,23 @@
 }
 
 .field-container.grid-3 {
-  grid-column: span 3;
+  min-width: 300px;
+  flex: 1;
 }
 
 .field-container.grid-4 {
-  grid-column: span 4;
+  min-width: 400px;
+  flex: 1;
 }
 
 .field-container.grid-6 {
-  grid-column: span 6;
+  min-width: 500px;
+  flex: 1;
 }
 
 .field-container.grid-12 {
-  grid-column: span 12;
+  width: 100%;
+  grid-column: 1 / -1;
 }
 
 .form-field {
@@ -220,6 +226,87 @@
   font-weight: 500;
 }
 
+/* Compact Header with Inline Sub-tabs */
+.compact-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  gap: 20px;
+}
+
+.header-left {
+  flex: 1;
+}
+
+.header-left .section-title {
+  color: #1f2937;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 6px 0;
+}
+
+.header-left .section-subtitle {
+  color: #6b7280;
+  font-size: 13px;
+  margin: 0;
+}
+
+.inline-sub-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.inline-sub-tab-button {
+  padding: 8px 14px;
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.inline-sub-tab-button:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+
+.inline-sub-tab-button.active {
+  background: #8b5cf6;
+  border-color: #8b5cf6;
+  color: white;
+  box-shadow: 0 2px 6px rgba(139, 92, 246, 0.2);
+}
+
+.tab-field-count {
+  font-size: 10px;
+  opacity: 0.8;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.inline-sub-tab-button.active .tab-field-count {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.compact-field-groups {
+  background: #fafbfc;
+  border-radius: 8px;
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+}
+
 /* Tabs Section */
 .tabs-section {
   background: white;
@@ -259,12 +346,210 @@
   border-bottom-color: #8b5cf6;
 }
 
+.tab-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.field-count {
+  color: #9ca3af;
+  font-size: 12px;
+  font-weight: 400;
+  margin-left: 8px;
+}
+
 .tab-content {
   min-height: 300px;
+  overflow: hidden;
 }
 
 .tab-panel {
-  padding: 40px;
+  padding: 32px;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.bank-specific-content {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Sub-tabs for Bank-Specific Fields */
+.sub-tabs-section {
+  margin-bottom: 24px;
+}
+
+.sub-tabs-header {
+  display: flex;
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 4px;
+  gap: 4px;
+  border: 1px solid #e2e8f0;
+}
+
+.sub-tab-button {
+  flex: 1;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  font-size: 13px;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 6px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.sub-tab-button:hover {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.sub-tab-button.active {
+  background: white;
+  color: #3b82f6;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  font-weight: 600;
+}
+
+.sub-tab-button .field-count {
+  color: inherit;
+  opacity: 0.7;
+  font-size: 11px;
+}
+
+/* Bank-Specific Content */
+.bank-specific-content {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Field Groups */
+.field-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.field-group {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 24px;
+  border: 1px solid #e2e8f0;
+}
+
+.field-group-title {
+  color: #334155;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 20px 0;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+/* Group Fields (for complex fields with subFields) */
+.group-field {
+  grid-column: span 12;
+}
+
+.field-group-container {
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 20px;
+  background: #fafbfc;
+  margin: 0;
+}
+
+.group-legend {
+  color: #334155;
+  font-weight: 600;
+  font-size: 16px;
+  padding: 0 12px;
+  background: #fafbfc;
+  margin-bottom: 16px;
+}
+
+.group-fields-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.group-fields-grid .field-container.grid-3 {
+  grid-column: span 3;
+}
+
+.group-fields-grid .field-container.grid-4 {
+  grid-column: span 4;
+}
+
+.group-fields-grid .field-container.grid-6 {
+  grid-column: span 6;
+}
+
+.group-fields-grid .field-container.grid-12,
+.group-fields-grid .field-container.grid-full {
+  grid-column: span 12;
+}
+
+/* Form Textarea */
+.form-textarea {
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  background: white;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.form-textarea:focus {
+  outline: none;
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+/* Checkbox Field */
+.checkbox-field {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+.form-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: #8b5cf6;
+  cursor: pointer;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.checkbox-text {
+  color: #374151;
+  font-weight: 500;
+  font-size: 14px;
 }
 
 .placeholder-content {
@@ -289,6 +574,51 @@
 .placeholder-text {
   font-size: 14px;
   line-height: 1.5;
+  margin: 0;
+}
+
+/* Template Fields Styling */
+.template-header {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.template-header h3 {
+  color: #1f2937;
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
+
+.template-header p {
+  color: #6b7280;
+  font-size: 14px;
+  margin: 0;
+}
+
+.template-section {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid #e5e7eb;
+}
+
+.template-section .section-header {
+  margin-bottom: 16px;
+}
+
+.template-section .section-header h4 {
+  color: #374151;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 4px 0;
+}
+
+.template-section .section-header p {
+  color: #6b7280;
+  font-size: 12px;
   margin: 0;
 }
 
@@ -393,10 +723,16 @@
   
   .fields-grid {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
   
-  .field-container.grid-3, .field-container.grid-4, .field-container.grid-6, .field-container.grid-12 {
-    grid-column: span 1;
+  .field-container.grid-3, 
+  .field-container.grid-4, 
+  .field-container.grid-6, 
+  .field-container.grid-12 {
+    min-width: auto;
+    width: 100%;
+    flex: none;
   }
   
   .tabs-header {
@@ -410,4 +746,125 @@
   .cancel-button, .save-draft-button, .submit-button {
     width: 100%;
   }
+}
+
+/* Sub-tabs for Bank-Specific Fields */
+.sub-tabs-section {
+  margin-bottom: 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.sub-tabs-header {
+  display: flex;
+  gap: 4px;
+  padding: 0 0 16px 0;
+  flex-wrap: wrap;
+}
+
+.sub-tab-button {
+  padding: 8px 16px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sub-tab-button:hover {
+  background: #f3f4f6;
+  color: #4b5563;
+  border-color: #d1d5db;
+}
+
+.sub-tab-button.active {
+  background: #8b5cf6;
+  color: white;
+  border-color: #8b5cf6;
+  box-shadow: 0 2px 4px rgba(139, 92, 246, 0.2);
+}
+
+.sub-tab-button .field-count {
+  background: #e5e7eb;
+  color: #6b7280;
+  font-size: 11px;
+  padding: 1px 4px;
+  border-radius: 8px;
+  margin-left: 0;
+}
+
+.sub-tab-button.active .field-count {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+/* Group Fields Styling */
+.group-field {
+  grid-column: span 12 !important; /* Full width for group fields */
+}
+
+.field-group-container {
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 0;
+  background: #fafbfc;
+}
+
+.group-legend {
+  background: white;
+  color: #374151;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 8px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+
+.group-fields-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+/* Enhanced field count styling in main tabs */
+.tab-button .field-count {
+  display: inline-block;
+  background: #e5e7eb;
+  color: #6b7280;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: 8px;
+  font-weight: 500;
+}
+
+.tab-button.active .field-count {
+  background: #ddd6fe;
+  color: #8b5cf6;
+}
+
+/* Bank-specific content styling */
+.bank-specific-content {
+  position: relative;
+}
+
+.field-group {
+  margin-bottom: 32px;
+}
+
+.field-group-title {
+  color: #1f2937;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 20px 0;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e5e7eb;
 }

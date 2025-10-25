@@ -2,12 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { HttpClient, HttpClientModule } from '@angular/common/http';
-import { CommonField, BankBranch } from '../../models';
+import { HttpClient } from '@angular/common/http';
+import { CommonField, BankBranch, ProcessedTemplateData, FieldGroup, TemplateField, BankSpecificField } from '../../models';
+import { TemplateService } from '../../services/template.service';
 
 @Component({
   selector: 'app-report-form',
-  imports: [CommonModule, ReactiveFormsModule, HttpClientModule],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './report-form.html',
   styleUrl: './report-form.css',
 })
@@ -20,279 +21,297 @@ export class ReportForm implements OnInit {
   selectedTemplateName: string = '';
   selectedPropertyType: string = '';
   
-  // Form data
+  // Form data - Updated for new structure
   reportForm: FormGroup;
-  commonFields: CommonField[] = [];
+  templateData: ProcessedTemplateData | null = null;
   availableBranches: Array<{value: string, label: string}> = [];
   isLoading = false;
   
   // Current active tab
   activeTab = 'common';
+  
+  // Bank-specific sub-tabs
+  activeBankSpecificTab: string | null = null;
 
   constructor(
     private router: Router,
     private route: ActivatedRoute,
     private fb: FormBuilder,
-    private http: HttpClient
+    private http: HttpClient,
+    private templateService: TemplateService
   ) {
     this.reportForm = this.fb.group({});
   }
 
   ngOnInit() {
+    console.log('🔥 ReportForm ngOnInit called');
     this.loadQueryParams();
-    this.loadCommonFields();
     this.loadBankBranches();
+    
+    // Load template data after query params are loaded
+    if (this.selectedBankCode && this.selectedTemplateId) {
+      console.log('🔥 Query params available, loading template data:', {
+        bankCode: this.selectedBankCode,
+        templateId: this.selectedTemplateId
+      });
+      this.loadTemplateData();
+    } else {
+      console.log('🔥 No query params yet, waiting...');
+      // Retry after a short delay to ensure query params are loaded
+      setTimeout(() => {
+        if (this.selectedBankCode && this.selectedTemplateId) {
+          console.log('🔥 Retrying template data load after delay');
+          this.loadTemplateData();
+        }
+      }, 100);
+    }
     
     // Log current timestamp for debugging - Updated to trigger hot reload
     console.log('🕒 ReportForm component initialized at:', new Date().toISOString());
   }
 
   // Method to manually refresh data (for debugging)
-  refreshCommonFields() {
+  refreshTemplateData() {
     console.log('🔄 Manual refresh triggered');
-    this.loadCommonFields();
+    this.loadTemplateData();
   }
 
-  loadQueryParams() {
-    this.route.queryParams.subscribe(params => {
-      this.selectedBankCode = params['bankCode'] || '';
-      this.selectedBankName = params['bankName'] || '';
-      this.selectedTemplateId = params['templateId'] || '';
-      this.selectedTemplateName = params['templateName'] || '';
-      this.selectedPropertyType = params['propertyType'] || '';
-      
-      console.log('Report Form Params:', {
-        bankCode: this.selectedBankCode,
-        bankName: this.selectedBankName,
-        templateId: this.selectedTemplateId,
-        templateName: this.selectedTemplateName,
-        propertyType: this.selectedPropertyType
-      });
-    });
-  }
+  loadTemplateData() {
+    if (!this.selectedBankCode || !this.selectedTemplateId) {
+      console.warn('⚠️ Missing bank code or template ID for loading template data');
+      return;
+    }
 
-  loadCommonFields() {
-    // Fetch common fields data dynamically from backend API
     this.isLoading = true;
     
-    // Add cache-busting parameter to ensure fresh data
-    const timestamp = new Date().getTime();
-    const apiUrl = `http://localhost:8000/api/common-fields?t=${timestamp}`;
+    console.log(`🔄 Loading template data for: ${this.selectedBankCode}/${this.selectedTemplateId}`);
     
-    console.log('🔄 Fetching common fields from API with cache-busting:', apiUrl);
-    
-    this.http.get<CommonField[]>(apiUrl)
+    this.templateService.getAggregatedTemplateFields(this.selectedBankCode, this.selectedTemplateId)
       .subscribe({
-        next: (fields) => {
-          console.log('✅ Raw API Response:', fields);
-          console.log('📊 GridSize values from API:');
-          fields.forEach(field => {
-            console.log(`  ${field.uiDisplayName}: gridSize=${field.gridSize} (CSS class: grid-${field.gridSize})`);
+        next: (response) => {
+          console.log('✅ Raw aggregated API Response:', response);
+          console.log('✅ API Response type:', typeof response);
+          console.log('✅ API Response keys:', Object.keys(response));
+          
+          // Process the response into organized field groups
+          this.templateData = this.templateService.processTemplateData(response);
+          
+          console.log('🏗️ Processed template data:', {
+            commonFieldGroups: this.templateData.commonFieldGroups.length,
+            bankSpecificFieldGroups: this.templateData.bankSpecificFieldGroups.length,
+            totalFields: this.templateData.totalFieldCount,
+            templateData: this.templateData
           });
           
-          // Filter active fields and sort by sortOrder
-          this.commonFields = fields
-            .filter(field => field.isActive)
-            .sort((a, b) => a.sortOrder - b.sortOrder);
-
-          console.log('📋 Processed common fields:', this.commonFields);
           this.buildFormControls();
+          
+          // Initialize first bank-specific tab if available
+          this.initializeBankSpecificTabs();
+          
           this.isLoading = false;
         },
         error: (error) => {
-          console.error('❌ Error loading common fields:', error);
-          console.log('🔄 Falling back to embedded data...');
+          console.error('❌ Error loading template data:', error);
+          console.log('🔄 Falling back to legacy common fields loading...');
           
-          // Fallback to embedded data if API fails
+          // Fallback to old method for common fields only
           this.loadCommonFieldsFallback();
           this.isLoading = false;
         }
       });
   }
 
-  loadCommonFieldsFallback() {
-    // Fallback embedded data (in case API is not available)
-    console.log('📦 Using fallback embedded common fields data');
-    
-    const fallbackFields: CommonField[] = [
-      {
-        "_id": "68fa41fa7cb7c7ce7f3f8bd1",
-        "fieldId": "report_reference_number",
-        "technicalName": "report_reference_number",
-        "uiDisplayName": "Report Reference Number",
-        "fieldType": "text" as const,
-        "isRequired": true,
-        "placeholder": "Enter report reference number",
-        "helpText": "Unique reference number for this valuation report",
-        "validation": {
-          "pattern": "^[A-Z]{2,4}[0-9]{4,8}$",
-          "maxLength": 20
-        },
-        "gridSize": 4,
-        "sortOrder": 1,
-        "isActive": true
-      },
-      {
-        "_id": "68fa41fa7cb7c7ce7f3f8bd2",
-        "fieldId": "valuation_date",
-        "technicalName": "valuation_date",
-        "uiDisplayName": "Valuation Date",
-        "fieldType": "date" as const,
-        "isRequired": true,
-        "defaultValue": "today",
-        "placeholder": "Select valuation date",
-        "helpText": "Date when the property valuation was conducted",
-        "validation": {
-          "maxDate": "today",
-          "minDate": "2020-01-01"
-        },
-        "gridSize": 4,
-        "sortOrder": 2,
-        "isActive": true
-      },
-      {
-        "_id": "68fa41fa7cb7c7ce7f3f8bd3",
-        "fieldId": "inspection_date",
-        "technicalName": "inspection_date",
-        "uiDisplayName": "Inspection Date",
-        "fieldType": "date" as const,
-        "isRequired": true,
-        "placeholder": "Select inspection date",
-        "helpText": "Date when the property was physically inspected",
-        "validation": {
-          "maxDate": "today",
-          "minDate": "2020-01-01"
-        },
-        "gridSize": 4,
-        "sortOrder": 3,
-        "isActive": true
-      },
-      {
-        "_id": "68fa41fa7cb7c7ce7f3f8bd4",
-        "fieldId": "valuation_purpose",
-        "technicalName": "valuation_purpose",
-        "uiDisplayName": "Valuation Purpose",
-        "fieldType": "select" as const,
-        "isRequired": true,
-        "options": [
-          { "value": "home_loan", "label": "Home Loan" },
-          { "value": "mortgage_loan", "label": "Mortgage Loan" },
-          { "value": "insurance", "label": "Insurance Purpose" },
-          { "value": "legal_settlement", "label": "Legal Settlement" },
-          { "value": "sale_purchase", "label": "Sale/Purchase" },
-          { "value": "stamp_duty", "label": "Stamp Duty Assessment" },
-          { "value": "other", "label": "Other" }
-        ],
-        "placeholder": "Select valuation purpose",
-        "helpText": "Reason for conducting this property valuation",
-        "gridSize": 4,
-        "sortOrder": 4,
-        "isActive": true
-      },
-      {
-        "_id": "68fa41fa7cb7c7ce7f3f8bd5",
-        "fieldId": "applicant_name",
-        "technicalName": "applicant_name",
-        "uiDisplayName": "Applicant Name",
-        "fieldType": "text" as const,
-        "isRequired": true,
-        "placeholder": "Enter applicant's full name",
-        "helpText": "Full name of the loan applicant/property owner",
-        "validation": {
-          "minLength": 3,
-          "maxLength": 100,
-          "pattern": "^[a-zA-Z\\s\\.]+$"
-        },
-        "gridSize": 4,
-        "sortOrder": 5,
-        "isActive": true
-      },
-      {
-        "_id": "68fa41fa7cb7c7ce7f3f8bd6",
-        "fieldId": "bank_name",
-        "technicalName": "bank_name",
-        "uiDisplayName": "Bank Name",
-        "fieldType": "text" as const,
-        "isRequired": true,
-        "isReadonly": true,
-        "placeholder": "Bank name (selected from previous page)",
-        "helpText": "Name of the lending bank/financial institution (auto-populated from selection)",
-        "gridSize": 4,
-        "sortOrder": 6,
-        "isActive": true
-      },
-      {
-        "_id": "68fa41fa7cb7c7ce7f3f8bd7",
-        "fieldId": "bank_branch",
-        "technicalName": "bank_branch",
-        "uiDisplayName": "Bank Branch",
-        "fieldType": "select" as const,
-        "isRequired": true,
-        "placeholder": "Select branch",
-        "helpText": "Choose the specific bank branch for this application",
-        "gridSize": 4,
-        "sortOrder": 7,
-        "isActive": true
+  loadQueryParams() {
+    console.log('🔥 Loading query params...');
+    this.route.queryParams.subscribe(params => {
+      console.log('🔥 Raw query params received:', params);
+      this.selectedBankCode = params['bankCode'] || '';
+      this.selectedBankName = params['bankName'] || '';
+      this.selectedTemplateId = params['templateId'] || '';
+      this.selectedTemplateName = params['templateName'] || '';
+      this.selectedPropertyType = params['propertyType'] || '';
+      
+      console.log('🔥 Processed Report Form Params:', {
+        bankCode: this.selectedBankCode,
+        bankName: this.selectedBankName,
+        templateId: this.selectedTemplateId,
+        templateName: this.selectedTemplateName,
+        propertyType: this.selectedPropertyType
+      });
+
+      // Load template data when query params are available
+      if (this.selectedBankCode && this.selectedTemplateId) {
+        console.log('🔥 Query params loaded, triggering template data load');
+        this.loadTemplateData();
       }
-    ];
-
-    // Filter active fields and sort by sortOrder
-    this.commonFields = fallbackFields
-      .filter(field => field.isActive)
-      .sort((a, b) => a.sortOrder - b.sortOrder);
-
-    this.buildFormControls();
+    });
   }
 
   buildFormControls() {
+    if (!this.templateData) {
+      console.warn('⚠️ No template data available for form building');
+      return;
+    }
+
     const formControls: any = {};
     
     // Debug log the fields being used for form building
-    console.log('🏗️ Building form with fields:', this.commonFields.map(f => ({
-      name: f.uiDisplayName,
-      gridSize: f.gridSize,
-      cssClass: `grid-${f.gridSize}`
-    })));
+    console.log('🏗️ Building form with template data:', {
+      commonFields: this.templateData.commonFieldGroups.length,
+      bankSpecificFields: this.templateData.bankSpecificFieldGroups.length,
+      totalFields: this.templateData.totalFieldCount
+    });
     
-    this.commonFields.forEach(field => {
-      const validators = [];
+    // Process all fields from template data
+    this.templateData.allFields.forEach(field => {
+      const validators = this.buildFieldValidators(field);
       
-      // Required validation
-      if (field.isRequired) {
-        validators.push(Validators.required);
-      }
+      // Set default value with context
+      const contextData = {
+        bankName: this.selectedBankName,
+        bankCode: this.selectedBankCode,
+        templateName: this.selectedTemplateName
+      };
       
-      // Pattern validation
-      if (field.validation?.pattern) {
-        validators.push(Validators.pattern(field.validation.pattern));
-      }
-      
-      // Length validations
-      if (field.validation?.minLength) {
-        validators.push(Validators.minLength(field.validation.minLength));
-      }
-      if (field.validation?.maxLength) {
-        validators.push(Validators.maxLength(field.validation.maxLength));
-      }
-      
-      // Set default value
-      let defaultValue = '';
-      if (field.fieldId === 'bank_name') {
-        defaultValue = this.selectedBankName;
-      } else if (field.fieldId === 'valuation_date' && field.defaultValue === 'today') {
-        defaultValue = new Date().toISOString().split('T')[0];
-      }
+      const defaultValue = this.templateService.getFieldDefaultValue(field, contextData);
       
       formControls[field.fieldId] = [defaultValue, validators];
+      
+      // Add sub-field controls for group fields
+      if (field.fieldType === 'group' && field.subFields) {
+        field.subFields.forEach(subField => {
+          const subValidators = this.buildFieldValidators(subField);
+          const subDefaultValue = this.templateService.getFieldDefaultValue(subField, contextData);
+          formControls[subField.fieldId] = [subDefaultValue, subValidators];
+        });
+      }
     });
     
     this.reportForm = this.fb.group(formControls);
     
-    // Disable bank_name field
-    const bankNameControl = this.reportForm.get('bank_name');
-    if (bankNameControl) {
-      bankNameControl.disable();
+    // Disable readonly fields
+    this.templateData.allFields.forEach(field => {
+      if (field.isReadonly) {
+        const control = this.reportForm.get(field.fieldId);
+        if (control) {
+          control.disable();
+        }
+      }
+      
+      // Handle readonly sub-fields
+      if (field.fieldType === 'group' && field.subFields) {
+        field.subFields.forEach(subField => {
+          if (subField.isReadonly) {
+            const subControl = this.reportForm.get(subField.fieldId);
+            if (subControl) {
+              subControl.disable();
+            }
+          }
+        });
+      }
+    });
+
+    console.log('✅ Form built with controls:', Object.keys(formControls));
+  }
+
+  /**
+   * Initialize bank-specific tabs - set first tab as active
+   */
+  initializeBankSpecificTabs() {
+    const bankSpecificGroups = this.getBankSpecificFieldGroups();
+    if (bankSpecificGroups.length > 0) {
+      this.activeBankSpecificTab = bankSpecificGroups[0].groupName;
+      console.log('🔧 Initialized bank-specific tab:', this.activeBankSpecificTab);
     }
+  }
+
+  buildFieldValidators(field: TemplateField | BankSpecificField): any[] {
+    const validators = [];
+    
+    // Required validation
+    if (field.isRequired) {
+      validators.push(Validators.required);
+    }
+    
+    // Pattern validation
+    if (field.validation?.pattern) {
+      validators.push(Validators.pattern(field.validation.pattern));
+    }
+    
+    // Length validations
+    if (field.validation?.minLength) {
+      validators.push(Validators.minLength(field.validation.minLength));
+    }
+    if (field.validation?.maxLength) {
+      validators.push(Validators.maxLength(field.validation.maxLength));
+    }
+    
+    // Numeric validations
+    if (field.validation?.min !== undefined) {
+      validators.push(Validators.min(field.validation.min));
+    }
+    if (field.validation?.max !== undefined) {
+      validators.push(Validators.max(field.validation.max));
+    }
+    
+    return validators;
+  }
+
+  // Legacy fallback method (simplified)
+  loadCommonFieldsFallback() {
+    console.log('📦 Using fallback method - loading basic common fields only');
+    
+    // Fetch common fields data dynamically from backend API as fallback
+    const timestamp = new Date().getTime();
+    const apiUrl = `http://localhost:8000/api/common-fields?t=${timestamp}`;
+    
+    this.http.get<CommonField[]>(apiUrl)
+      .subscribe({
+        next: (fields) => {
+          console.log('✅ Fallback - Raw API Response:', fields);
+          
+          // Create a basic template data structure for compatibility
+          this.templateData = {
+            templateInfo: {
+              templateId: this.selectedTemplateId,
+              templateName: this.selectedTemplateName,
+              propertyType: this.selectedPropertyType,
+              bankCode: this.selectedBankCode,
+              bankName: this.selectedBankName,
+              version: '1.0'
+            },
+            commonFieldGroups: [{
+              groupName: 'default',
+              displayName: 'Common Fields',
+              fields: fields.filter(field => field.isActive).sort((a, b) => a.sortOrder - b.sortOrder)
+            }],
+            bankSpecificFieldGroups: [],
+            allFields: fields.filter(field => field.isActive).sort((a, b) => a.sortOrder - b.sortOrder),
+            totalFieldCount: fields.filter(field => field.isActive).length
+          };
+
+          console.log('📋 Fallback template data created:', this.templateData);
+          this.buildFormControls();
+        },
+        error: (error) => {
+          console.error('❌ Fallback also failed:', error);
+          // Create minimal empty structure
+          this.templateData = {
+            templateInfo: {
+              templateId: this.selectedTemplateId,
+              templateName: this.selectedTemplateName,
+              propertyType: this.selectedPropertyType,
+              bankCode: this.selectedBankCode,
+              bankName: this.selectedBankName,
+              version: '1.0'
+            },
+            commonFieldGroups: [],
+            bankSpecificFieldGroups: [],
+            allFields: [],
+            totalFieldCount: 0
+          };
+        }
+      });
   }
 
   loadBankBranches() {
@@ -384,9 +403,36 @@ export class ReportForm implements OnInit {
     return !!(control && control.invalid && control.touched);
   }
 
+  // Helper methods for template access
+  getCommonFieldGroups(): FieldGroup[] {
+    return this.templateData?.commonFieldGroups || [];
+  }
+
+  getBankSpecificFieldGroups(): FieldGroup[] {
+    return this.templateData?.bankSpecificFieldGroups || [];
+  }
+
+  hasCommonFields(): boolean {
+    return this.getCommonFieldGroups().length > 0;
+  }
+
+  hasBankSpecificFields(): boolean {
+    return this.getBankSpecificFieldGroups().length > 0;
+  }
+
+  getTotalFieldCount(): number {
+    return this.templateData?.totalFieldCount || 0;
+  }
+
   // Tab navigation
   switchTab(tab: string) {
     this.activeTab = tab;
+  }
+
+  // Bank-specific tab navigation
+  switchBankSpecificTab(tabName: string) {
+    this.activeBankSpecificTab = tabName;
+    console.log('🔄 Switched to bank-specific tab:', tabName);
   }
 
   // Actions

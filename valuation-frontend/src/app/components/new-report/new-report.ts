@@ -37,7 +37,7 @@ export class NewReport implements OnInit {
           isActive: true,
           templates: [
             {
-              templateId: "SBI_LAND_001",
+              templateId: "SBI_LAND_REF_001",
               templateCode: "land",
               templateName: "Land Property Valuation",
               templateType: "property_valuation",
@@ -48,7 +48,7 @@ export class NewReport implements OnInit {
               fields: ["property_description", "location_details", "land_area", "boundaries", "legal_documents", "market_analysis", "valuation_method", "final_valuation"]
             },
             {
-              templateId: "SBI_APARTMENT_001",
+              templateId: "SBI_APARTMENT_REF_001",
               templateCode: "apartment",
               templateName: "Apartment/Flat Property Valuation",
               templateType: "property_valuation",
@@ -239,7 +239,7 @@ export class NewReport implements OnInit {
       };
       
       if (this.selectedTemplate) {
-        queryParams.templateId = this.selectedTemplate.templateId;
+        queryParams.templateId = this.selectedTemplate.templateCode; // Use templateCode for URL
         queryParams.templateName = this.selectedTemplate.templateName;
         queryParams.propertyType = this.selectedTemplate.propertyType;
       }

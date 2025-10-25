@@ -59,7 +59,9 @@ export type FieldType =
   | 'textarea' 
   | 'checkbox' 
   | 'radio' 
-  | 'file';
+  | 'file'
+  | 'currency'
+  | 'group';
 
 export interface CommonFieldsApiResponse {
   metadata: {
