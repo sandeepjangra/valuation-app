@@ -668,33 +668,13 @@ async def get_banks():
 async def get_bank(bank_code: str) -> Dict[str, Any]:
     """Get bank details by bank code"""
     try:
-        # async with DatabaseSession() as db:
-        #     bank = await db.get_bank_by_code(bank_code.upper())
-        #     if not bank:
-        #         raise HTTPException(status_code=404, detail="Bank not found")
-        #     
-        #     return JSONResponse(
-        #         content=json.loads(json.dumps(bank, default=json_serializer))
-        #     )
-        
-        # Mock response
-        if bank_code.upper() == "SBI":
-            return {
-                "_id": "672345678901234567890123",
-                "bankCode": "SBI",
-                "bankName": "State Bank of India",
-                "bankType": "PUBLIC_SECTOR",
-                "submissionMode": "HARDCOPY",
-                "contactInfo": {
-                    "address": "Corporate Centre, Nariman Point, Mumbai",
-                    "email": "valuations@sbi.co.in",
-                    "phone": "+91-22-22740000"
-                },
-                "isActive": True
-            }
-        else:
-            raise HTTPException(status_code=404, detail="Bank not found")
+        async with MultiDatabaseSession() as db:
+            bank = await db.find_one("admin", "banks", {"bankCode": bank_code.upper(), "isActive": True})
+            if not bank:
+                raise HTTPException(status_code=404, detail="Bank not found")
             
+            return bank
+        
     except HTTPException:
         raise
     except Exception as e:
@@ -705,13 +685,51 @@ async def get_bank(bank_code: str) -> Dict[str, Any]:
 # Templates API Endpoints
 # ================================
 
-@app.get("/api/templates/bank/{bank_code}", response_model=List[Dict[str, Any]])
+# ================================
+# Template Fields API Endpoints  
+# ================================
+
+@app.get("/api/templates/{bank_code}/{template_id}", response_model=Dict[str, Any])
+async def get_template_fields(bank_code: str, template_id: str) -> JSONResponse:
+    """Get template-specific fields for a bank and template"""
+    try:
+        logger.info(f"📋 API call received for template fields: {bank_code}/{template_id}")
+        
+        async with MultiDatabaseSession() as db:
+            # Query for the specific template
+            template = await db.find_one(
+                "admin", 
+                "bank_templates", 
+                {
+                    "bankCode": bank_code.upper(),
+                    "templateId": template_id.upper(), 
+                    "isActive": True
+                }
+            )
+            
+            if not template:
+                logger.warning(f"❌ Template not found: {bank_code}/{template_id}")
+                raise HTTPException(status_code=404, detail=f"Template {template_id} not found for bank {bank_code}")
+            
+            logger.info(f"✅ Found template: {template.get('templateName')} with {len(template.get('sections', []))} sections")
+            
+            return JSONResponse(
+                content=json.loads(json.dumps(template, default=json_serializer))
+            )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error fetching template fields for {bank_code}/{template_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch template fields")
+
+@app.get("/api/templates/{bank_code}", response_model=List[Dict[str, Any]])
 async def get_templates_for_bank(bank_code: str) -> List[Dict[str, Any]]:
     """Get all templates for a specific bank"""
     try:
         async with MultiDatabaseSession() as db:
             # Find bank by code and get its templates
-            bank = await db.find_one("admin", "banks", {"code": bank_code.upper(), "isActive": True})
+            bank = await db.find_one("admin", "banks", {"bankCode": bank_code.upper(), "isActive": True})
             if not bank:
                 return []
             
@@ -720,6 +738,202 @@ async def get_templates_for_bank(bank_code: str) -> List[Dict[str, Any]]:
     except Exception as e:
         logger.error(f"Error fetching templates for bank {bank_code}: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch templates")
+
+# ================================
+# NEW AGGREGATION ENDPOINTS FOR REFERENCE-BASED TEMPLATES
+# ================================
+
+@app.get("/api/templates/{bank_code}/{template_id}/aggregated-fields")
+async def get_aggregated_template_fields(bank_code: str, template_id: str) -> JSONResponse:
+    """Get template fields using dynamic structure from templateMetadata"""
+    try:
+        logger.info(f"🔄 Dynamic Aggregation API call for template: {bank_code}/{template_id}")
+        
+        async with MultiDatabaseSession() as db:
+            # Get the bank and template information
+            bank = await db.find_one(
+                "admin", 
+                "banks", 
+                {"bankCode": bank_code.upper(), "isActive": True}
+            )
+            
+            if not bank:
+                logger.warning(f"❌ Bank not found: {bank_code}")
+                raise HTTPException(status_code=404, detail=f"Bank {bank_code} not found")
+            
+            # Find the specific template
+            template = None
+            for t in bank.get("templates", []):
+                if (t.get("templateCode", "").upper() == template_id.upper() or 
+                    t.get("templateId", "").upper() == template_id.upper()):
+                    template = t
+                    break
+            
+            if not template:
+                logger.warning(f"❌ Template not found: {template_id} for bank {bank_code}")
+                raise HTTPException(status_code=404, detail=f"Template {template_id} not found for bank {bank_code}")
+            
+            # Get bank-specific collection - this contains the templateMetadata
+            bank_config = template.get("fields", {}).get("bankSpecificFields", {})
+            
+            if not bank_config.get("collectionRef"):
+                logger.warning(f"❌ No bank-specific collection configured for template: {bank_code}/{template_id}")
+                raise HTTPException(status_code=500, detail="Template does not have bank-specific collection configured")
+            
+            # Fetch the collection data with templateMetadata
+            bank_filter = bank_config.get("filter", {})
+            collection_data = await db.find_one(
+                "admin", 
+                bank_config["collectionRef"], 
+                bank_filter
+            )
+            
+            if not collection_data:
+                logger.warning(f"❌ No collection data found for template: {bank_code}/{template_id}")
+                raise HTTPException(status_code=404, detail="Template collection data not found")
+            
+            # Extract templateMetadata and documents
+            template_metadata = collection_data.get("templateMetadata", {})
+            documents = collection_data.get("documents", [])
+            
+            if not template_metadata:
+                logger.warning(f"❌ No templateMetadata found in collection for template: {bank_code}/{template_id}")
+                raise HTTPException(status_code=500, detail="Template metadata not found")
+            
+            # Get common fields (if configured)
+            common_fields = []
+            common_config = template.get("fields", {}).get("commonFields", {})
+            if common_config.get("collectionRef"):
+                common_filter = common_config.get("filter", {})
+                common_fields = await db.find_many(
+                    "admin", 
+                    common_config["collectionRef"], 
+                    common_filter,
+                    sort=[("sortOrder", 1)]
+                )
+                
+                # Fallback if no results with applicableFor filter
+                if not common_fields and "applicableFor" in common_filter:
+                    logger.info("🔍 No fields found with applicableFor filter, trying with isActive only")
+                    fallback_filter = {k: v for k, v in common_filter.items() if k != "applicableFor"}
+                    common_fields = await db.find_many(
+                        "admin", 
+                        common_config["collectionRef"], 
+                        fallback_filter,
+                        sort=[("sortOrder", 1)]
+                    )
+            
+            # Build dynamic tab structure based on templateMetadata
+            bank_specific_tabs = []
+            tabs_config = template_metadata.get("tabs", [])
+            
+            # Sort tabs by sortOrder
+            tabs_config.sort(key=lambda x: x.get("sortOrder", 0))
+            
+            for tab_config in tabs_config:
+                tab_id = tab_config.get("tabId")
+                document_source = tab_config.get("documentSource")
+                
+                # Find the corresponding document
+                document = None
+                for doc in documents:
+                    if doc.get("templateId") == document_source:
+                        document = doc
+                        break
+                
+                if not document:
+                    logger.warning(f"⚠️ Document not found for tab {tab_id}, source: {document_source}")
+                    continue
+                
+                # Build tab structure
+                tab = {
+                    "tabId": tab_config.get("tabId"),
+                    "tabName": tab_config.get("tabName"),
+                    "sortOrder": tab_config.get("sortOrder"),
+                    "hasSections": tab_config.get("hasSections", False),
+                    "description": tab_config.get("description", ""),
+                    "fields": []
+                }
+                
+                # Handle tabs with sections (like Valuation tab)
+                if tab_config.get("hasSections") and "sections" in document:
+                    tab["sections"] = []
+                    sections_config = tab_config.get("sections", [])
+                    
+                    # Sort sections by sortOrder
+                    sections_config.sort(key=lambda x: x.get("sortOrder", 0))
+                    
+                    for section_config in sections_config:
+                        section_id = section_config.get("sectionId")
+                        
+                        # Find the corresponding section in document
+                        document_section = None
+                        for doc_section in document.get("sections", []):
+                            if doc_section.get("sectionId") == section_id:
+                                document_section = doc_section
+                                break
+                        
+                        if document_section:
+                            section = {
+                                "sectionId": section_config.get("sectionId"),
+                                "sectionName": section_config.get("sectionName"),
+                                "sortOrder": section_config.get("sortOrder"),
+                                "description": section_config.get("description", ""),
+                                "fields": document_section.get("fields", [])
+                            }
+                            tab["sections"].append(section)
+                            # Also add fields to tab level for backward compatibility
+                            tab["fields"].extend(document_section.get("fields", []))
+                
+                # Handle tabs without sections (normal field structure)
+                else:
+                    tab["fields"] = document.get("fields", [])
+                
+                bank_specific_tabs.append(tab)
+            
+            # Prepare response
+            response_data = {
+                "templateInfo": {
+                    "templateId": template_metadata.get("templateId"),
+                    "templateName": template_metadata.get("templateName"),
+                    "propertyType": template_metadata.get("propertyType"),
+                    "bankCode": bank_code.upper(),
+                    "bankName": bank.get("bankName"),
+                    "version": template_metadata.get("version", "2.0")
+                },
+                "commonFields": common_fields,
+                "bankSpecificTabs": bank_specific_tabs,
+                "aggregatedAt": datetime.now(timezone.utc).isoformat()
+            }
+            
+            logger.info(f"✅ Dynamic aggregation complete: {len(common_fields)} common fields, {len(bank_specific_tabs)} tabs")
+            
+            return JSONResponse(
+                content=json.loads(json.dumps(response_data, default=json_serializer))
+            )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error in aggregation for {bank_code}/{template_id}: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail="Failed to aggregate template fields")
+
+@app.get("/api/templates/{bank_code}/{template_id}/fields")
+async def get_template_fields_new(bank_code: str, template_id: str, use_aggregation: bool = True) -> JSONResponse:
+    """
+    Enhanced template fields endpoint with aggregation support
+    
+    - use_aggregation=True: Uses new aggregation pipeline (default)
+    - use_aggregation=False: Falls back to old separate collection queries
+    """
+    if use_aggregation:
+        # Use new aggregation endpoint
+        return await get_aggregated_template_fields(bank_code, template_id)
+    else:
+        # Fall back to original logic for backward compatibility
+        return await get_template_fields(bank_code, template_id)
 
 @app.get("/api/templates/{template_id}", response_model=Dict[str, Any])
 async def get_template(template_id: str) -> Dict[str, Any]:

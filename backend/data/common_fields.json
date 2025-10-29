@@ -1,8 +1,10 @@
 {
   "metadata": {
-    "generated_at": "2025-10-24T15:14:07.527376+00:00",
-    "total_fields": 7,
-    "version": "1.0"
+    "generated_at": "2025-10-25T11:45:05.968290+00:00",
+    "collection_name": "common_fields",
+    "total_documents": 7,
+    "version": "1.0",
+    "database": "valuation_admin"
   },
   "fields": [
     {
@@ -21,8 +23,8 @@
       "gridSize": 4,
       "sortOrder": 1,
       "isActive": true,
-      "createdAt": "2025-10-23 14:55:54.012000",
-      "updatedAt": "2025-10-23 14:55:54.012000",
+      "createdAt": "2025-10-23T14:55:54.012000",
+      "updatedAt": "2025-10-23T14:55:54.012000",
       "version": 1,
       "createdBy": "system_recreate",
       "metadata": {
@@ -48,8 +50,8 @@
       "gridSize": 4,
       "sortOrder": 2,
       "isActive": true,
-      "createdAt": "2025-10-23 14:55:54.012000",
-      "updatedAt": "2025-10-23 14:55:54.012000",
+      "createdAt": "2025-10-23T14:55:54.012000",
+      "updatedAt": "2025-10-23T14:55:54.012000",
       "version": 1,
       "createdBy": "system_recreate",
       "metadata": {
@@ -74,8 +76,8 @@
       "gridSize": 4,
       "sortOrder": 3,
       "isActive": true,
-      "createdAt": "2025-10-23 14:55:54.012000",
-      "updatedAt": "2025-10-23 14:55:54.012000",
+      "createdAt": "2025-10-23T14:55:54.012000",
+      "updatedAt": "2025-10-23T14:55:54.012000",
       "version": 1,
       "createdBy": "system_recreate",
       "metadata": {
@@ -126,8 +128,8 @@
       "gridSize": 4,
       "sortOrder": 4,
       "isActive": true,
-      "createdAt": "2025-10-23 14:55:54.012000",
-      "updatedAt": "2025-10-23 14:55:54.012000",
+      "createdAt": "2025-10-23T14:55:54.012000",
+      "updatedAt": "2025-10-23T14:55:54.012000",
       "version": 1,
       "createdBy": "system_recreate",
       "metadata": {
@@ -153,8 +155,8 @@
       "gridSize": 4,
       "sortOrder": 5,
       "isActive": true,
-      "createdAt": "2025-10-23 14:55:54.012000",
-      "updatedAt": "2025-10-23 14:55:54.012000",
+      "createdAt": "2025-10-23T14:55:54.012000",
+      "updatedAt": "2025-10-23T14:55:54.012000",
       "version": 1,
       "createdBy": "system_recreate",
       "metadata": {
@@ -176,8 +178,8 @@
       "gridSize": 4,
       "sortOrder": 6,
       "isActive": true,
-      "createdAt": "2025-10-23 14:55:54.012000",
-      "updatedAt": "2025-10-23 14:55:54.012000",
+      "createdAt": "2025-10-23T14:55:54.012000",
+      "updatedAt": "2025-10-23T14:55:54.012000",
       "version": 1,
       "createdBy": "system_recreate",
       "metadata": {
@@ -211,8 +213,8 @@
       "gridSize": 4,
       "sortOrder": 7,
       "isActive": true,
-      "createdAt": "2025-10-23 14:55:54.012000",
-      "updatedAt": "2025-10-23 14:55:54.012000",
+      "createdAt": "2025-10-23T14:55:54.012000",
+      "updatedAt": "2025-10-23T14:55:54.012000",
       "version": 1,
       "createdBy": "system_recreate",
       "metadata": {

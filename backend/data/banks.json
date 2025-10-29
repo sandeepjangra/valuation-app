@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generated_at": "2025-10-24T14:28:01.037627+00:00",
+    "generated_at": "2025-10-25T11:45:09.856001+00:00",
     "collection_name": "banks",
     "total_documents": 9,
     "version": "1.0",
@@ -158,42 +158,67 @@
       "totalBranches": 1,
       "templates": [
         {
-          "templateId": "CBI_STANDARD_001",
-          "templateCode": "standard",
-          "templateName": "Standard Property Valuation",
+          "templateId": "CBI_ALL_REF_001",
+          "templateCode": "all",
+          "templateName": "CBI Property Valuation",
           "templateType": "property_valuation",
           "propertyType": "all",
-          "description": "Standard template for all property types as per Central Bank of India guidelines",
-          "version": "1.0",
+          "description": "Unified template for all property types with common and CBI-specific fields",
+          "version": "2.0",
           "isActive": true,
-          "fields": [
-            "property_details",
-            "geographical_location",
-            "area_measurements",
-            "construction_specifications",
-            "documentation",
-            "comparative_analysis",
-            "valuation_process",
-            "concluded_value"
-          ],
-          "validationRules": {
-            "required_fields": [
-              "property_details",
-              "area_measurements",
-              "documentation"
-            ],
-            "minimum_documents": 3
+          "fields": {
+            "commonFields": {
+              "collectionRef": "common_form_fields",
+              "filter": {
+                "isActive": true,
+                "applicableFor": "all"
+              }
+            },
+            "bankSpecificFields": {
+              "collectionRef": "cbi_all_property_details",
+              "filter": {
+                "isActive": true
+              }
+            }
           },
-          "allowCustomFields": true,
-          "maxCustomFields": 15,
-          "createdAt": "2025-10-23T14:13:02.671000",
-          "updatedAt": "2025-10-23T14:13:02.671000"
+          "aggregationPipeline": [
+            {
+              "$lookup": {
+                "from": "common_form_fields",
+                "pipeline": [
+                  {
+                    "$match": {
+                      "isActive": true,
+                      "applicableFor": "all"
+                    }
+                  }
+                ],
+                "as": "commonFields"
+              }
+            },
+            {
+              "$lookup": {
+                "from": "cbi_all_property_details",
+                "pipeline": [
+                  {
+                    "$match": {
+                      "isActive": true
+                    }
+                  }
+                ],
+                "as": "bankSpecificTabs"
+              }
+            }
+          ],
+          "createdAt": "2025-10-24T22:04:59.994070+00:00",
+          "updatedAt": "2025-10-24T22:04:59.994128+00:00"
         }
       ],
-      "templatesLastUpdated": "2025-10-23T14:13:02.671000",
-      "templatesVersion": "1.0",
+      "templatesLastUpdated": "2025-10-24T22:04:59.994154+00:00",
+      "templatesVersion": "2.0",
       "createdAt": "2025-10-23T14:13:02.671000",
-      "updatedAt": "2025-10-23T14:13:02.671000"
+      "updatedAt": "2025-10-24T22:04:59.994164+00:00",
+      "architecture": "reference_based"
     },
     {
       "_id": "68f3ebdea9483cef5ac839aa",
@@ -294,11 +319,72 @@
       ],
       "totalBranches": 2,
       "createdAt": "2025-10-18T19:34:54.119000",
-      "updatedAt": "2025-10-18T19:34:54.119000",
+      "updatedAt": "2025-10-24T22:04:59.284123+00:00",
       "migratedAt": "2025-10-19T15:53:21.308000",
       "migratedFrom": "valuation_app_prod",
       "originalCollection": "banks",
-      "version": 1
+      "version": 1,
+      "architecture": "reference_based",
+      "templates": [
+        {
+          "templateId": "HDFC_ALL_REF_001",
+          "templateCode": "all",
+          "templateName": "HDFC Property Valuation",
+          "templateType": "property_valuation",
+          "propertyType": "all",
+          "description": "Unified template for all property types with common and HDFC-specific fields",
+          "version": "2.0",
+          "isActive": true,
+          "fields": {
+            "commonFields": {
+              "collectionRef": "common_form_fields",
+              "filter": {
+                "isActive": true,
+                "applicableFor": "all"
+              }
+            },
+            "bankSpecificFields": {
+              "collectionRef": "hdfc_all_property_details",
+              "filter": {
+                "isActive": true
+              }
+            }
+          },
+          "aggregationPipeline": [
+            {
+              "$lookup": {
+                "from": "common_form_fields",
+                "pipeline": [
+                  {
+                    "$match": {
+                      "isActive": true,
+                      "applicableFor": "all"
+                    }
+                  }
+                ],
+                "as": "commonFields"
+              }
+            },
+            {
+              "$lookup": {
+                "from": "hdfc_all_property_details",
+                "pipeline": [
+                  {
+                    "$match": {
+                      "isActive": true
+                    }
+                  }
+                ],
+                "as": "bankSpecificTabs"
+              }
+            }
+          ],
+          "createdAt": "2025-10-24T22:04:59.284044+00:00",
+          "updatedAt": "2025-10-24T22:04:59.284093+00:00"
+        }
+      ],
+      "templatesLastUpdated": "2025-10-24T22:04:59.284117+00:00",
+      "templatesVersion": "2.0"
     },
     {
       "_id": "68f3ebdfa9483cef5ac839ab",
@@ -462,47 +548,72 @@
       ],
       "totalBranches": 2,
       "createdAt": "2025-10-18T19:34:54.119000",
-      "updatedAt": "2025-10-23T14:08:15.897000",
+      "updatedAt": "2025-10-24T22:04:58.963747+00:00",
       "migratedAt": "2025-10-19T15:53:21.308000",
       "migratedFrom": "valuation_app_prod",
       "originalCollection": "banks",
       "version": 1,
       "templates": [
         {
-          "templateId": "PNB_STANDARD_001",
-          "templateCode": "standard",
-          "templateName": "Standard Property Valuation",
+          "templateId": "PNB_ALL_REF_001",
+          "templateCode": "all",
+          "templateName": "PNB Property Valuation",
           "templateType": "property_valuation",
           "propertyType": "all",
-          "description": "Standard template for all property types as per PNB guidelines",
-          "version": "1.0",
+          "description": "Unified template for all property types with common and PNB-specific fields",
+          "version": "2.0",
           "isActive": true,
-          "fields": [
-            "property_description",
-            "location_details",
-            "property_area",
-            "construction_details",
-            "legal_documents",
-            "market_analysis",
-            "valuation_method",
-            "final_valuation"
-          ],
-          "validationRules": {
-            "required_fields": [
-              "property_description",
-              "property_area",
-              "legal_documents"
-            ],
-            "minimum_documents": 3
+          "fields": {
+            "commonFields": {
+              "collectionRef": "common_form_fields",
+              "filter": {
+                "isActive": true,
+                "applicableFor": "all"
+              }
+            },
+            "bankSpecificFields": {
+              "collectionRef": "pnb_all_property_details",
+              "filter": {
+                "isActive": true
+              }
+            }
           },
-          "allowCustomFields": true,
-          "maxCustomFields": 10,
-          "createdAt": "2025-10-23T14:08:15.897000",
-          "updatedAt": "2025-10-23T14:08:15.897000"
+          "aggregationPipeline": [
+            {
+              "$lookup": {
+                "from": "common_form_fields",
+                "pipeline": [
+                  {
+                    "$match": {
+                      "isActive": true,
+                      "applicableFor": "all"
+                    }
+                  }
+                ],
+                "as": "commonFields"
+              }
+            },
+            {
+              "$lookup": {
+                "from": "pnb_all_property_details",
+                "pipeline": [
+                  {
+                    "$match": {
+                      "isActive": true
+                    }
+                  }
+                ],
+                "as": "bankSpecificTabs"
+              }
+            }
+          ],
+          "createdAt": "2025-10-24T22:04:58.963708+00:00",
+          "updatedAt": "2025-10-24T22:04:58.963729+00:00"
         }
       ],
-      "templatesLastUpdated": "2025-10-23T14:08:15.897000",
-      "templatesVersion": "1.0"
+      "templatesLastUpdated": "2025-10-24T22:04:58.963741+00:00",
+      "templatesVersion": "2.0",
+      "architecture": "reference_based"
     },
     {
       "_id": "68f3ebdea9483cef5ac839a8",
@@ -641,77 +752,128 @@
       ],
       "totalBranches": 3,
       "createdAt": "2025-10-18T19:34:54.119000",
-      "updatedAt": "2025-10-23T14:08:15.897000",
+      "updatedAt": "2025-10-24T22:04:58.627228+00:00",
       "migratedAt": "2025-10-19T15:53:21.308000",
       "migratedFrom": "valuation_app_prod",
       "originalCollection": "banks",
       "version": 1,
       "templates": [
         {
-          "templateId": "SBI_LAND_001",
+          "templateId": "SBI_LAND_REF_001",
           "templateCode": "land",
-          "templateName": "Land Property Valuation",
+          "templateName": "SBI Land Property Valuation",
           "templateType": "property_valuation",
           "propertyType": "land",
-          "description": "Template for land property valuation as per SBI guidelines",
-          "version": "1.0",
+          "description": "Template for land property valuation with common and SBI-specific fields",
+          "version": "2.0",
           "isActive": true,
-          "fields": [
-            "property_description",
-            "location_details",
-            "land_area",
-            "boundaries",
-            "legal_documents",
-            "market_analysis",
-            "valuation_method",
-            "final_valuation"
-          ],
-          "validationRules": {
-            "required_fields": [
-              "property_description",
-              "land_area",
-              "legal_documents"
-            ],
-            "minimum_documents": 3
+          "fields": {
+            "commonFields": {
+              "collectionRef": "common_form_fields",
+              "filter": {
+                "isActive": true,
+                "applicableFor": "all"
+              }
+            },
+            "bankSpecificFields": {
+              "collectionRef": "sbi_land_property_details",
+              "filter": {
+                "isActive": true
+              }
+            }
           },
-          "createdAt": "2025-10-23T14:08:15.897000",
-          "updatedAt": "2025-10-23T14:08:15.897000"
+          "aggregationPipeline": [
+            {
+              "$lookup": {
+                "from": "common_form_fields",
+                "pipeline": [
+                  {
+                    "$match": {
+                      "isActive": true,
+                      "applicableFor": "all"
+                    }
+                  }
+                ],
+                "as": "commonFields"
+              }
+            },
+            {
+              "$lookup": {
+                "from": "sbi_land_property_details",
+                "pipeline": [
+                  {
+                    "$match": {
+                      "isActive": true
+                    }
+                  }
+                ],
+                "as": "bankSpecificTabs"
+              }
+            }
+          ],
+          "createdAt": "2025-10-24T22:04:58.627186+00:00",
+          "updatedAt": "2025-10-24T22:04:58.627203+00:00"
         },
         {
-          "templateId": "SBI_APARTMENT_001",
+          "templateId": "SBI_APARTMENT_REF_001",
           "templateCode": "apartment",
-          "templateName": "Apartment/Flat Property Valuation",
+          "templateName": "SBI Apartment Property Valuation",
           "templateType": "property_valuation",
           "propertyType": "apartment",
-          "description": "Template for apartment/flat property valuation as per SBI guidelines",
-          "version": "1.0",
+          "description": "Template for apartment property valuation with common and SBI-specific fields",
+          "version": "2.0",
           "isActive": true,
-          "fields": [
-            "property_description",
-            "location_details",
-            "built_area",
-            "carpet_area",
-            "floor_details",
-            "amenities",
-            "legal_documents",
-            "market_comparison",
-            "valuation_method",
-            "final_valuation"
-          ],
-          "validationRules": {
-            "required_fields": [
-              "property_description",
-              "built_area",
-              "legal_documents"
-            ],
-            "minimum_documents": 4
+          "fields": {
+            "commonFields": {
+              "collectionRef": "common_form_fields",
+              "filter": {
+                "isActive": true,
+                "applicableFor": "all"
+              }
+            },
+            "bankSpecificFields": {
+              "collectionRef": "sbi_apartment_property_details",
+              "filter": {
+                "isActive": true
+              }
+            }
           },
-          "createdAt": "2025-10-23T14:08:15.897000",
-          "updatedAt": "2025-10-23T14:08:15.897000"
+          "aggregationPipeline": [
+            {
+              "$lookup": {
+                "from": "common_form_fields",
+                "pipeline": [
+                  {
+                    "$match": {
+                      "isActive": true,
+                      "applicableFor": "all"
+                    }
+                  }
+                ],
+                "as": "commonFields"
+              }
+            },
+            {
+              "$lookup": {
+                "from": "sbi_apartment_property_details",
+                "pipeline": [
+                  {
+                    "$match": {
+                      "isActive": true
+                    }
+                  }
+                ],
+                "as": "bankSpecificTabs"
+              }
+            }
+          ],
+          "createdAt": "2025-10-24T22:04:58.627214+00:00",
+          "updatedAt": "2025-10-24T22:04:58.627218+00:00"
         }
       ],
-      "templatesLastUpdated": "2025-10-23T14:08:15.897000",
-      "templatesVersion": "1.0"
+      "templatesLastUpdated": "2025-10-24T22:04:58.627225+00:00",
+      "templatesVersion": "2.0",
+      "architecture": "reference_based"
     },
     {
       "_id": "68f534350cbfd4e1d7ea7ba5",
@@ -785,42 +947,67 @@
       "totalBranches": 1,
       "templates": [
         {
-          "templateId": "UCO_STANDARD_001",
-          "templateCode": "standard",
-          "templateName": "Standard Property Valuation",
+          "templateId": "UCO_ALL_REF_001",
+          "templateCode": "all",
+          "templateName": "UCO Property Valuation",
           "templateType": "property_valuation",
           "propertyType": "all",
-          "description": "Standard template for all property types as per UCO Bank guidelines",
-          "version": "1.0",
+          "description": "Unified template for all property types with common and UCO-specific fields",
+          "version": "2.0",
           "isActive": true,
-          "fields": [
-            "property_description",
-            "location_details",
-            "property_dimensions",
-            "structural_details",
-            "legal_compliance",
-            "market_evaluation",
-            "valuation_methodology",
-            "final_assessment"
-          ],
-          "validationRules": {
-            "required_fields": [
-              "property_description",
-              "property_dimensions",
-              "legal_compliance"
-            ],
-            "minimum_documents": 3
+          "fields": {
+            "commonFields": {
+              "collectionRef": "common_form_fields",
+              "filter": {
+                "isActive": true,
+                "applicableFor": "all"
+              }
+            },
+            "bankSpecificFields": {
+              "collectionRef": "uco_all_property_details",
+              "filter": {
+                "isActive": true
+              }
+            }
           },
-          "allowCustomFields": true,
-          "maxCustomFields": 12,
-          "createdAt": "2025-10-23T14:13:02.671000",
-          "updatedAt": "2025-10-23T14:13:02.671000"
+          "aggregationPipeline": [
+            {
+              "$lookup": {
+                "from": "common_form_fields",
+                "pipeline": [
+                  {
+                    "$match": {
+                      "isActive": true,
+                      "applicableFor": "all"
+                    }
+                  }
+                ],
+                "as": "commonFields"
+              }
+            },
+            {
+              "$lookup": {
+                "from": "uco_all_property_details",
+                "pipeline": [
+                  {
+                    "$match": {
+                      "isActive": true
+                    }
+                  }
+                ],
+                "as": "bankSpecificTabs"
+              }
+            }
+          ],
+          "createdAt": "2025-10-24T22:04:59.637226+00:00",
+          "updatedAt": "2025-10-24T22:04:59.637246+00:00"
         }
       ],
-      "templatesLastUpdated": "2025-10-23T14:13:02.671000",
-      "templatesVersion": "1.0",
+      "templatesLastUpdated": "2025-10-24T22:04:59.637258+00:00",
+      "templatesVersion": "2.0",
       "createdAt": "2025-10-23T14:13:02.671000",
-      "updatedAt": "2025-10-23T14:13:02.671000"
+      "updatedAt": "2025-10-24T22:04:59.637263+00:00",
+      "architecture": "reference_based"
     },
     {
       "_id": "68fa36cd5bb6b9cffed41371",

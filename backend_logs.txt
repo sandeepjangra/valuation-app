@@ -1,0 +1,1716 @@
+INFO:     Will watch for changes in these directories: ['/Users/sandeepjangra/Downloads/development/ValuationAppV1']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [55402] using WatchFiles
+INFO:     Started server process [55468]
+INFO:     Waiting for application startup.
+INFO:main:🚀 Starting Valuation Application...
+INFO:     Application startup complete.
+INFO:     127.0.0.1:55730 - "GET /api/health HTTP/1.1" 200 OK
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:55734 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:55734 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:watchfiles.main:1 change detected
+INFO:watchfiles.main:1 change detected
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:55776 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:55776 - "GET /api/common-fields?t=1761346797131 HTTP/1.1" 200 OK
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:55771 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:55776 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:55806 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:55776 - "GET /api/common-fields?t=1761346799465 HTTP/1.1" 200 OK
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:55806 - "GET /api/common-fields?t=1761346799651 HTTP/1.1" 200 OK
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:55806 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:55806 - "GET /api/common-fields?t=1761346801952 HTTP/1.1" 200 OK
+INFO:watchfiles.main:1 change detected
+INFO:watchfiles.main:1 change detected
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:55848 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:55849 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:55848 - "GET /api/common-fields?t=1761346806572 HTTP/1.1" 200 OK
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:55849 - "GET /api/common-fields?t=1761346806745 HTTP/1.1" 200 OK
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:55776 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:55847 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:55849 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:55848 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:55849 - "GET /api/common-fields?t=1761346809005 HTTP/1.1" 200 OK
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:55848 - "GET /api/common-fields?t=1761346809197 HTTP/1.1" 200 OK
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:55806 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:55944 - "GET /api/common-fields?t=1761346809617 HTTP/1.1" 200 OK
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:55806 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:55944 - "GET /api/common-fields?t=1761346811822 HTTP/1.1" 200 OK
+INFO:watchfiles.main:1 change detected
+INFO:watchfiles.main:1 change detected
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:55806 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:55944 - "GET /api/common-fields?t=1761346814176 HTTP/1.1" 200 OK
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:55963 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:55962 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:55963 - "GET /api/common-fields?t=1761346816053 HTTP/1.1" 200 OK
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:55962 - "GET /api/common-fields?t=1761346816233 HTTP/1.1" 200 OK
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:55848 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:55849 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:55962 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:55962 - "GET /api/common-fields?t=1761346818706 HTTP/1.1" 200 OK
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:55963 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:55963 - "GET /api/common-fields?t=1761346819060 HTTP/1.1" 200 OK
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:55944 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:56080 - "GET /api/common-fields?t=1761346819452 HTTP/1.1" 200 OK
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:55849 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:55848 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:55944 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:56080 - "GET /api/common-fields?t=1761346821959 HTTP/1.1" 200 OK
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:55944 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:56080 - "GET /api/common-fields?t=1761346824428 HTTP/1.1" 200 OK
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:55848 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:55849 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:55944 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:55944 - "GET /api/common-fields?t=1761346826983 HTTP/1.1" 200 OK
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56152 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56165 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:watchfiles.main:1 change detected
+INFO:watchfiles.main:2 changes detected
+INFO:watchfiles.main:82 changes detected
+INFO:watchfiles.main:1 change detected
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56206 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56205 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56235 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:56235 - "GET /api/common-fields?t=1761346893129 HTTP/1.1" 200 OK
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56205 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56206 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:watchfiles.main:1 change detected
+INFO:watchfiles.main:1 change detected
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56294 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56295 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:56294 - "GET /api/common-fields?t=1761346934318 HTTP/1.1" 200 OK
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56282 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56283 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:56295 - "GET /api/common-fields?t=1761346934581 HTTP/1.1" 200 OK
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:watchfiles.main:1 change detected
+ERROR:backend.database.multi_db_manager:💥 Unexpected error during MongoDB connection: The resolution lifetime expired after 32.006 seconds: Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.
+INFO:backend.database.multi_db_manager:🔄 Retrying in 2 seconds...
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 2/3...
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56282 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56349 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56295 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:56282 - "GET /api/common-fields?t=1761346981926 HTTP/1.1" 200 OK
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:56295 - "GET /api/common-fields?t=1761346982317 HTTP/1.1" 200 OK
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:56349 - "GET /api/common-fields?t=1761346982317 HTTP/1.1" 200 OK
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56422 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:56422 - "GET /api/common-fields?t=1761346983556 HTTP/1.1" 200 OK
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56349 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56283 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56426 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56425 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56294 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:56422 - "GET /api/common-fields?t=1761346984629 HTTP/1.1" 200 OK
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56438 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56437 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:watchfiles.main:1 change detected
+INFO:watchfiles.main:1 change detected
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56349 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:56349 - "GET /api/common-fields?t=1761346987622 HTTP/1.1" 200 OK
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56438 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56437 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56426 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56294 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:56426 - "GET /api/common-fields?t=1761346989953 HTTP/1.1" 200 OK
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:56294 - "GET /api/common-fields?t=1761346990128 HTTP/1.1" 200 OK
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56294 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:56294 - "GET /api/common-fields?t=1761346992792 HTTP/1.1" 200 OK
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56349 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56426 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:56426 - "GET /api/common-fields?t=1761346993465 HTTP/1.1" 200 OK
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:56644 - "GET /api/common-fields?t=1761346993239 HTTP/1.1" 200 OK
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56438 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56349 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56437 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:56644 - "GET /api/common-fields?t=1761346995893 HTTP/1.1" 200 OK
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56349 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:56644 - "GET /api/common-fields?t=1761346998508 HTTP/1.1" 200 OK
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56438 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56437 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56349 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:56349 - "GET /api/common-fields?t=1761347000698 HTTP/1.1" 200 OK
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56752 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56765 - "GET /api/health HTTP/1.1" 200 OK
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56769 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:watchfiles.main:1 change detected
+WARNING:  WatchFiles detected changes in 'check_templates.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:main:🛑 Shutting down Valuation Application...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [55468]
+INFO:watchfiles.main:1 change detected
+WARNING:  WatchFiles detected changes in 'check_templates.py'. Reloading...
+INFO:     Started server process [58589]
+INFO:     Waiting for application startup.
+INFO:main:🚀 Starting Valuation Application...
+INFO:     Application startup complete.
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_REF_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56813 - "GET /api/templates/SBI/SBI_LAND_REF_001/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_REF_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56826 - "GET /api/templates/SBI/SBI_LAND_REF_001/aggregated-fields HTTP/1.1" 200 OK
+INFO:watchfiles.main:1 change detected
+INFO:watchfiles.main:1 change detected
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56864 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56865 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:56864 - "GET /api/common-fields?t=1761347323396 HTTP/1.1" 200 OK
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:56865 - "GET /api/common-fields?t=1761347323564 HTTP/1.1" 200 OK
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56853 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56852 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56865 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:56865 - "GET /api/common-fields?t=1761347325735 HTTP/1.1" 200 OK
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56864 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56909 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:56864 - "GET /api/common-fields?t=1761347326219 HTTP/1.1" 200 OK
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:56947 - "GET /api/common-fields?t=1761347326221 HTTP/1.1" 200 OK
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56909 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:56947 - "GET /api/common-fields?t=1761347328175 HTTP/1.1" 200 OK
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56909 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:56947 - "GET /api/common-fields?t=1761347330285 HTTP/1.1" 200 OK
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:56909 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:56909 - "GET /api/common-fields?t=1761347332413 HTTP/1.1" 200 OK
+INFO:watchfiles.main:1 change detected
+WARNING:  WatchFiles detected changes in 'check_all_templates.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:main:🛑 Shutting down Valuation Application...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [58589]
+INFO:watchfiles.main:1 change detected
+WARNING:  WatchFiles detected changes in 'check_all_templates.py'. Reloading...
+INFO:     Started server process [59390]
+INFO:     Waiting for application startup.
+INFO:main:🚀 Starting Valuation Application...
+INFO:     Application startup complete.
+INFO:watchfiles.main:1 change detected
+WARNING:  WatchFiles detected changes in 'check_all_templates.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:main:🛑 Shutting down Valuation Application...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [59390]
+INFO:     Started server process [59734]
+INFO:     Waiting for application startup.
+INFO:main:🚀 Starting Valuation Application...
+INFO:     Application startup complete.
+INFO:main:🔄 Aggregation API call for template: PNB/PNB_STANDARD_REF_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+WARNING:main:❌ Template not found: PNB_STANDARD_REF_001 for bank PNB
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:57023 - "GET /api/templates/PNB/PNB_STANDARD_REF_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:🔄 Aggregation API call for template: PNB/PNB_STANDARD_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+WARNING:main:❌ Template not found: PNB_STANDARD_001 for bank PNB
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:57034 - "GET /api/templates/PNB/PNB_STANDARD_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:🔄 Aggregation API call for template: PNB/standard
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+WARNING:main:❌ Template not found: standard for bank PNB
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:57049 - "GET /api/templates/PNB/standard/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:watchfiles.main:1 change detected
+WARNING:  WatchFiles detected changes in 'check_pnb.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:main:🛑 Shutting down Valuation Application...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [59734]
+INFO:watchfiles.main:1 change detected
+WARNING:  WatchFiles detected changes in 'check_pnb.py'. Reloading...
+INFO:     Started server process [60456]
+INFO:     Waiting for application startup.
+INFO:main:🚀 Starting Valuation Application...
+INFO:     Application startup complete.
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:57078 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:watchfiles.main:1 change detected
+INFO:watchfiles.main:1 change detected
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:57111 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:57112 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:57111 - "GET /api/common-fields?t=1761347458319 HTTP/1.1" 200 OK
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:57112 - "GET /api/common-fields?t=1761347458491 HTTP/1.1" 200 OK
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:57099 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:57100 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:57111 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:57112 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:57155 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:57111 - "GET /api/common-fields?t=1761347460608 HTTP/1.1" 200 OK
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:57112 - "GET /api/common-fields?t=1761347460933 HTTP/1.1" 200 OK
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:57155 - "GET /api/common-fields?t=1761347460934 HTTP/1.1" 200 OK
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:57195 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:57155 - "GET /api/common-fields?t=1761347462962 HTTP/1.1" 200 OK
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:57195 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:🔄 Aggregation API call for template: SBI/SBI_LAND_001
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:57155 - "GET /api/common-fields?t=1761347464951 HTTP/1.1" 200 OK
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+WARNING:main:❌ Template not found: SBI_LAND_001 for bank SBI
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:57195 - "GET /api/templates/SBI/SBI_LAND_001/aggregated-fields HTTP/1.1" 404 Not Found
+INFO:main:📋 API call received for common fields
+INFO:backend.utils.field_file_manager:📋 Successfully read 7 fields from file (generated: 2025-10-24T15:14:07.527376+00:00)
+INFO:main:📋 Loaded 7 active fields from local file (filtered from 7 total)
+INFO:main:✅ Returning 7 fields to API clients
+INFO:     127.0.0.1:57195 - "GET /api/common-fields?t=1761347466956 HTTP/1.1" 200 OK
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:57255 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:57256 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:57256 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:57255 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:🔄 Aggregation API call for template: SBI/apartment
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+ERROR:backend.database.multi_db_manager:💥 Unexpected error during MongoDB connection: The resolution lifetime expired after 32.003 seconds: Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.
+INFO:backend.database.multi_db_manager:🔄 Retrying in 2 seconds...
+INFO:main:🔄 Aggregation API call for template: SBI/apartment
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+ERROR:backend.database.multi_db_manager:💥 Unexpected error during MongoDB connection: The resolution lifetime expired after 32.006 seconds: Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.
+INFO:backend.database.multi_db_manager:🔄 Retrying in 2 seconds...
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+ERROR:backend.database.multi_db_manager:💥 Unexpected error during MongoDB connection: The resolution lifetime expired after 32.001 seconds: Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.
+INFO:backend.database.multi_db_manager:🔄 Retrying in 2 seconds...
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 2/3...
+ERROR:backend.database.multi_db_manager:💥 Unexpected error during MongoDB connection: The resolution lifetime expired after 32.005 seconds: Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.
+INFO:backend.database.multi_db_manager:🔄 Retrying in 4 seconds...
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+ERROR:backend.database.multi_db_manager:💥 Unexpected error during MongoDB connection: The resolution lifetime expired after 32.006 seconds: Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.
+INFO:backend.database.multi_db_manager:🔄 Retrying in 2 seconds...
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 2/3...
+ERROR:backend.database.multi_db_manager:💥 Unexpected error during MongoDB connection: The resolution lifetime expired after 32.003 seconds: Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.
+INFO:backend.database.multi_db_manager:🔄 Retrying in 4 seconds...
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 2/3...
+ERROR:backend.database.multi_db_manager:💥 Unexpected error during MongoDB connection: The resolution lifetime expired after 32.005 seconds: Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.; Server Do53:192.168.0.1@53 answered The DNS operation timed out.
+INFO:backend.database.multi_db_manager:🔄 Retrying in 4 seconds...
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 3/3...
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 2/3...
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 3/3...
+INFO:main:🔄 Aggregation API call for template: SBI/apartment
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 3/3...
+INFO:main:🔄 Aggregation API call for template: SBI/apartment
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/apartment
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/apartment
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:     127.0.0.1:57413 - "GET /api/health HTTP/1.1" 200 OK
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:✅ Aggregation complete: 7 common fields, 15 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:57321 - "GET /api/templates/SBI/apartment/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:✅ Aggregation complete: 7 common fields, 15 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:57322 - "GET /api/templates/SBI/apartment/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:✅ Aggregation complete: 7 common fields, 15 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:57337 - "GET /api/templates/SBI/apartment/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:57334 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:57333 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:🔄 Aggregation API call for template: SBI/apartment
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔄 Aggregation API call for template: SBI/apartment
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:✅ Aggregation complete: 7 common fields, 15 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:57336 - "GET /api/templates/SBI/apartment/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:✅ Aggregation complete: 7 common fields, 15 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:57343 - "GET /api/templates/SBI/apartment/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:57376 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:main:✅ Aggregation complete: 7 common fields, 15 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:57344 - "GET /api/templates/SBI/apartment/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:57380 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:watchfiles.main:3 changes detected
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:57382 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:57384 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:watchfiles.main:6 changes detected
+WARNING:  WatchFiles detected changes in 'check_all_templates.py', 'check_templates.py', 'check_pnb.py'. Reloading...
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:57388 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:57386 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:     Waiting for connections to close. (CTRL+C to force quit)
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:✅ Aggregation complete: 7 common fields, 15 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:57322 - "GET /api/templates/SBI/apartment/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:✅ Aggregation complete: 7 common fields, 15 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:57321 - "GET /api/templates/SBI/apartment/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:57376 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:     Waiting for application shutdown.
+INFO:main:🛑 Shutting down Valuation Application...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [60456]
+INFO:     Started server process [61847]
+INFO:     Waiting for application startup.
+INFO:main:🚀 Starting Valuation Application...
+INFO:     Application startup complete.
+INFO:main:🔄 Aggregation API call for template: SBI/apartment
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:✅ Aggregation complete: 7 common fields, 15 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:57631 - "GET /api/templates/SBI/apartment/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:57659 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases
+INFO:main:🔍 Fetching fields using direct queries based on template configuration
+INFO:main:🔍 No fields found with applicableFor filter, trying with isActive only
+INFO:main:✅ Aggregation complete: 7 common fields, 52 bank-specific fields
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:backend.database.multi_db_manager:🔒 Disconnected from MongoDB Atlas
+INFO:     127.0.0.1:57659 - "GET /api/templates/SBI/land/aggregated-fields HTTP/1.1" 200 OK
+INFO:main:🔄 Aggregation API call for template: SBI/land
+INFO:backend.database.multi_db_manager:Connecting to MongoDB Atlas (Multi-Database) - Attempt 1/3...
+INFO:backend.database.multi_db_manager:📋 Connected to main database: valuation_app_prod
+INFO:backend.database.multi_db_manager:📋 Connected to admin database: valuation_admin
+INFO:backend.database.multi_db_manager:📋 Connected to reports database: valuation_reports
+INFO:backend.database.multi_db_manager:✅ Successfully connected to all MongoDB Atlas databases

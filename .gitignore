@@ -26,6 +26,7 @@ valuation_env/
 venv/
 env/
 ENV/
+sample_template/
 
 # IDEs
 .vscode/

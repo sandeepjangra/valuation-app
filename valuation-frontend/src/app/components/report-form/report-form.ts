@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { CommonField, BankBranch, ProcessedTemplateData, FieldGroup, TemplateField, BankSpecificField } from '../../models';
+import { CommonField, BankBranch, ProcessedTemplateData, FieldGroup, TemplateField, BankSpecificField, BankSpecificTab, BankSpecificSection } from '../../models';
 import { TemplateService } from '../../services/template.service';
 
 @Component({
@@ -28,9 +28,9 @@ export class ReportForm implements OnInit {
   isLoading = false;
   
   // Current active tab
-  activeTab = 'common';
+  activeTab = 'template';  // Default to template tab instead of common
   
-  // Bank-specific sub-tabs
+  // Bank-specific dynamic tabs
   activeBankSpecificTab: string | null = null;
 
   constructor(
@@ -38,7 +38,8 @@ export class ReportForm implements OnInit {
     private route: ActivatedRoute,
     private fb: FormBuilder,
     private http: HttpClient,
-    private templateService: TemplateService
+    private templateService: TemplateService,
+    private cdr: ChangeDetectorRef
   ) {
     this.reportForm = this.fb.group({});
   }
@@ -84,9 +85,11 @@ export class ReportForm implements OnInit {
 
     this.isLoading = true;
     
-    console.log(`🔄 Loading template data for: ${this.selectedBankCode}/${this.selectedTemplateId}`);
+    // Convert templateId to templateCode (uppercase LAND -> lowercase land)
+    const templateCode = this.selectedTemplateId.toLowerCase();
+    console.log(`🔄 Loading template data for: ${this.selectedBankCode}/${templateCode} (converted from ${this.selectedTemplateId})`);
     
-    this.templateService.getAggregatedTemplateFields(this.selectedBankCode, this.selectedTemplateId)
+    this.templateService.getAggregatedTemplateFields(this.selectedBankCode, templateCode)
       .subscribe({
         next: (response) => {
           console.log('✅ Raw aggregated API Response:', response);
@@ -98,7 +101,7 @@ export class ReportForm implements OnInit {
           
           console.log('🏗️ Processed template data:', {
             commonFieldGroups: this.templateData.commonFieldGroups.length,
-            bankSpecificFieldGroups: this.templateData.bankSpecificFieldGroups.length,
+            bankSpecificTabs: this.templateData.bankSpecificTabs.length,
             totalFields: this.templateData.totalFieldCount,
             templateData: this.templateData
           });
@@ -109,6 +112,10 @@ export class ReportForm implements OnInit {
           this.initializeBankSpecificTabs();
           
           this.isLoading = false;
+          
+          // Force change detection to ensure template updates
+          this.cdr.detectChanges();
+          console.log('🔄 Change detection triggered after template data load');
         },
         error: (error) => {
           console.error('❌ Error loading template data:', error);
@@ -158,7 +165,7 @@ export class ReportForm implements OnInit {
     // Debug log the fields being used for form building
     console.log('🏗️ Building form with template data:', {
       commonFields: this.templateData.commonFieldGroups.length,
-      bankSpecificFields: this.templateData.bankSpecificFieldGroups.length,
+      bankSpecificTabs: this.templateData.bankSpecificTabs.length,
       totalFields: this.templateData.totalFieldCount
     });
     
@@ -189,6 +196,11 @@ export class ReportForm implements OnInit {
     
     this.reportForm = this.fb.group(formControls);
     
+    // Subscribe to form value changes for conditional logic
+    this.reportForm.valueChanges.subscribe(values => {
+      this.handleFormValueChanges(values);
+    });
+    
     // Disable readonly fields
     this.templateData.allFields.forEach(field => {
       if (field.isReadonly) {
@@ -218,9 +230,9 @@ export class ReportForm implements OnInit {
    * Initialize bank-specific tabs - set first tab as active
    */
   initializeBankSpecificTabs() {
-    const bankSpecificGroups = this.getBankSpecificFieldGroups();
-    if (bankSpecificGroups.length > 0) {
-      this.activeBankSpecificTab = bankSpecificGroups[0].groupName;
+    const bankSpecificTabs = this.getBankSpecificTabs();
+    if (bankSpecificTabs.length > 0) {
+      this.activeBankSpecificTab = bankSpecificTabs[0].tabId;
       console.log('🔧 Initialized bank-specific tab:', this.activeBankSpecificTab);
     }
   }
@@ -285,7 +297,7 @@ export class ReportForm implements OnInit {
               displayName: 'Common Fields',
               fields: fields.filter(field => field.isActive).sort((a, b) => a.sortOrder - b.sortOrder)
             }],
-            bankSpecificFieldGroups: [],
+            bankSpecificTabs: [],
             allFields: fields.filter(field => field.isActive).sort((a, b) => a.sortOrder - b.sortOrder),
             totalFieldCount: fields.filter(field => field.isActive).length
           };
@@ -306,7 +318,7 @@ export class ReportForm implements OnInit {
               version: '1.0'
             },
             commonFieldGroups: [],
-            bankSpecificFieldGroups: [],
+            bankSpecificTabs: [],
             allFields: [],
             totalFieldCount: 0
           };
@@ -315,7 +327,41 @@ export class ReportForm implements OnInit {
   }
 
   loadBankBranches() {
-    // Load bank branches from the same banks data used in New Report
+    // Load bank branches dynamically from API instead of hardcoded data
+    this.http.get<any[]>('http://localhost:8000/api/banks')
+      .subscribe({
+        next: (banks) => {
+          console.log('🏦 Loaded banks data:', banks);
+          
+          // Find the selected bank and populate branches
+          const selectedBank = banks.find((bank: any) => bank.bankCode === this.selectedBankCode);
+          if (selectedBank && selectedBank.branches) {
+            this.availableBranches = selectedBank.branches
+              .filter((branch: any) => branch.isActive)
+              .map((branch: any) => ({
+                value: branch.branchId,
+                label: branch.branchName
+              }));
+            
+            console.log(`🔧 Loaded ${this.availableBranches.length} branches for ${this.selectedBankCode}:`, 
+              this.availableBranches.map((b: any) => b.label));
+          } else {
+            console.warn(`⚠️ No branches found for bank: ${this.selectedBankCode}`);
+            this.availableBranches = [];
+          }
+        },
+        error: (error) => {
+          console.error('❌ Error loading bank branches:', error);
+          
+          // Fallback to hardcoded data if API fails
+          this.loadBankBranchesFallback();
+        }
+      });
+  }
+
+  private loadBankBranchesFallback() {
+    console.log('🔄 Using fallback hardcoded branch data');
+    
     const banksData = {
       documents: [
         {
@@ -375,11 +421,11 @@ export class ReportForm implements OnInit {
     };
 
     // Find the selected bank and populate branches
-    const selectedBank = banksData.documents.find(bank => bank.bankCode === this.selectedBankCode);
+    const selectedBank = banksData.documents.find((bank: any) => bank.bankCode === this.selectedBankCode);
     if (selectedBank && selectedBank.branches) {
       this.availableBranches = selectedBank.branches
-        .filter(branch => branch.isActive)
-        .map(branch => ({
+        .filter((branch: any) => branch.isActive)
+        .map((branch: any) => ({
           value: branch.branchId,
           label: branch.branchName
         }));
@@ -408,20 +454,62 @@ export class ReportForm implements OnInit {
     return this.templateData?.commonFieldGroups || [];
   }
 
-  getBankSpecificFieldGroups(): FieldGroup[] {
-    return this.templateData?.bankSpecificFieldGroups || [];
+  getBankSpecificTabs(): BankSpecificTab[] {
+    const tabs = this.templateData?.bankSpecificTabs || [];
+    console.log('🔍 getBankSpecificTabs() called:', {
+      tabsCount: tabs.length,
+      tabs: tabs.map(t => ({ 
+        id: t.tabId, 
+        name: t.tabName, 
+        fieldsCount: t.fields.length,
+        hasSections: t.hasSections,
+        sectionsCount: t.sections?.length || 0 
+      }))
+    });
+    return tabs;
   }
 
   hasCommonFields(): boolean {
-    return this.getCommonFieldGroups().length > 0;
+    if (!this.templateData) {
+      console.log('🔍 hasCommonFields(): No template data yet');
+      return false;
+    }
+    const hasFields = this.getCommonFieldGroups().length > 0;
+    console.log('🔍 hasCommonFields():', {
+      hasFields,
+      commonFieldGroups: this.getCommonFieldGroups().length,
+      templateData: !!this.templateData
+    });
+    return hasFields;
   }
 
   hasBankSpecificFields(): boolean {
-    return this.getBankSpecificFieldGroups().length > 0;
+    if (!this.templateData) {
+      console.log('🔍 hasBankSpecificFields(): No template data yet');
+      return false;
+    }
+    const hasFields = this.getBankSpecificTabs().length > 0;
+    console.log('🔍 hasBankSpecificFields():', {
+      hasFields,
+      bankSpecificTabs: this.getBankSpecificTabs().length,
+      templateData: !!this.templateData
+    });
+    return hasFields;
   }
 
   getTotalFieldCount(): number {
     return this.templateData?.totalFieldCount || 0;
+  }
+
+  // Check if form is ready with controls
+  isFormReady(): boolean {
+    const hasControls = this.reportForm && Object.keys(this.reportForm.controls).length > 0;
+    console.log('🔍 isFormReady():', {
+      hasControls,
+      controlsCount: Object.keys(this.reportForm?.controls || {}).length,
+      templateData: !!this.templateData
+    });
+    return hasControls;
   }
 
   // Tab navigation
@@ -430,9 +518,45 @@ export class ReportForm implements OnInit {
   }
 
   // Bank-specific tab navigation
-  switchBankSpecificTab(tabName: string) {
-    this.activeBankSpecificTab = tabName;
-    console.log('🔄 Switched to bank-specific tab:', tabName);
+  switchBankSpecificTab(tabId: string) {
+    this.activeBankSpecificTab = tabId;
+    console.log('🔄 Switched to bank-specific tab:', tabId);
+  }
+
+  // Get active bank-specific tab data
+  getActiveBankSpecificTab(): BankSpecificTab | null {
+    if (!this.activeBankSpecificTab) return null;
+    const activeTab = this.getBankSpecificTabs().find(tab => tab.tabId === this.activeBankSpecificTab) || null;
+    
+    // Debug logging
+    if (activeTab) {
+      console.log('🔍 Active tab details:', {
+        tabId: activeTab.tabId,
+        tabName: activeTab.tabName,
+        fieldsCount: activeTab.fields.length,
+        hasSections: activeTab.hasSections,
+        sectionsCount: activeTab.sections?.length || 0,
+        fields: activeTab.fields.map(f => ({ id: f.fieldId, name: f.uiDisplayName, type: f.fieldType }))
+      });
+    }
+    
+    return activeTab;
+  }
+
+  // Check if a tab has sections
+  tabHasSections(tab: BankSpecificTab): boolean {
+    return tab.hasSections && (tab.sections?.length || 0) > 0;
+  }
+
+  // Get sections for a tab
+  getTabSections(tab: BankSpecificTab): BankSpecificSection[] {
+    return tab.sections || [];
+  }
+
+  // Get fields for a specific section within a tab
+  getSectionFields(tab: BankSpecificTab, sectionId: string): BankSpecificField[] {
+    const section = tab.sections?.find(s => s.sectionId === sectionId);
+    return section?.fields || [];
   }
 
   // Actions
@@ -462,4 +586,120 @@ export class ReportForm implements OnInit {
   goBackToSelection() {
     this.router.navigate(['/new-report']);
   }
+
+  /**
+   * Evaluates conditional logic for a field or field group
+   */
+  evaluateConditionalLogic(conditionalLogic: any): boolean {
+    if (!conditionalLogic || !conditionalLogic.field) {
+      return true; // Show field if no conditional logic
+    }
+
+    const fieldValue = this.reportForm.get(conditionalLogic.field)?.value;
+    const targetValue = conditionalLogic.value;
+    const operator = conditionalLogic.operator || '==';
+
+    switch (operator) {
+      case '==':
+      case 'equals':
+        return fieldValue === targetValue;
+      case '!=':
+      case 'not_equals':
+        return fieldValue !== targetValue;
+      case 'in':
+        return Array.isArray(targetValue) && targetValue.includes(fieldValue);
+      case 'not_in':
+        return Array.isArray(targetValue) && !targetValue.includes(fieldValue);
+      case 'empty':
+        return !fieldValue || fieldValue === '';
+      case 'not_empty':
+        return fieldValue && fieldValue !== '';
+      default:
+        console.warn(`Unknown conditional operator: ${operator}`);
+        return true;
+    }
+  }
+
+  /**
+   * Checks if a field should be visible based on conditional logic
+   */
+  shouldShowField(field: any): boolean {
+    if (!field.conditionalLogic) {
+      return true;
+    }
+    return this.evaluateConditionalLogic(field.conditionalLogic);
+  }
+
+  /**
+   * Checks if a field group should be visible based on conditional logic
+   */
+  shouldShowFieldGroup(fieldGroup: any): boolean {
+    if (!fieldGroup.conditionalLogic) {
+      return true;
+    }
+    return this.evaluateConditionalLogic(fieldGroup.conditionalLogic);
+  }
+
+  /**
+   * Checks if a section should be visible based on conditional logic
+   */
+  shouldShowSection(section: any): boolean {
+    if (!section.conditionalLogic) {
+      return true;
+    }
+    return this.evaluateConditionalLogic(section.conditionalLogic);
+  }
+
+  /**
+   * Handles form value changes to apply conditional logic
+   */
+  handleFormValueChanges(formValues: any): void {
+    if (!this.templateData || !this.reportForm) {
+      return;
+    }
+
+    // Update field visibility and disabled states based on conditional logic
+    this.templateData.allFields.forEach(field => {
+      this.updateFieldConditionalState(field, formValues);
+      
+      // Handle sub-fields for group fields
+      if (field.fieldType === 'group' && field.subFields) {
+        field.subFields.forEach(subField => {
+          this.updateFieldConditionalState(subField, formValues);
+        });
+      }
+    });
+  }
+
+  /**
+   * Updates a field's conditional state (visibility and disabled status)
+   */
+  private updateFieldConditionalState(field: any, formValues: any): void {
+    const control = this.reportForm?.get(field.fieldId);
+    if (!control) {
+      return;
+    }
+
+    // Check if field should be disabled based on conditional logic
+    const shouldDisable = this.isFieldDisabled(field);
+    
+    if (shouldDisable && !control.disabled) {
+      control.disable({ emitEvent: false });
+    } else if (!shouldDisable && control.disabled && !field.isReadonly) {
+      control.enable({ emitEvent: false });
+    }
+  }
+
+  /**
+   * Gets the disabled state of a field based on conditional logic
+   */
+  isFieldDisabled(field: any): boolean {
+    if (!field.conditionalLogic) {
+      return false;
+    }
+    
+    // If conditional logic evaluates to false, disable the field
+    return !this.evaluateConditionalLogic(field.conditionalLogic);
+  }
+
 }

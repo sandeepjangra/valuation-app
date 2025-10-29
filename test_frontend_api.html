@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend API Test</title>
+</head>
+<body>
+    <h1>Frontend API Test</h1>
+    <button onclick="testAggregationAPI()">Test Aggregation API</button>
+    <div id="results"></div>
+
+    <script>
+        async function testAggregationAPI() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p>Testing aggregation API...</p>';
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/templates/SBI/land/aggregated-fields');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                resultsDiv.innerHTML = `
+                    <h2>✅ API Response Successful</h2>
+                    <h3>Template Info:</h3>
+                    <p><strong>Bank:</strong> ${data.templateInfo.bankName}</p>
+                    <p><strong>Template:</strong> ${data.templateInfo.templateName}</p>
+                    
+                    <h3>Fields Summary:</h3>
+                    <p><strong>Common Fields:</strong> ${data.commonFields.length}</p>
+                    <p><strong>Bank-Specific Fields:</strong> ${data.bankSpecificFields.length}</p>
+                    
+                    <h3>Sample Common Fields:</h3>
+                    <ul>
+                        ${data.commonFields.slice(0, 5).map(field => 
+                            `<li>${field.uiDisplayName} (${field.fieldType})</li>`
+                        ).join('')}
+                    </ul>
+                    
+                    <h3>Sample Bank-Specific Fields:</h3>
+                    <ul>
+                        ${data.bankSpecificFields.slice(0, 5).map(field => 
+                            `<li>${field.uiDisplayName} (${field.fieldType})</li>`
+                        ).join('')}
+                    </ul>
+                    
+                    <details>
+                        <summary>Full Response</summary>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </details>
+                `;
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <h2>❌ API Test Failed</h2>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p>Check if backend is running and CORS is configured properly.</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

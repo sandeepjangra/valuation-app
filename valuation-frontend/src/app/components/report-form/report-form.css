@@ -868,3 +868,97 @@
   padding-bottom: 8px;
   border-bottom: 2px solid #e5e7eb;
 }
+
+/* Valuation section styling */
+.valuation-section {
+  margin-bottom: 28px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.section-title {
+  color: #1e293b;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+  padding: 0 0 8px 0;
+  border-bottom: 2px solid #3b82f6;
+  display: inline-block;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Conditional Logic & Disabled Field Styles */
+.disabled-field {
+  background-color: #f3f4f6 !important;
+  color: #6b7280 !important;
+  border-color: #d1d5db !important;
+  cursor: not-allowed !important;
+  opacity: 0.7;
+}
+
+.disabled-field:hover {
+  background-color: #f3f4f6 !important;
+  border-color: #d1d5db !important;
+}
+
+.disabled-field:focus {
+  background-color: #f3f4f6 !important;
+  border-color: #d1d5db !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Disabled fieldset styling */
+fieldset:disabled {
+  background-color: #f9fafb;
+  border-color: #e5e7eb;
+  opacity: 0.7;
+}
+
+fieldset:disabled .group-legend {
+  color: #6b7280;
+}
+
+fieldset:disabled .form-input,
+fieldset:disabled .form-select,
+fieldset:disabled .form-textarea {
+  background-color: #f3f4f6;
+  color: #6b7280;
+  border-color: #d1d5db;
+  cursor: not-allowed;
+}
+
+/* Hidden field styling */
+[hidden] {
+  display: none !important;
+}
+
+/* Conditional field transition */
+.form-field {
+  transition: opacity 0.3s ease, background-color 0.3s ease;
+}
+
+.form-field[hidden] {
+  opacity: 0;
+}
+
+/* Enhanced visual feedback for conditional fields */
+.conditional-field-hidden {
+  opacity: 0;
+  height: 0;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.conditional-field-visible {
+  opacity: 1;
+  transition: all 0.3s ease;
+}
