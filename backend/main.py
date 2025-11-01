@@ -749,6 +749,22 @@ async def get_aggregated_template_fields(bank_code: str, template_id: str) -> JS
     try:
         logger.info(f"🔄 Dynamic Aggregation API call for template: {bank_code}/{template_id}")
         
+        def process_group_fields(fields_list):
+            """Process group fields to ensure subFields are also included in fields array"""
+            if not fields_list:
+                return fields_list
+                
+            for field in fields_list:
+                if field.get("fieldType") == "group" and field.get("subFields"):
+                    # Ensure the subFields are also in the fields array
+                    if "fields" not in field:
+                        field["fields"] = []
+                    # Copy subFields to fields if not already present
+                    for sub_field in field["subFields"]:
+                        if sub_field not in field["fields"]:
+                            field["fields"].append(sub_field)
+            return fields_list
+        
         async with MultiDatabaseSession() as db:
             # Get the bank and template information
             bank = await db.find_one(
@@ -874,20 +890,25 @@ async def get_aggregated_template_fields(bank_code: str, template_id: str) -> JS
                                 break
                         
                         if document_section:
+                            # Process group fields in this section
+                            processed_fields = process_group_fields(document_section.get("fields", []))
+                            
                             section = {
                                 "sectionId": section_config.get("sectionId"),
                                 "sectionName": section_config.get("sectionName"),
                                 "sortOrder": section_config.get("sortOrder"),
                                 "description": section_config.get("description", ""),
-                                "fields": document_section.get("fields", [])
+                                "fields": processed_fields
                             }
                             tab["sections"].append(section)
                             # Also add fields to tab level for backward compatibility
-                            tab["fields"].extend(document_section.get("fields", []))
+                            tab["fields"].extend(processed_fields)
                 
                 # Handle tabs without sections (normal field structure)
                 else:
-                    tab["fields"] = document.get("fields", [])
+                    # Process group fields in this tab
+                    processed_fields = process_group_fields(document.get("fields", []))
+                    tab["fields"] = processed_fields
                 
                 bank_specific_tabs.append(tab)
             

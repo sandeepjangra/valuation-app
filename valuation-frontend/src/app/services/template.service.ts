@@ -51,12 +51,27 @@ export class TemplateService {
     // Combine all fields for form building (flatten tabs and sections)
     const allFields: (TemplateField | BankSpecificField)[] = [...response.commonFields];
     
-    // Extract all fields from tabs and sections
+    // Extract all fields from tabs and sections, including sub-fields from group fields
     bankSpecificTabs.forEach(tab => {
-      allFields.push(...tab.fields);
+      // Add tab-level fields
+      tab.fields.forEach(field => {
+        allFields.push(field);
+        // If it's a group field, also add its sub-fields
+        if (field.fieldType === 'group' && field.subFields) {
+          allFields.push(...field.subFields);
+        }
+      });
+      
+      // Add section-level fields
       if (tab.sections) {
         tab.sections.forEach(section => {
-          allFields.push(...section.fields);
+          section.fields.forEach(field => {
+            allFields.push(field);
+            // If it's a group field, also add its sub-fields
+            if (field.fieldType === 'group' && field.subFields) {
+              allFields.push(...field.subFields);
+            }
+          });
         });
       }
     });
