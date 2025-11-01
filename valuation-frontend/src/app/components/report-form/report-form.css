@@ -962,3 +962,143 @@ fieldset:disabled .form-textarea {
   opacity: 1;
   transition: all 0.3s ease;
 }
+
+/* Currency Field Styles */
+.currency-field .currency-input-wrapper {
+  display: flex;
+  align-items: center;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  background: white;
+  transition: all 0.2s ease;
+}
+
+.currency-field .currency-input-wrapper:focus-within {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.currency-prefix,
+.currency-suffix {
+  padding: 12px 8px;
+  background: #f9fafb;
+  color: #6b7280;
+  font-weight: 500;
+  border-right: 1px solid #e5e7eb;
+  white-space: nowrap;
+}
+
+.currency-suffix {
+  border-right: none;
+  border-left: 1px solid #e5e7eb;
+}
+
+.currency-input {
+  border: none !important;
+  box-shadow: none !important;
+  padding: 12px 16px;
+  flex: 1;
+  min-width: 0;
+}
+
+.currency-input:focus {
+  outline: none;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Calculated Field Styles */
+.calculated-field .calculated-input {
+  background: #f9fafb;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+.calculated-indicator {
+  font-size: 12px;
+  margin-left: 4px;
+}
+
+/* Table Field Styles */
+.table-field {
+  margin-bottom: 24px;
+}
+
+.table-container {
+  overflow-x: auto;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  background: white;
+}
+
+.valuation-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.valuation-table th {
+  background: #f9fafb;
+  color: #374151;
+  font-weight: 600;
+  padding: 12px 8px;
+  text-align: left;
+  border-bottom: 2px solid #e5e7eb;
+  border-right: 1px solid #e5e7eb;
+}
+
+.valuation-table th:last-child {
+  border-right: none;
+}
+
+.valuation-table td {
+  padding: 8px;
+  border-bottom: 1px solid #e5e7eb;
+  border-right: 1px solid #e5e7eb;
+  vertical-align: top;
+}
+
+.valuation-table td:last-child {
+  border-right: none;
+}
+
+.valuation-table tr:last-child td {
+  border-bottom: none;
+}
+
+.table-input {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 13px;
+  transition: all 0.2s ease;
+}
+
+.table-input:focus {
+  outline: none;
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.1);
+}
+
+.table-cell-readonly {
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* Responsive table */
+@media (max-width: 768px) {
+  .table-container {
+    font-size: 12px;
+  }
+  
+  .valuation-table th,
+  .valuation-table td {
+    padding: 6px 4px;
+  }
+  
+  .table-input {
+    font-size: 12px;
+    padding: 4px 6px;
+  }
+}

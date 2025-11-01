@@ -702,4 +702,79 @@ export class ReportForm implements OnInit {
     return !this.evaluateConditionalLogic(field.conditionalLogic);
   }
 
+  /**
+   * Get calculated value for calculated fields
+   */
+  getCalculatedValue(field: any): string {
+    if (!field.formula) return '';
+    
+    try {
+      // Simple formula evaluation - can be enhanced with a proper expression parser
+      let formula = field.formula;
+      const formControls = this.reportForm.controls;
+      
+      // Replace field references with actual values
+      Object.keys(formControls).forEach(fieldId => {
+        const value = formControls[fieldId].value || 0;
+        formula = formula.replace(new RegExp(fieldId, 'g'), value.toString());
+      });
+      
+      // Evaluate simple mathematical expressions
+      // Note: In production, use a proper expression parser for security
+      const result = Function('"use strict"; return (' + formula + ')')();
+      return isNaN(result) ? '' : result.toString();
+    } catch (error) {
+      console.warn('Error calculating formula:', field.formula, error);
+      return '';
+    }
+  }
+
+  /**
+   * Get input type for table cells
+   */
+  getTableCellInputType(fieldType: string): string {
+    switch (fieldType) {
+      case 'number':
+      case 'currency':
+      case 'decimal':
+        return 'number';
+      case 'date':
+        return 'date';
+      case 'email':
+        return 'email';
+      default:
+        return 'text';
+    }
+  }
+
+  /**
+   * Update table cell value
+   */
+  updateTableCell(tableFieldId: string, rowIndex: number, columnId: string, event: any): void {
+    const value = event.target.value;
+    
+    // Find the table field in template data
+    let tableField: any = null;
+    
+    // Search in all fields
+    if (this.templateData) {
+      for (const field of this.templateData.allFields) {
+        if (field.fieldId === tableFieldId) {
+          tableField = field;
+          break;
+        }
+      }
+    }
+    
+    if (tableField && tableField.rows && tableField.rows[rowIndex]) {
+      tableField.rows[rowIndex][columnId] = value;
+      
+      // Trigger change detection
+      this.cdr.detectChanges();
+      
+      // Optionally update form control if needed
+      console.log(`Updated table ${tableFieldId} row ${rowIndex} column ${columnId} to:`, value);
+    }
+  }
+
 }
