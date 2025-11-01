@@ -61,7 +61,11 @@ export type FieldType =
   | 'radio' 
   | 'file'
   | 'currency'
-  | 'group';
+  | 'group'
+  | 'decimal'
+  | 'calculated'
+  | 'table'
+  | 'multiselect';
 
 export interface CommonFieldsApiResponse {
   metadata: {

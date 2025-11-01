@@ -2,6 +2,22 @@
 
 import { FieldType, FieldOption, FieldValidation, DataSourceConfig } from './common-field.model';
 
+// Table field interfaces
+export interface TableColumn {
+  columnId: string;
+  columnName: string;
+  fieldType: string;
+  isRequired?: boolean;
+  isEditable?: boolean;
+  isReadonly?: boolean;
+  placeholder?: string;
+}
+
+export interface TableRow {
+  [key: string]: any; // Dynamic properties based on column IDs
+  isReadonly?: boolean; // For readonly rows
+}
+
 export interface TemplateField {
   _id: string;
   fieldId: string;
@@ -23,6 +39,14 @@ export interface TemplateField {
   defaultValue?: string;
   metadata?: any;
   subFields?: TemplateField[]; // For group fields
+  
+  // Enhanced field properties
+  prefix?: string; // For currency fields
+  suffix?: string; // For currency fields
+  formula?: string; // For calculated fields
+  displayFormat?: string; // For calculated fields
+  columns?: TableColumn[]; // For table fields
+  rows?: TableRow[]; // For table fields
 }
 
 export interface BankSpecificField {
@@ -47,6 +71,14 @@ export interface BankSpecificField {
   defaultValue?: string;
   metadata?: any;
   subFields?: BankSpecificField[]; // For group fields
+  
+  // Enhanced field properties
+  prefix?: string; // For currency fields
+  suffix?: string; // For currency fields
+  formula?: string; // For calculated fields
+  displayFormat?: string; // For calculated fields
+  columns?: TableColumn[]; // For table fields
+  rows?: TableRow[]; // For table fields
 }
 
 export interface BankSpecificSection {
