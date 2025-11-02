@@ -18,8 +18,8 @@ body {
 
 /* Main content area */
 .main-content {
-  min-height: calc(100vh - 70px); /* Account for header height */
-  padding: 30px;
+  min-height: 100vh;
+  padding: 72px 20px 20px 20px; /* Very compact padding */
   background: linear-gradient(135deg, #faf9ff 0%, #f3f0ff 100%);
 }
 
@@ -33,10 +33,16 @@ body {
 /* Basic responsive design */
 @media (max-width: 768px) {
   .main-content {
-    padding: 10px;
+    padding: 62px 10px 10px 10px; /* Very compact for mobile */
   }
   
   .container {
     padding: 0 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 75px 10px 10px 10px; /* Compact for mobile stacked header */
   }
 }

@@ -170,6 +170,7 @@ export class ReportForm implements OnInit {
     });
     
     // Process all fields from template data
+    console.log('🏗️ Creating form controls for fields:');
     this.templateData.allFields.forEach(field => {
       const validators = this.buildFieldValidators(field);
       
@@ -183,18 +184,44 @@ export class ReportForm implements OnInit {
       const defaultValue = this.templateService.getFieldDefaultValue(field, contextData);
       
       formControls[field.fieldId] = [defaultValue, validators];
+      console.log(`  ✅ ${field.fieldId} (${field.fieldType}): ${field.uiDisplayName}`);
       
       // Add sub-field controls for group fields
       if (field.fieldType === 'group' && field.subFields) {
+        console.log(`    🔸 Group has ${field.subFields.length} sub-fields:`);
         field.subFields.forEach(subField => {
           const subValidators = this.buildFieldValidators(subField);
           const subDefaultValue = this.templateService.getFieldDefaultValue(subField, contextData);
           formControls[subField.fieldId] = [subDefaultValue, subValidators];
+          console.log(`      ✅ ${subField.fieldId} (${subField.fieldType}): ${subField.uiDisplayName}`);
         });
       }
     });
     
     this.reportForm = this.fb.group(formControls);
+    
+    // Log summary of form controls created
+    const controlCount = Object.keys(formControls).length;
+    const textareaControls = Object.keys(formControls).filter(key => {
+      if (!this.templateData) return false;
+      const field = this.templateData.allFields.find(f => f.fieldId === key || (f.fieldType === 'group' && f.subFields?.some(sf => sf.fieldId === key)));
+      if (field && field.fieldType === 'group' && field.subFields) {
+        const subField = field.subFields.find(sf => sf.fieldId === key);
+        return subField?.fieldType === 'textarea';
+      }
+      return field?.fieldType === 'textarea';
+    });
+    
+    console.log(`🎯 Form building complete:`, {
+      totalControls: controlCount,
+      textareaControls: textareaControls.length,
+      textareaFieldIds: textareaControls
+    });
+    
+    // Force change detection after form is built
+    setTimeout(() => {
+      this.cdr.detectChanges();
+    }, 0);
     
     // Subscribe to form value changes for conditional logic
     this.reportForm.valueChanges.subscribe(values => {
@@ -232,7 +259,9 @@ export class ReportForm implements OnInit {
   initializeBankSpecificTabs() {
     const bankSpecificTabs = this.getBankSpecificTabs();
     if (bankSpecificTabs.length > 0) {
-      this.activeBankSpecificTab = bankSpecificTabs[0].tabId;
+      // Set valuation tab as active if it exists, otherwise use first tab
+      const valuationTab = bankSpecificTabs.find(tab => tab.tabId === 'valuation');
+      this.activeBankSpecificTab = valuationTab ? valuationTab.tabId : bankSpecificTabs[0].tabId;
       console.log('🔧 Initialized bank-specific tab:', this.activeBankSpecificTab);
     }
   }

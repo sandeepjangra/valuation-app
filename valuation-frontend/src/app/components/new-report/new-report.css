@@ -1,6 +1,6 @@
 .new-report-container {
-  min-height: 100vh;
-  max-height: 100vh;
+  min-height: calc(100vh - 70px); /* Account for header */
+  max-height: calc(100vh - 70px); /* Account for header */
   overflow: hidden;
   background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
   padding: 16px;
@@ -233,6 +233,7 @@
   flex: 1;
   overflow-y: auto;
   padding-right: 8px;
+  max-height: calc(100vh - 320px); /* Ensure it fits within viewport */
 }
 
 .bank-card {
@@ -349,6 +350,7 @@
   flex: 1;
   overflow-y: auto;
   padding-right: 8px;
+  max-height: calc(100vh - 380px); /* Ensure it fits within viewport */
 }
 
 .template-card {
@@ -461,6 +463,7 @@
   margin: 20px 0;
   flex: 1;
   overflow-y: auto;
+  max-height: calc(100vh - 380px); /* Ensure it fits within viewport */
 }
 
 .summary-card {
@@ -558,7 +561,9 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .new-report-container {
-    padding: 16px;
+    padding: 12px;
+    min-height: calc(100vh - 60px); /* Smaller header on mobile */
+    max-height: calc(100vh - 60px);
   }
   
   .header-content {
@@ -578,6 +583,7 @@
   
   .banks-grid, .templates-grid {
     grid-template-columns: 1fr;
+    max-height: calc(100vh - 280px);
   }
   
   .action-buttons {
@@ -586,5 +592,35 @@
   
   .cancel-button, .proceed-button {
     width: 100%;
+  }
+  
+  .page-header {
+    padding: 16px;
+  }
+  
+  .step-content {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .new-report-container {
+    padding: 8px;
+  }
+  
+  .page-header {
+    padding: 12px;
+  }
+  
+  .step-content {
+    padding: 16px;
+  }
+  
+  .banks-grid, .templates-grid {
+    max-height: calc(100vh - 260px);
+  }
+  
+  .progress-steps {
+    padding: 12px;
   }
 }

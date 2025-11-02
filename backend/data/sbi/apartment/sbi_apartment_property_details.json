@@ -84,7 +84,6 @@
             "sortOrder": 1,
             "description": "Location advantages, market demand, and rental potential assessment"
           },
-
           {
             "sectionId": "rate_adopted_after_depreciation",
             "sectionName": "Part B - Depreciation Calculation",
@@ -368,7 +367,7 @@
                     }
                   ],
                   "isRequired": true,
-                  "sortOrder": 1
+                  "sortOrder": 2
                 },
                 {
                   "fieldId": "urban_rural",
@@ -521,7 +520,7 @@
             },
             {
               "fieldId": "coordinates",
-              "uiDisplayName": "Coorditnates of the Site",
+              "uiDisplayName": "Coordinates of the Site",
               "fieldType": "group",
               "isRequired": false,
               "defaultValue": "NA",
@@ -533,7 +532,7 @@
                   "fieldType": "number",
                   "isRequired": false,
                   "defaultValue": "NA",
-                  "sortOrder": 16,
+                  "sortOrder": 1,
                   "placeholder": "Enter number for longitude"
                 },
                 {
@@ -542,7 +541,7 @@
                   "fieldType": "number",
                   "isRequired": false,
                   "defaultValue": "NA",
-                  "sortOrder": 17,
+                  "sortOrder": 2,
                   "placeholder": "Enter number for latitude"
                 }
               ]
@@ -1039,7 +1038,7 @@
               "uiDisplayName": "Bills & Receipts",
               "fieldType": "group",
               "isRequired": true,
-              "sortOrder": 3,
+              "sortOrder": 2,
               "subFields": [
                 {
                   "fieldId": "house_tax",
@@ -1096,7 +1095,7 @@
               "uiDisplayName": "Others",
               "fieldType": "group",
               "isRequired": false,
-              "sortOrder": 4,
+              "sortOrder": 3,
               "subFields": [
                 {
                   "fieldId": "undivided_area_sale_deed",
@@ -1234,7 +1233,7 @@
               ]
             },
             {
-              "fieldId": "rental_analysis",
+              "fieldId": "rate_adopted_after_depreciation",
               "uiDisplayName": "Rental Analysis",
               "fieldType": "group",
               "isRequired": false,

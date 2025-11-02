@@ -1,1 +1,59 @@
-<p>banks works!</p>
+<div class="banks-container">
+  <!-- Header Section -->
+  <div class="banks-header">
+    <div class="header-content">
+      <button class="back-btn" (click)="goBack()">
+        ← Back to Dashboard
+      </button>
+      <div class="title-section">
+        <h1 class="banks-title">Banks</h1>
+        <p class="banks-subtitle">Manage and view all available banks</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="loading">
+    <div class="loading-spinner"></div>
+    <p>Loading banks...</p>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-container" *ngIf="error && !loading">
+    <div class="error-message">
+      <span class="error-icon">⚠️</span>
+      <p>{{ error }}</p>
+      <button class="retry-btn" (click)="retryLoad()">Retry</button>
+    </div>
+  </div>
+
+  <!-- Banks Grid -->
+  <div class="banks-grid" *ngIf="!loading && !error">
+    <div class="bank-card" *ngFor="let bank of banks" (click)="viewBankDetails(bank)">
+      <div class="bank-header">
+        <div class="bank-icon">
+          🏦
+        </div>
+        <div class="bank-status" [class.active]="bank.isActive" [class.inactive]="!bank.isActive">
+          {{ bank.isActive ? 'Active' : 'Inactive' }}
+        </div>
+      </div>
+      
+      <div class="bank-content">
+        <h3 class="bank-name">{{ bank.bankName }}</h3>
+        <div class="bank-code">{{ bank.bankCode }}</div>
+      </div>
+      
+      <div class="bank-footer">
+        <span class="view-details">View Details →</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="!loading && !error && banks.length === 0">
+    <div class="empty-icon">🏦</div>
+    <h3>No Banks Found</h3>
+    <p>There are no banks available at the moment.</p>
+  </div>
+</div>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Valuation Tab Debug</title>
+    <script>
+        function testValuationTab() {
+            // Test the API call directly
+            fetch('http://localhost:8000/api/templates/SBI/apartment/aggregated-fields')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('=== API Response Analysis ===');
+                    console.log('Total bank specific tabs:', data.bankSpecificTabs.length);
+                    
+                    // Find valuation tab
+                    const valuationTab = data.bankSpecificTabs.find(tab => tab.tabId === 'valuation');
+                    if (valuationTab) {
+                        console.log('✅ Valuation tab found:', valuationTab.tabName);
+                        console.log('   - Tab ID:', valuationTab.tabId);
+                        console.log('   - Has sections:', valuationTab.hasSections);
+                        console.log('   - Sections count:', valuationTab.sections ? valuationTab.sections.length : 0);
+                        console.log('   - Tab-level fields count:', valuationTab.fields.length);
+                        
+                        if (valuationTab.sections) {
+                            valuationTab.sections.forEach((section, index) => {
+                                console.log(`   Section ${index + 1}: ${section.sectionName}`);
+                                console.log(`     - Fields count: ${section.fields.length}`);
+                                
+                                section.fields.forEach(field => {
+                                    if (field.fieldType === 'group') {
+                                        console.log(`     - Group: ${field.uiDisplayName} (${field.subFields ? field.subFields.length : 0} subfields)`);
+                                        if (field.subFields) {
+                                            field.subFields.forEach(subField => {
+                                                if (subField.fieldType === 'textarea') {
+                                                    console.log(`       ✅ TEXTAREA FOUND: ${subField.fieldId} - ${subField.uiDisplayName}`);
+                                                }
+                                            });
+                                        }
+                                    } else if (field.fieldType === 'textarea') {
+                                        console.log(`     ✅ TEXTAREA FOUND: ${field.fieldId} - ${field.uiDisplayName}`);
+                                    }
+                                });
+                            });
+                        }
+                    } else {
+                        console.log('❌ Valuation tab NOT found!');
+                        console.log('Available tabs:', data.bankSpecificTabs.map(tab => tab.tabId));
+                    }
+                    
+                    // Show the raw structure
+                    document.getElementById('output').innerHTML = '<pre>' + JSON.stringify(data.bankSpecificTabs, null, 2) + '</pre>';
+                })
+                .catch(error => {
+                    console.error('❌ API Error:', error);
+                    document.getElementById('output').innerHTML = 'Error: ' + error.message;
+                });
+        }
+    </script>
+</head>
+<body>
+    <h1>Valuation Tab Debug Test</h1>
+    <button onclick="testValuationTab()">Test API Call</button>
+    <div id="output"></div>
+    
+    <script>
+        // Auto-run test when page loads
+        window.onload = testValuationTab;
+    </script>
+</body>
+</html>

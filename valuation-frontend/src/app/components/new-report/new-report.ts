@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Bank, Template } from '../../models';
@@ -9,39 +9,69 @@ import { Bank, Template } from '../../models';
   templateUrl: './new-report.html',
   styleUrl: './new-report.css',
 })
-export class NewReport implements OnInit {
+export class NewReport implements OnInit, OnDestroy {
   
   banks: Bank[] = [];
   selectedBank: Bank | null = null;
   selectedTemplate: Template | null = null;
   availableTemplates: Template[] = [];
-  isLoading = false; // Set to false since we're loading data synchronously
+  isLoading = true; // Start with loading state
   step = 1; // 1: Select Bank, 2: Select Template, 3: Ready to proceed
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone
+  ) {}
 
   ngOnInit() {
+    // Ensure we start fresh
+    console.log('🚀 NewReport component initialized');
     this.loadBanksData();
+  }
+
+  ngOnDestroy() {
+    console.log('🔄 NewReport component destroyed');
+    // Cleanup if needed
   }
 
   loadBanksData() {
     // Load banks data dynamically from API
+    console.log('🔄 Loading banks data from API...');
     this.isLoading = true;
     
-    // Use fetch to get banks data from API
+    // Use fetch to get banks data from API with proper error handling
     fetch('http://localhost:8000/api/banks')
-      .then(response => response.json())
+      .then(response => {
+        console.log('📡 API Response status:', response.status);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
       .then(banksData => {
-        // Filter only active banks
-        this.banks = banksData.filter((bank: Bank) => bank.isActive);
-        console.log('✅ Banks loaded from API:', this.banks.length);
-        console.log('🏦 Available banks:', this.banks.map(b => `${b.bankCode} (${b.templates?.length || 0} templates)`));
-        this.isLoading = false;
+        console.log('📊 Raw banks data received:', banksData.length);
+        
+        // Run in NgZone to ensure change detection
+        this.ngZone.run(() => {
+          // Filter only active banks
+          this.banks = banksData.filter((bank: Bank) => bank.isActive);
+          console.log('✅ Banks loaded from API:', this.banks.length);
+          console.log('🏦 Available banks:', this.banks.map(b => `${b.bankCode} (${b.templates?.length || 0} templates)`));
+          this.isLoading = false;
+          
+          // Force change detection
+          this.cdr.detectChanges();
+        });
       })
       .catch(error => {
-        console.error('❌ Error loading banks from API, using fallback data:', error);
-        this.loadBanksFallback();
-        this.isLoading = false;
+        console.error('❌ Error loading banks from API:', error);
+        this.ngZone.run(() => {
+          console.log('🔄 Using fallback data...');
+          this.loadBanksFallback();
+          this.isLoading = false;
+          this.cdr.detectChanges();
+        });
       });
   }
 
@@ -111,21 +141,34 @@ export class NewReport implements OnInit {
   }
 
   selectBank(bank: Bank) {
+    console.log('🏦 Bank selected:', bank.bankCode, bank.bankName);
     this.selectedBank = bank;
     this.selectedTemplate = null;
     this.availableTemplates = bank.templates || [];
     
+    console.log('📋 Available templates for bank:', this.availableTemplates.length);
+    
     if (this.availableTemplates.length > 0) {
       this.step = 2;
+      console.log('➡️ Moving to step 2: Template selection');
     } else {
       // No templates available for this bank
       this.step = 3;
+      console.log('➡️ Moving to step 3: No templates available');
     }
+    
+    // Force change detection
+    this.cdr.detectChanges();
   }
 
   selectTemplate(template: Template) {
+    console.log('📋 Template selected:', template.templateCode, template.templateName);
     this.selectedTemplate = template;
     this.step = 3;
+    console.log('➡️ Moving to step 3: Ready to proceed');
+    
+    // Force change detection
+    this.cdr.detectChanges();
   }
 
   goBack() {
@@ -149,6 +192,8 @@ export class NewReport implements OnInit {
 
   proceedToForm() {
     if (this.selectedBank) {
+      console.log('🚀 Proceeding to form with bank:', this.selectedBank.bankCode);
+      
       // Navigate to report form with bank and template info
       const queryParams: any = {
         bankCode: this.selectedBank.bankCode,
@@ -156,12 +201,16 @@ export class NewReport implements OnInit {
       };
       
       if (this.selectedTemplate) {
+        console.log('📋 Including template:', this.selectedTemplate.templateCode);
         queryParams.templateId = this.selectedTemplate.templateCode; // Use templateCode for URL
         queryParams.templateName = this.selectedTemplate.templateName;
         queryParams.propertyType = this.selectedTemplate.propertyType;
       }
       
+      console.log('🔗 Navigating to report-form with params:', queryParams);
       this.router.navigate(['/report-form'], { queryParams });
+    } else {
+      console.error('❌ No bank selected - cannot proceed');
     }
   }
 

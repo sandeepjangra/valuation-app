@@ -6,6 +6,7 @@ import { ReportForm } from './components/report-form/report-form';
 import { Admin } from './components/admin/admin';
 import { Reports } from './components/reports/reports';
 import { Banks } from './components/banks/banks';
+import { BankDetails } from './components/bank-details/bank-details';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
@@ -16,4 +17,5 @@ export const routes: Routes = [
   { path: 'admin', component: Admin },
   { path: 'reports', component: Reports },
   { path: 'banks', component: Banks },
+  { path: 'bank-details/:id', component: BankDetails },
 ];

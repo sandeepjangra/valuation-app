@@ -1,11 +1,14 @@
 .app-header {
   background: linear-gradient(135deg, #e6d7ff 0%, #d4b5ff 100%);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
   z-index: 1000;
   border-bottom: 2px solid #c299ff;
-  padding: 0; /* Remove any padding from header itself */
+  padding: 0;
 }
 
 .header-container {

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend API Debug</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .field { margin: 10px 0; padding: 5px; background: #f5f5f5; }
+        .group { border-left: 3px solid blue; padding-left: 10px; margin: 10px 0; }
+        .textarea-field { color: green; font-weight: bold; }
+        pre { background: #f0f0f0; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>SBI Apartment Template - API Debug</h1>
+    
+    <div id="loading">Loading API data...</div>
+    <div id="results" style="display: none;">
+        <div id="summary"></div>
+        <div id="tabs"></div>
+        <div id="raw-data"></div>
+    </div>
+
+    <script>
+        async function debugAPI() {
+            try {
+                console.log('🔄 Fetching SBI apartment template data...');
+                const response = await fetch('http://localhost:8000/api/templates/SBI/apartment/aggregated-fields');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('✅ API Response:', data);
+                
+                displayResults(data);
+                
+            } catch (error) {
+                console.error('❌ API Error:', error);
+                document.getElementById('loading').innerHTML = `
+                    <div style="color: red;">
+                        <h2>Error loading API data:</h2>
+                        <p>${error.message}</p>
+                        <p>Make sure the backend is running at http://localhost:8000</p>
+                    </div>
+                `;
+            }
+        }
+        
+        function displayResults(data) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('results').style.display = 'block';
+            
+            // Summary
+            const summary = document.getElementById('summary');
+            summary.innerHTML = `
+                <div class="section">
+                    <h2>API Response Summary</h2>
+                    <p><strong>Template:</strong> ${data.templateInfo?.templateName || 'N/A'}</p>
+                    <p><strong>Bank:</strong> ${data.templateInfo?.bankName || 'N/A'}</p>
+                    <p><strong>Common Fields:</strong> ${data.commonFields?.length || 0}</p>
+                    <p><strong>Bank-Specific Tabs:</strong> ${data.bankSpecificTabs?.length || 0}</p>
+                </div>
+            `;
+            
+            // Tabs analysis
+            const tabsDiv = document.getElementById('tabs');
+            let tabsHTML = '<div class="section"><h2>Bank-Specific Tabs Analysis</h2>';
+            
+            if (data.bankSpecificTabs && data.bankSpecificTabs.length > 0) {
+                data.bankSpecificTabs.forEach(tab => {
+                    tabsHTML += `
+                        <div class="section">
+                            <h3>Tab: ${tab.tabName} (ID: ${tab.tabId})</h3>
+                            <p><strong>Sort Order:</strong> ${tab.sortOrder}</p>
+                            <p><strong>Has Sections:</strong> ${tab.hasSections}</p>
+                            <p><strong>Direct Fields:</strong> ${tab.fields?.length || 0}</p>
+                            <p><strong>Sections:</strong> ${tab.sections?.length || 0}</p>
+                            
+                            ${analyzeTabFields(tab)}
+                        </div>
+                    `;
+                });
+            } else {
+                tabsHTML += '<p style="color: red;">No bank-specific tabs found!</p>';
+            }
+            
+            tabsHTML += '</div>';
+            tabsDiv.innerHTML = tabsHTML;
+            
+            // Raw data
+            const rawDiv = document.getElementById('raw-data');
+            rawDiv.innerHTML = `
+                <div class="section">
+                    <h2>Raw API Response</h2>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                </div>
+            `;
+        }
+        
+        function analyzeTabFields(tab) {
+            let analysis = '';
+            
+            // Analyze direct fields
+            if (tab.fields && tab.fields.length > 0) {
+                analysis += '<h4>Direct Fields:</h4>';
+                tab.fields.forEach(field => {
+                    const isTextarea = field.fieldType === 'textarea';
+                    analysis += `
+                        <div class="field ${isTextarea ? 'textarea-field' : ''}">
+                            ${field.uiDisplayName} (${field.fieldType}) - ID: ${field.fieldId}
+                            ${isTextarea ? ' ⭐ TEXTAREA' : ''}
+                        </div>
+                    `;
+                    
+                    // Check for group sub-fields
+                    if (field.fieldType === 'group' && field.subFields) {
+                        analysis += '<div class="group">';
+                        analysis += '<strong>Group Sub-fields:</strong>';
+                        field.subFields.forEach(subField => {
+                            const isSubTextarea = subField.fieldType === 'textarea';
+                            analysis += `
+                                <div class="field ${isSubTextarea ? 'textarea-field' : ''}">
+                                    └── ${subField.uiDisplayName} (${subField.fieldType}) - ID: ${subField.fieldId}
+                                    ${isSubTextarea ? ' ⭐ TEXTAREA' : ''}
+                                </div>
+                            `;
+                        });
+                        analysis += '</div>';
+                    }
+                });
+            }
+            
+            // Analyze section fields
+            if (tab.sections && tab.sections.length > 0) {
+                analysis += '<h4>Section Fields:</h4>';
+                tab.sections.forEach(section => {
+                    analysis += `<h5>Section: ${section.sectionName}</h5>`;
+                    if (section.fields) {
+                        section.fields.forEach(field => {
+                            const isTextarea = field.fieldType === 'textarea';
+                            analysis += `
+                                <div class="field ${isTextarea ? 'textarea-field' : ''}">
+                                    ${field.uiDisplayName} (${field.fieldType}) - ID: ${field.fieldId}
+                                    ${isTextarea ? ' ⭐ TEXTAREA' : ''}
+                                </div>
+                            `;
+                            
+                            // Check for group sub-fields in sections
+                            if (field.fieldType === 'group' && field.subFields) {
+                                analysis += '<div class="group">';
+                                analysis += '<strong>Group Sub-fields:</strong>';
+                                field.subFields.forEach(subField => {
+                                    const isSubTextarea = subField.fieldType === 'textarea';
+                                    analysis += `
+                                        <div class="field ${isSubTextarea ? 'textarea-field' : ''}">
+                                            └── ${subField.uiDisplayName} (${subField.fieldType}) - ID: ${subField.fieldId}
+                                            ${isSubTextarea ? ' ⭐ TEXTAREA' : ''}
+                                        </div>
+                                    `;
+                                });
+                                analysis += '</div>';
+                            }
+                        });
+                    }
+                });
+            }
+            
+            return analysis;
+        }
+        
+        // Run the debug on page load
+        debugAPI();
+    </script>
+</body>
+</html>
