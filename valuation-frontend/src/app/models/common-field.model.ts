@@ -65,6 +65,7 @@ export type FieldType =
   | 'decimal'
   | 'calculated'
   | 'table'
+  | 'dynamic_table'
   | 'multiselect';
 
 export interface CommonFieldsApiResponse {

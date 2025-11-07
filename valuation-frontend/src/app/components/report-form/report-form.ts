@@ -5,10 +5,11 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { HttpClient } from '@angular/common/http';
 import { CommonField, BankBranch, ProcessedTemplateData, FieldGroup, TemplateField, BankSpecificField, BankSpecificTab, BankSpecificSection } from '../../models';
 import { TemplateService } from '../../services/template.service';
+import { DynamicTableComponent } from '../dynamic-table/dynamic-table.component';
 
 @Component({
   selector: 'app-report-form',
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, DynamicTableComponent],
   templateUrl: './report-form.html',
   styleUrl: './report-form.css',
 })
@@ -32,6 +33,9 @@ export class ReportForm implements OnInit {
   
   // Bank-specific dynamic tabs
   activeBankSpecificTab: string | null = null;
+
+  // Dynamic tables data storage
+  dynamicTablesData: { [fieldId: string]: any } = {};
 
   constructor(
     private router: Router,
@@ -804,6 +808,46 @@ export class ReportForm implements OnInit {
       // Optionally update form control if needed
       console.log(`Updated table ${tableFieldId} row ${rowIndex} column ${columnId} to:`, value);
     }
+  }
+
+  /**
+   * Handle dynamic table data changes
+   */
+  onDynamicTableDataChange(tableData: any): void {
+    console.log('🔄 Dynamic table data changed:', tableData);
+    
+    // Store the dynamic table data in form state or component state
+    // This will be used when submitting the form
+    if (!this.dynamicTablesData) {
+      this.dynamicTablesData = {};
+    }
+    
+    this.dynamicTablesData[tableData.fieldId] = {
+      columns: tableData.columns,
+      rows: tableData.rows,
+      userAddedColumns: tableData.userAddedColumns,
+      nextColumnNumber: tableData.nextColumnNumber,
+      lastUpdated: new Date().toISOString()
+    };
+    
+    // Trigger change detection
+    this.cdr.detectChanges();
+    
+    console.log('📊 Updated dynamic tables data:', this.dynamicTablesData);
+  }
+
+  /**
+   * Get dynamic table initial data
+   */
+  getDynamicTableInitialData(fieldId: string): any {
+    return this.dynamicTablesData?.[fieldId] || null;
+  }
+
+  /**
+   * Check if field is dynamic table type
+   */
+  isDynamicTable(field: any): boolean {
+    return field.fieldType === 'dynamic_table' && field.tableConfig;
   }
 
 }

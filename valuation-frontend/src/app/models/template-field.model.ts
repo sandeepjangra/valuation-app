@@ -18,6 +18,54 @@ export interface TableRow {
   isReadonly?: boolean; // For readonly rows
 }
 
+// Dynamic Table field interfaces
+export interface DynamicTableColumn {
+  columnId: string;
+  columnName: string;
+  fieldType: string;
+  isRequired?: boolean;
+  isEditable?: boolean;
+  isReadonly?: boolean;
+  placeholder?: string;
+  isUserAdded?: boolean; // Track if column was added by user
+  canDelete?: boolean; // Track if column can be deleted
+}
+
+export interface DynamicColumnConfig {
+  columnType: string; // 'floor', 'unit', etc.
+  defaultColumns: DynamicTableColumn[];
+  addColumnConfig: {
+    buttonText: string;
+    columnNamePattern: string; // 'Floor {number}', 'Unit {number}'
+    maxColumns: number;
+  };
+}
+
+export interface DynamicRowConfig {
+  buttonText: string;
+  maxRows: number;
+  rowTemplate: { [key: string]: any }; // Template for new rows
+}
+
+export interface DynamicTableConfig {
+  // Table type identifier
+  tableType?: 'column_dynamic' | 'row_dynamic';
+  
+  // Column definitions (always present)
+  fixedColumns: DynamicTableColumn[];
+  
+  // Column-dynamic specific properties
+  dynamicColumns?: DynamicColumnConfig;
+  
+  // Row-dynamic specific properties
+  allowAddRows?: boolean;
+  maxRows?: number;
+  addRowConfig?: DynamicRowConfig;
+  
+  // Table data (rows)
+  rows: TableRow[];
+}
+
 export interface TemplateField {
   _id: string;
   fieldId: string;
@@ -47,6 +95,7 @@ export interface TemplateField {
   displayFormat?: string; // For calculated fields
   columns?: TableColumn[]; // For table fields
   rows?: TableRow[]; // For table fields
+  tableConfig?: DynamicTableConfig; // For dynamic_table fields
 }
 
 export interface BankSpecificField {
@@ -79,6 +128,7 @@ export interface BankSpecificField {
   displayFormat?: string; // For calculated fields
   columns?: TableColumn[]; // For table fields
   rows?: TableRow[]; // For table fields
+  tableConfig?: DynamicTableConfig; // For dynamic_table fields
 }
 
 export interface BankSpecificSection {

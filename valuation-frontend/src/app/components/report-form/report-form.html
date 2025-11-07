@@ -642,6 +642,24 @@
                               <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
                             </div>
 
+                            <!-- Dynamic Table Field -->
+                            <div *ngSwitchCase="'dynamic_table'" 
+                                 class="form-field dynamic-table-field">
+                              <app-dynamic-table
+                                *ngIf="field.tableConfig"
+                                [fieldId]="field.fieldId"
+                                [fieldLabel]="field.uiDisplayName"
+                                [isRequired]="field.isRequired"
+                                [helpText]="field.helpText"
+                                [tableConfig]="field.tableConfig"
+                                [initialData]="getDynamicTableInitialData(field.fieldId)"
+                                (dataChange)="onDynamicTableDataChange($event)">
+                              </app-dynamic-table>
+                              <div *ngIf="!field.tableConfig" class="error-message">
+                                Dynamic table configuration is missing for field: {{ field.fieldId }}
+                              </div>
+                            </div>
+
                             <!-- Default case for unknown field types -->
                             <div *ngSwitchDefault class="form-field">
                               <label [for]="field.fieldId" class="field-label">
@@ -961,6 +979,24 @@
                           />
                           <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
                           <div class="field-help" *ngIf="field.formula">Formula: {{ field.formula }}</div>
+                        </div>
+
+                        <!-- Dynamic Table Field (for non-section tabs) -->
+                        <div *ngSwitchCase="'dynamic_table'" 
+                             class="form-field dynamic-table-field">
+                          <app-dynamic-table
+                            *ngIf="field.tableConfig"
+                            [fieldId]="field.fieldId"
+                            [fieldLabel]="field.uiDisplayName"
+                            [isRequired]="field.isRequired"
+                            [helpText]="field.helpText"
+                            [tableConfig]="field.tableConfig"
+                            [initialData]="getDynamicTableInitialData(field.fieldId)"
+                            (dataChange)="onDynamicTableDataChange($event)">
+                          </app-dynamic-table>
+                          <div *ngIf="!field.tableConfig" class="error-message">
+                            Dynamic table configuration is missing for field: {{ field.fieldId }}
+                          </div>
                         </div>
 
                         <!-- Default case for unknown field types -->
