@@ -136,8 +136,8 @@
                   *ngIf="field.fieldId !== 'bank_branch'"
                   [id]="field.fieldId"
                   [formControlName]="field.fieldId"
-                  class="form-select">
-                  <option value="">{{ field.placeholder || 'Select option' }}</option>
+                  [class]="'form-select' + (isFieldEmpty(field.fieldId) ? ' placeholder-active' : '')">
+                  <option value="" hidden>{{ field.placeholder || 'Select option' }}</option>
                   <option *ngFor="let option of field.options" [value]="option.value">
                     {{ option.label }}
                   </option>
@@ -148,8 +148,8 @@
                   *ngIf="field.fieldId === 'bank_branch'"
                   [id]="field.fieldId"
                   [formControlName]="field.fieldId"
-                  class="form-select">
-                  <option value="">{{ field.placeholder || 'Select branch' }}</option>
+                  [class]="'form-select' + (isFieldEmpty(field.fieldId) ? ' placeholder-active' : '')">
+                  <option value="" hidden>{{ field.placeholder || 'Select branch' }}</option>
                   <option *ngFor="let branch of availableBranches" [value]="branch.value">
                     {{ branch.label }}
                   </option>
@@ -308,9 +308,8 @@
                                         [id]="subField.fieldId"
                                         [formControlName]="subField.fieldId"
                                         [disabled]="isFieldDisabled(subField)"
-                                        [class.disabled-field]="isFieldDisabled(subField)"
-                                        class="form-select">
-                                        <option value="">{{ subField.placeholder || 'Select option' }}</option>
+                                        [class]="'form-select' + (isFieldDisabled(subField) ? ' disabled-field' : '') + (isFieldEmpty(subField.fieldId) ? ' placeholder-active' : '')">
+                                        <option value="" hidden>{{ subField.placeholder || 'Select option' }}</option>
                                         <option *ngFor="let option of subField.options" [value]="option.value">
                                           {{ option.label }}
                                         </option>
@@ -506,9 +505,8 @@
                                 [id]="field.fieldId"
                                 [formControlName]="field.fieldId"
                                 [disabled]="isFieldDisabled(field)"
-                                [class.disabled-field]="isFieldDisabled(field)"
-                                class="form-select">
-                                <option value="">{{ field.placeholder || 'Select option' }}</option>
+                                [class]="'form-select' + (isFieldDisabled(field) ? ' disabled-field' : '') + (isFieldEmpty(field.fieldId) ? ' placeholder-active' : '')">
+                                <option value="" hidden>{{ field.placeholder || 'Select option' }}</option>
                                 <option *ngFor="let option of field.options" [value]="option.value">
                                   {{ option.label }}
                                 </option>
@@ -754,8 +752,8 @@
                                   <select 
                                     [id]="subField.fieldId"
                                     [formControlName]="subField.fieldId"
-                                    class="form-select">
-                                    <option value="">{{ subField.placeholder || 'Select option' }}</option>
+                                    [class]="'form-select' + (isFieldEmpty(subField.fieldId) ? ' placeholder-active' : '')">
+                                    <option value="" hidden>{{ subField.placeholder || 'Select option' }}</option>
                                     <option *ngFor="let option of subField.options" [value]="option.value">
                                       {{ option.label }}
                                     </option>
@@ -888,8 +886,8 @@
                           <select 
                             [id]="field.fieldId"
                             [formControlName]="field.fieldId"
-                            class="form-select">
-                            <option value="">{{ field.placeholder || 'Select option' }}</option>
+                            [class]="'form-select' + (isFieldEmpty(field.fieldId) ? ' placeholder-active' : '')">
+                            <option value="" hidden>{{ field.placeholder || 'Select option' }}</option>
                             <option *ngFor="let option of field.options" [value]="option.value">
                               {{ option.label }}
                             </option>

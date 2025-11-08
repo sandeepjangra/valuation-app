@@ -29,7 +29,7 @@ export class ReportForm implements OnInit {
   isLoading = false;
   
   // Current active tab
-  activeTab = 'template';  // Default to template tab instead of common
+  activeTab = 'template';  // Always default to first tab (Bank-Specific Fields)
   
   // Bank-specific dynamic tabs
   activeBankSpecificTab: string | null = null;
@@ -50,6 +50,12 @@ export class ReportForm implements OnInit {
 
   ngOnInit() {
     console.log('🔥 ReportForm ngOnInit called');
+    
+    // Always reset to first tab on init/reload
+    this.activeTab = 'template';
+    this.activeBankSpecificTab = null;
+    console.log('🔄 Reset to first tab (template) on page load');
+    
     this.loadQueryParams();
     this.loadBankBranches();
     
@@ -263,10 +269,9 @@ export class ReportForm implements OnInit {
   initializeBankSpecificTabs() {
     const bankSpecificTabs = this.getBankSpecificTabs();
     if (bankSpecificTabs.length > 0) {
-      // Set valuation tab as active if it exists, otherwise use first tab
-      const valuationTab = bankSpecificTabs.find(tab => tab.tabId === 'valuation');
-      this.activeBankSpecificTab = valuationTab ? valuationTab.tabId : bankSpecificTabs[0].tabId;
-      console.log('🔧 Initialized bank-specific tab:', this.activeBankSpecificTab);
+      // Always start with the first bank-specific tab on page load
+      this.activeBankSpecificTab = bankSpecificTabs[0].tabId;
+      console.log('🔧 Initialized first bank-specific tab:', this.activeBankSpecificTab);
     }
   }
 
@@ -480,6 +485,11 @@ export class ReportForm implements OnInit {
   isFieldInvalid(fieldId: string): boolean {
     const control = this.reportForm.get(fieldId);
     return !!(control && control.invalid && control.touched);
+  }
+
+  isFieldEmpty(fieldId: string): boolean {
+    const control = this.reportForm.get(fieldId);
+    return !control || !control.value || control.value === '';
   }
 
   // Helper methods for template access

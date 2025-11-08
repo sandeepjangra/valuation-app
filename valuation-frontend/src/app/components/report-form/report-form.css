@@ -200,6 +200,22 @@
   box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
 }
 
+/* Select placeholder styling */
+.form-select option[value=""][hidden] {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+/* Style the select when placeholder is selected */
+.form-select {
+  position: relative;
+}
+
+.form-select.placeholder-active {
+  color: #9ca3af;
+  font-style: italic;
+}
+
 .form-input.readonly-field {
   background: #f9fafb;
   color: #6b7280;

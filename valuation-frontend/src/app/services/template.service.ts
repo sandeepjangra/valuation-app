@@ -257,7 +257,7 @@ export class TemplateService {
       case 'checkbox':
         return false;
       case 'radio':
-        return '';
+        return null;
       default:
         return '';
     }
