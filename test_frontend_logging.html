@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Frontend Logging</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-section h3 {
+            color: #333;
+            margin-top: 0;
+        }
+        .btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .log-output {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .status.success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .status.error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Frontend & Backend Logging System Test</h1>
+        <p>This page tests the comprehensive logging system for both frontend and backend API calls.</p>
+        
+        <div class="test-section">
+            <h3>1. Backend API Testing</h3>
+            <p>Test backend logging by making direct API calls:</p>
+            <button class="btn" onclick="testBanksAPI()">Test Banks API</button>
+            <button class="btn" onclick="testTemplateAPI()">Test Template API</button>
+            <div id="backend-status"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>2. Frontend Logging Simulation</h3>
+            <p>Simulate frontend logging behavior:</p>
+            <button class="btn" onclick="simulateFrontendLogs()">Simulate Frontend Logs</button>
+            <button class="btn" onclick="viewLocalStorageLogs()">View localStorage Logs</button>
+            <button class="btn" onclick="clearLogs()">Clear Logs</button>
+            <div id="frontend-status"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>3. Log Output</h3>
+            <div id="log-output" class="log-output">Logs will appear here...</div>
+        </div>
+        
+        <div class="test-section">
+            <h3>4. Log File Locations</h3>
+            <p><strong>Backend Logs:</strong></p>
+            <ul>
+                <li>Request/Response: <code>backend/logs/backend_requests.log</code></li>
+                <li>Database Operations: <code>backend/logs/backend_database.log</code></li>
+            </ul>
+            <p><strong>Frontend Logs:</strong></p>
+            <ul>
+                <li>Browser localStorage: Check browser DevTools → Application → Local Storage</li>
+                <li>Console logs: Check browser DevTools → Console</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const output = document.getElementById('log-output');
+            const timestamp = new Date().toISOString();
+            const logEntry = `[${timestamp}] ${type.toUpperCase()}: ${message}\n`;
+            output.textContent += logEntry;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function setStatus(elementId, message, isSuccess = true) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="status ${isSuccess ? 'success' : 'error'}">${message}</div>`;
+        }
+
+        // Simulate Frontend Logger Service
+        class FrontendLogger {
+            constructor() {
+                this.logs = JSON.parse(localStorage.getItem('frontend_logs') || '[]');
+            }
+
+            logRequest(method, url, headers = {}, body = null) {
+                const requestId = Date.now().toString();
+                const logEntry = {
+                    id: requestId,
+                    type: 'request',
+                    timestamp: new Date().toISOString(),
+                    method,
+                    url,
+                    headers,
+                    body,
+                    startTime: performance.now()
+                };
+                
+                this.logs.push(logEntry);
+                this.saveLogs();
+                log(`Frontend REQUEST: ${method} ${url}`, 'request');
+                return requestId;
+            }
+
+            logResponse(requestId, status, responseHeaders = {}, responseBody = null, error = null) {
+                const request = this.logs.find(log => log.id === requestId && log.type === 'request');
+                if (request) {
+                    const processingTime = performance.now() - request.startTime;
+                    const logEntry = {
+                        id: `${requestId}_response`,
+                        type: 'response',
+                        requestId,
+                        timestamp: new Date().toISOString(),
+                        status,
+                        responseHeaders,
+                        responseBody,
+                        error,
+                        processingTimeMs: Math.round(processingTime * 100) / 100
+                    };
+                    
+                    this.logs.push(logEntry);
+                    this.saveLogs();
+                    log(`Frontend RESPONSE: ${status} (${processingTime.toFixed(2)}ms)`, error ? 'error' : 'response');
+                }
+            }
+
+            saveLogs() {
+                localStorage.setItem('frontend_logs', JSON.stringify(this.logs));
+            }
+
+            getLogs() {
+                return this.logs;
+            }
+
+            clearLogs() {
+                this.logs = [];
+                localStorage.removeItem('frontend_logs');
+            }
+
+            exportLogs() {
+                return JSON.stringify(this.logs, null, 2);
+            }
+        }
+
+        const frontendLogger = new FrontendLogger();
+
+        async function testBanksAPI() {
+            log('Testing Banks API endpoint...', 'info');
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/banks');
+                if (response.ok) {
+                    const data = await response.json();
+                    setStatus('backend-status', `✅ Banks API successful: Retrieved ${data.length} banks`, true);
+                    log(`Banks API returned ${data.length} banks`, 'success');
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                setStatus('backend-status', `❌ Banks API failed: ${error.message}`, false);
+                log(`Banks API error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testTemplateAPI() {
+            log('Testing Template API endpoint...', 'info');
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/templates/sbi/land-property/aggregated-fields');
+                if (response.ok) {
+                    const data = await response.json();
+                    setStatus('backend-status', `✅ Template API successful: Retrieved template with ${data.commonFields?.length || 0} common fields`, true);
+                    log(`Template API returned template with ${data.commonFields?.length || 0} common fields`, 'success');
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                setStatus('backend-status', `❌ Template API failed: ${error.message}`, false);
+                log(`Template API error: ${error.message}`, 'error');
+            }
+        }
+
+        function simulateFrontendLogs() {
+            log('Simulating frontend HTTP requests...', 'info');
+            
+            // Simulate a few different requests
+            const requests = [
+                { method: 'GET', url: '/api/banks', delay: 100 },
+                { method: 'GET', url: '/api/templates/sbi/land-property/aggregated-fields', delay: 250 },
+                { method: 'POST', url: '/api/valuation', delay: 500 }
+            ];
+            
+            requests.forEach((req, index) => {
+                setTimeout(() => {
+                    const requestId = frontendLogger.logRequest(
+                        req.method, 
+                        req.url, 
+                        { 'Content-Type': 'application/json', 'Authorization': 'Bearer ***' },
+                        req.method === 'POST' ? { sample: 'data' } : null
+                    );
+                    
+                    // Simulate response after delay
+                    setTimeout(() => {
+                        const status = Math.random() > 0.8 ? 500 : 200; // 20% chance of error
+                        const isError = status >= 400;
+                        
+                        frontendLogger.logResponse(
+                            requestId,
+                            status,
+                            { 'Content-Type': 'application/json' },
+                            isError ? null : { result: 'success', data: [] },
+                            isError ? 'Internal Server Error' : null
+                        );
+                    }, req.delay);
+                    
+                }, index * 100);
+            });
+            
+            setStatus('frontend-status', '✅ Frontend logs simulated successfully', true);
+            
+            // Show updated count after simulation
+            setTimeout(() => {
+                const logs = frontendLogger.getLogs();
+                log(`Frontend logging completed: ${logs.length} log entries created`, 'success');
+            }, 1000);
+        }
+
+        function viewLocalStorageLogs() {
+            const logs = frontendLogger.getLogs();
+            log('=== FRONTEND LOGS FROM LOCALSTORAGE ===', 'info');
+            
+            if (logs.length === 0) {
+                log('No frontend logs found. Try simulating some logs first.', 'info');
+                setStatus('frontend-status', 'ℹ️ No logs found in localStorage', true);
+            } else {
+                log(`Found ${logs.length} log entries:`, 'info');
+                logs.forEach((logEntry, index) => {
+                    log(`${index + 1}. [${logEntry.type}] ${logEntry.timestamp} - ${logEntry.method || ''} ${logEntry.url || ''} ${logEntry.status || ''}`, 'info');
+                });
+                setStatus('frontend-status', `✅ Found ${logs.length} log entries in localStorage`, true);
+            }
+            
+            log('=== END FRONTEND LOGS ===', 'info');
+        }
+
+        function clearLogs() {
+            frontendLogger.clearLogs();
+            log('Frontend logs cleared from localStorage', 'info');
+            setStatus('frontend-status', '✅ Logs cleared successfully', true);
+            
+            // Clear the output too
+            document.getElementById('log-output').textContent = 'Logs cleared...\n';
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            log('Frontend & Backend Logging Test Page Loaded', 'info');
+            log('Backend should be running on http://localhost:8000', 'info');
+            log('Check browser DevTools → Network tab to see actual HTTP requests', 'info');
+            log('Check browser DevTools → Application → Local Storage for frontend logs', 'info');
+        });
+    </script>
+</body>
+</html>

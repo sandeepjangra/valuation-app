@@ -47,21 +47,55 @@
       <div class="bank-card" 
            *ngFor="let bank of banks" 
            (click)="selectBank(bank)"
-           [class.selected]="selectedBank?.bankCode === bank.bankCode">
-        <div class="bank-icon">{{ getBankIcon(bank.bankCode) }}</div>
-        <div class="bank-info">
-          <h3 class="bank-name">{{ bank.bankName }}</h3>
-          <p class="bank-short-name">{{ bank.bankShortName }}</p>
-          <div class="bank-meta">
-            <span class="bank-type">{{ bank.bankType | titlecase }}</span>
-            <span class="template-count" *ngIf="bank.templates">
-              {{ bank.templates.length }} template{{ bank.templates.length !== 1 ? 's' : '' }}
-            </span>
+           [class.selected]="selectedBank?.bankCode === bank.bankCode"
+           [style.--bank-color]="getBankThemeColor(bank.bankCode)">
+        
+        <!-- Bank Header with Logo -->
+        <div class="bank-header">
+          <div class="bank-logo-container">
+            <div class="bank-logo-placeholder" 
+                 [style.background-color]="getBankThemeColor(bank.bankCode)">
+              {{ getBankIcon(bank.bankCode) }}
+            </div>
+          </div>
+          <div class="bank-status-badge" [class.active]="bank.isActive">
+            {{ bank.isActive ? 'Active' : 'Inactive' }}
           </div>
         </div>
-        <div class="select-indicator">
-          <span class="select-text">Select</span>
-          <span class="arrow">→</span>
+
+        <!-- Bank Information -->
+        <div class="bank-content">
+          <h3 class="bank-name">{{ bank.bankName }}</h3>
+          <p class="bank-short-name">{{ bank.bankShortName }}</p>
+          <div class="bank-code">Code: {{ bank.bankCode }}</div>
+          
+          <!-- Bank Details -->
+          <div class="bank-details">
+            <div class="bank-type-badge">
+              {{ bank.bankType | titlecase }} Sector
+            </div>
+            <div class="template-info" *ngIf="bank.templates && bank.templates.length > 0">
+              <span class="template-count">
+                {{ bank.templates.length }} Template{{ bank.templates.length !== 1 ? 's' : '' }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Headquarters Info -->
+          <div class="headquarters-info" *ngIf="bank.headquarters">
+            <small class="headquarters-label">Headquarters:</small>
+            <small class="headquarters-location">
+              {{ bank.headquarters.city }}, {{ bank.headquarters.state }}
+            </small>
+          </div>
+        </div>
+
+        <!-- Selection Footer -->
+        <div class="bank-footer">
+          <div class="select-indicator">
+            <span class="select-text">Select Bank</span>
+            <span class="arrow">→</span>
+          </div>
         </div>
       </div>
     </div>
@@ -90,24 +124,63 @@
       <div class="template-card" 
            *ngFor="let template of availableTemplates" 
            (click)="selectTemplate(template)"
-           [class.selected]="selectedTemplate?.templateId === template.templateId">
+           [class.selected]="selectedTemplate?.templateId === template.templateId"
+           [class.active]="template.isActive">
+        
+        <!-- Template Header -->
         <div class="template-header">
-          <div class="template-icon">{{ getPropertyTypeIcon(template.propertyType) }}</div>
-          <div class="template-info">
-            <h3 class="template-name">{{ template.templateName }}</h3>
-            <p class="template-property-type">{{ template.propertyType | titlecase }} Property</p>
+          <div class="template-icon-container">
+            <div class="template-icon">{{ getPropertyTypeIcon(template.propertyType) }}</div>
+          </div>
+          <div class="template-status" [class.active]="template.isActive">
+            {{ template.isActive ? 'Available' : 'Inactive' }}
           </div>
         </div>
-        <div class="template-content">
+
+        <!-- Template Info -->
+        <div class="template-info">
+          <h3 class="template-name">{{ template.templateName }}</h3>
+          <div class="template-property-type">
+            <span class="property-badge">{{ template.propertyType | titlecase }} Property</span>
+          </div>
           <p class="template-description">{{ template.description }}</p>
+        </div>
+
+        <!-- Template Details -->
+        <div class="template-details">
           <div class="template-meta">
-            <span class="template-version">v{{ template.version }}</span>
-            <span class="field-count">{{ template.fields.length }} fields</span>
+            <div class="meta-item">
+              <span class="meta-label">Version:</span>
+              <span class="meta-value version-badge">v{{ template.version }}</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Template Type:</span>
+              <span class="meta-value">{{ template.templateType | titlecase }}</span>
+            </div>
+          </div>
+
+          <!-- Field Information -->
+          <div class="template-fields-info" *ngIf="template.fields && template.fields.length > 0">
+            <div class="fields-header">
+              <span class="fields-count">{{ template.fields.length }} Form Fields</span>
+            </div>
+            <div class="fields-preview">
+              <span class="field-tag" *ngFor="let field of template.fields.slice(0, 3)">
+                {{ field | titlecase }}
+              </span>
+              <span class="more-fields" *ngIf="template.fields.length > 3">
+                +{{ template.fields.length - 3 }} more
+              </span>
+            </div>
           </div>
         </div>
-        <div class="select-indicator">
-          <span class="select-text">Select</span>
-          <span class="arrow">→</span>
+
+        <!-- Selection Footer -->
+        <div class="template-footer">
+          <div class="select-indicator">
+            <span class="select-text">Select Template</span>
+            <span class="arrow">→</span>
+          </div>
         </div>
       </div>
     </div>

@@ -1,0 +1,650 @@
+{
+  "_id": "all_banks_unified_v3",
+  "collectionName": "banks",
+  "description": "Unified document containing all Indian banks with template collection references",
+  "version": "3.0",
+  "createdAt": "2025-11-09T18:40:00.000Z",
+  "updatedAt": "2025-11-09T20:00:00.000Z",
+  "banks": [
+    {
+      "bankId": "sbi",
+      "bankCode": "SBI",
+      "bankName": "State Bank of India",
+      "bankShortName": "SBI",
+      "bankType": "Public Sector",
+      "isActive": true,
+      "headquarters": {
+        "city": "Mumbai",
+        "state": "Maharashtra",
+        "pincode": "400001"
+      },
+      "totalBranches": 22405,
+      "bankBranches": [
+        {
+          "branchId": "sbi_mumbai_main",
+          "branchCode": "SBI001",
+          "branchName": "Mumbai Main Branch",
+          "branchAddress": {
+            "street": "Nariman Point",
+            "city": "Mumbai",
+            "state": "Maharashtra",
+            "pincode": "400001",
+            "country": "India"
+          },
+          "ifscCode": "SBIN0000001",
+          "contactDetails": {
+            "phone": "+91-22-22661602",
+            "email": "mumbai.main@sbi.co.in"
+          },
+          "isActive": true,
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "updatedAt": "2025-11-09T18:40:00.000Z"
+        },
+        {
+          "branchId": "sbi_delhi_cp",
+          "branchCode": "SBI002",
+          "branchName": "Delhi Connaught Place Branch",
+          "branchAddress": {
+            "street": "Connaught Place",
+            "city": "New Delhi",
+            "state": "Delhi",
+            "pincode": "110001",
+            "country": "India"
+          },
+          "ifscCode": "SBIN0000002",
+          "contactDetails": {
+            "phone": "+91-11-23417821",
+            "email": "delhi.cp@sbi.co.in"
+          },
+          "isActive": true,
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "updatedAt": "2025-11-09T18:40:00.000Z"
+        }
+      ],
+      "templates": [
+        {
+          "templateId": "land-property",
+          "templateCode": "land-property",
+          "templateName": "SBI Land Property Valuation",
+          "templateType": "property_valuation",
+          "propertyType": "land",
+          "description": "Standard template for SBI land property valuation reports",
+          "version": "1.0",
+          "isActive": true,
+          "collectionRef": "sbi_land_property_details",
+          "commonFieldsCollectionRef": "common_form_fields"
+        },
+        {
+          "templateId": "apartment-property",
+          "templateCode": "apartment-property",
+          "templateName": "SBI Apartment Property Valuation",
+          "templateType": "property_valuation",
+          "propertyType": "apartment",
+          "description": "Standard template for SBI apartment property valuation reports",
+          "version": "1.0",
+          "isActive": true,
+          "collectionRef": "sbi_apartment_property_details",
+          "commonFieldsCollectionRef": "common_form_fields"
+        }
+      ]
+    },
+    {
+      "bankId": "pnb",
+      "bankCode": "PNB",
+      "bankName": "Punjab National Bank",
+      "bankShortName": "PNB",
+      "bankType": "Public Sector",
+      "isActive": true,
+      "headquarters": {
+        "city": "New Delhi",
+        "state": "Delhi",
+        "pincode": "110001"
+      },
+      "totalBranches": 10681,
+      "bankBranches": [
+        {
+          "branchId": "pnb_delhi_main",
+          "branchCode": "PNB001",
+          "branchName": "Delhi Main Branch",
+          "branchAddress": {
+            "street": "Parliament Street",
+            "city": "New Delhi",
+            "state": "Delhi",
+            "pincode": "110001",
+            "country": "India"
+          },
+          "ifscCode": "PUNB0000001",
+          "contactDetails": {
+            "phone": "+91-11-23325200",
+            "email": "delhi.main@pnb.co.in"
+          },
+          "isActive": true,
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "updatedAt": "2025-11-09T20:00:00.000Z"
+        }
+      ],
+      "templates": [
+        {
+          "templateId": "land-property",
+          "templateCode": "land-property",
+          "templateName": "PNB Land Property Valuation",
+          "templateType": "property_valuation",
+          "propertyType": "land",
+          "description": "Standard template for PNB land property valuation reports",
+          "version": "1.0",
+          "isActive": true,
+          "collectionRef": "pnb_land_property_details",
+          "commonFieldsCollectionRef": "common_form_fields"
+        },
+        {
+          "templateId": "apartment-property",
+          "templateCode": "apartment-property",
+          "templateName": "PNB Apartment Property Valuation",
+          "templateType": "property_valuation",
+          "propertyType": "apartment",
+          "description": "Standard template for PNB apartment property valuation reports",
+          "version": "1.0",
+          "isActive": true,
+          "collectionRef": "pnb_apartment_property_details",
+          "commonFieldsCollectionRef": "common_form_fields"
+        }
+      ]
+    },
+    {
+      "bankId": "bob",
+      "bankCode": "BOB",
+      "bankName": "Bank of Baroda",
+      "bankShortName": "BOB",
+      "bankType": "Public Sector",
+      "isActive": true,
+      "headquarters": {
+        "city": "Vadodara",
+        "state": "Gujarat",
+        "pincode": "390007"
+      },
+      "totalBranches": 9500,
+      "bankBranches": [
+        {
+          "branchId": "bob_vadodara_main",
+          "branchCode": "BOB001",
+          "branchName": "Vadodara Main Branch",
+          "branchAddress": {
+            "street": "Mandvi",
+            "city": "Vadodara",
+            "state": "Gujarat",
+            "pincode": "390007",
+            "country": "India"
+          },
+          "ifscCode": "BARB0VADODA",
+          "contactDetails": {
+            "phone": "+91-265-2323232",
+            "email": "vadodara.main@bankofbaroda.in"
+          },
+          "isActive": true,
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "updatedAt": "2025-11-09T18:40:00.000Z"
+        }
+      ],
+      "templates": [
+        {
+          "templateId": "land-property",
+          "templateCode": "land-property",
+          "templateName": "BOB Land Property Valuation",
+          "templateType": "property_valuation",
+          "propertyType": "land",
+          "description": "Standard template for BOB land property valuation reports",
+          "version": "1.0",
+          "isActive": true,
+          "collectionRef": "bob_land_property_details",
+          "commonFieldsCollectionRef": "common_form_fields"
+        },
+        {
+          "templateId": "apartment-property",
+          "templateCode": "apartment-property",
+          "templateName": "BOB Apartment Property Valuation",
+          "templateType": "property_valuation",
+          "propertyType": "apartment",
+          "description": "Standard template for BOB apartment property valuation reports",
+          "version": "1.0",
+          "isActive": false,
+          "collectionRef": "bob_apartment_property_details",
+          "commonFieldsCollectionRef": "common_form_fields"
+        }
+      ]
+    },
+    {
+      "bankId": "ubi",
+      "bankCode": "UBI",
+      "bankName": "Union Bank of India",
+      "bankShortName": "UBI",
+      "bankType": "Public Sector",
+      "isActive": true,
+      "headquarters": {
+        "city": "Mumbai",
+        "state": "Maharashtra",
+        "pincode": "400013"
+      },
+      "totalBranches": 7500,
+      "bankBranches": [
+        {
+          "branchId": "ubi_mumbai_fort",
+          "branchCode": "UBI001",
+          "branchName": "Mumbai Fort Branch",
+          "branchAddress": {
+            "street": "D.N. Road, Fort",
+            "city": "Mumbai",
+            "state": "Maharashtra",
+            "pincode": "400001",
+            "country": "India"
+          },
+          "ifscCode": "UBIN0801234",
+          "contactDetails": {
+            "phone": "+91-22-22661515",
+            "email": "mumbai.fort@unionbankofindia.co.in"
+          },
+          "isActive": true,
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "updatedAt": "2025-11-09T18:40:00.000Z"
+        }
+      ],
+      "templates": [
+        {
+          "templateId": "land-property",
+          "templateCode": "land-property",
+          "templateName": "UBI Land Property Valuation",
+          "templateType": "property_valuation",
+          "propertyType": "land",
+          "description": "Standard template for UBI land property valuation reports",
+          "version": "1.0",
+          "isActive": true,
+          "collectionRef": "ubi_land_property_details",
+          "commonFieldsCollectionRef": "common_form_fields"
+        },
+        {
+          "templateId": "apartment-property",
+          "templateCode": "apartment-property",
+          "templateName": "UBI Apartment Property Valuation",
+          "templateType": "property_valuation",
+          "propertyType": "apartment",
+          "description": "Standard template for UBI apartment property valuation reports",
+          "version": "1.0",
+          "isActive": true,
+          "collectionRef": "ubi_apartment_property_details",
+          "commonFieldsCollectionRef": "common_form_fields"
+        }
+      ]
+    },
+    {
+      "bankId": "boi",
+      "bankCode": "BOI",
+      "bankName": "Bank of India",
+      "bankShortName": "BOI",
+      "bankType": "Public Sector",
+      "isActive": true,
+      "headquarters": {
+        "city": "Mumbai",
+        "state": "Maharashtra",
+        "pincode": "400001"
+      },
+      "totalBranches": 5100,
+      "bankBranches": [
+        {
+          "branchId": "boi_mumbai_hq",
+          "branchCode": "BOI001",
+          "branchName": "Mumbai Head Office",
+          "branchAddress": {
+            "street": "Star House, C-5, G Block",
+            "city": "Mumbai",
+            "state": "Maharashtra",
+            "pincode": "400051",
+            "country": "India"
+          },
+          "ifscCode": "BKID0006001",
+          "contactDetails": {
+            "phone": "+91-22-26590371",
+            "email": "mumbai.ho@bankofindia.co.in"
+          },
+          "isActive": true,
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "updatedAt": "2025-11-09T18:40:00.000Z"
+        }
+      ],
+      "templates": [
+        {
+          "templateId": "land-property",
+          "templateCode": "land-property",
+          "templateName": "BOI Land Property Valuation",
+          "templateType": "property_valuation",
+          "propertyType": "land",
+          "description": "Standard template for BOI land property valuation reports",
+          "version": "1.0",
+          "isActive": true,
+          "collectionRef": "boi_land_property_details",
+          "commonFieldsCollectionRef": "common_form_fields"
+        },
+        {
+          "templateId": "apartment-property",
+          "templateCode": "apartment-property",
+          "templateName": "BOI Apartment Property Valuation",
+          "templateType": "property_valuation",
+          "propertyType": "apartment",
+          "description": "Standard template for BOI apartment property valuation reports",
+          "version": "1.0",
+          "isActive": true,
+          "collectionRef": "boi_apartment_property_details",
+          "commonFieldsCollectionRef": "common_form_fields"
+        }
+      ]
+    },
+    {
+      "bankId": "cbi",
+      "bankCode": "CBI",
+      "bankName": "Central Bank of India",
+      "bankShortName": "CBI",
+      "bankType": "Public Sector",
+      "isActive": true,
+      "headquarters": {
+        "city": "Mumbai",
+        "state": "Maharashtra",
+        "pincode": "400001"
+      },
+      "totalBranches": 4730,
+      "bankBranches": [
+        {
+          "branchId": "cbi_mumbai_main",
+          "branchCode": "CBI001",
+          "branchName": "Mumbai Main Branch",
+          "branchAddress": {
+            "street": "Chander Mukhi",
+            "city": "Mumbai",
+            "state": "Maharashtra",
+            "pincode": "400001",
+            "country": "India"
+          },
+          "ifscCode": "CBIN0280001",
+          "contactDetails": {
+            "phone": "+91-22-22661234",
+            "email": "mumbai.main@centralbank.co.in"
+          },
+          "isActive": true,
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "updatedAt": "2025-11-09T20:00:00.000Z"
+        }
+      ],
+      "templates": [
+        {
+          "templateId": "land-property",
+          "templateCode": "land-property",
+          "templateName": "CBI Land Property Valuation",
+          "templateType": "property_valuation",
+          "propertyType": "land",
+          "description": "Standard template for CBI land property valuation reports",
+          "version": "1.0",
+          "isActive": true,
+          "collectionRef": "cbi_land_property_details",
+          "commonFieldsCollectionRef": "common_form_fields"
+        },
+        {
+          "templateId": "apartment-property",
+          "templateCode": "apartment-property",
+          "templateName": "CBI Apartment Property Valuation",
+          "templateType": "property_valuation",
+          "propertyType": "apartment",
+          "description": "Standard template for CBI apartment property valuation reports",
+          "version": "1.0",
+          "isActive": true,
+          "collectionRef": "cbi_apartment_property_details",
+          "commonFieldsCollectionRef": "common_form_fields"
+        }
+      ]
+    },
+    {
+      "bankId": "iob",
+      "bankCode": "IOB",
+      "bankName": "Indian Overseas Bank",
+      "bankShortName": "IOB",
+      "bankType": "Public Sector",
+      "isActive": true,
+      "headquarters": {
+        "city": "Chennai",
+        "state": "Tamil Nadu",
+        "pincode": "600001"
+      },
+      "totalBranches": 3270,
+      "bankBranches": [
+        {
+          "branchId": "iob_chennai_main",
+          "branchCode": "IOB001",
+          "branchName": "Chennai Main Branch",
+          "branchAddress": {
+            "street": "763, Anna Salai",
+            "city": "Chennai",
+            "state": "Tamil Nadu",
+            "pincode": "600002",
+            "country": "India"
+          },
+          "ifscCode": "IOBA0000001",
+          "contactDetails": {
+            "phone": "+91-44-28529020",
+            "email": "chennai.main@iob.in"
+          },
+          "isActive": true,
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "updatedAt": "2025-11-09T20:00:00.000Z"
+        }
+      ],
+      "templates": [
+        {
+          "templateId": "land-property",
+          "templateCode": "land-property",
+          "templateName": "IOB Land Property Valuation",
+          "templateType": "property_valuation",
+          "propertyType": "land",
+          "description": "Standard template for IOB land property valuation reports",
+          "version": "1.0",
+          "isActive": true,
+          "collectionRef": "iob_land_property_details",
+          "commonFieldsCollectionRef": "common_form_fields"
+        },
+        {
+          "templateId": "apartment-property",
+          "templateCode": "apartment-property",
+          "templateName": "IOB Apartment Property Valuation",
+          "templateType": "property_valuation",
+          "propertyType": "apartment",
+          "description": "Standard template for IOB apartment property valuation reports",
+          "version": "1.0",
+          "isActive": true,
+          "collectionRef": "iob_apartment_property_details",
+          "commonFieldsCollectionRef": "common_form_fields"
+        }
+      ]
+    },
+    {
+      "bankId": "canara",
+      "bankCode": "CANARA",
+      "bankName": "Canara Bank",
+      "bankShortName": "Canara",
+      "bankType": "Public Sector",
+      "isActive": true,
+      "headquarters": {
+        "city": "Bangalore",
+        "state": "Karnataka",
+        "pincode": "560002"
+      },
+      "totalBranches": 10342,
+      "bankBranches": [
+        {
+          "branchId": "canara_bangalore_main",
+          "branchCode": "CANARA001",
+          "branchName": "Bangalore Main Branch",
+          "branchAddress": {
+            "street": "112, J.C. Road",
+            "city": "Bangalore",
+            "state": "Karnataka",
+            "pincode": "560002",
+            "country": "India"
+          },
+          "ifscCode": "CNRB0000001",
+          "contactDetails": {
+            "phone": "+91-80-25588888",
+            "email": "bangalore.main@canarabank.com"
+          },
+          "isActive": true,
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "updatedAt": "2025-11-09T20:00:00.000Z"
+        }
+      ],
+      "templates": [
+        {
+          "templateId": "land-property",
+          "templateCode": "land-property",
+          "templateName": "Canara Land Property Valuation",
+          "templateType": "property_valuation",
+          "propertyType": "land",
+          "description": "Standard template for Canara Bank land property valuation reports",
+          "version": "1.0",
+          "isActive": true,
+          "collectionRef": "canara_land_property_details",
+          "commonFieldsCollectionRef": "common_form_fields"
+        },
+        {
+          "templateId": "apartment-property",
+          "templateCode": "apartment-property",
+          "templateName": "Canara Apartment Property Valuation",
+          "templateType": "property_valuation",
+          "propertyType": "apartment",
+          "description": "Standard template for Canara Bank apartment property valuation reports",
+          "version": "1.0",
+          "isActive": true,
+          "collectionRef": "canara_apartment_property_details",
+          "commonFieldsCollectionRef": "common_form_fields"
+        }
+      ]
+    },
+    {
+      "bankId": "uco",
+      "bankCode": "UCO",
+      "bankName": "UCO Bank",
+      "bankShortName": "UCO",
+      "bankType": "Public Sector",
+      "isActive": true,
+      "headquarters": {
+        "city": "Kolkata",
+        "state": "West Bengal",
+        "pincode": "700001"
+      },
+      "totalBranches": 3057,
+      "bankBranches": [
+        {
+          "branchId": "uco_kolkata_main",
+          "branchCode": "UCO001",
+          "branchName": "Kolkata Main Branch",
+          "branchAddress": {
+            "street": "10, B.T.M. Sarani",
+            "city": "Kolkata",
+            "state": "West Bengal",
+            "pincode": "700001",
+            "country": "India"
+          },
+          "ifscCode": "UCBA0000001",
+          "contactDetails": {
+            "phone": "+91-33-22305000",
+            "email": "kolkata.main@ucobank.com"
+          },
+          "isActive": true,
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "updatedAt": "2025-11-09T20:00:00.000Z"
+        }
+      ],
+      "templates": [
+        {
+          "templateId": "land-property",
+          "templateCode": "land-property",
+          "templateName": "UCO Land Property Valuation",
+          "templateType": "property_valuation",
+          "propertyType": "land",
+          "description": "Standard template for UCO Bank land property valuation reports",
+          "version": "1.0",
+          "isActive": true,
+          "collectionRef": "uco_land_property_details",
+          "commonFieldsCollectionRef": "common_form_fields"
+        },
+        {
+          "templateId": "apartment-property",
+          "templateCode": "apartment-property",
+          "templateName": "UCO Apartment Property Valuation",
+          "templateType": "property_valuation",
+          "propertyType": "apartment",
+          "description": "Standard template for UCO Bank apartment property valuation reports",
+          "version": "1.0",
+          "isActive": true,
+          "collectionRef": "uco_apartment_property_details",
+          "commonFieldsCollectionRef": "common_form_fields"
+        }
+      ]
+    },
+    {
+      "bankId": "syndicate",
+      "bankCode": "SYNDICATE",
+      "bankName": "Syndicate Bank",
+      "bankShortName": "Syndicate",
+      "bankType": "Public Sector",
+      "isActive": false,
+      "headquarters": {
+        "city": "Bangalore",
+        "state": "Karnataka",
+        "pincode": "560001"
+      },
+      "totalBranches": 4169,
+      "bankBranches": [
+        {
+          "branchId": "syndicate_bangalore_main",
+          "branchCode": "SYN001",
+          "branchName": "Bangalore Main Branch",
+          "branchAddress": {
+            "street": "Manipal Centre",
+            "city": "Bangalore",
+            "state": "Karnataka",
+            "pincode": "560001",
+            "country": "India"
+          },
+          "ifscCode": "SYNB0000001",
+          "contactDetails": {
+            "phone": "+91-80-25599999",
+            "email": "bangalore.main@syndicatebank.in"
+          },
+          "isActive": false,
+          "createdAt": "2025-01-01T00:00:00.000Z",
+          "updatedAt": "2025-11-09T20:00:00.000Z"
+        }
+      ],
+      "templates": [
+        {
+          "templateId": "land-property",
+          "templateCode": "land-property",
+          "templateName": "Syndicate Land Property Valuation",
+          "templateType": "property_valuation",
+          "propertyType": "land",
+          "description": "Standard template for Syndicate Bank land property valuation reports",
+          "version": "1.0",
+          "isActive": false,
+          "collectionRef": "syndicate_land_property_details",
+          "commonFieldsCollectionRef": "common_form_fields"
+        },
+        {
+          "templateId": "apartment-property",
+          "templateCode": "apartment-property",
+          "templateName": "Syndicate Apartment Property Valuation",
+          "templateType": "property_valuation",
+          "propertyType": "apartment",
+          "description": "Standard template for Syndicate Bank apartment property valuation reports",
+          "version": "1.0",
+          "isActive": false,
+          "collectionRef": "syndicate_apartment_property_details",
+          "commonFieldsCollectionRef": "common_form_fields"
+        }
+      ]
+    }
+  ]
+}

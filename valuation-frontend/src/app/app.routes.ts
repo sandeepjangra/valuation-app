@@ -7,6 +7,7 @@ import { Admin } from './components/admin/admin';
 import { Reports } from './components/reports/reports';
 import { Banks } from './components/banks/banks';
 import { BankDetails } from './components/bank-details/bank-details';
+import { LogViewerComponent } from './components/log-viewer.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
@@ -18,4 +19,5 @@ export const routes: Routes = [
   { path: 'reports', component: Reports },
   { path: 'banks', component: Banks },
   { path: 'bank-details/:id', component: BankDetails },
+  { path: 'logs', component: LogViewerComponent },
 ];

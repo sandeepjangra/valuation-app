@@ -227,9 +227,47 @@ export class NewReport implements OnInit, OnDestroy {
       'UNION': '🏛️',
       'BOB': '🏦',
       'UCO': '🏛️',
-      'CBI': '🏢'
+      'CBI': '🏢',
+      'CANARA': '🏛️',
+      'IOB': '🏦',
+      'UBI': '🏛️'
     };
     return icons[bankCode] || '🏦';
+  }
+
+  getBankLogo(bankCode: string): string {
+    // You can replace these with actual logo URLs in the future
+    const logos: { [key: string]: string } = {
+      'SBI': 'assets/logos/sbi-logo.png',
+      'HDFC': 'assets/logos/hdfc-logo.png',
+      'PNB': 'assets/logos/pnb-logo.png',
+      'ICICI': 'assets/logos/icici-logo.png',
+      'UNION': 'assets/logos/union-logo.png',
+      'BOB': 'assets/logos/bob-logo.png',
+      'UCO': 'assets/logos/uco-logo.png',
+      'CBI': 'assets/logos/cbi-logo.png',
+      'CANARA': 'assets/logos/canara-logo.png',
+      'IOB': 'assets/logos/iob-logo.png',
+      'UBI': 'assets/logos/ubi-logo.png'
+    };
+    return logos[bankCode] || '';
+  }
+
+  getBankThemeColor(bankCode: string): string {
+    const colors: { [key: string]: string } = {
+      'SBI': '#1e40af',      // Blue
+      'HDFC': '#dc2626',     // Red  
+      'PNB': '#059669',      // Green
+      'ICICI': '#ea580c',    // Orange
+      'UNION': '#7c3aed',    // Purple
+      'BOB': '#0891b2',      // Cyan
+      'UCO': '#be123c',      // Rose
+      'CBI': '#4338ca',      // Indigo
+      'CANARA': '#16a34a',   // Green
+      'IOB': '#c2410c',      // Orange
+      'UBI': '#9333ea'       // Violet
+    };
+    return colors[bankCode] || '#6b7280';
   }
 
   getPropertyTypeIcon(propertyType: string): string {

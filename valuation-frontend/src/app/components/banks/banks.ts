@@ -123,4 +123,92 @@ export class Banks implements OnInit, OnDestroy {
   viewBankDetails(bank: Bank) {
     this.router.navigate(['/bank-details', bank.bankCode]);
   }
+
+  createNewReport(bank: Bank) {
+    console.log('Creating new report for bank:', bank.bankCode);
+    this.router.navigate(['/new-report'], { 
+      queryParams: { selectedBank: bank.bankCode } 
+    });
+  }
+
+  getBankLogo(bankCode: string): string {
+    const logos: { [key: string]: string } = {
+      'SBI': '🏛️',
+      'HDFC': '🏢',
+      'ICICI': '🏦',
+      'AXIS': '🏪',
+      'PNB': '🏛️',
+      'BOB': '🏦',
+      'CANARA': '🏢',
+      'UBI': '🏪',
+      'IOB': '🏛️',
+      'UNION': '🏦'
+    };
+    return logos[bankCode] || '🏦';
+  }
+
+  getBankThemeColor(bankCode: string): string {
+    const colors: { [key: string]: string } = {
+      'SBI': 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
+      'HDFC': 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%)',
+      'ICICI': 'linear-gradient(135deg, #ea580c 0%, #f97316 100%)',
+      'AXIS': 'linear-gradient(135deg, #7c2d12 0%, #a16207 100%)',
+      'PNB': 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+      'BOB': 'linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%)',
+      'CANARA': 'linear-gradient(135deg, #be123c 0%, #e11d48 100%)',
+      'UBI': 'linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)',
+      'IOB': 'linear-gradient(135deg, #4338ca 0%, #6366f1 100%)',
+      'UNION': 'linear-gradient(135deg, #059669 0%, #10b981 100%)'
+    };
+    return colors[bankCode] || 'linear-gradient(135deg, #6b7280 0%, #9ca3af 100%)';
+  }
+
+  getTemplateCount(bankCode: string): number {
+    // This would normally come from API data
+    const templateCounts: { [key: string]: number } = {
+      'SBI': 8,
+      'HDFC': 6,
+      'ICICI': 7,
+      'AXIS': 5,
+      'PNB': 9,
+      'BOB': 4,
+      'CANARA': 6,
+      'UBI': 7,
+      'IOB': 5,
+      'UNION': 3
+    };
+    return templateCounts[bankCode] || 0;
+  }
+
+  getBankType(bankCode: string): string {
+    const types: { [key: string]: string } = {
+      'SBI': 'Public Sector',
+      'HDFC': 'Private Sector', 
+      'ICICI': 'Private Sector',
+      'AXIS': 'Private Sector',
+      'PNB': 'Public Sector',
+      'BOB': 'Public Sector',
+      'CANARA': 'Public Sector',
+      'UBI': 'Public Sector',
+      'IOB': 'Public Sector',
+      'UNION': 'Public Sector'
+    };
+    return types[bankCode] || 'Unknown';
+  }
+
+  getBankHeadquarters(bankCode: string): string {
+    const headquarters: { [key: string]: string } = {
+      'SBI': 'Mumbai, Maharashtra',
+      'HDFC': 'Mumbai, Maharashtra',
+      'ICICI': 'Mumbai, Maharashtra',
+      'AXIS': 'Mumbai, Maharashtra',
+      'PNB': 'New Delhi, Delhi',
+      'BOB': 'Mumbai, Maharashtra',
+      'CANARA': 'Bengaluru, Karnataka',
+      'UBI': 'Kolkata, West Bengal',
+      'IOB': 'Chennai, Tamil Nadu',
+      'UNION': 'Mumbai, Maharashtra'
+    };
+    return headquarters[bankCode] || 'Unknown';
+  }
 }
