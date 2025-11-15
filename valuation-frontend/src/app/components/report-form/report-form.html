@@ -979,6 +979,42 @@
                           <div class="field-help" *ngIf="field.formula">Formula: {{ field.formula }}</div>
                         </div>
 
+                        <!-- Table Field (for non-section tabs) -->
+                        <div *ngSwitchCase="'table'" 
+                             class="form-field table-field">
+                          <label class="field-label">
+                            {{ field.uiDisplayName }}
+                            <span class="required-indicator" *ngIf="field.isRequired">*</span>
+                          </label>
+                          <div class="table-container">
+                            <table class="valuation-table">
+                              <thead>
+                                <tr>
+                                  <th *ngFor="let column of field.columns">{{ column.columnName }}</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <tr *ngFor="let row of field.rows; let i = index">
+                                  <td *ngFor="let column of field.columns">
+                                    <input
+                                      *ngIf="column.isEditable && !row.isReadonly; else readonlyCell"
+                                      [type]="getTableCellInputType(column.fieldType)"
+                                      [value]="row[column.columnId]"
+                                      (input)="updateTableCell(field.fieldId, i, column.columnId, $event)"
+                                      class="table-input"
+                                      [placeholder]="column.placeholder || ''"
+                                    />
+                                    <ng-template #readonlyCell>
+                                      <span class="table-cell-readonly">{{ row[column.columnId] || '-' }}</span>
+                                    </ng-template>
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                          <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
+                        </div>
+
                         <!-- Dynamic Table Field (for non-section tabs) -->
                         <div *ngSwitchCase="'dynamic_table'" 
                              class="form-field dynamic-table-field">

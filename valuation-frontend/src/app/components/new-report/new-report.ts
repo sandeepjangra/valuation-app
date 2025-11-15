@@ -279,4 +279,15 @@ export class NewReport implements OnInit, OnDestroy {
     };
     return icons[propertyType] || '🏘️';
   }
+
+  getBankLogoPath(bankCode: string): string {
+    // Return path to bank logo in assets folder
+    return `assets/images/banks/${bankCode.toLowerCase()}.svg`;
+  }
+
+  onImageError(event: any, bankCode: string): void {
+    console.log(`Failed to load logo for bank: ${bankCode}`);
+    // Fallback to a default bank icon
+    event.target.src = 'assets/images/banks/default-bank.svg';
+  }
 }

@@ -1,0 +1,97 @@
+{
+  "sectionId": "valuation_part_c",
+  "sectionName": "Part C - Floor-wise Valuation",
+  "sortOrder": 3,
+  "fields": [
+    {
+      "fieldId": "floor_wise_valuation_table",
+      "uiDisplayName": "Floor-wise Valuation Details",
+      "fieldType": "dynamic_table",
+      "sortOrder": 1,
+      "tableConfig": {
+        "tableType": "row_dynamic",
+        "fixedColumns": [
+          {
+            "columnId": "sr_no",
+            "columnName": "Sr. No.",
+            "fieldType": "text",
+            "isReadonly": true,
+            "canDelete": false
+          },
+          {
+            "columnId": "floors_level",
+            "columnName": "Floors/Level",
+            "fieldType": "text",
+            "isRequired": false,
+            "isEditable": true,
+            "canDelete": false
+          },
+          {
+            "columnId": "particulars_description",
+            "columnName": "Particulars/Description of the Items",
+            "fieldType": "textarea",
+            "isRequired": false,
+            "isEditable": true,
+            "canDelete": false
+          },
+          {
+            "columnId": "plinth_covered_area",
+            "columnName": "Plinth/Covered Area (in Sq.ft.)",
+            "fieldType": "number",
+            "isRequired": false,
+            "isEditable": true,
+            "canDelete": false
+          },
+          {
+            "columnId": "estimated_replacement_rate",
+            "columnName": "Estimated Replacement Rate per Sq.ft. (in Rs.)",
+            "fieldType": "currency",
+            "isRequired": false,
+            "isEditable": true,
+            "canDelete": false
+          },
+          {
+            "columnId": "estimated_replacement_cost",
+            "columnName": "Estimated Replacement Cost",
+            "fieldType": "currency",
+            "isRequired": false,
+            "isEditable": true,
+            "canDelete": false
+          },
+          {
+            "columnId": "depreciation",
+            "columnName": "Depreciation for 2 yr. @ 1.5% per year",
+            "fieldType": "currency",
+            "isRequired": false,
+            "isEditable": true,
+            "canDelete": false
+          },
+          {
+            "columnId": "net_value",
+            "columnName": "Net Value",
+            "fieldType": "currency",
+            "isRequired": false,
+            "isEditable": true,
+            "canDelete": false
+          }
+        ],
+        "maxRows": 10,
+        "addRowConfig": {
+          "buttonText": "Add Row"
+        },
+        "rows": [
+          {
+            "sr_no": "1.",
+            "floors_level": "",
+            "particulars_description": "",
+            "plinth_covered_area": "",
+            "estimated_replacement_rate": "",
+            "estimated_replacement_cost": "",
+            "depreciation": "",
+            "net_value": ""
+          }
+        ]
+      }
+    }
+  ]
+}

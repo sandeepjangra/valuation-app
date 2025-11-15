@@ -29,55 +29,31 @@
 
   <!-- Banks Grid -->
   <div class="banks-grid" *ngIf="!loading && !error">
-    <div class="bank-card" 
-         *ngFor="let bank of banks" 
-         (click)="viewBankDetails(bank)"
-         [style.--bank-theme-color]="getBankThemeColor(bank.bankCode)">
-      
-      <!-- Bank Header with Logo -->
-      <div class="bank-header">
-        <div class="bank-logo-container" [style.background]="getBankThemeColor(bank.bankCode)">
-          {{ getBankLogo(bank.bankCode) }}
-        </div>
-        <div class="bank-status" [class.active]="bank.isActive" [class.inactive]="!bank.isActive">
-          <span class="status-dot"></span>
-          {{ bank.isActive ? 'Active' : 'Inactive' }}
-        </div>
+    <div class="bank-card" *ngFor="let bank of banks" (click)="createNewReport(bank)">
+      <!-- Bank Logo -->
+      <div class="bank-logo-section">
+        <img 
+          class="bank-logo" 
+          [src]="getBankLogoPath(bank.bankCode)" 
+          [alt]="bank.bankName + ' Logo'"
+          (error)="onImageError($event, bank.bankCode)"
+        />
       </div>
       
-      <!-- Bank Content -->
-      <div class="bank-content">
+      <!-- Bank Info -->
+      <div class="bank-info-section">
         <h3 class="bank-name">{{ bank.bankName }}</h3>
         <div class="bank-code">{{ bank.bankCode }}</div>
-        
-        <div class="bank-info">
-          <div class="info-item">
-            <span class="info-label">Templates:</span>
-            <span class="info-value">{{ getTemplateCount(bank.bankCode) }}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">Type:</span>
-            <span class="info-value">{{ getBankType(bank.bankCode) }}</span>
-          </div>
-        </div>
-
-        <div class="bank-headquarters">
-          <strong>HQ:</strong> {{ getBankHeadquarters(bank.bankCode) }}
+        <div class="template-count">
+          {{ getTemplateCount(bank.bankCode) }} Templates
         </div>
       </div>
       
-      <!-- Bank Footer -->
-      <div class="bank-footer">
-        <div class="action-buttons">
-          <button class="action-btn primary" (click)="createNewReport(bank); $event.stopPropagation()">
-            <span class="btn-icon">📄</span>
-            New Report
-          </button>
-          <button class="action-btn secondary" (click)="viewBankDetails(bank); $event.stopPropagation()">
-            <span class="btn-icon">👁️</span>
-            View Details
-          </button>
-        </div>
+      <!-- Action Button -->
+      <div class="bank-action">
+        <button class="create-report-btn" (click)="$event.stopPropagation()">
+          Create Report
+        </button>
       </div>
     </div>
   </div>

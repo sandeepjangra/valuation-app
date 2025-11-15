@@ -273,12 +273,21 @@ async def get_aggregated_template_fields(bank_code: str, template_id: str, reque
                     
                     # Handle tabs without sections (normal field structure)
                     else:
-                        # Get fields directly from documents array
-                        all_doc_fields = []
-                        for document in doc.get("documents", []):
-                            doc_fields = document.get("fields", [])
-                            all_doc_fields.extend(doc_fields)
-                        tab["fields"] = all_doc_fields
+                        # Get fields from the specific document that matches this tab's documentSource
+                        document_source = tab_config.get("documentSource")
+                        if document_source:
+                            # Find the document with matching templateId
+                            for document in doc.get("documents", []):
+                                if document.get("templateId") == document_source:
+                                    tab["fields"] = document.get("fields", [])
+                                    break
+                        else:
+                            # Fallback: get all fields if no documentSource specified
+                            all_doc_fields = []
+                            for document in doc.get("documents", []):
+                                doc_fields = document.get("fields", [])
+                                all_doc_fields.extend(doc_fields)
+                            tab["fields"] = all_doc_fields
                     
                     bank_specific_tabs.append(tab)
             

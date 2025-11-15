@@ -36,7 +36,9 @@ export class Admin implements OnInit {
   // System Status Methods
   checkSystemStatus() {
     // Check backend status
-    this.http.get('http://localhost:8000/api/banks').subscribe({
+    this.http.get('http://localhost:8000/api/banks', { 
+      timeout: 5000 // 5 second timeout
+    }).subscribe({
       next: (response) => {
         this.backendOnline = true;
         this.databaseOnline = true; // If banks API works, database is connected
@@ -50,6 +52,7 @@ export class Admin implements OnInit {
   }
 
   refreshStatus() {
+    console.log('Refreshing system status...');
     this.checkSystemStatus();
   }
 

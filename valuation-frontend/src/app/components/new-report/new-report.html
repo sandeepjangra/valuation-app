@@ -53,40 +53,21 @@
         <!-- Bank Header with Logo -->
         <div class="bank-header">
           <div class="bank-logo-container">
-            <div class="bank-logo-placeholder" 
-                 [style.background-color]="getBankThemeColor(bank.bankCode)">
-              {{ getBankIcon(bank.bankCode) }}
-            </div>
-          </div>
-          <div class="bank-status-badge" [class.active]="bank.isActive">
-            {{ bank.isActive ? 'Active' : 'Inactive' }}
+            <img 
+              class="bank-logo" 
+              [src]="getBankLogoPath(bank.bankCode)" 
+              [alt]="bank.bankName + ' Logo'"
+              (error)="onImageError($event, bank.bankCode)"
+            />
           </div>
         </div>
 
         <!-- Bank Information -->
         <div class="bank-content">
           <h3 class="bank-name">{{ bank.bankName }}</h3>
-          <p class="bank-short-name">{{ bank.bankShortName }}</p>
-          <div class="bank-code">Code: {{ bank.bankCode }}</div>
-          
-          <!-- Bank Details -->
-          <div class="bank-details">
-            <div class="bank-type-badge">
-              {{ bank.bankType | titlecase }} Sector
-            </div>
-            <div class="template-info" *ngIf="bank.templates && bank.templates.length > 0">
-              <span class="template-count">
-                {{ bank.templates.length }} Template{{ bank.templates.length !== 1 ? 's' : '' }}
-              </span>
-            </div>
-          </div>
-
-          <!-- Headquarters Info -->
-          <div class="headquarters-info" *ngIf="bank.headquarters">
-            <small class="headquarters-label">Headquarters:</small>
-            <small class="headquarters-location">
-              {{ bank.headquarters.city }}, {{ bank.headquarters.state }}
-            </small>
+          <div class="bank-code">{{ bank.bankCode }}</div>
+          <div class="template-count" *ngIf="bank.templates && bank.templates.length > 0">
+            {{ bank.templates.length }} Templates
           </div>
         </div>
 
@@ -127,60 +108,16 @@
            [class.selected]="selectedTemplate?.templateId === template.templateId"
            [class.active]="template.isActive">
         
-        <!-- Template Header -->
-        <div class="template-header">
-          <div class="template-icon-container">
-            <div class="template-icon">{{ getPropertyTypeIcon(template.propertyType) }}</div>
-          </div>
-          <div class="template-status" [class.active]="template.isActive">
-            {{ template.isActive ? 'Available' : 'Inactive' }}
-          </div>
+        <!-- Template Icon -->
+        <div class="template-icon-section">
+          <div class="template-icon">{{ getPropertyTypeIcon(template.propertyType) }}</div>
         </div>
 
         <!-- Template Info -->
-        <div class="template-info">
+        <div class="template-content">
           <h3 class="template-name">{{ template.templateName }}</h3>
-          <div class="template-property-type">
-            <span class="property-badge">{{ template.propertyType | titlecase }} Property</span>
-          </div>
-          <p class="template-description">{{ template.description }}</p>
-        </div>
-
-        <!-- Template Details -->
-        <div class="template-details">
-          <div class="template-meta">
-            <div class="meta-item">
-              <span class="meta-label">Version:</span>
-              <span class="meta-value version-badge">v{{ template.version }}</span>
-            </div>
-            <div class="meta-item">
-              <span class="meta-label">Template Type:</span>
-              <span class="meta-value">{{ template.templateType | titlecase }}</span>
-            </div>
-          </div>
-
-          <!-- Field Information -->
-          <div class="template-fields-info" *ngIf="template.fields && template.fields.length > 0">
-            <div class="fields-header">
-              <span class="fields-count">{{ template.fields.length }} Form Fields</span>
-            </div>
-            <div class="fields-preview">
-              <span class="field-tag" *ngFor="let field of template.fields.slice(0, 3)">
-                {{ field | titlecase }}
-              </span>
-              <span class="more-fields" *ngIf="template.fields.length > 3">
-                +{{ template.fields.length - 3 }} more
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Selection Footer -->
-        <div class="template-footer">
-          <div class="select-indicator">
-            <span class="select-text">Select Template</span>
-            <span class="arrow">→</span>
-          </div>
+          <div class="template-type">{{ template.propertyType | titlecase }} Property</div>
+          <div class="template-version">v{{ template.version }}</div>
         </div>
       </div>
     </div>

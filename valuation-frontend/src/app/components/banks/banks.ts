@@ -90,11 +90,7 @@ export class Banks implements OnInit, OnDestroy {
         bankShortName: "SBI",
         bankType: "public_sector",
         isActive: true,
-        headquarters: {
-          city: "Mumbai",
-          state: "Maharashtra",
-          pincode: "400001"
-        }
+        headquarters: { city: "Mumbai", state: "Maharashtra", pincode: "400001" }
       },
       {
         _id: "68f3ebdea9483cef5ac839aa",
@@ -103,11 +99,43 @@ export class Banks implements OnInit, OnDestroy {
         bankShortName: "HDFC Bank",
         bankType: "private_sector",
         isActive: true,
-        headquarters: {
-          city: "Mumbai",
-          state: "Maharashtra",
-          pincode: "400020"
-        }
+        headquarters: { city: "Mumbai", state: "Maharashtra", pincode: "400020" }
+      },
+      {
+        _id: "68f3ebdea9483cef5ac839ab",
+        bankCode: "ICICI",
+        bankName: "ICICI Bank Limited",
+        bankShortName: "ICICI Bank",
+        bankType: "private_sector",
+        isActive: true,
+        headquarters: { city: "Mumbai", state: "Maharashtra", pincode: "400051" }
+      },
+      {
+        _id: "68f3ebdea9483cef5ac839ac",
+        bankCode: "PNB",
+        bankName: "Punjab National Bank",
+        bankShortName: "PNB",
+        bankType: "public_sector",
+        isActive: true,
+        headquarters: { city: "New Delhi", state: "Delhi", pincode: "110001" }
+      },
+      {
+        _id: "68f3ebdea9483cef5ac839ad",
+        bankCode: "BOB",
+        bankName: "Bank of Baroda",
+        bankShortName: "BOB",
+        bankType: "public_sector",
+        isActive: true,
+        headquarters: { city: "Vadodara", state: "Gujarat", pincode: "390007" }
+      },
+      {
+        _id: "68f3ebdea9483cef5ac839ae",
+        bankCode: "CANARA",
+        bankName: "Canara Bank",
+        bankShortName: "Canara Bank",
+        bankType: "public_sector",
+        isActive: true,
+        headquarters: { city: "Bengaluru", state: "Karnataka", pincode: "560002" }
       }
     ];
 
@@ -210,5 +238,24 @@ export class Banks implements OnInit, OnDestroy {
       'UNION': 'Mumbai, Maharashtra'
     };
     return headquarters[bankCode] || 'Unknown';
+  }
+
+  getBankLogoPath(bankCode: string): string {
+    // Return path to bank logo in assets folder
+    return `assets/images/banks/${bankCode.toLowerCase()}.svg`;
+  }
+
+  onImageError(event: any, bankCode: string): void {
+    console.log(`Failed to load SVG logo for bank: ${bankCode}, trying PNG...`);
+    
+    // If SVG fails, try PNG
+    const currentSrc = event.target.src;
+    if (currentSrc.includes('.svg')) {
+      event.target.src = `assets/images/banks/${bankCode.toLowerCase()}.png`;
+    } else {
+      // If PNG also fails, use default
+      console.log(`Failed to load PNG logo for bank: ${bankCode}, using default`);
+      event.target.src = 'assets/images/banks/default-bank.svg';
+    }
   }
 }
