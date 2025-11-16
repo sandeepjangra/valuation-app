@@ -6,7 +6,7 @@ frontend:
         - npm ci
     build:
       commands:
-        - npm run build
+        - npx ng build --configuration=static
   artifacts:
     baseDirectory: dist/valuation-frontend/browser
     files:

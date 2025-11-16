@@ -1,0 +1,36 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "amplify:*",
+        "amplifybackend:*",
+        "amplifyuibuilder:*",
+        "appsync:*",
+        "cognito-identity:*",
+        "cognito-idp:*",
+        "dynamodb:*",
+        "iam:ListRoles",
+        "iam:PassRole",
+        "iam:CreateRole",
+        "iam:AttachRolePolicy",
+        "iam:DetachRolePolicy",
+        "iam:DeleteRole",
+        "iam:GetRole",
+        "iam:CreatePolicy",
+        "iam:DeletePolicy",
+        "iam:GetPolicy",
+        "lambda:*",
+        "logs:*",
+        "s3:*",
+        "ssm:GetParameter",
+        "ssm:GetParameters",
+        "ssm:PutParameter",
+        "ssm:DeleteParameter",
+        "cloudformation:*"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
