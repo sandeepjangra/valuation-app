@@ -1,0 +1,53 @@
+<div class="admin-container">
+  <h1>Admin Panel</h1>
+  <p>Welcome to the administration panel</p>
+
+  <div class="admin-section">
+    <h2>System Monitoring</h2>
+    <div class="card-grid">
+      <div class="card" (click)="navigateToLogs()">
+        <h3>📋 System Logs</h3>
+        <p>View system logs</p>
+      </div>
+      
+      <div class="card" (click)="openLogTest()">
+        <h3>🧪 Test Logs</h3>
+        <p>Test logging system</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="admin-section">
+    <h2>Management</h2>
+    <div class="card-grid">
+      <div class="card" (click)="navigateToBanks()">
+        <h3>🏦 Banks</h3>
+        <p>Manage banks</p>
+      </div>
+      
+      <div class="card" (click)="viewCollections()">
+        <h3>📚 Collections</h3>
+        <p>View collections</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="status-info">
+    <h3>System Status</h3>
+    <div class="status-grid">
+      <div class="status-item">
+        <span>Backend:</span>
+        <span [ngClass]="backendOnline ? 'online' : 'offline'">
+          {{ backendOnline ? 'Online' : 'Offline' }}
+        </span>
+      </div>
+      <div class="status-item">
+        <span>Database:</span>
+        <span [ngClass]="databaseOnline ? 'online' : 'offline'">
+          {{ databaseOnline ? 'Connected' : 'Disconnected' }}
+        </span>
+      </div>
+    </div>
+    <button class="refresh-btn" (click)="refreshStatus()">🔄 Refresh</button>
+  </div>
+</div>

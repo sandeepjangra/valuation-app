@@ -1,0 +1,175 @@
+<div class="dynamic-table-container" *ngIf="tableConfig">
+  <!-- Field Header -->
+  <div class="field-header">
+    <label class="field-label">
+      {{ fieldLabel }}
+      <span class="required-indicator" *ngIf="isRequired">*</span>
+    </label>
+    <div class="column-info">
+      <span class="column-count" *ngIf="isColumnDynamic">Columns: {{ allColumns.length }}</span>
+      <span class="column-count" *ngIf="isRowDynamic">Rows: {{ tableRows.length }}</span>
+      <span class="remaining-count" *ngIf="isColumnDynamic && getRemainingColumns() > 0">
+        ({{ getRemainingColumns() }} more columns allowed)
+      </span>
+      <span class="remaining-count" *ngIf="isRowDynamic && getRemainingRows() > 0">
+        ({{ getRemainingRows() }} more rows allowed)
+      </span>
+    </div>
+  </div>
+
+  <!-- Table Controls -->
+  <div class="table-controls">
+    <!-- Column Management Controls -->
+    <button 
+      *ngIf="isColumnDynamic"
+      type="button"
+      class="add-column-btn"
+      [disabled]="!canAddColumn()"
+      (click)="addColumn()"
+      title="Add new column">
+      <span class="btn-icon">➕</span>
+      {{ getAddColumnButtonText() }}
+    </button>
+    <div class="controls-info" *ngIf="isColumnDynamic && !canAddColumn() && tableConfig.dynamicColumns">
+      <span class="max-limit-text">Maximum {{ tableConfig.dynamicColumns.addColumnConfig.maxColumns }} columns reached</span>
+    </div>
+
+    <!-- Row Management Controls -->
+    <button 
+      *ngIf="isRowDynamic"
+      type="button"
+      class="add-column-btn"
+      [disabled]="!canAddRow()"
+      (click)="addRow()"
+      title="Add new row">
+      <span class="btn-icon">➕</span>
+      {{ getAddRowButtonText() }}
+    </button>
+    <div class="controls-info" *ngIf="isRowDynamic && !canAddRow()">
+      <span class="max-limit-text">Maximum {{ tableConfig.maxRows }} rows reached</span>
+    </div>
+  </div>
+
+  <!-- Dynamic Table -->
+  <div class="table-wrapper">
+    <table class="dynamic-table">
+      <!-- Table Header -->
+      <thead>
+        <tr>
+          <!-- Row Actions Column Header (for row-dynamic tables) -->
+          <th *ngIf="isRowDynamic" class="table-header fixed-column" style="width: 80px;">
+            Actions
+          </th>
+          
+          <!-- Data Columns Headers -->
+          <th *ngFor="let column of allColumns; let colIndex = index" 
+              class="table-header"
+              [class.fixed-column]="!column.isUserAdded"
+              [class.user-column]="column.isUserAdded">
+            
+            <!-- Fixed Column Header -->
+            <div *ngIf="!column.isUserAdded" class="fixed-header">
+              {{ column.columnName }}
+              <span class="required-indicator" *ngIf="isColumnRequired(column)">*</span>
+            </div>
+
+            <!-- Editable Column Header (for column-dynamic tables) -->
+            <div *ngIf="column.isUserAdded && isColumnDynamic" class="editable-header">
+              <input 
+                type="text"
+                class="column-name-input"
+                [value]="column.columnName"
+                (blur)="updateColumnName(colIndex, $event)"
+                (keyup.enter)="updateColumnName(colIndex, $event)"
+                placeholder="Column name"
+                maxlength="50">
+              <button 
+                type="button"
+                class="remove-column-btn"
+                *ngIf="column.canDelete"
+                (click)="removeColumn(colIndex)"
+                title="Remove this column">
+                ❌
+              </button>
+            </div>
+          </th>
+        </tr>
+      </thead>
+
+      <!-- Table Body -->
+      <tbody>
+        <tr *ngFor="let row of tableRows; let rowIndex = index" class="table-row">
+          <!-- Row Actions Cell (for row-dynamic tables) -->
+          <td *ngIf="isRowDynamic" class="table-cell" style="text-align: center;">
+            <button 
+              type="button"
+              class="remove-column-btn"
+              *ngIf="canRemoveRow(rowIndex)"
+              (click)="removeRow(rowIndex)"
+              title="Remove this row">
+              ❌
+            </button>
+          </td>
+
+          <!-- Data Cells -->
+          <td *ngFor="let column of allColumns; let colIndex = index" 
+              class="table-cell"
+              [class.readonly-cell]="!isColumnEditable(column)">
+            
+            <!-- Editable Cell -->
+            <textarea
+              *ngIf="isColumnEditable(column) && column.fieldType === 'textarea'; else inputCell"
+              class="cell-textarea"
+              [value]="getCellValue(rowIndex, column.columnId)"
+              (input)="updateCellValue(rowIndex, column.columnId, $event)"
+              [placeholder]="column.placeholder || ''"
+              [required]="isColumnRequired(column)"
+              rows="2">
+            </textarea>
+
+            <!-- Input Cell Template -->
+            <ng-template #inputCell>
+              <input
+                *ngIf="isColumnEditable(column); else readonlyCell"
+                class="cell-input"
+                [type]="getCellInputType(column.fieldType)"
+                [value]="getCellValue(rowIndex, column.columnId)"
+                (input)="updateCellValue(rowIndex, column.columnId, $event)"
+                [placeholder]="column.placeholder || ''"
+                [required]="isColumnRequired(column)">
+            </ng-template>
+
+            <!-- Readonly Cell -->
+            <ng-template #readonlyCell>
+              <span class="cell-readonly">
+                {{ getCellValue(rowIndex, column.columnId) || '-' }}
+              </span>
+            </ng-template>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Help Text -->
+  <div class="field-help" *ngIf="helpText">
+    {{ helpText }}
+  </div>
+
+  <!-- Table Summary -->
+  <div class="table-summary">
+    <div class="summary-stats">
+      <span class="stat-item">Rows: {{ tableRows.length }}</span>
+      <span class="stat-item">Columns: {{ allColumns.length }}</span>
+      <span class="stat-item" *ngIf="isColumnDynamic && userAddedColumns.length > 0">
+        User Columns: {{ userAddedColumns.length }}
+      </span>
+      <span class="stat-item" *ngIf="isRowDynamic && tableConfig.maxRows">
+        Max Rows: {{ tableConfig.maxRows }}
+      </span>
+      <span class="stat-item" *ngIf="isColumnDynamic && tableConfig.dynamicColumns">
+        Max Columns: {{ tableConfig.dynamicColumns.addColumnConfig.maxColumns }}
+      </span>
+    </div>
+  </div>
+</div>

@@ -3,21 +3,14 @@ frontend:
   phases:
     preBuild:
       commands:
-        - cd valuation-frontend
         - npm ci
     build:
       commands:
-        - cd valuation-frontend
         - npm run build
   artifacts:
-    baseDirectory: valuation-frontend/dist/valuation-frontend/browser
+    baseDirectory: dist/valuation-frontend/browser
     files:
       - '**/*'
   cache:
     paths:
-      - valuation-frontend/node_modules/**/*
-backend:
-  phases:
-    build:
-      commands:
-        - '# Backend is handled separately via FastAPI'
+      - node_modules/**/*

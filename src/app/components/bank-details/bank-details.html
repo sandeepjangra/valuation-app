@@ -1,0 +1,107 @@
+<div class="bank-details-container">
+  <!-- Header -->
+  <div class="header">
+    <button class="back-btn" (click)="goBack()">
+      ← Back to Banks
+    </button>
+    <h1 class="title">Bank Details</h1>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Loading bank details...</p>
+  </div>
+
+  <!-- Error State -->
+  <div class="error" *ngIf="error && !loading">
+    <p>{{ error }}</p>
+    <button class="retry-btn" (click)="loadBankDetails()">Retry</button>
+  </div>
+
+  <!-- Bank Details -->
+  <div class="bank-info" *ngIf="bank && !loading && !error">
+    <div class="bank-header">
+      <div class="bank-icon">🏦</div>
+      <div class="bank-title">
+        <h2>{{ bank.bankName }}</h2>
+        <div class="bank-code">{{ bank.bankCode }}</div>
+        <div class="status" [class.active]="bank.isActive" [class.inactive]="!bank.isActive">
+          {{ bank.isActive ? 'Active' : 'Inactive' }}
+        </div>
+      </div>
+    </div>
+
+    <div class="details-grid">
+      <div class="detail-card">
+        <h3>Basic Information</h3>
+        <div class="detail-item">
+          <span class="label">Bank Name:</span>
+          <span class="value">{{ bank.bankName }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Bank Code:</span>
+          <span class="value">{{ bank.bankCode }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Short Name:</span>
+          <span class="value">{{ bank.bankShortName }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Bank Type:</span>
+          <span class="value">{{ bank.bankType }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Status:</span>
+          <span class="value" [class.active]="bank.isActive" [class.inactive]="!bank.isActive">
+            {{ bank.isActive ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+      </div>
+
+      <div class="detail-card" *ngIf="bank.headquarters">
+        <h3>Headquarters</h3>
+        <div class="detail-item">
+          <span class="label">City:</span>
+          <span class="value">{{ bank.headquarters.city }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">State:</span>
+          <span class="value">{{ bank.headquarters.state }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">Pincode:</span>
+          <span class="value">{{ bank.headquarters.pincode }}</span>
+        </div>
+      </div>
+
+      <div class="detail-card" *ngIf="bank.templates && bank.templates.length > 0">
+        <h3>Templates ({{ bank.templates.length }})</h3>
+        <div class="template-list">
+          <div class="template-item" *ngFor="let template of bank.templates">
+            <div class="template-info">
+              <div class="template-name">{{ template.templateName }}</div>
+              <div class="template-type">{{ template.propertyType }}</div>
+              <div class="template-status" [class.active]="template.isActive" [class.inactive]="!template.isActive">
+                {{ template.isActive ? 'Active' : 'Inactive' }}
+              </div>
+            </div>
+            <div class="template-actions" *ngIf="template.isActive">
+              <button class="create-report-btn" (click)="goToReportForm(template)">
+                Create Report →
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-card" *ngIf="bank.totalBranches">
+        <h3>Branch Information</h3>
+        <div class="detail-item">
+          <span class="label">Total Branches:</span>
+          <span class="value">{{ bank.totalBranches | number }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

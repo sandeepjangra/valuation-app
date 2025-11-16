@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="120" height="120" rx="12" fill="#ea580c"/>
+  <text x="60" y="75" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="18" font-weight="bold">ICICI</text>
+  <circle cx="60" cy="45" r="8" fill="white"/>
+</svg>

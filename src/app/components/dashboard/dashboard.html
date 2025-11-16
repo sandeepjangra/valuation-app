@@ -1,0 +1,130 @@
+<div class="dashboard-container">
+  <!-- Header Section -->
+  <div class="dashboard-header">
+    <div class="header-content">
+      <div class="welcome-section">
+        <h1 class="dashboard-title">Dashboard</h1>
+        <p class="company-info">{{ currentCompany }}</p>
+      </div>
+      
+      <!-- Admin Toggle -->
+      <div class="admin-controls" *ngIf="isAdmin">
+        <div class="toggle-container">
+          <label class="toggle-label">
+            <span [class.active]="!showCollectiveView">Company View</span>
+            <button (click)="toggleAdminView()" class="toggle-btn">
+              {{ showCollectiveView ? 'Switch to Company' : 'Switch to Collective' }}
+            </button>
+            <span [class.active]="showCollectiveView">Collective View</span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Action Section -->
+  <div class="quick-actions">
+    <button class="create-report-btn" (click)="createNewReport()">
+      ➕ Create New Report
+    </button>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="stats-grid">
+    <!-- Pending Reports Card -->
+    <div class="stats-card pending-card" (click)="navigateToReports()">
+      <div class="card-header">
+        <div class="card-icon pending-icon">
+          ⏰
+        </div>
+        <div class="card-title">Pending Reports</div>
+      </div>
+      <div class="card-content">
+        <div class="card-number">{{ getDisplayStats().pendingReports }}</div>
+        <div class="card-subtitle">
+          {{ showCollectiveView ? 'Across all companies' : 'Your company' }}
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="view-all">View All →</span>
+      </div>
+    </div>
+
+    <!-- Created Reports Card -->
+    <div class="stats-card created-card" (click)="navigateToReports()">
+      <div class="card-header">
+        <div class="card-icon created-icon">
+          📄
+        </div>
+        <div class="card-title">Created Reports</div>
+      </div>
+      <div class="card-content">
+        <div class="card-number">{{ getDisplayStats().createdReports }}</div>
+        <div class="card-subtitle">
+          {{ showCollectiveView ? 'Total reports' : 'Your reports' }}
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="view-all">View All →</span>
+      </div>
+    </div>
+
+    <!-- Banks Card -->
+    <div class="stats-card banks-card" (click)="navigateToBanks()">
+      <div class="card-header">
+        <div class="card-icon banks-icon">
+          🏦
+        </div>
+        <div class="card-title">Banks</div>
+      </div>
+      <div class="card-content">
+        <div class="card-number">{{ getDisplayStats().totalBanks }}</div>
+        <div class="card-subtitle">
+          {{ showCollectiveView ? 'All available banks' : 'Available banks' }}
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="view-all">View All →</span>
+      </div>
+    </div>
+
+    <!-- Companies Card (Admin Only) -->
+    <div class="stats-card companies-card" *ngIf="isAdmin && showCollectiveView">
+      <div class="card-header">
+        <div class="card-icon companies-icon">
+          🏢
+        </div>
+        <div class="card-title">Companies</div>
+      </div>
+      <div class="card-content">
+        <div class="card-number">{{ collectiveStats.totalCompanies }}</div>
+        <div class="card-subtitle">Active companies</div>
+      </div>
+      <div class="card-footer">
+        <span class="view-all">Manage →</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Activity Section -->
+  <div class="recent-activity">
+    <div class="activity-header">
+      <h2 class="activity-title">Recent Activity</h2>
+      <p class="activity-subtitle">Last 5 business days</p>
+    </div>
+    
+    <div class="activity-list">
+      <div class="activity-item" *ngFor="let activity of recentActivity">
+        <div class="activity-date">{{ activity.date }}</div>
+        <div class="activity-content">
+          <div class="activity-type" [class]="activity.type">
+            {{ activity.count }} {{ activity.type === 'created' ? 'reports created' : 'reports pending' }}
+          </div>
+          <div class="activity-company" *ngIf="isAdmin && showCollectiveView">
+            {{ activity.company }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
