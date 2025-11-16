@@ -1,6 +1,7 @@
 export const environment = {
   production: false,
-  apiUrl: 'https://your-api-gateway-url.execute-api.us-east-1.amazonaws.com/dev',
+  apiUrl: 'http://localhost:8000/api',
+  developmentMode: true,
   amplify: {
     Auth: {
       region: 'us-east-1',
@@ -13,5 +14,11 @@ export const environment = {
         region: 'us-east-1',
       }
     }
+  },
+  // Development tokens for testing
+  devTokens: {
+    systemAdmin: 'dev_admin_system.com_system_admin_system_admin',
+    manager: 'dev_manager_demo.com_demo_org_001_manager',
+    employee: 'dev_employee_demo.com_demo_org_001_employee'
   }
 };

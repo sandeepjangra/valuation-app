@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://your-api-gateway-url.execute-api.us-east-1.amazonaws.com/prod',
+  apiUrl: 'https://your-backend-domain.com',  // Your deployed backend URL
   amplify: {
     Auth: {
       region: 'us-east-1',

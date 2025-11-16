@@ -121,6 +121,60 @@
   flex-shrink: 0; /* Prevent login button from shrinking */
 }
 
+/* User Info Section (when authenticated) */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-btn {
+  background: rgba(156, 39, 176, 0.1);
+  color: #4a148c;
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 13px;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  border: 2px solid rgba(156, 39, 176, 0.2);
+  display: flex;
+  align-items: center;
+}
+
+.user-btn:hover {
+  background: rgba(156, 39, 176, 0.2);
+  transform: translateY(-1px);
+  border-color: rgba(156, 39, 176, 0.4);
+}
+
+.user-btn.active {
+  background: rgba(156, 39, 176, 0.3);
+  font-weight: 700;
+  border-color: rgba(156, 39, 176, 0.5);
+}
+
+.logout-btn {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+  white-space: nowrap;
+}
+
+.logout-btn:hover {
+  background: linear-gradient(135deg, #b91c1c, #991b1b);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+}
+
 .login-btn {
   background: linear-gradient(135deg, #9c27b0, #673ab7);
   color: white;
@@ -156,6 +210,20 @@
     gap: 8px; /* Very compact gap on mobile */
     margin-right: 10px; /* Proper margin on mobile */
     max-width: 65%; /* Smaller max width on mobile */
+  }
+  
+  .user-info {
+    gap: 8px;
+  }
+  
+  .user-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  
+  .logout-btn {
+    padding: 5px 10px;
+    font-size: 11px;
   }
   
   .company-name {

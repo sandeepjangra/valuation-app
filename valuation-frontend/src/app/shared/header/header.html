@@ -17,11 +17,23 @@
         <a routerLink="/new-report" routerLinkActive="active">New Report</a>
         <a routerLink="/reports" routerLinkActive="active">Reports</a>
         <a routerLink="/banks" routerLinkActive="active">Banks</a>
-        <a routerLink="/admin" routerLinkActive="active">Admin</a>
+        <!-- Admin link only for system admin users -->
+        <a *ngIf="isSystemAdmin()" routerLink="/admin" routerLinkActive="active">Admin</a>
+        <!-- Employee Activities link for managers -->
+        <a *ngIf="hasManagerPermissions()" routerLink="/organization/users" routerLinkActive="active">Employee Activities</a>
       </nav>
       
       <div class="user-section">
-        <a routerLink="/login" class="login-btn">Login</a>
+        <!-- Show user button and logout when authenticated -->
+        <div *ngIf="isAuthenticated()" class="user-info">
+          <a routerLink="/profile" class="user-btn" routerLinkActive="active">
+            {{ currentUser()?.first_name }} {{ currentUser()?.last_name }}
+          </a>
+          <button (click)="logout()" class="logout-btn">Logout</button>
+        </div>
+        
+        <!-- Show login link when not authenticated -->
+        <a *ngIf="!isAuthenticated()" routerLink="/login" class="login-btn">Login</a>
       </div>
     </div>
   </div>

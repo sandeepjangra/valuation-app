@@ -1,6 +1,6 @@
 export const environment = {
   production: false,
-  apiUrl: 'https://your-api-gateway-url.execute-api.us-east-1.amazonaws.com/dev',
+  apiUrl: 'http://localhost:8000',  // Your local Python backend
   amplify: {
     Auth: {
       region: 'us-east-1',
