@@ -1,19 +1,23 @@
 version: 1
-applications:
-  - frontend:
-      phases:
-        preBuild:
-          commands:
-            - cd valuation-frontend
-            - npm ci
-        build:
-          commands:
-            - npm run build
-      artifacts:
-        baseDirectory: valuation-frontend/dist/valuation-frontend/browser
-        files:
-          - '**/*'
-      cache:
-        paths:
-          - valuation-frontend/node_modules/**/*
-    appRoot: valuation-frontend
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - cd valuation-frontend
+        - npm ci
+    build:
+      commands:
+        - cd valuation-frontend
+        - npm run build
+  artifacts:
+    baseDirectory: valuation-frontend/dist/valuation-frontend/browser
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - valuation-frontend/node_modules/**/*
+backend:
+  phases:
+    build:
+      commands:
+        - '# Backend is handled separately via FastAPI'
