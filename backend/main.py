@@ -1,8 +1,10 @@
-from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi import FastAPI, HTTPException, Request, Response, Depends
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from typing import Dict, List, Any
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from typing import Dict, List, Any, Optional
 from datetime import datetime, timezone
+from pydantic import BaseModel
 import json
 import logging
 import os
@@ -33,6 +35,26 @@ app = FastAPI(title="Valuation App API", version="1.0.0")
 # Initialize request/response logger
 api_logger = RequestResponseLogger()
 
+# Security scheme
+security = HTTPBearer()
+
+# Pydantic models for authentication
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+    rememberMe: Optional[bool] = False
+
+class LoginResponse(BaseModel):
+    access_token: str
+    expires_in: int
+    user: Dict[str, Any]
+    organization: Dict[str, Any]
+
+class DevLoginRequest(BaseModel):
+    email: str
+    organizationId: str
+    role: str
+
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -49,6 +71,116 @@ def json_serializer(obj):
     if hasattr(obj, '__dict__'):
         return obj.__dict__
     return str(obj)
+
+# Authentication helper functions
+def create_dev_token(email: str, organization_id: str, role: str) -> Dict[str, Any]:
+    """Create a development JWT token"""
+    import time
+    
+    # Create a simple token payload for development
+    payload = {
+        "sub": f"dev_user_{email.split('@')[0]}",
+        "email": email,
+        "custom:organization_id": organization_id,
+        "cognito:groups": [role],
+        "iat": int(time.time()),
+        "exp": int(time.time()) + 3600,  # 1 hour
+        "dev_mode": True
+    }
+    
+    # For development, we'll use a simple token (in production, use proper JWT)
+    dev_token = f"dev_{email.split('@')[0]}_{organization_id}_{role}"
+    
+    return {
+        "access_token": dev_token,
+        "expires_in": 3600,
+        "user": {
+            "_id": payload["sub"],
+            "organization_id": organization_id,
+            "email": email,
+            "first_name": email.split('@')[0].title(),
+            "roles": [role],
+            "is_active": True,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        },
+        "organization": {
+            "id": organization_id,
+            "name": "System Administration" if organization_id == "system_admin" else "Demo Organization 001",
+            "type": "system" if organization_id == "system_admin" else "valuation_company"
+        }
+    }
+
+# Authentication endpoints
+@app.post("/api/auth/login")
+async def login(login_request: LoginRequest):
+    """Traditional login endpoint"""
+    logger.info(f"🔐 Login attempt for: {login_request.email}")
+    
+    # For development, accept any password (in production, validate against Cognito or database)
+    logger.info(f"🧪 Development mode: accepting any password for {login_request.email}")
+    
+    # Default role based on email domain  
+    if "admin" in login_request.email.lower():
+        role = "system_admin"
+        org_id = "system_admin"
+    elif "manager" in login_request.email.lower():
+        role = "manager" 
+        org_id = "demo_org_001"
+    else:
+        role = "employee"
+        org_id = "demo_org_001"
+    
+    # Create development token
+    token_data = create_dev_token(login_request.email, org_id, role)
+    
+    logger.info(f"✅ Login successful for {login_request.email} with role {role}")
+    
+    return JSONResponse(
+        status_code=200,
+        content={
+            "success": True,
+            "data": token_data
+        }
+    )
+
+@app.post("/api/auth/dev-login")
+async def dev_login(dev_request: DevLoginRequest):
+    """Development login endpoint with predefined roles"""
+    logger.info(f"🧪 Development login for: {dev_request.email} as {dev_request.role}")
+    
+    try:
+        # Create development token
+        token_data = create_dev_token(dev_request.email, dev_request.organizationId, dev_request.role)
+        
+        logger.info(f"✅ Development login successful for {dev_request.email}")
+        
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "data": token_data
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"❌ Development login failed: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="Development login failed"
+        )
+
+@app.post("/api/auth/logout")
+async def logout():
+    """Logout endpoint"""
+    logger.info("🔓 User logout")
+    return JSONResponse(
+        status_code=200,
+        content={
+            "success": True,
+            "message": "Logged out successfully"
+        }
+    )
 
 @app.get("/api/health")
 async def health_check():

@@ -50,32 +50,18 @@
            [class.selected]="selectedBank?.bankCode === bank.bankCode"
            [style.--bank-color]="getBankThemeColor(bank.bankCode)">
         
-        <!-- Bank Header with Logo -->
+        <!-- Bank Code Badge -->
         <div class="bank-header">
-          <div class="bank-logo-container">
-            <img 
-              class="bank-logo" 
-              [src]="getBankLogoPath(bank.bankCode)" 
-              [alt]="bank.bankName + ' Logo'"
-              (error)="onImageError($event, bank.bankCode)"
-            />
+          <div class="bank-code-badge" [style.background-color]="getBankThemeColor(bank.bankCode)">
+            {{ bank.bankCode }}
           </div>
         </div>
 
         <!-- Bank Information -->
         <div class="bank-content">
           <h3 class="bank-name">{{ bank.bankName }}</h3>
-          <div class="bank-code">{{ bank.bankCode }}</div>
           <div class="template-count" *ngIf="bank.templates && bank.templates.length > 0">
             {{ bank.templates.length }} Templates
-          </div>
-        </div>
-
-        <!-- Selection Footer -->
-        <div class="bank-footer">
-          <div class="select-indicator">
-            <span class="select-text">Select Bank</span>
-            <span class="arrow">→</span>
           </div>
         </div>
       </div>
@@ -96,8 +82,10 @@
 
     <div class="selected-bank-info">
       <div class="bank-chip">
-        <span class="bank-icon">{{ getBankIcon(selectedBank!.bankCode) }}</span>
-        <span class="bank-name">{{ selectedBank?.bankShortName }}</span>
+        <span class="bank-code-badge-small" [style.background-color]="getBankThemeColor(selectedBank!.bankCode)">
+          {{ selectedBank!.bankCode }}
+        </span>
+        <span class="bank-name">{{ selectedBank?.bankName }}</span>
       </div>
     </div>
 
@@ -153,7 +141,9 @@
         <div class="selection-item">
           <div class="selection-label">Bank:</div>
           <div class="selection-value">
-            <span class="bank-icon">{{ getBankIcon(selectedBank!.bankCode) }}</span>
+            <span class="bank-code-badge-small" [style.background-color]="getBankThemeColor(selectedBank!.bankCode)">
+              {{ selectedBank!.bankCode }}
+            </span>
             {{ selectedBank?.bankName }}
           </div>
         </div>

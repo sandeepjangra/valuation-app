@@ -484,14 +484,14 @@ export class LoginComponent {
 
   constructor() {
     this.loginForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required]],
+      email: ['admin@demo.com', [Validators.required, Validators.email]], // Pre-fill for testing
+      password: ['password123', [Validators.required]], // Pre-fill for testing
       rememberMe: [false]
     });
 
     // Redirect if already authenticated
     if (this.authService.isAuthenticated()) {
-      this.router.navigate(['/organization/dashboard']);
+      this.router.navigate(['/dashboard']);
     }
   }
 
@@ -558,13 +558,8 @@ export class LoginComponent {
       sessionStorage.removeItem('attempted_url');
       this.router.navigateByUrl(attemptedUrl);
     } else {
-      // Default redirect based on role
-      const orgContext = this.authService.getOrganizationContext();
-      if (orgContext?.isSystemAdmin) {
-        this.router.navigate(['/system/dashboard']);
-      } else {
-        this.router.navigate(['/organization/dashboard']);
-      }
+      // Default redirect to dashboard
+      this.router.navigate(['/dashboard']);
     }
   }
 

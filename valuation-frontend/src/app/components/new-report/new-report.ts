@@ -218,54 +218,20 @@ export class NewReport implements OnInit, OnDestroy {
     this.router.navigate(['/dashboard']);
   }
 
-  getBankIcon(bankCode: string): string {
-    const icons: { [key: string]: string } = {
-      'SBI': '🏛️',
-      'HDFC': '🏢',
-      'PNB': '🏦',
-      'ICICI': '🏪',
-      'UNION': '🏛️',
-      'BOB': '🏦',
-      'UCO': '🏛️',
-      'CBI': '🏢',
-      'CANARA': '🏛️',
-      'IOB': '🏦',
-      'UBI': '🏛️'
-    };
-    return icons[bankCode] || '🏦';
-  }
-
-  getBankLogo(bankCode: string): string {
-    // You can replace these with actual logo URLs in the future
-    const logos: { [key: string]: string } = {
-      'SBI': 'assets/logos/sbi-logo.png',
-      'HDFC': 'assets/logos/hdfc-logo.png',
-      'PNB': 'assets/logos/pnb-logo.png',
-      'ICICI': 'assets/logos/icici-logo.png',
-      'UNION': 'assets/logos/union-logo.png',
-      'BOB': 'assets/logos/bob-logo.png',
-      'UCO': 'assets/logos/uco-logo.png',
-      'CBI': 'assets/logos/cbi-logo.png',
-      'CANARA': 'assets/logos/canara-logo.png',
-      'IOB': 'assets/logos/iob-logo.png',
-      'UBI': 'assets/logos/ubi-logo.png'
-    };
-    return logos[bankCode] || '';
-  }
-
   getBankThemeColor(bankCode: string): string {
     const colors: { [key: string]: string } = {
-      'SBI': '#1e40af',      // Blue
-      'HDFC': '#dc2626',     // Red  
-      'PNB': '#059669',      // Green
-      'ICICI': '#ea580c',    // Orange
-      'UNION': '#7c3aed',    // Purple
-      'BOB': '#0891b2',      // Cyan
-      'UCO': '#be123c',      // Rose
-      'CBI': '#4338ca',      // Indigo
-      'CANARA': '#16a34a',   // Green
-      'IOB': '#c2410c',      // Orange
-      'UBI': '#9333ea'       // Violet
+      'SBI': '#22409A',      // SBI Blue
+      'PNB': '#E31E24',      // PNB Red
+      'BOB': '#ED8B00',      // BOB Orange
+      'UBI': '#D32F2F',      // UBI Red
+      'BOI': '#0066B3',      // BOI Blue
+      'CBI': '#1A237E',      // CBI Dark Blue
+      'IOB': '#00796B',      // IOB Teal
+      'CANARA': '#D32F2F',   // Canara Red
+      'UCO': '#6A1B9A',      // UCO Purple
+      'HDFC': '#004C8F',     // HDFC Blue
+      'ICICI': '#F37021',    // ICICI Orange
+      'AXIS': '#800080'      // Axis Purple
     };
     return colors[bankCode] || '#6b7280';
   }
@@ -278,16 +244,5 @@ export class NewReport implements OnInit, OnDestroy {
       'standard': '📋'
     };
     return icons[propertyType] || '🏘️';
-  }
-
-  getBankLogoPath(bankCode: string): string {
-    // Return path to bank logo in assets folder
-    return `assets/images/banks/${bankCode.toLowerCase()}.svg`;
-  }
-
-  onImageError(event: any, bankCode: string): void {
-    console.log(`Failed to load logo for bank: ${bankCode}`);
-    // Fallback to a default bank icon
-    event.target.src = 'assets/images/banks/default-bank.svg';
   }
 }
