@@ -24,10 +24,31 @@ export const routes: Routes = [
     loadComponent: () => import('./components/report-form/report-form').then(m => m.ReportForm),
     canActivate: [authGuard()]
   },
-  { 
-    path: 'admin', 
-    loadComponent: () => import('./components/admin/admin').then(m => m.Admin),
-    canActivate: [systemAdminGuard()]
+  // Admin routes for system administrators
+  {
+    path: 'admin',
+    canActivate: [systemAdminGuard()],
+    children: [
+      {
+        path: '',
+        redirectTo: 'organizations',
+        pathMatch: 'full'
+      },
+      {
+        path: 'organizations',
+        loadComponent: () => 
+          import('./components/admin/organizations/organizations-list.component')
+            .then(m => m.OrganizationsListComponent),
+        title: 'Organizations - System Admin'
+      },
+      {
+        path: 'organizations/:orgId/users',
+        loadComponent: () => 
+          import('./components/admin/users/manage-users.component')
+            .then(m => m.ManageUsersComponent),
+        title: 'Manage Users - System Admin'
+      }
+    ]
   },
   { 
     path: 'reports', 

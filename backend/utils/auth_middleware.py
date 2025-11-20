@@ -201,19 +201,21 @@ class OrganizationContext:
         if self.is_system_admin:
             return True  # System admin has all permissions
         
-        # Define role-based permissions (matches organization_models.py)
+        # Define role-based permissions
+        # Manager: Full access including report submission
+        # Employee: Can create/edit/save reports but CANNOT submit them
         permissions = {
             "manager": {
                 "organization": ["read", "update"],
                 "users": ["read", "update"], # Managers can only read and update users, not create
-                "reports": ["create", "read", "update", "delete"],
+                "reports": ["create", "read", "update", "delete", "submit"],  # Can submit reports
                 "templates": ["read", "update"],
                 "audit_logs": ["read"],
                 "files": ["create", "read", "update", "delete"]
             },
             "employee": {
                 "organization": ["read"],
-                "reports": ["create", "read", "update"],
+                "reports": ["create", "read", "update"],  # CANNOT submit (no "submit" permission)
                 "templates": ["read"],
                 "files": ["create", "read", "update"]
             }

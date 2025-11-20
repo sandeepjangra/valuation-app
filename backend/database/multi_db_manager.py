@@ -34,18 +34,26 @@ class MultiDatabaseManager:
         if not self.connection_string:
             raise ValueError("MONGODB_URI environment variable is required")
         
-        # Database names configuration
+        # Static database names configuration (always connected)
         self.database_names = {
-            "main": os.getenv("MONGODB_DB_NAME", "valuation_app_prod"),
             "admin": os.getenv("MONGODB_ADMIN_DB_NAME", "valuation_admin"),
+            "shared": os.getenv("MONGODB_SHARED_DB_NAME", "shared_resources")
+        }
+        
+        # Legacy database support (kept for backward compatibility during migration)
+        self.legacy_databases = {
+            "main": os.getenv("MONGODB_DB_NAME", "valuation_app_prod"),
             "reports": os.getenv("MONGODB_REPORTS_DB_NAME", "valuation_reports")
         }
         
+        # Organization database cache (lazy loaded)
+        self.org_database_cache: Dict[str, AsyncIOMotorDatabase[Any]] = {}
+        self.max_org_cache_size = 50  # Maximum number of org databases to keep in cache
+        
         # GridFS bucket names
         self.gridfs_bucket_names = {
-            "main": os.getenv("GRIDFS_BUCKET_NAME", "valuation_files"),
             "admin": "admin_files",
-            "reports": "report_files"
+            "shared": "shared_files"
         }
     
     async def connect(self) -> bool:
@@ -90,6 +98,11 @@ class MultiDatabaseManager:
                         self.databases[db_type], 
                         bucket_name=self.gridfs_bucket_names[db_type]
                     )
+                
+                # Also connect to legacy databases during migration period
+                for db_type, db_name in self.legacy_databases.items():
+                    self.databases[db_type] = self.client[db_name]
+                    logger.info(f"🔄 Connected to legacy {db_type} database: {db_name}")
                 
                 self.is_connected = True
                 logger.info("✅ Successfully connected to all MongoDB Atlas databases")
@@ -165,6 +178,94 @@ class MultiDatabaseManager:
         if db_type not in self.gridfs_buckets:
             raise ValueError(f"Unknown database type: {db_type}")
         return self.gridfs_buckets[db_type]
+    
+    # ================================
+    # Organization-Aware Database Access
+    # ================================
+    
+    def get_org_database(self, org_id: str) -> AsyncIOMotorDatabase[Any]:
+        """
+        Get organization-specific database (lazy loading with LRU cache)
+        
+        Args:
+            org_id: Organization identifier (e.g., 'demo_org_001')
+            
+        Returns:
+            AsyncIOMotorDatabase instance for the organization
+        """
+        if not self.is_connected:
+            raise RuntimeError("Database not connected. Call connect() first.")
+        
+        # Check cache first
+        if org_id in self.org_database_cache:
+            logger.debug(f"📦 Using cached database for org: {org_id}")
+            return self.org_database_cache[org_id]
+        
+        # Create new database reference
+        org_db = self.client[org_id]
+        logger.info(f"🆕 Loaded new organization database: {org_id}")
+        
+        # Add to cache
+        self.org_database_cache[org_id] = org_db
+        
+        # Implement LRU eviction if cache is too large
+        if len(self.org_database_cache) > self.max_org_cache_size:
+            # Remove the first (oldest) entry
+            oldest_org = next(iter(self.org_database_cache))
+            del self.org_database_cache[oldest_org]
+            logger.debug(f"🗑️ Evicted {oldest_org} from org database cache")
+        
+        return org_db
+    
+    def get_org_collection(self, org_id: str, collection_name: str) -> AsyncIOMotorCollection[Any]:
+        """Get a collection reference from organization-specific database"""
+        org_db = self.get_org_database(org_id)
+        return org_db[collection_name]
+    
+    async def ensure_org_database_structure(self, org_id: str) -> bool:
+        """
+        Initialize standard collections for an organization database
+        
+        Args:
+            org_id: Organization identifier
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        if not self.is_connected:
+            raise RuntimeError("Database not connected")
+        
+        logger.info(f"🏗️ Ensuring database structure for organization: {org_id}")
+        
+        try:
+            org_db = self.get_org_database(org_id)
+            
+            # Define standard collections for each organization
+            standard_collections = {
+                "reports": "Organization-specific valuation reports",
+                "custom_templates": "Organization-specific custom templates",
+                "users_settings": "User preferences and settings",
+                "activity_logs": "Organization activity audit logs",
+                "files_metadata": "Document and file metadata"
+            }
+            
+            existing_collections = await org_db.list_collection_names()
+            
+            for collection_name, description in standard_collections.items():
+                if collection_name not in existing_collections:
+                    # Create collection by inserting a dummy document and removing it
+                    await org_db[collection_name].insert_one({"_temp": True})
+                    await org_db[collection_name].delete_one({"_temp": True})
+                    logger.info(f"✅ Created collection: {org_id}.{collection_name} - {description}")
+                else:
+                    logger.debug(f"✓ Collection already exists: {org_id}.{collection_name}")
+            
+            logger.info(f"✅ Database structure verified for organization: {org_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to ensure database structure for {org_id}: {e}")
+            return False
     
     # ================================
     # CRUD Operations with Database Selection

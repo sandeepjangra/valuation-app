@@ -312,7 +312,8 @@ export class AuthService {
         create: ['system_admin', 'manager', 'employee'],
         read: ['system_admin', 'manager', 'employee'],
         update: ['system_admin', 'manager', 'employee'],
-        delete: ['system_admin', 'manager']
+        delete: ['system_admin', 'manager'],
+        submit: ['system_admin', 'manager'] // Only Manager can submit
       },
       users: {
         create: ['system_admin'], // Only system admin can create users
@@ -335,6 +336,66 @@ export class AuthService {
     return allowedRoles ? this.hasAnyRole(allowedRoles) : false;
   }
 
+  /**
+   * Check if current user can submit reports
+   * Only Managers and System Admins can submit reports
+   */
+  canSubmitReports(): boolean {
+    return this.hasPermission('reports', 'submit');
+  }
+
+  /**
+   * Check if current user can view activity logs
+   * Only Managers and System Admins can view audit logs
+   */
+  canViewActivityLogs(): boolean {
+    return this.hasPermission('audit_logs', 'read');
+  }
+
+  /**
+   * Get current user information from backend
+   * This validates the token and returns fresh user data
+   */
+  getCurrentUserFromBackend(): Observable<any> {
+    return this.http.get(`${this.API_BASE}/auth/me`)
+      .pipe(
+        tap((response: any) => {
+          if (response.success && response.data) {
+            const userData = response.data;
+            
+            // Update current user if we have the full user object
+            if (userData.user_id) {
+              const user: User = {
+                _id: userData.user_id,
+                organization_id: userData.organization_id,
+                email: userData.email,
+                first_name: userData.email.split('@')[0],
+                roles: userData.roles || [],
+                is_active: true,
+                created_at: new Date(),
+                updated_at: new Date()
+              };
+              this._currentUser.set(user);
+            }
+            
+            console.log('✅ Current user info refreshed from backend:', {
+              email: userData.email,
+              roles: userData.roles,
+              permissions: userData.permissions
+            });
+          }
+        }),
+        catchError(error => {
+          console.error('❌ Failed to get current user from backend:', error);
+          // If token is invalid, logout
+          if (error.status === 401) {
+            this.logout();
+          }
+          return throwError(() => error);
+        })
+      );
+  }
+
   // Private helper methods
 
   private handleLoginSuccess(loginData: LoginResponse['data']): void {
@@ -347,26 +408,34 @@ export class AuthService {
       // Create organization context
       const orgContext = this.createOrganizationContext(payload, access_token);
       
+      // Merge user data from loginData with parsed token data
+      const enhancedUser: User = {
+        ...user,
+        roles: orgContext.roles // Ensure roles from token are used
+      };
+      
       // Store data
       localStorage.setItem(this.TOKEN_KEY, access_token);
       if (refresh_token) {
         localStorage.setItem(this.REFRESH_TOKEN_KEY, refresh_token);
       }
-      localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+      localStorage.setItem(this.USER_KEY, JSON.stringify(enhancedUser));
       localStorage.setItem(this.ORG_CONTEXT_KEY, JSON.stringify(orgContext));
       
       // Update signals
       this._isAuthenticated.set(true);
-      this._currentUser.set(user);
+      this._currentUser.set(enhancedUser);
       this._organizationContext.set(orgContext);
       
       // Schedule token refresh
       this.scheduleTokenRefresh(payload.exp);
       
       console.log('✅ Login successful:', {
-        user: user.email,
+        user: enhancedUser.email,
         organization: orgContext.organizationId,
-        roles: orgContext.roles
+        roles: orgContext.roles,
+        canSubmitReports: this.canSubmitReports(),
+        canViewLogs: this.canViewActivityLogs()
       });
       
     } catch (error) {

@@ -5,6 +5,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Dict, List, Any, Optional
 from datetime import datetime, timezone
 from pydantic import BaseModel
+from passlib.context import CryptContext
 import json
 import logging
 import os
@@ -30,10 +31,82 @@ except ImportError:
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Helper function to convert datetime objects to ISO format strings
+def convert_datetimes_to_iso(obj):
+    """Recursively convert datetime objects to ISO format strings"""
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    elif isinstance(obj, dict):
+        return {key: convert_datetimes_to_iso(value) for key, value in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_datetimes_to_iso(item) for item in obj]
+    else:
+        return obj
+
+# Activity logging helper function
+async def log_activity(
+    organization_id: str,
+    user_id: str,
+    user_email: str,
+    action: str,
+    resource_type: str,
+    resource_id: Optional[str] = None,
+    details: Optional[Dict[str, Any]] = None,
+    ip_address: Optional[str] = None
+):
+    """
+    Log user activity to organization's activity_logs collection
+    
+    Args:
+        organization_id: Organization ID
+        user_id: User ID performing the action
+        user_email: User email for readability
+        action: Action performed (e.g., "report_created", "report_submitted", "report_updated")
+        resource_type: Type of resource (e.g., "report", "template", "user")
+        resource_id: ID of the resource affected
+        details: Additional details about the action
+        ip_address: IP address of the request
+    """
+    try:
+        from database.multi_db_manager import MultiDatabaseManager
+        
+        db_manager = MultiDatabaseManager()
+        await db_manager.connect()
+        
+        # Get organization database
+        org_db = db_manager.get_org_database(organization_id)
+        
+        # Create activity log document
+        activity_log = {
+            "user_id": user_id,
+            "user_email": user_email,
+            "action": action,
+            "resource_type": resource_type,
+            "resource_id": resource_id,
+            "details": details or {},
+            "ip_address": ip_address,
+            "timestamp": datetime.now(timezone.utc),
+            "created_at": datetime.now(timezone.utc)
+        }
+        
+        # Insert into activity_logs collection
+        await org_db.activity_logs.insert_one(activity_log)
+        
+        await db_manager.disconnect()
+        
+        logger.debug(f"📝 Activity logged: {action} by {user_email} in org {organization_id}")
+        
+    except Exception as e:
+        # Don't fail the main operation if activity logging fails
+        logger.error(f"❌ Failed to log activity: {str(e)}")
+
 app = FastAPI(title="Valuation App API", version="1.0.0")
 
 # Initialize request/response logger
 api_logger = RequestResponseLogger()
+
+# Password hashing context
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Security scheme
 security = HTTPBearer()
@@ -54,6 +127,44 @@ class DevLoginRequest(BaseModel):
     email: str
     organizationId: str
     role: str
+
+# Organization Management Models
+class CreateOrganizationRequest(BaseModel):
+    name: str
+    contact_email: str
+    contact_phone: Optional[str] = None
+    address: Optional[str] = None
+    max_users: Optional[int] = 25
+    plan: Optional[str] = "basic"
+
+class OrganizationResponse(BaseModel):
+    organization_id: str
+    name: str
+    status: str
+    contact_info: Dict[str, Any]
+    settings: Dict[str, Any]
+    subscription: Dict[str, Any]
+    created_at: str
+
+# User Management Models
+class AddUserToOrgRequest(BaseModel):
+    email: str
+    full_name: str
+    password: str
+    role: str  # "manager" or "employee"
+    phone: Optional[str] = None
+
+class UpdateUserRoleRequest(BaseModel):
+    role: str  # "manager" or "employee"
+
+class UserResponse(BaseModel):
+    user_id: str
+    email: str
+    full_name: str
+    organization_id: str
+    role: str
+    status: str
+    created_at: str
 
 # Add CORS middleware
 app.add_middleware(
@@ -114,35 +225,89 @@ def create_dev_token(email: str, organization_id: str, role: str) -> Dict[str, A
 # Authentication endpoints
 @app.post("/api/auth/login")
 async def login(login_request: LoginRequest):
-    """Traditional login endpoint"""
+    """Traditional login endpoint - fetches user from database and returns role"""
     logger.info(f"🔐 Login attempt for: {login_request.email}")
     
-    # For development, accept any password (in production, validate against Cognito or database)
-    logger.info(f"🧪 Development mode: accepting any password for {login_request.email}")
-    
-    # Default role based on email domain  
-    if "admin" in login_request.email.lower():
-        role = "system_admin"
-        org_id = "system_admin"
-    elif "manager" in login_request.email.lower():
-        role = "manager" 
-        org_id = "demo_org_001"
-    else:
-        role = "employee"
-        org_id = "demo_org_001"
-    
-    # Create development token
-    token_data = create_dev_token(login_request.email, org_id, role)
-    
-    logger.info(f"✅ Login successful for {login_request.email} with role {role}")
-    
-    return JSONResponse(
-        status_code=200,
-        content={
-            "success": True,
-            "data": token_data
+    try:
+        from database.multi_db_manager import MultiDatabaseManager
+        
+        db_manager = MultiDatabaseManager()
+        await db_manager.connect()
+        
+        admin_db = db_manager.get_database("admin")
+        
+        # Find user by email
+        user = await admin_db.users.find_one({
+            "email": login_request.email,
+            "isActive": True
+        })
+        
+        if not user:
+            logger.warning(f"❌ User not found: {login_request.email}")
+            await db_manager.disconnect()
+            raise HTTPException(status_code=401, detail="Invalid email or password")
+        
+        # In development, accept any password (in production, validate against Cognito or password hash)
+        logger.info(f"🧪 Development mode: accepting any password for {login_request.email}")
+        
+        # Get user details
+        user_id = user.get("user_id")
+        email = user.get("email")
+        full_name = user.get("full_name")
+        organization_id = user.get("organization_id")
+        role = user.get("role")  # Get actual role from database
+        
+        # Update last_login timestamp
+        await admin_db.users.update_one(
+            {"user_id": user_id},
+            {
+                "$set": {
+                    "last_login": datetime.now(timezone.utc),
+                    "updated_at": datetime.now(timezone.utc)
+                }
+            }
+        )
+        
+        # Get organization details
+        org = await admin_db.organizations.find_one({
+            "organization_id": organization_id,
+            "isActive": True
+        })
+        
+        org_name = org.get("name", "Unknown Organization") if org else "Unknown Organization"
+        
+        await db_manager.disconnect()
+        
+        # Create development token with actual user data
+        token_data = create_dev_token(email, organization_id, role)
+        
+        # Add user information to response
+        token_data["user"] = {
+            "user_id": user_id,
+            "email": email,
+            "full_name": full_name,
+            "organization_id": organization_id,
+            "organization_name": org_name,
+            "role": role
         }
-    )
+        
+        logger.info(f"✅ Login successful for {email} with role {role} in org {organization_id}")
+        
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "data": token_data
+            }
+        )
+        
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        logger.error(f"❌ Login failed: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail="Login failed")
 
 @app.post("/api/auth/dev-login")
 async def dev_login(dev_request: DevLoginRequest):
@@ -186,13 +351,67 @@ async def logout():
 async def health_check():
     return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
 
+# ================================
+# ROLE-BASED ACCESS CONTROL HELPERS
+# ================================
+
+@app.get("/api/auth/me")
+async def get_current_user(request: Request):
+    """Get current user information from token"""
+    try:
+        from utils.auth_middleware import get_organization_context
+        from fastapi.security import HTTPBearer
+        
+        security = HTTPBearer()
+        auth_header = request.headers.get("Authorization")
+        
+        if not auth_header or not auth_header.startswith("Bearer "):
+            raise HTTPException(status_code=401, detail="Missing or invalid authorization header")
+        
+        token = auth_header.replace("Bearer ", "")
+        
+        # Create credentials object
+        from fastapi.security import HTTPAuthorizationCredentials
+        credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
+        
+        # Get organization context
+        org_context = await get_organization_context(credentials)
+        
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "data": {
+                    "user_id": org_context.user_id,
+                    "email": org_context.email,
+                    "organization_id": org_context.organization_id,
+                    "roles": org_context.roles,
+                    "is_system_admin": org_context.is_system_admin,
+                    "is_manager": org_context.is_manager,
+                    "is_employee": org_context.is_employee,
+                    "permissions": {
+                        "can_submit_reports": org_context.has_permission("reports", "submit"),
+                        "can_create_reports": org_context.has_permission("reports", "create"),
+                        "can_read_reports": org_context.has_permission("reports", "read"),
+                        "can_update_reports": org_context.has_permission("reports", "update"),
+                        "can_view_audit_logs": org_context.has_permission("audit_logs", "read")
+                    }
+                }
+            }
+        )
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        logger.error(f"❌ Error getting current user: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to get user information")
+
 @app.get("/api/banks")
 async def get_all_banks(request: Request):
-    """Get all active banks"""
+    """Get all active banks with their templates from shared_resources"""
     # Log the request
     request_data = await api_logger.log_request(request)
     
-    logger.info("🏦 Fetching all banks from unified document...")
+    logger.info("🏦 Fetching all banks from shared_resources...")
     
     try:
         from database.multi_db_manager import MultiDatabaseManager
@@ -200,28 +419,52 @@ async def get_all_banks(request: Request):
         db_manager = MultiDatabaseManager()
         await db_manager.connect()
         
-        # Get the unified banks document
-        banks_document = await db_manager.find_one(
-            "admin",
-            "banks", 
-            {"_id": "all_banks_unified_v3"}
-        )
+        # Get shared resources database
+        shared_db = db_manager.get_database("shared")
         
-        if not banks_document:
-            logger.error("❌ Unified banks document not found")
-            raise HTTPException(status_code=404, detail="Banks document not found")
+        # Fetch all active banks
+        banks_cursor = shared_db.banks.find({"isActive": True})
+        banks = await banks_cursor.to_list(length=None)
         
-        # Extract active banks from the unified document
-        all_banks = banks_document.get("banks", [])
-        active_banks = [bank for bank in all_banks if bank.get("isActive", True)]
+        logger.info(f"📦 Found {len(banks)} active banks")
         
-        logger.info(f"✅ Found {len(active_banks)} active banks out of {len(all_banks)} total banks")
+        # For each bank, fetch its templates
+        for bank in banks:
+            bank_code = bank.get("bankCode")
+            
+            # Fetch templates for this bank
+            templates_cursor = shared_db.bank_templates.find({
+                "bankCode": bank_code,
+                "isActive": True
+            })
+            templates = await templates_cursor.to_list(length=None)
+            
+            # Clean up template documents (remove migration metadata)
+            cleaned_templates = []
+            for template in templates:
+                # Remove migration-specific fields
+                template.pop("migratedAt", None)
+                template.pop("migrationSource", None)
+                template.pop("bankCode", None)  # Already in parent bank
+                template.pop("bankName", None)  # Already in parent bank
+                cleaned_templates.append(template)
+            
+            # Add templates array to bank
+            bank["templates"] = cleaned_templates
+            
+            # Clean up bank document
+            bank.pop("migratedAt", None)
+            bank.pop("migrationSource", None)
+            
+            logger.debug(f"  ✅ {bank_code}: {len(cleaned_templates)} templates")
+        
+        logger.info(f"✅ Successfully aggregated banks with templates")
         
         await db_manager.disconnect()
         
         response = JSONResponse(
             status_code=200,
-            content=json.loads(json.dumps(active_banks, default=json_serializer))
+            content=json.loads(json.dumps(banks, default=json_serializer))
         )
         
         # Log the response
@@ -231,6 +474,9 @@ async def get_all_banks(request: Request):
         
     except Exception as e:
         logger.error(f"❌ Error fetching banks: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
         error_response = JSONResponse(
             status_code=500,
             content={"error": "Internal server error", "details": str(e)}
@@ -480,6 +726,1117 @@ async def get_aggregated_template_fields(bank_code: str, template_id: str, reque
         )
         api_logger.log_response(error_response, request_data)
         raise HTTPException(status_code=500, detail=f"Failed to aggregate template fields: {str(e)}")
+
+# ================================
+# ORGANIZATION MANAGEMENT APIs
+# ================================
+
+@app.post("/api/admin/organizations")
+async def create_organization(org_request: CreateOrganizationRequest, request: Request):
+    """Create a new organization (System Admin only)"""
+    request_data = await api_logger.log_request(request)
+    
+    logger.info(f"🏢 Creating new organization: {org_request.name}")
+    
+    try:
+        from database.multi_db_manager import MultiDatabaseManager
+        import re
+        
+        db_manager = MultiDatabaseManager()
+        await db_manager.connect()
+        
+        # Generate organization ID from name
+        org_name_clean = re.sub(r'[^a-z0-9]+', '_', org_request.name.lower())
+        org_id_base = org_name_clean[:20]  # Limit to 20 chars
+        
+        # Check if org ID exists, add number suffix if needed
+        admin_db = db_manager.get_database("admin")
+        counter = 1
+        org_id = f"{org_id_base}_{counter:03d}"
+        
+        while await admin_db.organizations.find_one({"organization_id": org_id}):
+            counter += 1
+            org_id = f"{org_id_base}_{counter:03d}"
+        
+        logger.info(f"📝 Generated organization ID: {org_id}")
+        
+        # Create organization document
+        org_document = {
+            "organization_id": org_id,
+            "name": org_request.name,
+            "status": "active",
+            "contact_info": {
+                "email": org_request.contact_email,
+                "phone": org_request.contact_phone,
+                "address": org_request.address
+            },
+            "settings": {
+                "max_users": org_request.max_users,
+                "features_enabled": ["reports", "templates", "file_upload"],
+                "s3_prefix": org_id,
+                "timezone": "UTC",
+                "date_format": "YYYY-MM-DD"
+            },
+            "subscription": {
+                "plan": org_request.plan,
+                "max_reports_per_month": 100 if org_request.plan == "basic" else 500,
+                "storage_limit_gb": 10 if org_request.plan == "basic" else 50,
+                "expires_at": None
+            },
+            "created_by": "system_admin",  # TODO: Get from JWT
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc),
+            "isActive": True,
+            "version": 1
+        }
+        
+        # Insert into valuation_admin.organizations
+        result = await admin_db.organizations.insert_one(org_document)
+        logger.info(f"✅ Created organization document: {result.inserted_id}")
+        
+        # Initialize organization database structure
+        success = await db_manager.ensure_org_database_structure(org_id)
+        
+        if not success:
+            logger.error(f"❌ Failed to initialize database for {org_id}")
+            # Rollback - delete org document
+            await admin_db.organizations.delete_one({"_id": result.inserted_id})
+            raise HTTPException(status_code=500, detail="Failed to initialize organization database")
+        
+        logger.info(f"✅ Organization database initialized: {org_id}")
+        
+        await db_manager.disconnect()
+        
+        # Return organization data
+        org_document["_id"] = str(result.inserted_id)
+        org_document["created_at"] = org_document["created_at"].isoformat()
+        org_document["updated_at"] = org_document["updated_at"].isoformat()
+        
+        response = JSONResponse(
+            status_code=201,
+            content={
+                "success": True,
+                "message": f"Organization '{org_request.name}' created successfully",
+                "data": org_document
+            }
+        )
+        
+        api_logger.log_response(response, request_data)
+        return response
+        
+    except Exception as e:
+        logger.error(f"❌ Error creating organization: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        error_response = JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+        api_logger.log_response(error_response, request_data)
+        return error_response
+
+
+@app.get("/api/admin/organizations")
+async def list_organizations(request: Request):
+    """List all organizations (System Admin only)"""
+    request_data = await api_logger.log_request(request)
+    
+    logger.info("📋 Fetching all organizations")
+    
+    try:
+        from database.multi_db_manager import MultiDatabaseManager
+        
+        db_manager = MultiDatabaseManager()
+        await db_manager.connect()
+        
+        admin_db = db_manager.get_database("admin")
+        
+        # Get all active organizations
+        orgs_cursor = admin_db.organizations.find({"isActive": True})
+        organizations = await orgs_cursor.to_list(length=None)
+        
+        # Get user count for each organization and convert ObjectId
+        for org in organizations:
+            org_id = org.get("organization_id")
+            user_count = await admin_db.users.count_documents({
+                "organization_id": org_id,
+                "isActive": True
+            })
+            org["user_count"] = user_count
+            org["_id"] = str(org["_id"])
+        
+        # Convert all datetime objects to ISO format
+        organizations = convert_datetimes_to_iso(organizations)
+        
+        logger.info(f"✅ Found {len(organizations)} organizations")
+        
+        await db_manager.disconnect()
+        
+        response = JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "data": organizations,
+                "total": len(organizations)
+            }
+        )
+        
+        api_logger.log_response(response, request_data)
+        return response
+        
+    except Exception as e:
+        logger.error(f"❌ Error fetching organizations: {str(e)}")
+        error_response = JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+        api_logger.log_response(error_response, request_data)
+        return error_response
+
+
+@app.get("/api/admin/organizations/{org_id}")
+async def get_organization(org_id: str, request: Request):
+    """Get organization details (System Admin only)"""
+    request_data = await api_logger.log_request(request)
+    
+    logger.info(f"🔍 Fetching organization: {org_id}")
+    
+    try:
+        from database.multi_db_manager import MultiDatabaseManager
+        
+        db_manager = MultiDatabaseManager()
+        await db_manager.connect()
+        
+        admin_db = db_manager.get_database("admin")
+        
+        # Get organization
+        org = await admin_db.organizations.find_one({
+            "organization_id": org_id,
+            "isActive": True
+        })
+        
+        if not org:
+            raise HTTPException(status_code=404, detail=f"Organization {org_id} not found")
+        
+        # Get users in this organization
+        users_cursor = admin_db.users.find({
+            "organization_id": org_id,
+            "isActive": True
+        })
+        users = await users_cursor.to_list(length=None)
+        
+        # Clean up user data
+        for user in users:
+            user["_id"] = str(user["_id"])
+            user.pop("cognito_id", None)  # Don't expose cognito_id
+            user["created_at"] = user.get("created_at", datetime.now(timezone.utc)).isoformat()
+            user["updated_at"] = user.get("updated_at", datetime.now(timezone.utc)).isoformat()
+            # Handle nullable last_login
+            if user.get("last_login"):
+                user["last_login"] = user["last_login"].isoformat()
+        
+        org["_id"] = str(org["_id"])
+        org["created_at"] = org["created_at"].isoformat()
+        org["updated_at"] = org["updated_at"].isoformat()
+        
+        # Handle nullable datetime in subscription
+        if org.get("subscription", {}).get("expires_at"):
+            org["subscription"]["expires_at"] = org["subscription"]["expires_at"].isoformat()
+        
+        org["users"] = users
+        org["user_count"] = len(users)
+        
+        logger.info(f"✅ Found organization {org_id} with {len(users)} users")
+        
+        await db_manager.disconnect()
+        
+        response = JSONResponse(
+            status_code=200,
+            content={"success": True, "data": org}
+        )
+        
+        api_logger.log_response(response, request_data)
+        return response
+        
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        logger.error(f"❌ Error fetching organization: {str(e)}")
+        error_response = JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+        api_logger.log_response(error_response, request_data)
+        return error_response
+
+
+@app.delete("/api/admin/organizations/{org_id}")
+async def delete_organization(org_id: str, request: Request):
+    """
+    Delete organization and all its data (System Admin only)
+    WARNING: This will drop the entire organization database and remove all data permanently
+    """
+    request_data = await api_logger.log_request(request)
+    
+    logger.info(f"🗑️ Deleting organization: {org_id}")
+    
+    try:
+        from database.multi_db_manager import MultiDatabaseManager
+        
+        db_manager = MultiDatabaseManager()
+        await db_manager.connect()
+        
+        admin_db = db_manager.get_database("admin")
+        
+        # Check if organization exists
+        org = await admin_db.organizations.find_one({"organization_id": org_id})
+        
+        if not org:
+            raise HTTPException(status_code=404, detail=f"Organization {org_id} not found")
+        
+        org_name = org.get("name", org_id)
+        
+        # Get organization database name
+        org_db_name = org_id.replace("-", "_")
+        
+        # Drop the entire organization database
+        logger.warning(f"⚠️ Dropping database: {org_db_name}")
+        await db_manager.client.drop_database(org_db_name)
+        logger.info(f"✅ Dropped database: {org_db_name}")
+        
+        # Delete all users belonging to this organization
+        users_result = await admin_db.users.delete_many({"organization_id": org_id})
+        logger.info(f"✅ Deleted {users_result.deleted_count} users from organization")
+        
+        # Delete organization document
+        org_result = await admin_db.organizations.delete_one({"organization_id": org_id})
+        logger.info(f"✅ Deleted organization document")
+        
+        await db_manager.disconnect()
+        
+        response = JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "message": f"Organization '{org_name}' and all its data have been permanently deleted",
+                "deleted": {
+                    "organization": org_id,
+                    "database": org_db_name,
+                    "users_count": users_result.deleted_count
+                }
+            }
+        )
+        
+        api_logger.log_response(response, request_data)
+        return response
+        
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        logger.error(f"❌ Error deleting organization: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        error_response = JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+        api_logger.log_response(error_response, request_data)
+        return error_response
+
+
+@app.patch("/api/admin/organizations/{org_id}/status")
+async def update_organization_status(org_id: str, request: Request):
+    """
+    Toggle organization active/inactive status (System Admin only)
+    This deactivates the organization without deleting data
+    """
+    request_data = await api_logger.log_request(request)
+    
+    logger.info(f"🔄 Toggling status for organization: {org_id}")
+    
+    try:
+        from database.multi_db_manager import MultiDatabaseManager
+        
+        # Parse request body to get new status
+        body = await request.json()
+        new_status = body.get("status")
+        
+        if new_status not in ["active", "inactive"]:
+            raise HTTPException(
+                status_code=400, 
+                detail="Status must be 'active' or 'inactive'"
+            )
+        
+        db_manager = MultiDatabaseManager()
+        await db_manager.connect()
+        
+        admin_db = db_manager.get_database("admin")
+        
+        # Check if organization exists
+        org = await admin_db.organizations.find_one({"organization_id": org_id})
+        
+        if not org:
+            raise HTTPException(status_code=404, detail=f"Organization {org_id} not found")
+        
+        org_name = org.get("name", org_id)
+        current_status = "active" if org.get("isActive", True) else "inactive"
+        
+        # Update organization status
+        is_active = (new_status == "active")
+        
+        update_result = await admin_db.organizations.update_one(
+            {"organization_id": org_id},
+            {
+                "$set": {
+                    "isActive": is_active,
+                    "status": new_status,
+                    "updated_at": datetime.now(timezone.utc)
+                }
+            }
+        )
+        
+        # Also update all users in this organization
+        users_result = await admin_db.users.update_many(
+            {"organization_id": org_id},
+            {
+                "$set": {
+                    "isActive": is_active,
+                    "status": new_status,
+                    "updated_at": datetime.now(timezone.utc)
+                }
+            }
+        )
+        
+        logger.info(f"✅ Updated organization status: {current_status} → {new_status}")
+        logger.info(f"✅ Updated {users_result.modified_count} users")
+        
+        await db_manager.disconnect()
+        
+        response = JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "message": f"Organization '{org_name}' status changed to {new_status}",
+                "data": {
+                    "organization_id": org_id,
+                    "previous_status": current_status,
+                    "new_status": new_status,
+                    "users_updated": users_result.modified_count
+                }
+            }
+        )
+        
+        api_logger.log_response(response, request_data)
+        return response
+        
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        logger.error(f"❌ Error updating organization status: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        error_response = JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+        api_logger.log_response(error_response, request_data)
+        return error_response
+
+
+# ================================
+# USER MANAGEMENT APIs
+# ================================
+
+@app.post("/api/admin/organizations/{org_id}/users")
+async def add_user_to_organization(org_id: str, user_request: AddUserToOrgRequest, request: Request):
+    """Add a new user to an organization (System Admin only)"""
+    request_data = await api_logger.log_request(request)
+    
+    logger.info(f"👤 Adding user {user_request.email} to organization {org_id}")
+    
+    try:
+        from database.multi_db_manager import MultiDatabaseManager
+        
+        # Validate role
+        if user_request.role not in ["manager", "employee"]:
+            raise HTTPException(status_code=400, detail="Role must be 'manager' or 'employee'")
+        
+        db_manager = MultiDatabaseManager()
+        await db_manager.connect()
+        
+        admin_db = db_manager.get_database("admin")
+        
+        # Check if organization exists
+        org = await admin_db.organizations.find_one({
+            "organization_id": org_id,
+            "isActive": True
+        })
+        
+        if not org:
+            raise HTTPException(status_code=404, detail=f"Organization {org_id} not found")
+        
+        # Check if user already exists
+        existing_user = await admin_db.users.find_one({"email": user_request.email})
+        
+        if existing_user:
+            raise HTTPException(status_code=400, detail=f"User with email {user_request.email} already exists")
+        
+        # Generate user ID
+        import uuid
+        user_id = f"user_{uuid.uuid4().hex[:12]}"
+        
+        # Hash password
+        hashed_password = pwd_context.hash(user_request.password)
+        
+        # Create user document
+        user_document = {
+            "user_id": user_id,
+            "email": user_request.email,
+            "full_name": user_request.full_name,
+            "phone": user_request.phone,
+            "password_hash": hashed_password,
+            "organization_id": org_id,
+            "role": user_request.role,
+            "status": "active",
+            "cognito_id": None,  # Will be set after Cognito user creation
+            "created_by": "system_admin",  # TODO: Get from JWT
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc),
+            "last_login": None,
+            "isActive": True,
+            "version": 1
+        }
+        
+        # Insert into valuation_admin.users
+        result = await admin_db.users.insert_one(user_document)
+        logger.info(f"✅ Created user document: {result.inserted_id}")
+        
+        # Create user settings in organization database
+        org_db = db_manager.get_org_database(org_id)
+        user_settings = {
+            "_id": user_id,
+            "user_email": user_request.email,
+            "dashboard_layout": "grid",
+            "theme": "light",
+            "notifications_enabled": True,
+            "default_bank": None,
+            "favorite_templates": [],
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc)
+        }
+        
+        await org_db.users_settings.insert_one(user_settings)
+        logger.info(f"✅ Created user settings in {org_id}.users_settings")
+        
+        # Log activity
+        activity_log = {
+            "user_id": "system_admin",
+            "action": "user_created",
+            "resource_type": "user",
+            "resource_id": user_id,
+            "details": {
+                "email": user_request.email,
+                "role": user_request.role,
+                "full_name": user_request.full_name
+            },
+            "timestamp": datetime.now(timezone.utc)
+        }
+        await org_db.activity_logs.insert_one(activity_log)
+        
+        await db_manager.disconnect()
+        
+        # Return user data (remove sensitive fields)
+        user_document["_id"] = str(result.inserted_id)
+        user_document["created_at"] = user_document["created_at"].isoformat()
+        user_document["updated_at"] = user_document["updated_at"].isoformat()
+        user_document.pop("cognito_id", None)  # Don't expose
+        user_document.pop("password_hash", None)  # Don't expose password hash
+        
+        response = JSONResponse(
+            status_code=201,
+            content={
+                "success": True,
+                "message": f"User '{user_request.email}' added to organization successfully",
+                "data": user_document
+            }
+        )
+        
+        api_logger.log_response(response, request_data)
+        return response
+        
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        logger.error(f"❌ Error adding user: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        error_response = JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+        api_logger.log_response(error_response, request_data)
+        return error_response
+
+
+@app.get("/api/admin/organizations/{org_id}/users")
+async def list_organization_users(org_id: str, request: Request):
+    """List all users in an organization"""
+    request_data = await api_logger.log_request(request)
+    
+    logger.info(f"📋 Fetching users for organization: {org_id}")
+    
+    try:
+        from database.multi_db_manager import MultiDatabaseManager
+        
+        db_manager = MultiDatabaseManager()
+        await db_manager.connect()
+        
+        admin_db = db_manager.get_database("admin")
+        
+        # Get users for this organization
+        users_cursor = admin_db.users.find({
+            "organization_id": org_id,
+            "isActive": True
+        })
+        users = await users_cursor.to_list(length=None)
+        
+        # Clean up user data
+        for user in users:
+            user["_id"] = str(user["_id"])
+            user.pop("cognito_id", None)
+            user["created_at"] = user.get("created_at", datetime.now(timezone.utc)).isoformat()
+            user["updated_at"] = user.get("updated_at", datetime.now(timezone.utc)).isoformat()
+            # Handle nullable last_login
+            if user.get("last_login"):
+                user["last_login"] = user["last_login"].isoformat()
+        
+        logger.info(f"✅ Found {len(users)} users in organization {org_id}")
+        
+        await db_manager.disconnect()
+        
+        response = JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "data": users,
+                "total": len(users)
+            }
+        )
+        
+        api_logger.log_response(response, request_data)
+        return response
+        
+    except Exception as e:
+        logger.error(f"❌ Error fetching users: {str(e)}")
+        error_response = JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+        api_logger.log_response(error_response, request_data)
+        return error_response
+
+
+@app.put("/api/admin/users/{user_id}/role")
+async def update_user_role(user_id: str, role_request: UpdateUserRoleRequest, request: Request):
+    """Update user role (System Admin only)"""
+    request_data = await api_logger.log_request(request)
+    
+    logger.info(f"🔄 Updating role for user {user_id} to {role_request.role}")
+    
+    try:
+        from database.multi_db_manager import MultiDatabaseManager
+        
+        # Validate role
+        if role_request.role not in ["manager", "employee"]:
+            raise HTTPException(status_code=400, detail="Role must be 'manager' or 'employee'")
+        
+        db_manager = MultiDatabaseManager()
+        await db_manager.connect()
+        
+        admin_db = db_manager.get_database("admin")
+        
+        # Find user
+        user = await admin_db.users.find_one({
+            "user_id": user_id,
+            "isActive": True
+        })
+        
+        if not user:
+            raise HTTPException(status_code=404, detail=f"User {user_id} not found")
+        
+        # Update role
+        result = await admin_db.users.update_one(
+            {"user_id": user_id},
+            {
+                "$set": {
+                    "role": role_request.role,
+                    "updated_at": datetime.now(timezone.utc),
+                    "version": user.get("version", 1) + 1
+                }
+            }
+        )
+        
+        if result.modified_count == 0:
+            raise HTTPException(status_code=400, detail="Failed to update user role")
+        
+        logger.info(f"✅ Updated role for user {user_id}")
+        
+        # Log activity
+        org_db = db_manager.get_org_database(user["organization_id"])
+        activity_log = {
+            "user_id": "system_admin",
+            "action": "user_role_updated",
+            "resource_type": "user",
+            "resource_id": user_id,
+            "details": {
+                "old_role": user.get("role"),
+                "new_role": role_request.role,
+                "user_email": user.get("email")
+            },
+            "timestamp": datetime.now(timezone.utc)
+        }
+        await org_db.activity_logs.insert_one(activity_log)
+        
+        await db_manager.disconnect()
+        
+        response = JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "message": f"User role updated to '{role_request.role}'"
+            }
+        )
+        
+        api_logger.log_response(response, request_data)
+        return response
+        
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        logger.error(f"❌ Error updating user role: {str(e)}")
+        error_response = JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+        api_logger.log_response(error_response, request_data)
+        return error_response
+
+
+# ================================
+# REPORT MANAGEMENT APIs (with Activity Logging)
+# ================================
+
+class ReportCreateRequest(BaseModel):
+    bank_code: str
+    template_id: str
+    property_address: str
+    report_data: Dict[str, Any]
+
+class ReportUpdateRequest(BaseModel):
+    report_data: Dict[str, Any]
+    status: Optional[str] = None
+
+@app.post("/api/reports")
+async def create_report(report_request: ReportCreateRequest, request: Request):
+    """Create a new report (Manager and Employee can create)"""
+    request_data = await api_logger.log_request(request)
+    
+    try:
+        from utils.auth_middleware import get_organization_context
+        from fastapi.security import HTTPAuthorizationCredentials
+        
+        # Get auth token
+        auth_header = request.headers.get("Authorization")
+        if not auth_header or not auth_header.startswith("Bearer "):
+            raise HTTPException(status_code=401, detail="Missing authorization header")
+        
+        token = auth_header.replace("Bearer ", "")
+        credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
+        
+        # Get organization context from token
+        org_context = await get_organization_context(credentials)
+        
+        # Check permission
+        if not org_context.has_permission("reports", "create"):
+            raise HTTPException(status_code=403, detail="Insufficient permissions to create reports")
+        
+        from database.multi_db_manager import MultiDatabaseManager
+        import uuid
+        
+        db_manager = MultiDatabaseManager()
+        await db_manager.connect()
+        
+        org_db = db_manager.get_org_database(org_context.organization_id)
+        
+        # Generate report ID
+        report_id = f"rpt_{uuid.uuid4().hex[:12]}"
+        
+        # Create report document
+        report = {
+            "report_id": report_id,
+            "bank_code": report_request.bank_code,
+            "template_id": report_request.template_id,
+            "property_address": report_request.property_address,
+            "report_data": report_request.report_data,
+            "status": "draft",  # Initial status is always draft
+            "created_by": org_context.user_id,
+            "created_by_email": org_context.email,
+            "organization_id": org_context.organization_id,
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc),
+            "submitted_at": None,
+            "version": 1
+        }
+        
+        # Insert report
+        result = await org_db.reports.insert_one(report)
+        
+        logger.info(f"✅ Report created: {report_id} by {org_context.email}")
+        
+        # Log activity
+        await log_activity(
+            organization_id=org_context.organization_id,
+            user_id=org_context.user_id,
+            user_email=org_context.email,
+            action="report_created",
+            resource_type="report",
+            resource_id=report_id,
+            details={
+                "bank_code": report_request.bank_code,
+                "template_id": report_request.template_id,
+                "property_address": report_request.property_address,
+                "status": "draft"
+            },
+            ip_address=request.client.host
+        )
+        
+        await db_manager.disconnect()
+        
+        report["_id"] = str(result.inserted_id)
+        report["created_at"] = report["created_at"].isoformat()
+        report["updated_at"] = report["updated_at"].isoformat()
+        
+        response = JSONResponse(
+            status_code=201,
+            content={
+                "success": True,
+                "message": "Report created successfully",
+                "data": report
+            }
+        )
+        
+        api_logger.log_response(response, request_data)
+        return response
+        
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        logger.error(f"❌ Error creating report: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        error_response = JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+        api_logger.log_response(error_response, request_data)
+        return error_response
+
+
+@app.put("/api/reports/{report_id}")
+async def update_report(report_id: str, update_request: ReportUpdateRequest, request: Request):
+    """Update a report (Manager and Employee can update)"""
+    request_data = await api_logger.log_request(request)
+    
+    try:
+        from utils.auth_middleware import get_organization_context
+        from fastapi.security import HTTPAuthorizationCredentials
+        
+        # Get auth token
+        auth_header = request.headers.get("Authorization")
+        if not auth_header or not auth_header.startswith("Bearer "):
+            raise HTTPException(status_code=401, detail="Missing authorization header")
+        
+        token = auth_header.replace("Bearer ", "")
+        credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
+        
+        # Get organization context from token
+        org_context = await get_organization_context(credentials)
+        
+        # Check permission
+        if not org_context.has_permission("reports", "update"):
+            raise HTTPException(status_code=403, detail="Insufficient permissions to update reports")
+        
+        from database.multi_db_manager import MultiDatabaseManager
+        
+        db_manager = MultiDatabaseManager()
+        await db_manager.connect()
+        
+        org_db = db_manager.get_org_database(org_context.organization_id)
+        
+        # Find existing report
+        report = await org_db.reports.find_one({
+            "report_id": report_id,
+            "organization_id": org_context.organization_id
+        })
+        
+        if not report:
+            raise HTTPException(status_code=404, detail=f"Report {report_id} not found")
+        
+        # Prepare update data
+        update_data = {
+            "report_data": update_request.report_data,
+            "updated_at": datetime.now(timezone.utc),
+            "updated_by": org_context.user_id,
+            "updated_by_email": org_context.email,
+            "version": report.get("version", 1) + 1
+        }
+        
+        # Only allow status update if explicitly provided
+        if update_request.status:
+            update_data["status"] = update_request.status
+        
+        # Update report
+        result = await org_db.reports.update_one(
+            {"report_id": report_id},
+            {"$set": update_data}
+        )
+        
+        if result.modified_count == 0:
+            raise HTTPException(status_code=400, detail="Failed to update report")
+        
+        logger.info(f"✅ Report updated: {report_id} by {org_context.email}")
+        
+        # Log activity
+        await log_activity(
+            organization_id=org_context.organization_id,
+            user_id=org_context.user_id,
+            user_email=org_context.email,
+            action="report_updated",
+            resource_type="report",
+            resource_id=report_id,
+            details={
+                "previous_status": report.get("status"),
+                "new_status": update_request.status or report.get("status"),
+                "version": update_data["version"]
+            },
+            ip_address=request.client.host
+        )
+        
+        await db_manager.disconnect()
+        
+        response = JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "message": "Report updated successfully"
+            }
+        )
+        
+        api_logger.log_response(response, request_data)
+        return response
+        
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        logger.error(f"❌ Error updating report: {str(e)}")
+        error_response = JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+        api_logger.log_response(error_response, request_data)
+        return error_response
+
+
+@app.post("/api/reports/{report_id}/submit")
+async def submit_report(report_id: str, request: Request):
+    """Submit a report for review (ONLY Manager can submit)"""
+    request_data = await api_logger.log_request(request)
+    
+    try:
+        from utils.auth_middleware import get_organization_context
+        from fastapi.security import HTTPAuthorizationCredentials
+        
+        # Get auth token
+        auth_header = request.headers.get("Authorization")
+        if not auth_header or not auth_header.startswith("Bearer "):
+            raise HTTPException(status_code=401, detail="Missing authorization header")
+        
+        token = auth_header.replace("Bearer ", "")
+        credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
+        
+        # Get organization context from token
+        org_context = await get_organization_context(credentials)
+        
+        # Check permission - ONLY Manager can submit
+        if not org_context.has_permission("reports", "submit"):
+            raise HTTPException(
+                status_code=403, 
+                detail="Insufficient permissions. Only Managers can submit reports."
+            )
+        
+        from database.multi_db_manager import MultiDatabaseManager
+        
+        db_manager = MultiDatabaseManager()
+        await db_manager.connect()
+        
+        org_db = db_manager.get_org_database(org_context.organization_id)
+        
+        # Find existing report
+        report = await org_db.reports.find_one({
+            "report_id": report_id,
+            "organization_id": org_context.organization_id
+        })
+        
+        if not report:
+            raise HTTPException(status_code=404, detail=f"Report {report_id} not found")
+        
+        # Check if already submitted
+        if report.get("status") == "submitted":
+            raise HTTPException(status_code=400, detail="Report already submitted")
+        
+        # Update report status to submitted
+        result = await org_db.reports.update_one(
+            {"report_id": report_id},
+            {
+                "$set": {
+                    "status": "submitted",
+                    "submitted_at": datetime.now(timezone.utc),
+                    "submitted_by": org_context.user_id,
+                    "submitted_by_email": org_context.email,
+                    "updated_at": datetime.now(timezone.utc)
+                }
+            }
+        )
+        
+        if result.modified_count == 0:
+            raise HTTPException(status_code=400, detail="Failed to submit report")
+        
+        logger.info(f"✅ Report submitted: {report_id} by Manager {org_context.email}")
+        
+        # Log activity - IMPORTANT: This shows Manager submitted the report
+        await log_activity(
+            organization_id=org_context.organization_id,
+            user_id=org_context.user_id,
+            user_email=org_context.email,
+            action="report_submitted",
+            resource_type="report",
+            resource_id=report_id,
+            details={
+                "previous_status": report.get("status", "draft"),
+                "new_status": "submitted",
+                "bank_code": report.get("bank_code"),
+                "property_address": report.get("property_address"),
+                "role": "manager"  # Explicitly log that a manager submitted this
+            },
+            ip_address=request.client.host
+        )
+        
+        await db_manager.disconnect()
+        
+        response = JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "message": "Report submitted successfully by Manager"
+            }
+        )
+        
+        api_logger.log_response(response, request_data)
+        return response
+        
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        logger.error(f"❌ Error submitting report: {str(e)}")
+        error_response = JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+        api_logger.log_response(error_response, request_data)
+        return error_response
+
+
+@app.get("/api/reports/{report_id}/activity")
+async def get_report_activity(report_id: str, request: Request):
+    """Get activity logs for a specific report"""
+    request_data = await api_logger.log_request(request)
+    
+    try:
+        from utils.auth_middleware import get_organization_context
+        from fastapi.security import HTTPAuthorizationCredentials
+        
+        # Get auth token
+        auth_header = request.headers.get("Authorization")
+        if not auth_header or not auth_header.startswith("Bearer "):
+            raise HTTPException(status_code=401, detail="Missing authorization header")
+        
+        token = auth_header.replace("Bearer ", "")
+        credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
+        
+        # Get organization context from token
+        org_context = await get_organization_context(credentials)
+        
+        # Check permission - Only Manager can view activity logs
+        if not org_context.has_permission("audit_logs", "read"):
+            raise HTTPException(
+                status_code=403,
+                detail="Insufficient permissions. Only Managers can view activity logs."
+            )
+        
+        from database.multi_db_manager import MultiDatabaseManager
+        
+        db_manager = MultiDatabaseManager()
+        await db_manager.connect()
+        
+        org_db = db_manager.get_org_database(org_context.organization_id)
+        
+        # Get all activity logs for this report
+        activities_cursor = org_db.activity_logs.find({
+            "resource_type": "report",
+            "resource_id": report_id
+        }).sort("timestamp", -1)  # Most recent first
+        
+        activities = await activities_cursor.to_list(length=None)
+        
+        # Convert datetime objects
+        for activity in activities:
+            activity["_id"] = str(activity["_id"])
+            if activity.get("timestamp"):
+                activity["timestamp"] = activity["timestamp"].isoformat()
+            if activity.get("created_at"):
+                activity["created_at"] = activity["created_at"].isoformat()
+        
+        logger.info(f"📋 Retrieved {len(activities)} activity logs for report {report_id}")
+        
+        await db_manager.disconnect()
+        
+        response = JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "data": activities,
+                "total": len(activities)
+            }
+        )
+        
+        api_logger.log_response(response, request_data)
+        return response
+        
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        logger.error(f"❌ Error fetching activity logs: {str(e)}")
+        error_response = JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+        api_logger.log_response(error_response, request_data)
+        return error_response
+
 
 if __name__ == "__main__":
     import uvicorn
