@@ -2,6 +2,8 @@ import { Component, OnInit, OnDestroy, ChangeDetectorRef, NgZone } from '@angula
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Bank, Template } from '../../models';
+import { CustomTemplateService } from '../../services/custom-template.service';
+import { CustomTemplateListItem } from '../../models/custom-template.model';
 
 @Component({
   selector: 'app-new-report',
@@ -15,13 +17,17 @@ export class NewReport implements OnInit, OnDestroy {
   selectedBank: Bank | null = null;
   selectedTemplate: Template | null = null;
   availableTemplates: Template[] = [];
+  customTemplates: CustomTemplateListItem[] = [];
+  selectedCustomTemplate: CustomTemplateListItem | null = null;
   isLoading = true; // Start with loading state
-  step = 1; // 1: Select Bank, 2: Select Template, 3: Ready to proceed
+  isLoadingCustomTemplates = false;
+  step = 1; // 1: Select Bank, 2: Select Template, 3: Optional Custom Template, 4: Ready to proceed
 
   constructor(
     private router: Router,
     private cdr: ChangeDetectorRef,
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private customTemplateService: CustomTemplateService
   ) {}
 
   ngOnInit() {
@@ -164,10 +170,50 @@ export class NewReport implements OnInit, OnDestroy {
   selectTemplate(template: Template) {
     console.log('📋 Template selected:', template.templateCode, template.templateName);
     this.selectedTemplate = template;
+    this.selectedCustomTemplate = null; // Reset custom template selection
+    
+    // Load custom templates for this bank and property type
+    this.loadCustomTemplates(this.selectedBank!.bankCode, template.propertyType);
+    
     this.step = 3;
-    console.log('➡️ Moving to step 3: Ready to proceed');
+    console.log('➡️ Moving to step 3: Optional custom template selection');
     
     // Force change detection
+    this.cdr.detectChanges();
+  }
+
+  loadCustomTemplates(bankCode: string, propertyType: string): void {
+    this.isLoadingCustomTemplates = true;
+    this.customTemplateService.getTemplates(bankCode, propertyType as 'land' | 'apartment').subscribe({
+      next: (response) => {
+        this.customTemplates = response.data;
+        console.log(`✅ Loaded ${this.customTemplates.length} custom templates`);
+        this.isLoadingCustomTemplates = false;
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('❌ Failed to load custom templates:', error);
+        this.customTemplates = [];
+        this.isLoadingCustomTemplates = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  selectCustomTemplate(customTemplate: CustomTemplateListItem | null): void {
+    this.selectedCustomTemplate = customTemplate;
+    if (customTemplate) {
+      console.log('📝 Custom template selected:', customTemplate.templateName);
+    } else {
+      console.log('❌ No custom template selected');
+    }
+    this.step = 4;
+    this.cdr.detectChanges();
+  }
+
+  skipCustomTemplate(): void {
+    this.selectedCustomTemplate = null;
+    this.step = 4;
     this.cdr.detectChanges();
   }
 
@@ -176,17 +222,17 @@ export class NewReport implements OnInit, OnDestroy {
       this.step = 1;
       this.selectedBank = null;
       this.selectedTemplate = null;
+      this.selectedCustomTemplate = null;
       this.availableTemplates = [];
+      this.customTemplates = [];
     } else if (this.step === 3) {
-      if (this.availableTemplates.length > 0) {
-        this.step = 2;
-        this.selectedTemplate = null;
-      } else {
-        this.step = 1;
-        this.selectedBank = null;
-        this.selectedTemplate = null;
-        this.availableTemplates = [];
-      }
+      this.step = 2;
+      this.selectedTemplate = null;
+      this.selectedCustomTemplate = null;
+      this.customTemplates = [];
+    } else if (this.step === 4) {
+      this.step = 3;
+      this.selectedCustomTemplate = null;
     }
   }
 
@@ -205,6 +251,13 @@ export class NewReport implements OnInit, OnDestroy {
         queryParams.templateId = this.selectedTemplate.templateCode; // Use templateCode for URL
         queryParams.templateName = this.selectedTemplate.templateName;
         queryParams.propertyType = this.selectedTemplate.propertyType;
+      }
+
+      // Add custom template ID if selected
+      if (this.selectedCustomTemplate) {
+        console.log('📝 Including custom template:', this.selectedCustomTemplate._id);
+        queryParams.customTemplateId = this.selectedCustomTemplate._id;
+        queryParams.customTemplateName = this.selectedCustomTemplate.templateName;
       }
       
       console.log('🔗 Navigating to report-form with params:', queryParams);

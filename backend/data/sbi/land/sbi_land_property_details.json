@@ -25,25 +25,25 @@
         "hasSections": true,
         "sections": [
           {
-            "sectionId": "part_a",
+            "sectionId": "property_part_a",
             "sectionName": "Part A - Documents",
             "sortOrder": 1,
             "description": "Documents submitted by applicant"
           },
           {
-            "sectionId": "part_b",
+            "sectionId": "property_part_b",
             "sectionName": "Part B - Address Details",
             "sortOrder": 2,
             "description": "Address related information"
           },
           {
-            "sectionId": "part_c",
+            "sectionId": "property_part_c",
             "sectionName": "Part C - Property Information",
             "sortOrder": 3,
             "description": "Information/Details about the property"
           },
           {
-            "sectionId": "part_d",
+            "sectionId": "property_part_d",
             "sectionName": "Part D - Others",
             "sortOrder": 4,
             "description": "Other details"
@@ -111,13 +111,13 @@
         "hasSections": true,
         "sections": [
           {
-            "sectionId": "part_a",
+            "sectionId": "valuation_part_a",
             "sectionName": "Part A - Land Valuation",
             "sortOrder": 1,
             "description": "Land area calculations and market rates"
           },
           {
-            "sectionId": "part_b",
+            "sectionId": "valuation_part_b",
             "sectionName": "Part B - Building Details",
             "sortOrder": 2,
             "description": "Building specifications and construction details"
@@ -157,7 +157,7 @@
       "uiName": "Property Details",
       "sections": [
         {
-          "sectionId": "part_a",
+          "sectionId": "property_part_a",
           "sectionName": "Part A - Documents",
           "sortOrder": 1,
           "fields": [
@@ -196,7 +196,7 @@
           ]
         },
         {
-          "sectionId": "part_b",
+          "sectionId": "property_part_b",
           "sectionName": "Part B - Address Details",
           "sortOrder": 2,
           "fields": [
@@ -284,7 +284,7 @@
           ]
         },
         {
-          "sectionId": "part_c",
+          "sectionId": "property_part_c",
           "sectionName": "Part C - Property Information",
           "sortOrder": 3,
           "fields": [
@@ -450,7 +450,7 @@
           ]
         },
         {
-          "sectionId": "part_d",
+          "sectionId": "property_part_d",
           "sectionName": "Part D - Others",
           "sortOrder": 4,
           "fields": [
@@ -649,14 +649,19 @@
       "updatedAt": "2025-10-23T18:49:24.051768+00:00",
       "isActive": true,
       "uiName": "Site Characteristics",
-      "fields": [
+      "sections": [
         {
-          "fieldId": "locality_details",
-          "uiDisplayName": "Locality & Surroundings",
-          "fieldType": "group",
+          "sectionId": "locality_details",
+          "sectionName": "Locality Details",
           "sortOrder": 1,
-          "description": "Classification and development status of the surrounding area",
-          "subFields": [
+          "fields": [
+            {
+              "fieldId": "locality_surroundings",
+              "uiDisplayName": "Locality & Surroundings",
+              "fieldType": "group",
+              "sortOrder": 1,
+              "description": "Classification and development status of the surrounding area",
+              "subFields": [
             {
               "fieldId": "locality_classification",
               "technicalName": "locality_classification",
@@ -716,14 +721,21 @@
               "sortOrder": 3
             }
           ]
+            }
+          ]
         },
         {
-          "fieldId": "physical_characteristics",
-          "uiDisplayName": "Physical Characteristics",
-          "fieldType": "group",
+          "sectionId": "site_physical",
+          "sectionName": "Physical Features",
           "sortOrder": 2,
-          "description": "Topography, shape, and environmental conditions of the land",
-          "subFields": [
+          "fields": [
+            {
+              "fieldId": "physical_characteristics",
+              "uiDisplayName": "Physical Characteristics",
+              "fieldType": "group",
+              "sortOrder": 1,
+              "description": "Topography, shape, and environmental conditions of the land",
+              "subFields": [
             {
               "fieldId": "land_level_topography",
               "technicalName": "land_level_topography",
@@ -808,14 +820,21 @@
               "sortOrder": 3
             }
           ]
+            }
+          ]
         },
         {
-          "fieldId": "land_usage",
-          "uiDisplayName": "Land Usage & Restrictions",
-          "fieldType": "group",
+          "sectionId": "usage_restrictions",
+          "sectionName": "Usage & Restrictions",
           "sortOrder": 3,
-          "description": "Permitted usage types and any restrictions on the property",
-          "subFields": [
+          "fields": [
+            {
+              "fieldId": "land_usage",
+              "uiDisplayName": "Land Usage & Restrictions",
+              "fieldType": "group",
+              "sortOrder": 1,
+              "description": "Permitted usage types and any restrictions on the property",
+              "subFields": [
             {
               "fieldId": "usage_type",
               "technicalName": "usage_type",
@@ -857,14 +876,21 @@
               "sortOrder": 2
             }
           ]
+            }
+          ]
         },
         {
-          "fieldId": "planning_approvals",
-          "uiDisplayName": "Planning & Approvals",
-          "fieldType": "group",
+          "sectionId": "planning_status",
+          "sectionName": "Planning Status",
           "sortOrder": 4,
-          "description": "Town planning status and layout approvals",
-          "subFields": [
+          "fields": [
+            {
+              "fieldId": "planning_approvals",
+              "uiDisplayName": "Planning & Approvals",
+              "fieldType": "group",
+              "sortOrder": 1,
+              "description": "Town planning status and layout approvals",
+              "subFields": [
             {
               "fieldId": "town_planning_approved",
               "technicalName": "town_planning_approved",
@@ -915,14 +941,21 @@
               "sortOrder": 2
             }
           ]
+            }
+          ]
         },
         {
-          "fieldId": "road_access",
-          "uiDisplayName": "Road & Access",
-          "fieldType": "group",
+          "sectionId": "access_connectivity",
+          "sectionName": "Access & Connectivity",
           "sortOrder": 5,
-          "description": "Road facilities and accessibility details",
-          "subFields": [
+          "fields": [
+            {
+              "fieldId": "road_access",
+              "uiDisplayName": "Road & Access",
+              "fieldType": "group",
+              "sortOrder": 1,
+              "description": "Road facilities and accessibility details",
+              "subFields": [
             {
               "fieldId": "road_facilities",
               "technicalName": "road_facilities",
@@ -1017,14 +1050,21 @@
               "sortOrder": 4
             }
           ]
+            }
+          ]
         },
         {
-          "fieldId": "utility_services",
-          "uiDisplayName": "Utility Services",
-          "fieldType": "group",
+          "sectionId": "utility_services",
+          "sectionName": "Utility Services",
           "sortOrder": 6,
-          "description": "Availability of essential utility services",
-          "subFields": [
+          "fields": [
+            {
+              "fieldId": "utility_services_group",
+              "uiDisplayName": "Utility Services",
+              "fieldType": "group",
+              "sortOrder": 1,
+              "description": "Availability of essential utility services",
+              "subFields": [
             {
               "fieldId": "water_potentiality",
               "technicalName": "water_potentiality",
@@ -1092,35 +1132,44 @@
               "sortOrder": 3
             }
           ]
+            }
+          ]
         },
         {
-          "fieldId": "additional_remarks",
-          "uiDisplayName": "Additional Information",
-          "fieldType": "group",
+          "sectionId": "additional_remarks",
+          "sectionName": "Additional Remarks",
           "sortOrder": 7,
-          "description": "Additional advantages and special remarks about the site",
-          "subFields": [
+          "fields": [
             {
-              "fieldId": "site_advantages",
-              "technicalName": "site_advantages",
-              "uiDisplayName": "Site Advantages & Features",
-              "fieldType": "text",
-              "isRequired": false,
-              "defaultValue": "NA",
-              "placeholder": "Describe unique advantages, features, or selling points of the site...",
-              "helpText": "Positive aspects that enhance the property value",
-              "sortOrder": 1
-            },
-            {
-              "fieldId": "special_remarks",
-              "technicalName": "special_remarks",
-              "uiDisplayName": "Special Remarks & Notifications",
-              "fieldType": "text",
-              "isRequired": false,
-              "defaultValue": "NA",
-              "placeholder": "Any special remarks, notifications, or additional information...",
-              "helpText": "Include any threat of acquisition, road widening, CRZ provisions, etc.",
-              "sortOrder": 2
+              "fieldId": "additional_information",
+              "uiDisplayName": "Additional Information",
+              "fieldType": "group",
+              "sortOrder": 1,
+              "description": "Additional advantages and special remarks about the site",
+              "subFields": [
+                {
+                  "fieldId": "site_advantages",
+                  "technicalName": "site_advantages",
+                  "uiDisplayName": "Site Advantages & Features",
+                  "fieldType": "text",
+                  "isRequired": false,
+                  "defaultValue": "NA",
+                  "placeholder": "Describe unique advantages, features, or selling points of the site...",
+                  "helpText": "Positive aspects that enhance the property value",
+                  "sortOrder": 1
+                },
+                {
+                  "fieldId": "special_remarks",
+                  "technicalName": "special_remarks",
+                  "uiDisplayName": "Special Remarks & Notifications",
+                  "fieldType": "text",
+                  "isRequired": false,
+                  "defaultValue": "NA",
+                  "placeholder": "Any special remarks, notifications, or additional information...",
+                  "helpText": "Include any threat of acquisition, road widening, CRZ provisions, etc.",
+                  "sortOrder": 2
+                }
+              ]
             }
           ]
         }
@@ -1139,7 +1188,7 @@
       "uiName": "Valuation",
       "sections": [
         {
-          "sectionId": "part_a",
+          "sectionId": "valuation_part_a",
           "sectionName": "Part A - Land Valuation",
           "sortOrder": 1,
           "fields": [
@@ -1245,7 +1294,7 @@
           ]
         },
         {
-          "sectionId": "part_b",
+          "sectionId": "valuation_part_b",
           "sectionName": "Part B - Building Details",
           "sortOrder": 2,
           "fields": [

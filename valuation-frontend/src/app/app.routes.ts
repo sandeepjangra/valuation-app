@@ -93,5 +93,34 @@ export const routes: Routes = [
         title: 'User Management - Valuation App'
       }
     ]
+  },
+
+  // Custom Templates Management
+  {
+    path: 'custom-templates',
+    canActivate: [authGuard, managerGuard],
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./components/custom-templates/custom-templates-management.component')
+            .then(m => m.CustomTemplatesManagementComponent),
+        title: 'Custom Templates - Valuation App'
+      },
+      {
+        path: 'create',
+        loadComponent: () =>
+          import('./components/custom-templates/custom-template-form.component')
+            .then(m => m.CustomTemplateFormComponent),
+        title: 'Create Template - Valuation App'
+      },
+      {
+        path: 'edit/:id',
+        loadComponent: () =>
+          import('./components/custom-templates/custom-template-form.component')
+            .then(m => m.CustomTemplateFormComponent),
+        title: 'Edit Template - Valuation App'
+      }
+    ]
   }
 ];

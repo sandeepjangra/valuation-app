@@ -22,12 +22,12 @@ This guide provides comprehensive instructions for running the backend server an
 cd /Users/sandeepjangra/Downloads/development/ValuationAppV1
 
 # Make scripts executable (one-time setup)
-chmod +x ./scripts/manage_app.sh
-chmod +x ./scripts/manage_refresh.sh
+chmod +x ./scripts/server/manage_app.sh
+chmod +x ./scripts/database/manage_refresh.sh
 chmod +x ./restart_backend_with_logs.sh
 
 # Start the complete application
-./scripts/manage_app.sh setup
+./scripts/server/manage_app.sh setup
 ```
 
 ### **Quick Backend Restart**
@@ -46,15 +46,15 @@ chmod +x ./restart_backend_with_logs.sh
 Complete application lifecycle management:
 
 ```bash
-./scripts/manage_app.sh start     # Start backend server
-./scripts/manage_app.sh stop      # Stop backend server  
-./scripts/manage_app.sh restart   # Restart backend server
-./scripts/manage_app.sh status    # Check server status
-./scripts/manage_app.sh logs      # View server logs
-./scripts/manage_app.sh health    # Perform health check
-./scripts/manage_app.sh install   # Install dependencies
-./scripts/manage_app.sh setup     # Complete development setup
-./scripts/manage_app.sh help      # Show help
+./scripts/server/manage_app.sh start     # Start backend server
+./scripts/server/manage_app.sh stop      # Stop backend server  
+./scripts/server/manage_app.sh restart   # Restart backend server
+./scripts/server/manage_app.sh status    # Check server status
+./scripts/server/manage_app.sh logs      # View server logs
+./scripts/server/manage_app.sh health    # Perform health check
+./scripts/server/manage_app.sh install   # Install dependencies
+./scripts/server/manage_app.sh setup     # Complete development setup
+./scripts/server/manage_app.sh help      # Show help
 ```
 
 **Features:**
@@ -84,12 +84,12 @@ Quick restart with enhanced logging:
 MongoDB collections refresh operations:
 
 ```bash
-./scripts/manage_refresh.sh interactive      # Interactive menu
-./scripts/manage_refresh.sh refresh-all      # Refresh all collections
-./scripts/manage_refresh.sh refresh <name>   # Refresh specific collection
-./scripts/manage_refresh.sh status           # Show collections status
-./scripts/manage_refresh.sh start-backend    # Start backend server
-./scripts/manage_refresh.sh help             # Show help
+./scripts/database/manage_refresh.sh interactive      # Interactive menu
+./scripts/database/manage_refresh.sh refresh-all      # Refresh all collections
+./scripts/database/manage_refresh.sh refresh <name>   # Refresh specific collection
+./scripts/database/manage_refresh.sh status           # Show collections status
+./scripts/database/manage_refresh.sh start-backend    # Start backend server
+./scripts/database/manage_refresh.sh help             # Show help
 ```
 
 **Available Collections:**
@@ -102,19 +102,19 @@ MongoDB collections refresh operations:
 - `valuation_reports` - Generated reports
 - `audit_logs` - System audit logs
 
-### **4. Python Data Refresh Script (`scripts/refresh_collections.py`)**
+### **4. Python Data Refresh Script (`scripts/database/refresh_collections.py`)**
 
 Direct Python script for data operations:
 
 ```bash
 # Interactive mode (recommended)
-python scripts/refresh_collections.py
+python scripts/database/refresh_collections.py
 
 # Command line options
-python scripts/refresh_collections.py --all                    # Refresh all collections
-python scripts/refresh_collections.py --status                 # Show collections status
-python scripts/refresh_collections.py --collection banks       # Refresh specific collection
-python scripts/refresh_collections.py --help                   # Show help message
+python scripts/database/refresh_collections.py --all                    # Refresh all collections
+python scripts/database/refresh_collections.py --status                 # Show collections status
+python scripts/database/refresh_collections.py --collection banks       # Refresh specific collection
+python scripts/database/refresh_collections.py --help                   # Show help message
 ```
 
 **Features:**
@@ -149,12 +149,12 @@ source ./activate-dev-env.sh
 cd /Users/sandeepjangra/Downloads/development/ValuationAppV1
 
 # 2. Make scripts executable (one-time)
-chmod +x ./scripts/manage_app.sh
-chmod +x ./scripts/manage_refresh.sh
+chmod +x ./scripts/server/manage_app.sh
+chmod +x ./scripts/database/manage_refresh.sh
 chmod +x ./restart_backend_with_logs.sh
 
 # 3. Run complete setup
-./scripts/manage_app.sh setup
+./scripts/server/manage_app.sh setup
 ```
 
 This will:
@@ -176,10 +176,10 @@ pip install -r requirements.txt
 ./restart_backend_with_logs.sh
 
 # 4. Refresh all data collections
-./scripts/manage_refresh.sh refresh-all
+./scripts/database/manage_refresh.sh refresh-all
 
 # 5. Verify everything is working
-./scripts/manage_app.sh status
+./scripts/server/manage_app.sh status
 ```
 
 ### **Option C: Quick Development Restart**
@@ -191,7 +191,7 @@ For daily development when everything is already set up:
 ./restart_backend_with_logs.sh
 
 # Check if data refresh is needed
-./scripts/manage_refresh.sh status
+./scripts/database/manage_refresh.sh status
 ```
 
 ---
@@ -215,15 +215,15 @@ For daily development when everything is already set up:
 
 ```bash
 # Refresh all collections
-./scripts/manage_refresh.sh refresh-all
+./scripts/database/manage_refresh.sh refresh-all
 
 # Refresh specific collections
-./scripts/manage_refresh.sh refresh common_fields
-./scripts/manage_refresh.sh refresh banks
-./scripts/manage_refresh.sh refresh sbi_land_property_details
+./scripts/database/manage_refresh.sh refresh common_fields
+./scripts/database/manage_refresh.sh refresh banks
+./scripts/database/manage_refresh.sh refresh sbi_land_property_details
 
 # Check collection status
-./scripts/manage_refresh.sh status
+./scripts/database/manage_refresh.sh status
 ```
 
 ### **Data Flow**
@@ -311,10 +311,10 @@ print('MongoDB URI:', os.getenv('MONGODB_URI'))
 
 ```bash
 # Check backend status first
-./scripts/manage_app.sh health
+./scripts/server/manage_app.sh health
 
 # Try refreshing individual collections
-./scripts/manage_refresh.sh refresh common_fields
+./scripts/database/manage_refresh.sh refresh common_fields
 
 # Check logs
 tail -f logs/backend.log
@@ -355,7 +355,7 @@ pip install -r requirements.txt
 
 ```bash
 # Check all services
-./scripts/manage_app.sh health
+./scripts/server/manage_app.sh health
 
 # View recent logs
 tail -f logs/backend.log
@@ -364,7 +364,7 @@ tail -f logs/backend.log
 curl -f http://localhost:8000/api/health
 
 # Check collections status
-python scripts/refresh_collections.py --status
+python scripts/database/refresh_collections.py --status
 ```
 
 ---
@@ -382,10 +382,10 @@ source ./activate-dev-env.sh
 ./restart_backend_with_logs.sh
 
 # 3. Check data freshness (if needed)
-./scripts/manage_refresh.sh status
+./scripts/database/manage_refresh.sh status
 
 # 4. Refresh data (if needed)
-./scripts/manage_refresh.sh refresh-all
+./scripts/database/manage_refresh.sh refresh-all
 
 # 5. Start frontend (in another terminal)
 cd valuation-frontend
@@ -396,7 +396,7 @@ ng serve
 
 ```bash
 # Backend health check
-./scripts/manage_app.sh health
+./scripts/server/manage_app.sh health
 
 # API documentation
 open http://localhost:8000/api/docs
@@ -409,7 +409,7 @@ curl http://localhost:8000/api/admin/collections-status
 
 ```bash
 # Stop backend
-./scripts/manage_app.sh stop
+./scripts/server/manage_app.sh stop
 
 # Or kill all processes
 pkill -f "uvicorn.*backend.main"

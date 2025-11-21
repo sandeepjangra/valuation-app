@@ -21,8 +21,9 @@
         @if (isSystemAdmin()) {
           <a routerLink="/admin" routerLinkActive="active">Admin</a>
         }
-        <!-- Employee Activities link for managers -->
+        <!-- Manager-only links -->
         @if (hasManagerPermissions()) {
+          <a routerLink="/custom-templates" routerLinkActive="active">Templates</a>
           <a routerLink="/organization/users" routerLinkActive="active">Employee Activities</a>
         }
       </nav>

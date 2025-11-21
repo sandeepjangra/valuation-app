@@ -140,5 +140,5 @@ if __name__ == "__main__":
         print("\n⏭️ Skipping cleanup. Collections remain as they are.")
     
     print("\nNext steps:")
-    print("1. Run: python scripts/setup_banks_collection.py")
-    print("2. Run: python scripts/setup_common_fields_collection.py")
+    print("1. Run: python scripts/database/setup_banks_collection.py")
+    print("2. Run: python scripts/database/setup_common_fields_collection.py")

@@ -24,8 +24,13 @@
       <div class="step-label">Select Template</div>
     </div>
     <div class="step-connector" [class.completed]="step > 2"></div>
-    <div class="step" [class.active]="step >= 3">
+    <div class="step" [class.active]="step >= 3" [class.completed]="step > 3">
       <div class="step-number">3</div>
+      <div class="step-label">Custom Template</div>
+    </div>
+    <div class="step-connector" [class.completed]="step > 3"></div>
+    <div class="step" [class.active]="step >= 4">
+      <div class="step-number">4</div>
       <div class="step-label">Create Report</div>
     </div>
   </div>
@@ -124,11 +129,93 @@
     </div>
   </div>
 
-  <!-- Step 3: Ready to Proceed -->
-  <div class="step-content" *ngIf="!isLoading && step === 3 && selectedTemplate">
+  <!-- Step 3: Custom Template Selection (Optional) -->
+  <div class="step-content" *ngIf="!isLoading && step === 3">
     <div class="section-header">
       <button class="back-step-button" (click)="goBack()">
         ← Back to Template Selection
+      </button>
+      <h2 class="section-title">Custom Template (Optional)</h2>
+      <p class="section-subtitle">
+        Speed up data entry by using a saved custom template, or skip to continue with an empty form
+      </p>
+    </div>
+
+    <div class="selected-bank-info">
+      <div class="bank-chip">
+        <span class="bank-code-badge-small" [style.background-color]="getBankThemeColor(selectedBank!.bankCode)">
+          {{ selectedBank!.bankCode }}
+        </span>
+        <span class="bank-name">{{ selectedBank?.bankName }}</span>
+        <span class="separator">•</span>
+        <span class="template-name">{{ selectedTemplate?.templateName }}</span>
+      </div>
+    </div>
+
+    <!-- Loading Custom Templates -->
+    <div class="loading-container-small" *ngIf="isLoadingCustomTemplates">
+      <div class="loading-spinner-small"></div>
+      <p class="loading-text">Loading custom templates...</p>
+    </div>
+
+    <!-- Custom Templates Available -->
+    <div class="custom-templates-section" *ngIf="!isLoadingCustomTemplates && customTemplates.length > 0">
+      <div class="templates-grid">
+        <!-- No Template Option -->
+        <div class="template-card custom-template-card" 
+             (click)="skipCustomTemplate()"
+             [class.selected]="!selectedCustomTemplate">
+          <div class="template-icon-section">
+            <div class="template-icon">📝</div>
+          </div>
+          <div class="template-content">
+            <h3 class="template-name">Start with Empty Form</h3>
+            <div class="template-type">No pre-filled values</div>
+            <div class="template-description">Fill all fields manually</div>
+          </div>
+        </div>
+
+        <!-- Custom Template Options -->
+        <div class="template-card custom-template-card" 
+             *ngFor="let customTemplate of customTemplates" 
+             (click)="selectCustomTemplate(customTemplate)"
+             [class.selected]="selectedCustomTemplate?._id === customTemplate._id">
+          <div class="template-icon-section">
+            <div class="template-icon">⚡</div>
+          </div>
+          <div class="template-content">
+            <h3 class="template-name">{{ customTemplate.templateName }}</h3>
+            <div class="template-type">Pre-filled template</div>
+            <div class="template-description" *ngIf="customTemplate.description">
+              {{ customTemplate.description }}
+            </div>
+            <div class="template-meta">
+              <span class="created-by">By: {{ customTemplate.createdByName }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- No Custom Templates -->
+    <div class="no-templates" *ngIf="!isLoadingCustomTemplates && customTemplates.length === 0">
+      <div class="no-templates-icon">📝</div>
+      <h3 class="no-templates-title">No Custom Templates Available</h3>
+      <p class="no-templates-text">
+        You don't have any saved custom templates for this bank and property type yet.
+        Managers can create custom templates to speed up future data entry.
+      </p>
+      <button class="proceed-button" (click)="skipCustomTemplate()">
+        Continue with Empty Form
+      </button>
+    </div>
+  </div>
+
+  <!-- Step 4: Ready to Proceed -->
+  <div class="step-content" *ngIf="!isLoading && step === 4 && selectedTemplate">
+    <div class="section-header">
+      <button class="back-step-button" (click)="goBack()">
+        ← Back to Custom Template Selection
       </button>
       <h2 class="section-title">Ready to Create Report</h2>
       <p class="section-subtitle">Review your selections and proceed to the report form</p>
@@ -159,6 +246,20 @@
         <div class="selection-item">
           <div class="selection-label">Property Type:</div>
           <div class="selection-value">{{ selectedTemplate.propertyType | titlecase }}</div>
+        </div>
+
+        <div class="selection-item" *ngIf="selectedCustomTemplate">
+          <div class="selection-label">Custom Template:</div>
+          <div class="selection-value">
+            <span class="custom-badge">⚡ {{ selectedCustomTemplate.templateName }}</span>
+          </div>
+        </div>
+
+        <div class="selection-item" *ngIf="!selectedCustomTemplate">
+          <div class="selection-label">Custom Template:</div>
+          <div class="selection-value">
+            <span class="no-template-badge">None (Empty form)</span>
+          </div>
         </div>
 
         <div class="selection-item">

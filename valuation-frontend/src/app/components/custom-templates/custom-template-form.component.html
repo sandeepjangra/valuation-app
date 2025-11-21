@@ -1,0 +1,306 @@
+<div class="template-form-container">
+  <!-- Header -->
+  <div class="form-header">
+    <button type="button" class="back-button" (click)="goBack()">
+      <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+      </svg>
+      Back to Templates
+    </button>
+    
+    <div class="header-content">
+      <h1>{{ isEditMode() ? 'Edit' : 'Create' }} Custom Template</h1>
+      <p class="header-subtitle">
+        {{ bankCode() }} - {{ propertyType() === 'land' ? 'Land' : 'Apartment' }}
+      </p>
+    </div>
+  </div>
+
+  <!-- Error Alert -->
+  @if (error()) {
+    <div class="alert alert-error">
+      <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="loading-container">
+      <div class="spinner"></div>
+      <p>Loading template structure...</p>
+    </div>
+  }
+
+  <!-- Form Content -->
+  @if (!isLoading() && templateData()) {
+    <div class="form-content">
+      <!-- Section Tabs -->
+      <div class="section-tabs">
+        <button 
+          type="button"
+          class="section-tab"
+          [class.active]="activeSection() === 'metadata'"
+          (click)="onSectionChange('metadata')">
+          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          Template Info
+        </button>
+        
+        <button 
+          type="button"
+          class="section-tab"
+          [class.active]="activeSection() === 'fields'"
+          (click)="onSectionChange('fields')">
+          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          Field Values
+          @if (getFilledFieldsCount() > 0) {
+            <span class="badge">{{ getFilledFieldsCount() }} / {{ getTotalFieldsCount() }}</span>
+          }
+        </button>
+      </div>
+
+      <!-- Metadata Section -->
+      @if (activeSection() === 'metadata') {
+        <div class="section-content">
+          <form [formGroup]="metadataForm" class="metadata-form">
+            <div class="form-group">
+              <label for="templateName" class="required">Template Name</label>
+              <input 
+                id="templateName"
+                type="text"
+                class="form-control"
+                formControlName="templateName"
+                placeholder="e.g., Standard Urban Land Template"
+                maxlength="100">
+              @if (metadataForm.get('templateName')?.errors?.['required'] && metadataForm.get('templateName')?.touched) {
+                <span class="error-text">Template name is required</span>
+              }
+              @if (metadataForm.get('templateName')?.errors?.['minlength']) {
+                <span class="error-text">Template name must be at least 3 characters</span>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="description">Description (Optional)</label>
+              <textarea 
+                id="description"
+                class="form-control textarea"
+                formControlName="description"
+                placeholder="Describe when to use this template..."
+                rows="4"
+                maxlength="500"></textarea>
+              <span class="help-text">{{ metadataForm.get('description')?.value?.length || 0 }} / 500 characters</span>
+            </div>
+
+            <div class="info-box">
+              <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <div>
+                <h4>Template Guidelines</h4>
+                <ul>
+                  <li>Choose a descriptive name that indicates when to use this template</li>
+                  <li>You can create up to 3 templates for each bank and property type combination</li>
+                  <li>Fill in default values for fields you commonly use</li>
+                  <li>Leave fields empty if they vary for each report</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="button" class="btn btn-primary" (click)="onSectionChange('fields')">
+                Next: Fill Field Values
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                </svg>
+              </button>
+            </div>
+          </form>
+        </div>
+      }
+
+      <!-- Fields Section -->
+      @if (activeSection() === 'fields' && templateData()) {
+        <div class="section-content">
+          <div class="fields-header">
+            <h3>Fill Default Values</h3>
+            <div class="fields-stats">
+              <span class="stat-item">
+                <strong>{{ getFilledFieldsCount() }}</strong> of <strong>{{ getTotalFieldsCount() }}</strong> fields filled
+              </span>
+              <button type="button" class="btn btn-text" (click)="clearAllFields()">
+                Clear All
+              </button>
+            </div>
+          </div>
+
+          <form [formGroup]="fieldsForm">
+            <!-- Common Fields -->
+            @if (templateData()!.commonFieldGroups.length > 0) {
+              <div class="fields-group">
+                <h4 class="group-title">Common Fields</h4>
+                @for (group of templateData()!.commonFieldGroups; track group.groupName) {
+                  <div class="field-section">
+                    <h5 class="section-title">{{ group.displayName }}</h5>
+                    <div class="fields-grid">
+                      @for (field of group.fields; track field.fieldId) {
+                        <div class="field-item" [class.filled]="isFieldFilled(field.fieldId)">
+                          <label [for]="field.fieldId">
+                            {{ field.uiDisplayName }}
+                            @if (field.isRequired) {
+                              <span class="required-marker">*</span>
+                            }
+                          </label>
+                          
+                          @switch (field.fieldType) {
+                            @case ('textarea') {
+                              <textarea 
+                                [id]="field.fieldId"
+                                class="form-control"
+                                [formControlName]="field.fieldId"
+                                [placeholder]="field.placeholder || ''"
+                                rows="3"></textarea>
+                            }
+                            @case ('select') {
+                              <select 
+                                [id]="field.fieldId"
+                                class="form-control"
+                                [formControlName]="field.fieldId">
+                                <option value="">Select...</option>
+                                @for (option of field.options; track option.value) {
+                                  <option [value]="option.value">{{ option.label }}</option>
+                                }
+                              </select>
+                            }
+                            @default {
+                              <input 
+                                [id]="field.fieldId"
+                                [type]="field.fieldType || 'text'"
+                                class="form-control"
+                                [formControlName]="field.fieldId"
+                                [placeholder]="field.placeholder || ''">
+                            }
+                          }
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- Bank Specific Fields -->
+            @if (templateData()!.bankSpecificTabs.length > 0) {
+              <div class="fields-group">
+                <h4 class="group-title">Bank Specific Fields</h4>
+                
+                <!-- Bank Tabs -->
+                <div class="bank-tabs">
+                  @for (tab of templateData()!.bankSpecificTabs; track tab.tabId) {
+                    <button 
+                      type="button"
+                      class="bank-tab"
+                      [class.active]="activeBankSpecificTab() === tab.tabId"
+                      (click)="onBankTabChange(tab.tabId)">
+                      {{ tab.tabName }}
+                    </button>
+                  }
+                </div>
+
+                <!-- Active Tab Content -->
+                @for (tab of templateData()!.bankSpecificTabs; track tab.tabId) {
+                  @if (activeBankSpecificTab() === tab.tabId) {
+                    <div class="tab-content">
+                      <!-- Tab Fields -->
+                      @if (tab.fields.length > 0) {
+                        <div class="fields-grid">
+                          @for (field of tab.fields; track field.fieldId) {
+                            @if (field.fieldType !== 'group') {
+                              <div class="field-item" [class.filled]="isFieldFilled(field.fieldId)">
+                                <label [for]="field.fieldId">{{ field.uiDisplayName }}</label>
+                                <input 
+                                  [id]="field.fieldId"
+                                  [type]="field.fieldType || 'text'"
+                                  class="form-control"
+                                  [formControlName]="field.fieldId"
+                                  [placeholder]="field.placeholder || ''">
+                              </div>
+                            }
+                          }
+                        </div>
+                      }
+
+                      <!-- Sections -->
+                      @if (tab.sections && tab.sections.length > 0) {
+                        @for (section of tab.sections; track section.sectionId) {
+                          <div class="field-section">
+                            <h5 class="section-title">{{ section.sectionName }}</h5>
+                            <div class="fields-grid">
+                              @for (field of section.fields; track field.fieldId) {
+                                @if (field.fieldType !== 'group') {
+                                  <div class="field-item" [class.filled]="isFieldFilled(field.fieldId)">
+                                    <label [for]="field.fieldId">{{ field.uiDisplayName }}</label>
+                                    <input 
+                                      [id]="field.fieldId"
+                                      [type]="field.fieldType || 'text'"
+                                      class="form-control"
+                                      [formControlName]="field.fieldId"
+                                      [placeholder]="field.placeholder || ''">
+                                  </div>
+                                }
+                              }
+                            </div>
+                          </div>
+                        }
+                      }
+                    </div>
+                  }
+                }
+              </div>
+            }
+          </form>
+        </div>
+      }
+    </div>
+
+    <!-- Bottom Action Bar -->
+    <div class="action-bar">
+      <button type="button" class="btn btn-secondary" (click)="goBack()" [disabled]="isSaving()">
+        Cancel
+      </button>
+      
+      <div class="action-bar-right">
+        @if (activeSection() === 'fields') {
+          <button type="button" class="btn btn-outline" (click)="onSectionChange('metadata')">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m7-7h18"></path>
+            </svg>
+            Back to Info
+          </button>
+        }
+        
+        <button 
+          type="button" 
+          class="btn btn-primary"
+          (click)="onSubmit()"
+          [disabled]="!canSave()">
+          @if (isSaving()) {
+            <span class="spinner-sm"></span>
+            Saving...
+          } @else {
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            {{ isEditMode() ? 'Update' : 'Create' }} Template
+          }
+        </button>
+      </div>
+    </div>
+  }
+</div>

@@ -1867,211 +1867,85 @@ async def get_report_activity(report_id: str, request: Request):
 
 @app.get("/api/custom-templates/fields")
 async def get_template_fields(
-    bank_code: str,
-    property_type: str,
-    request: Request
+    bankCode: str,
+    propertyType: str,
+    request: Request,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
     """
     Get field structure for a specific bank and property type.
     This is used when creating/editing custom templates.
-    PUBLIC ENDPOINT - No authentication required (returns shared bank template structure)
     """
     request_data = api_logger.log_request(request)
     
     try:
+        # Verify authentication
+        from utils.auth_middleware import get_organization_context
+        org_context = await get_organization_context(credentials)
+        
         from database.multi_db_manager import MultiDatabaseManager
         
         db_manager = MultiDatabaseManager()
         await db_manager.connect()
         
-        # Get the shared database for bank templates
-        # Common fields and bank-specific templates are in "admin" database
-        admin_db = db_manager.get_database("admin")
+        # Get the bank template from shared_resources
+        shared_db = db_manager.get_shared_database()
         
-        # Find bank from banks collection
-        banks_doc = await admin_db.banks.find_one({"_id": {"$regex": "all_banks_unified"}})
-        if not banks_doc:
-            raise HTTPException(status_code=404, detail="Banks configuration not found")
-        
-        # Find the specific bank
-        bank = None
-        for b in banks_doc.get("banks", []):
-            if b.get("bankCode") == bank_code:
-                bank = b
-                break
-        
+        # Find bank
+        bank = await shared_db.banks.find_one({"bankCode": bankCode})
         if not bank:
-            raise HTTPException(status_code=404, detail=f"Bank {bank_code} not found")
+            raise HTTPException(status_code=404, detail=f"Bank {bankCode} not found")
         
         # Find template for this property type
         templates = bank.get("templates", [])
         template = None
         for t in templates:
-            if t.get("propertyType") == property_type:
+            if t.get("propertyType") == propertyType:
                 template = t
                 break
         
         if not template:
             raise HTTPException(
                 status_code=404, 
-                detail=f"Template for {bank_code} - {property_type} not found"
+                detail=f"Template for {bankCode} - {propertyType} not found"
             )
         
-        template_code = template.get("templateCode")
-        if not template_code:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Template code not found for {bank_code} - {property_type}"
-            )
-        
-        # Use the aggregated template endpoint logic to get fields
-        # This returns the same structure that the report form uses
+        # Get collection reference from template
         collection_ref = template.get("collectionRef")
         if not collection_ref:
             raise HTTPException(
                 status_code=404,
-                detail=f"No collection reference found for {bank_code} - {property_type}"
+                detail=f"No collection reference found for {bankCode} - {propertyType}"
             )
         
-        logger.info(f"📋 Using collection: {collection_ref}")
+        # Fetch field structure from the collection
+        collection = shared_db[collection_ref]
+        field_document = await collection.find_one({})
         
-        # Step 1: Fetch common fields from admin database
-        # NOTE: Extract individual fields from documents (like aggregated endpoint)
-        common_fields_collection = admin_db.common_form_fields
-        common_fields_cursor = common_fields_collection.find({"isActive": True}).sort("sortOrder", 1)
-        common_fields_docs = await common_fields_cursor.to_list(length=None)
-        
-        # Extract fields array from documents (flatten structure)
-        common_fields = []
-        for doc in common_fields_docs:
-            doc_fields = doc.get("fields", [])
-            common_fields.extend(doc_fields)
-        
-        logger.info(f"📄 Found {len(common_fields)} common fields")
-        
-        # Step 2: Fetch bank-specific template structure from the collection in admin database
-        bank_template_collection = admin_db[collection_ref]
-        template_collection_docs = await bank_template_collection.find({}).to_list(length=None)
-        
-        if not template_collection_docs:
-            logger.warning(f"❌ No template data found in collection: {collection_ref}")
+        if not field_document:
             raise HTTPException(
                 status_code=404,
-                detail=f"No template structure found for {bank_code} - {property_type}"
+                detail=f"No field structure found in collection {collection_ref}"
             )
         
-        # Process bank-specific fields from collection documents
-        # Use the same logic as the aggregated template endpoint
-        bank_specific_tabs = []
-        
-        for doc in template_collection_docs:
-            template_metadata = doc.get("templateMetadata", {})
-            
-            # Build tabs structure based on template metadata
-            tabs_config = template_metadata.get("tabs", [])
-            
-            if not tabs_config:
-                # Fallback: create a single tab from document fields
-                doc_fields = doc.get("fields", [])
-                if doc_fields:
-                    bank_specific_tabs.append({
-                        "tabId": "property_details",
-                        "tabName": "Property Details",
-                        "sortOrder": 1,
-                        "hasSections": False,
-                        "description": "Property valuation details",
-                        "fields": doc_fields,
-                        "sections": []
-                    })
-                continue
-            
-            # Process each tab from metadata
-            for tab_config in sorted(tabs_config, key=lambda x: x.get("sortOrder", 0)):
-                tab_id = tab_config.get("tabId", "default_tab")
-                
-                # Build tab structure
-                tab = {
-                    "tabId": tab_id,
-                    "tabName": tab_config.get("tabName", tab_id).replace("_", " ").title(),
-                    "sortOrder": tab_config.get("sortOrder", 1),
-                    "hasSections": tab_config.get("hasSections", False),
-                    "description": tab_config.get("description", ""),
-                    "fields": [],
-                    "sections": []
-                }
-                
-                # Handle tabs with sections
-                if tab_config.get("hasSections"):
-                    sections_config = tab_config.get("sections", [])
-                    
-                    for section_config in sorted(sections_config, key=lambda x: x.get("sortOrder", 0)):
-                        section_id = section_config.get("sectionId")
-                        
-                        # Find the corresponding section in documents array
-                        document_section = None
-                        for document in doc.get("documents", []):
-                            for doc_section in document.get("sections", []):
-                                if doc_section.get("sectionId") == section_id:
-                                    document_section = doc_section
-                                    break
-                            if document_section:
-                                break
-                        
-                        if document_section:
-                            section = {
-                                "sectionId": section_config.get("sectionId"),
-                                "sectionName": section_config.get("sectionName"),
-                                "sortOrder": section_config.get("sortOrder"),
-                                "description": section_config.get("description", ""),
-                                "fields": document_section.get("fields", [])
-                            }
-                            tab["sections"].append(section)
-                            # Also add fields to tab level for backward compatibility
-                            tab["fields"].extend(document_section.get("fields", []))
-                
-                # Handle tabs without sections (normal field structure)
-                else:
-                    # Get fields from the specific document that matches this tab's documentSource
-                    document_source = tab_config.get("documentSource")
-                    if document_source:
-                        # Find the document with matching templateId
-                        for document in doc.get("documents", []):
-                            if document.get("templateId") == document_source:
-                                tab["fields"] = document.get("fields", [])
-                                break
-                    else:
-                        # Fallback: get all fields if no documentSource specified
-                        all_doc_fields = []
-                        for document in doc.get("documents", []):
-                            doc_fields = document.get("fields", [])
-                            all_doc_fields.extend(doc_fields)
-                        tab["fields"] = all_doc_fields
-                
-                bank_specific_tabs.append(tab)
+        # Clean up the document
+        field_document["_id"] = str(field_document["_id"])
         
         await db_manager.disconnect()
         
-        # Serialize the response to handle datetime objects
-        response_content = {
-            "success": True,
-            "bankCode": bank_code,
-            "bankName": bank.get("bankName", ""),
-            "propertyType": property_type,
-            "templateInfo": {
-                "templateId": template.get("templateId", ""),
-                "templateCode": template_code,
-                "templateName": template.get("templateName", ""),
-                "bankCode": bank_code,
-                "bankName": bank.get("bankName", ""),
-                "propertyType": property_type
-            },
-            "commonFields": common_fields,
-            "bankSpecificTabs": bank_specific_tabs
-        }
-        
         response = JSONResponse(
             status_code=200,
-            content=json.loads(json.dumps(response_content, default=json_serializer))
+            content={
+                "success": True,
+                "data": {
+                    "bankCode": bankCode,
+                    "bankName": bank.get("bankName", ""),
+                    "propertyType": propertyType,
+                    "templateId": template.get("templateId", ""),
+                    "templateName": template.get("templateName", ""),
+                    "fields": field_document.get("fields", [])
+                }
+            }
         )
         
         api_logger.log_response(response, request_data)
@@ -2380,8 +2254,7 @@ async def update_custom_template(
     
     try:
         # Verify authentication and role
-        from utils.auth_middleware import get_organization_context
-        org_context = await get_organization_context(credentials)
+        org_context = await verify_auth(credentials)
         
         # Check if user is Manager or Admin
         if org_context.role not in ["Manager", "Admin"]:
@@ -2479,8 +2352,7 @@ async def delete_custom_template(
     
     try:
         # Verify authentication and role
-        from utils.auth_middleware import get_organization_context
-        org_context = await get_organization_context(credentials)
+        org_context = await verify_auth(credentials)
         
         # Check if user is Manager or Admin
         if org_context.role not in ["Manager", "Admin"]:
@@ -2577,8 +2449,7 @@ async def clone_custom_template(
     
     try:
         # Verify authentication and role
-        from utils.auth_middleware import get_organization_context
-        org_context = await get_organization_context(credentials)
+        org_context = await verify_auth(credentials)
         
         # Check if user is Manager or Admin
         if org_context.role not in ["Manager", "Admin"]:

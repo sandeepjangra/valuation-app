@@ -6,24 +6,24 @@ Quick commands for daily development with the Valuation Application backend.
 
 ```bash
 # Complete setup (first time)
-./scripts/manage_app.sh setup
+./scripts/server/manage_app.sh setup
 
 # Daily development start
-./restart_backend_with_logs.sh
+./scripts/server/restart_backend_with_logs.sh
 
 # Interactive data refresh
-./scripts/manage_refresh.sh interactive
+./scripts/database/manage_refresh.sh interactive
 ```
 
 ## 🎯 Most Used Commands
 
 | Action | Command | Description |
 |--------|---------|-------------|
-| **Start Backend** | `./restart_backend_with_logs.sh` | Quick backend restart with logs |
-| **Stop Backend** | `./scripts/manage_app.sh stop` | Stop backend server |
-| **Check Status** | `./scripts/manage_app.sh status` | Server and health status |
-| **Refresh All Data** | `./scripts/manage_refresh.sh refresh-all` | Update all collections |
-| **Data Status** | `./scripts/manage_refresh.sh status` | Check data freshness |
+| **Start Backend** | `./scripts/server/restart_backend_with_logs.sh` | Quick backend restart with logs |
+| **Stop Backend** | `./scripts/server/manage_app.sh stop` | Stop backend server |
+| **Check Status** | `./scripts/server/manage_app.sh status` | Server and health status |
+| **Refresh All Data** | `./scripts/database/manage_refresh.sh refresh-all` | Update all collections |
+| **Data Status** | `./scripts/database/manage_refresh.sh status` | Check data freshness |
 | **View Logs** | `tail -f logs/backend.log` | Monitor server logs |
 
 ## 🔧 Service URLs
@@ -51,11 +51,11 @@ lsof -i :8000                     # Check port usage
 pkill -f "uvicorn.*backend.main"  # Kill processes
 
 # Data refresh failing?
-./scripts/manage_app.sh health     # Check backend health
+./scripts/server/manage_app.sh health     # Check backend health
 curl http://localhost:8000/api/health  # Test API
 
 # Permission issues?
-chmod +x ./scripts/*.sh            # Fix permissions
+chmod +x scripts/**/*.sh            # Fix script permissions
 ```
 
 ## 📁 Important Files

@@ -18,7 +18,7 @@ echo ""
 # Check if server is running
 if ! curl -s -f "$API_BASE_URL/api/health" > /dev/null 2>&1; then
     echo -e "${RED}❌ Server is not running. Please start it first:${NC}"
-    echo "   ./scripts/manage_server.sh start"
+    echo "   ./scripts/server/manage_server.sh start"
     exit 1
 fi
 
@@ -98,5 +98,5 @@ echo "     POST /api/files/upload"
 echo ""
 
 echo -e "${CYAN}📚 Documentation: $API_BASE_URL/api/docs${NC}"
-echo -e "${CYAN}🔧 Management: ./scripts/manage_server.sh {start|stop|status}${NC}"
+echo -e "${CYAN}🔧 Management: ./scripts/server/manage_server.sh {start|stop|status}${NC}"
 echo -e "${CYAN}🧪 Testing: ./scripts/test_endpoints.sh {--quick|--full}${NC}"

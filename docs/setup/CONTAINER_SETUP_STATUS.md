@@ -58,9 +58,9 @@ All container configuration files are ready and tested. When you upgrade macOS o
 
 ## Current Working Setup
 Your current development environment is fully functional:
-- ✅ Backend: `./scripts/manage_server.sh start`
-- ✅ Backend: `./scripts/manage_server.sh start`
-- ✅ Full Stack: `./scripts/manage_app.sh start`
+- ✅ Backend: `./scripts/server/manage_server.sh start`
+- ✅ Backend: `./scripts/server/manage_server.sh start`
+- ✅ Full Stack: `./scripts/server/manage_app.sh start`
 
 ## Recommendation
 Continue with your current development setup. The container files are ready for when you upgrade your system or deploy to production servers that support containers.

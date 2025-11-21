@@ -1,6 +1,51 @@
-# ValuationFrontend
+# Valuation Application
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.3.7.
+A multi-tenant property valuation management system built with Angular 20, FastAPI, and MongoDB Atlas.
+
+## Project Structure
+
+```
+ValuationAppV1/
+├── docs/              # Documentation (setup, architecture, API, testing)
+├── dev-tools/         # Development tools (test scripts, debug utilities, samples)
+├── scripts/           # Production scripts (deployment, database, server management)
+├── backend/           # FastAPI backend application
+├── valuation-frontend/# Angular 20 frontend application
+└── logs/             # Application logs
+```
+
+For detailed information about each directory:
+- [Documentation](docs/README.md) - Setup guides, architecture, API docs
+- [Development Tools](dev-tools/README.md) - Testing and debugging utilities
+- [Scripts](scripts/README.md) - Deployment and operations scripts
+
+## Quick Start
+
+### Prerequisites
+- Python 3.8+
+- Node.js 18+
+- MongoDB Atlas account
+
+### Setup
+```bash
+# 1. Activate Python environment
+source valuation_env/bin/activate
+
+# 2. Install dependencies
+pip install -r requirements.txt
+cd valuation-frontend && npm install
+
+# 3. Configure environment
+cp .env.example .env
+# Edit .env with your MongoDB Atlas URI
+
+# 4. Start servers
+./scripts/server/start-servers.sh
+```
+
+Once the servers are running:
+- Frontend: `http://localhost:4200/`
+- Backend API: `http://localhost:8000/`
 
 ## Development server
 
@@ -10,7 +55,7 @@ To start a local development server, run:
 ng serve
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+The application will automatically reload whenever you modify any of the source files.
 
 ## Code scaffolding
 

@@ -62,7 +62,7 @@ check_server() {
         return 0
     else
         print_failure "Server is not running or not responding"
-        print_info "Please start the server using: ./scripts/manage_server.sh start"
+        print_info "Please start the server using: ./scripts/server/manage_server.sh start"
         return 1
     fi
 }

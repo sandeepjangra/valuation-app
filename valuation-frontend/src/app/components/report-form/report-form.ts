@@ -5,11 +5,13 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { HttpClient } from '@angular/common/http';
 import { CommonField, BankBranch, ProcessedTemplateData, FieldGroup, TemplateField, BankSpecificField, BankSpecificTab, BankSpecificSection } from '../../models';
 import { TemplateService } from '../../services/template.service';
+import { CustomTemplateService } from '../../services/custom-template.service';
+import { TemplateAutofillModalComponent, AutoFillChoice } from '../custom-templates/template-autofill-modal.component';
 import { DynamicTableComponent } from '../dynamic-table/dynamic-table.component';
 
 @Component({
   selector: 'app-report-form',
-  imports: [CommonModule, ReactiveFormsModule, DynamicTableComponent],
+  imports: [CommonModule, ReactiveFormsModule, DynamicTableComponent, TemplateAutofillModalComponent],
   templateUrl: './report-form.html',
   styleUrl: './report-form.css',
 })
@@ -21,12 +23,18 @@ export class ReportForm implements OnInit {
   selectedTemplateId: string = '';
   selectedTemplateName: string = '';
   selectedPropertyType: string = '';
+  customTemplateId: string = '';
+  customTemplateName: string = '';
   
   // Form data - Updated for new structure
   reportForm: FormGroup;
   templateData: ProcessedTemplateData | null = null;
   availableBranches: Array<{value: string, label: string}> = [];
   isLoading = false;
+  
+  // Custom template auto-fill
+  showAutoFillModal = false;
+  customTemplateValues: Record<string, any> | null = null;
   
   // Current active tab
   activeTab = 'template';  // Always default to first tab (Bank-Specific Fields)
@@ -43,6 +51,7 @@ export class ReportForm implements OnInit {
     private fb: FormBuilder,
     private http: HttpClient,
     private templateService: TemplateService,
+    private customTemplateService: CustomTemplateService,
     private cdr: ChangeDetectorRef
   ) {
     this.reportForm = this.fb.group({});
@@ -123,6 +132,11 @@ export class ReportForm implements OnInit {
           
           this.isLoading = false;
           
+          // Load custom template values if specified
+          if (this.customTemplateId) {
+            this.loadCustomTemplate();
+          }
+          
           // Force change detection to ensure template updates
           this.cdr.detectChanges();
           console.log('🔄 Change detection triggered after template data load');
@@ -147,19 +161,28 @@ export class ReportForm implements OnInit {
       this.selectedTemplateId = params['templateId'] || '';
       this.selectedTemplateName = params['templateName'] || '';
       this.selectedPropertyType = params['propertyType'] || '';
+      this.customTemplateId = params['customTemplateId'] || '';
+      this.customTemplateName = params['customTemplateName'] || '';
       
       console.log('🔥 Processed Report Form Params:', {
         bankCode: this.selectedBankCode,
         bankName: this.selectedBankName,
         templateId: this.selectedTemplateId,
         templateName: this.selectedTemplateName,
-        propertyType: this.selectedPropertyType
+        propertyType: this.selectedPropertyType,
+        customTemplateId: this.customTemplateId,
+        customTemplateName: this.customTemplateName
       });
 
       // Load template data when query params are available
       if (this.selectedBankCode && this.selectedTemplateId) {
         console.log('🔥 Query params loaded, triggering template data load');
         this.loadTemplateData();
+        
+        // Load custom template if specified
+        if (this.customTemplateId) {
+          console.log('📝 Custom template specified, will load after form build');
+        }
       }
     });
   }
@@ -860,4 +883,70 @@ export class ReportForm implements OnInit {
     return field.fieldType === 'dynamic_table' && field.tableConfig;
   }
 
+  /**
+   * Load custom template data and show auto-fill modal
+   */
+  loadCustomTemplate(): void {
+    if (!this.customTemplateId) {
+      console.warn('⚠️ No custom template ID provided');
+      return;
+    }
+
+    console.log('📝 Loading custom template:', this.customTemplateId);
+    
+    this.customTemplateService.getTemplate(this.customTemplateId).subscribe({
+      next: (template) => {
+        console.log('✅ Custom template loaded:', template.templateName);
+        this.customTemplateValues = template.fieldValues;
+        
+        // Show auto-fill modal to let user choose strategy
+        this.showAutoFillModal = true;
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('❌ Failed to load custom template:', error);
+        alert('Failed to load custom template. Proceeding with empty form.');
+      }
+    });
+  }
+
+  /**
+   * Handle auto-fill modal choice
+   */
+  onAutoFillChoice(choice: AutoFillChoice): void {
+    this.showAutoFillModal = false;
+
+    if (!choice.confirmed || choice.strategy === 'cancel' || !this.customTemplateValues) {
+      console.log('❌ Auto-fill cancelled by user');
+      this.customTemplateValues = null;
+      return;
+    }
+
+    console.log(`✅ Applying custom template with strategy: ${choice.strategy}`);
+    
+    // Get current form values
+    const currentValues = this.reportForm.value;
+    
+    // Apply template values with selected strategy
+    const mergedValues = this.customTemplateService.applyTemplateToFormData(
+      currentValues,
+      this.customTemplateValues,
+      choice.strategy
+    );
+
+    // Update form with merged values
+    this.reportForm.patchValue(mergedValues);
+    
+    console.log('✅ Form updated with custom template values');
+    this.cdr.detectChanges();
+    
+    // Show success message
+    const message = choice.strategy === 'fill_empty'
+      ? 'Empty fields have been filled with template values'
+      : 'All fields have been replaced with template values';
+    
+    alert(message);
+  }
+
 }
+

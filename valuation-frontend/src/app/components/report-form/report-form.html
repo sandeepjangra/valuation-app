@@ -1143,3 +1143,9 @@
 
   </form>
 </div>
+<!-- Custom Template Auto-Fill Modal -->
+<app-template-autofill-modal 
+  [show]="showAutoFillModal"
+  [template]="customTemplateName"
+  (choice)="onAutoFillChoice($event)">
+</app-template-autofill-modal>

@@ -88,6 +88,25 @@
       </div>
     </div>
 
+    <!-- Templates Card (Manager/Admin Only) -->
+    <div class="stats-card templates-card" *ngIf="isAdmin" (click)="navigateToTemplates()">
+      <div class="card-header">
+        <div class="card-icon templates-icon">
+          📋
+        </div>
+        <div class="card-title">Templates</div>
+      </div>
+      <div class="card-content">
+        <div class="card-number">Custom</div>
+        <div class="card-subtitle">
+          Manage report templates
+        </div>
+      </div>
+      <div class="card-footer">
+        <span class="view-all">Manage →</span>
+      </div>
+    </div>
+
     <!-- Companies Card (Admin Only) -->
     <div class="stats-card companies-card" *ngIf="isAdmin && showCollectiveView">
       <div class="card-header">

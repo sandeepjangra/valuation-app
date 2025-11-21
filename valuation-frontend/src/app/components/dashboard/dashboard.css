@@ -165,6 +165,10 @@
   background: linear-gradient(135deg, #2196f3, #1976d2);
 }
 
+.templates-icon {
+  background: linear-gradient(135deg, #673ab7, #512da8);
+}
+
 .companies-icon {
   background: linear-gradient(135deg, #9c27b0, #673ab7);
 }

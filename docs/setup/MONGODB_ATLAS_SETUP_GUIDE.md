@@ -79,7 +79,7 @@ This guide will help you set up MongoDB Atlas cloud database for your Valuation 
 
 3. **Setup MongoDB Collections**:
    ```bash
-   python scripts/setup_mongodb_atlas.py
+   python scripts/database/setup_mongodb_atlas.py
    ```
 
 ## ✅ **Step 8: Verify Setup**

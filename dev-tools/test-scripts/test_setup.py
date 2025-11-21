@@ -62,7 +62,7 @@ def test_project_structure():
     required_files = [
         "backend/main.py",
         "backend/database/mongodb_manager.py",
-        "scripts/setup_mongodb_atlas.py",
+        "scripts/database/setup_mongodb_atlas.py",
         ".env.example",
         "requirements.txt",
         "MONGODB_ATLAS_SETUP_GUIDE.md"
@@ -133,7 +133,7 @@ async def main():
         print("\n📋 Next Steps:")
         print("1. Set up MongoDB Atlas cluster")
         print("2. Update .env with your MongoDB URI")
-        print("3. Run: python scripts/setup_mongodb_atlas.py")
+        print("3. Run: python scripts/database/setup_mongodb_atlas.py")
         print("4. Start development: cd backend && python main.py")
     else:
         print(f"\n⚠️  {total - passed} test(s) failed. Please fix the issues above.")

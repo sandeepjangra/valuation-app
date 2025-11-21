@@ -13,7 +13,7 @@ set -e  # Exit on any error
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
-BACKEND_SCRIPT="$SCRIPT_DIR/manage_server.sh"
+BACKEND_SCRIPT="$SCRIPT_DIR/server/manage_server.sh"
 
 # Colors for output
 RED='\033[0;31m'

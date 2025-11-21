@@ -7,7 +7,7 @@ Convenient wrapper for the Python refresh script
 # Set script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
-PYTHON_SCRIPT="$SCRIPT_DIR/refresh_collections.py"
+PYTHON_SCRIPT="$SCRIPT_DIR/database/refresh_collections.py"
 
 # Colors for output
 RED='\033[0;31m'

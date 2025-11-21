@@ -29,21 +29,21 @@
 
   <!-- Banks Grid -->
   <div class="banks-grid" *ngIf="!loading && !error">
-    <div class="bank-card" *ngFor="let bank of banks" (click)="createNewReport(bank)">
-      <!-- Bank Logo -->
-      <div class="bank-logo-section">
-        <img 
-          class="bank-logo" 
-          [src]="getBankLogoPath(bank.bankCode)" 
-          [alt]="bank.bankName + ' Logo'"
-          (error)="onImageError($event, bank.bankCode)"
-        />
+    <div class="bank-card" 
+         *ngFor="let bank of banks" 
+         (click)="createNewReport(bank)"
+         [style.--bank-color]="getBankThemeColor(bank.bankCode)">
+      
+      <!-- Bank Code Badge -->
+      <div class="bank-header">
+        <div class="bank-code-badge" [style.background]="getBankThemeColor(bank.bankCode)">
+          {{ bank.bankCode }}
+        </div>
       </div>
       
       <!-- Bank Info -->
       <div class="bank-info-section">
         <h3 class="bank-name">{{ bank.bankName }}</h3>
-        <div class="bank-code">{{ bank.bankCode }}</div>
         <div class="template-count">
           {{ getTemplateCount(bank.bankCode) }} Templates
         </div>

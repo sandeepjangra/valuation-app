@@ -63,6 +63,10 @@ export class Dashboard implements OnInit {
     this.router.navigate(['/banks']);
   }
 
+  navigateToTemplates() {
+    this.router.navigate(['/custom-templates']);
+  }
+
   createNewReport() {
     this.router.navigate(['/new-report']);
   }

@@ -6,7 +6,7 @@
 1. **`backend/database/mongodb_manager.py`** - 54 errors fixed
 2. **`backend/main.py`** - 17+ warnings fixed
 3. **`scripts/setup_common_fields_collection.py`** - No errors found
-4. **`scripts/setup_mongodb_atlas.py`** - No errors found
+4. **`scripts/database/setup_mongodb_atlas.py`** - No errors found
 
 ---
 
@@ -143,7 +143,7 @@ The codebase is now significantly cleaner and more robust. All critical function
 
 **Server Management:**
 ```bash
-./scripts/manage_server.sh start    # Start with all fixes applied
+./scripts/server/manage_server.sh start    # Start with all fixes applied
 ./scripts/test_endpoints.sh --quick # Verify everything works
 ./scripts/api_summary.sh           # See what's available
 ```
