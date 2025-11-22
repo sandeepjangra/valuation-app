@@ -2,6 +2,14 @@
 
 import { FieldType, FieldOption, FieldValidation, DataSourceConfig } from './common-field.model';
 
+// Calculated Field Configuration
+export interface CalculatedFieldConfig {
+  type: 'sum' | 'product' | 'average' | 'custom'; // Formula type
+  sourceFields: string[]; // Field IDs to use in calculation
+  customFormula?: string; // For complex calculations (optional)
+  dependencies?: string[]; // Fields that trigger recalculation
+}
+
 // Table field interfaces
 export interface TableColumn {
   columnId: string;
@@ -91,7 +99,8 @@ export interface TemplateField {
   // Enhanced field properties
   prefix?: string; // For currency fields
   suffix?: string; // For currency fields
-  formula?: string; // For calculated fields
+  formula?: string; // For calculated fields (deprecated, use calculatedField)
+  calculatedField?: CalculatedFieldConfig; // For calculated fields
   displayFormat?: string; // For calculated fields
   columns?: TableColumn[]; // For table fields
   rows?: TableRow[]; // For table fields
@@ -124,7 +133,8 @@ export interface BankSpecificField {
   // Enhanced field properties
   prefix?: string; // For currency fields
   suffix?: string; // For currency fields
-  formula?: string; // For calculated fields
+  formula?: string; // For calculated fields (deprecated, use calculatedField)
+  calculatedField?: CalculatedFieldConfig; // For calculated fields
   displayFormat?: string; // For calculated fields
   columns?: TableColumn[]; // For table fields
   rows?: TableRow[]; // For table fields

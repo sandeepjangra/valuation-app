@@ -3,9 +3,10 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { CommonField, BankBranch, ProcessedTemplateData, FieldGroup, TemplateField, BankSpecificField, BankSpecificTab, BankSpecificSection } from '../../models';
+import { CommonField, BankBranch, ProcessedTemplateData, FieldGroup, TemplateField, BankSpecificField, BankSpecificTab, BankSpecificSection, CalculatedFieldConfig } from '../../models';
 import { TemplateService } from '../../services/template.service';
 import { CustomTemplateService } from '../../services/custom-template.service';
+import { CalculationService } from '../../services/calculation.service';
 import { TemplateAutofillModalComponent, AutoFillChoice } from '../custom-templates/template-autofill-modal.component';
 import { DynamicTableComponent } from '../dynamic-table/dynamic-table.component';
 
@@ -45,6 +46,9 @@ export class ReportForm implements OnInit {
   // Dynamic tables data storage
   dynamicTablesData: { [fieldId: string]: any } = {};
 
+  // Calculated fields tracking
+  calculatedFieldsMap: Map<string, CalculatedFieldConfig> = new Map();
+
   constructor(
     private router: Router,
     private route: ActivatedRoute,
@@ -52,6 +56,7 @@ export class ReportForm implements OnInit {
     private http: HttpClient,
     private templateService: TemplateService,
     private customTemplateService: CustomTemplateService,
+    private calculationService: CalculationService,
     private cdr: ChangeDetectorRef
   ) {
     this.reportForm = this.fb.group({});
@@ -232,6 +237,9 @@ export class ReportForm implements OnInit {
     });
     
     this.reportForm = this.fb.group(formControls);
+    
+    // Initialize calculated fields tracking
+    this.initializeCalculatedFields();
     
     // Log summary of form controls created
     const controlCount = Object.keys(formControls).length;
@@ -587,6 +595,9 @@ export class ReportForm implements OnInit {
   switchBankSpecificTab(tabId: string) {
     this.activeBankSpecificTab = tabId;
     console.log('🔄 Switched to bank-specific tab:', tabId);
+    
+    // Trigger recalculation when switching tabs
+    this.recalculateAllFields();
   }
 
   // Get active bank-specific tab data
@@ -946,6 +957,96 @@ export class ReportForm implements OnInit {
       : 'All fields have been replaced with template values';
     
     alert(message);
+  }
+
+  /**
+   * Initialize calculated fields system
+   * - Extracts all calculated fields from template
+   * - Sets up real-time listeners for source field changes
+   * - Calculates initial values
+   */
+  private initializeCalculatedFields(): void {
+    if (!this.templateData) {
+      return;
+    }
+
+    console.log('🧮 Initializing calculated fields system...');
+
+    // Extract all calculated fields from template data
+    this.calculatedFieldsMap = this.calculationService.getCalculatedFields(this.templateData.allFields);
+    
+    console.log(`🧮 Found ${this.calculatedFieldsMap.size} calculated fields:`, 
+      Array.from(this.calculatedFieldsMap.keys())
+    );
+
+    // Set up listeners for each calculated field
+    this.calculatedFieldsMap.forEach((config, fieldId) => {
+      this.setupCalculatedFieldListener(fieldId, config);
+    });
+
+    // Perform initial calculation for all calculated fields
+    this.recalculateAllFields();
+  }
+
+  /**
+   * Sets up a listener for a calculated field
+   * Triggers recalculation whenever any source field changes
+   */
+  private setupCalculatedFieldListener(fieldId: string, config: CalculatedFieldConfig): void {
+    // Get all dependencies (fields that trigger recalculation)
+    const dependencies = this.calculationService.getFieldDependencies(config);
+
+    console.log(`🧮 Setting up listener for ${fieldId}, dependencies:`, dependencies);
+
+    // Subscribe to value changes of each dependency
+    dependencies.forEach(depFieldId => {
+      const control = this.reportForm.get(depFieldId);
+      
+      if (control) {
+        control.valueChanges.subscribe(() => {
+          this.calculateField(fieldId, config);
+        });
+      } else {
+        console.warn(`⚠️ Dependency control not found: ${depFieldId}`);
+      }
+    });
+  }
+
+  /**
+   * Calculates the value for a specific calculated field
+   */
+  private calculateField(fieldId: string, config: CalculatedFieldConfig): void {
+    const calculatedValue = this.calculationService.evaluateCalculatedField(config, this.reportForm);
+    
+    // Update the field value (enable temporarily if readonly)
+    const control = this.reportForm.get(fieldId);
+    if (control) {
+      const wasDisabled = control.disabled;
+      
+      if (wasDisabled) {
+        control.enable({ emitEvent: false });
+      }
+      
+      control.setValue(calculatedValue, { emitEvent: false });
+      
+      if (wasDisabled) {
+        control.disable({ emitEvent: false });
+      }
+
+      console.log(`🧮 Calculated ${fieldId} = ${calculatedValue}`);
+    }
+  }
+
+  /**
+   * Recalculates all calculated fields
+   * Called on initialization and when switching tabs
+   */
+  private recalculateAllFields(): void {
+    console.log('🧮 Recalculating all calculated fields...');
+    
+    this.calculatedFieldsMap.forEach((config, fieldId) => {
+      this.calculateField(fieldId, config);
+    });
   }
 
 }

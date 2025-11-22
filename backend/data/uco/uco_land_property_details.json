@@ -125,101 +125,101 @@
           "sectionName": "Part A - Basic Information",
           "sortOrder": 1,
           "fields": [
-        {
-          "fieldId": "list_of_documents_produced",
-          "uiDisplayName": "List of documents produced",
-          "fieldType": "textarea",
-          "isRequired": false,
-          "placeholder": "Enter List of documents provided, if any",
-          "sortOrder": 1
-        },
-        {
-          "fieldId": "postal_address",
-          "uiDisplayName": "Postal Address",
-          "fieldType": "textarea",
-          "isRequired": false,
-          "placeholder": "Enter postal address",
-          "sortOrder": 2
-        },
-        {
-          "fieldId": "property_description",
-          "uiDisplayName": "Property Description",
-          "fieldType": "textarea",
-          "isRequired": false,
-          "placeholder": "Describe the property",
-          "sortOrder": 3
-        },
-        {
-          "fieldId": "details_of_enquiries_to_govt_officials",
-          "uiDisplayName": "Details of the Enquiries to Govt. Officials",
-          "fieldType": "textarea",
-          "isRequired": false,
-          "placeholder": "Describe the Enquiries to Govt. Officials made, if any",
-          "sortOrder": 4
-        },
-        {
-          "fieldId": "property_ownership",
-          "uiDisplayName": "Property Ownership",
-          "fieldType": "select",
-          "options": [
             {
-              "value": "single_ownership",
-              "label": "Single Ownership"
+              "fieldId": "list_of_documents_produced",
+              "uiDisplayName": "List of documents produced",
+              "fieldType": "textarea",
+              "isRequired": false,
+              "placeholder": "Enter List of documents provided, if any",
+              "sortOrder": 1
             },
             {
-              "value": "multiple_ownership",
-              "label": "Multiple Ownership"
+              "fieldId": "postal_address",
+              "uiDisplayName": "Postal Address",
+              "fieldType": "textarea",
+              "isRequired": false,
+              "placeholder": "Enter postal address",
+              "sortOrder": 2
+            },
+            {
+              "fieldId": "property_description",
+              "uiDisplayName": "Property Description",
+              "fieldType": "textarea",
+              "isRequired": false,
+              "placeholder": "Describe the property",
+              "sortOrder": 3
+            },
+            {
+              "fieldId": "details_of_enquiries_to_govt_officials",
+              "uiDisplayName": "Details of the Enquiries to Govt. Officials",
+              "fieldType": "textarea",
+              "isRequired": false,
+              "placeholder": "Describe the Enquiries to Govt. Officials made, if any",
+              "sortOrder": 4
+            },
+            {
+              "fieldId": "property_ownership",
+              "uiDisplayName": "Property Ownership",
+              "fieldType": "select",
+              "options": [
+                {
+                  "value": "single_ownership",
+                  "label": "Single Ownership"
+                },
+                {
+                  "value": "multiple_ownership",
+                  "label": "Multiple Ownership"
+                }
+              ],
+              "isRequired": true,
+              "sortOrder": 5
+            },
+            {
+              "fieldId": "area_type",
+              "uiDisplayName": "Area Type",
+              "fieldType": "select",
+              "options": [
+                {
+                  "value": "residential",
+                  "label": "Residential"
+                },
+                {
+                  "value": "commercial",
+                  "label": "Commercial"
+                },
+                {
+                  "value": "industrial",
+                  "label": "Industrial"
+                },
+                {
+                  "value": "government",
+                  "label": "Government"
+                },
+                {
+                  "value": "non_government",
+                  "label": "Non Government"
+                }
+              ],
+              "isRequired": true,
+              "sortOrder": 6
+            },
+            {
+              "fieldId": "municipal_corporation",
+              "uiDisplayName": "Municipal Corporation",
+              "fieldType": "select",
+              "options": [
+                {
+                  "value": "panchkula",
+                  "label": "Municipal Corporation Panchkula"
+                },
+                {
+                  "value": "chandigarh",
+                  "label": "Municipal Corporation Chandigarh"
+                }
+              ],
+              "isRequired": false,
+              "sortOrder": 7
             }
-          ],
-          "isRequired": true,
-          "sortOrder": 5
-        },
-        {
-          "fieldId": "area_type",
-          "uiDisplayName": "Area Type",
-          "fieldType": "select",
-          "options": [
-            {
-              "value": "residential",
-              "label": "Residential"
-            },
-            {
-              "value": "commercial",
-              "label": "Commercial"
-            },
-            {
-              "value": "industrial",
-              "label": "Industrial"
-            },
-            {
-              "value": "government",
-              "label": "Government"
-            },
-            {
-              "value": "non_government",
-              "label": "Non Government"
-            }
-          ],
-          "isRequired": true,
-          "sortOrder": 6
-        },
-        {
-          "fieldId": "municipal_corporation",
-          "uiDisplayName": "Municipal Corporation",
-          "fieldType": "select",
-          "options": [
-            {
-              "value": "panchkula",
-              "label": "Municipal Corporation Panchkula"
-            },
-            {
-              "value": "chandigarh",
-              "label": "Municipal Corporation Chandigarh"
-            }
-          ],
-          "isRequired": false,
-          "sortOrder": 7
-        }
           ]
         },
         {
@@ -227,81 +227,81 @@
           "sectionName": "Part B - Location Details",
           "sortOrder": 2,
           "fields": [
-        {
-          "fieldId": "boundaries_dimensions_table",
-          "uiDisplayName": "Boundaries and Dimensions Table",
-          "fieldType": "table",
-          "isRequired": false,
-          "sortOrder": 1,
-          "columns": [
             {
-              "columnId": "direction",
-              "columnName": "Direction",
-              "fieldType": "text",
-              "isReadonly": true
-            },
-            {
-              "columnId": "boundaries_per_documents",
-              "columnName": "Boundaries As Per Documents",
-              "fieldType": "text",
+              "fieldId": "boundaries_dimensions_table",
+              "uiDisplayName": "Boundaries and Dimensions Table",
+              "fieldType": "table",
               "isRequired": false,
-              "isEditable": true
+              "sortOrder": 1,
+              "columns": [
+                {
+                  "columnId": "direction",
+                  "columnName": "Direction",
+                  "fieldType": "text",
+                  "isReadonly": true
+                },
+                {
+                  "columnId": "boundaries_per_documents",
+                  "columnName": "Boundaries As Per Documents",
+                  "fieldType": "text",
+                  "isRequired": false,
+                  "isEditable": true
+                },
+                {
+                  "columnId": "boundaries_actual",
+                  "columnName": "Boundaries Actual",
+                  "fieldType": "text",
+                  "isRequired": false,
+                  "isEditable": true
+                }
+              ],
+              "rows": [
+                {
+                  "direction": "North",
+                  "boundaries_per_documents": "",
+                  "boundaries_actual": ""
+                },
+                {
+                  "direction": "South",
+                  "boundaries_per_documents": "",
+                  "boundaries_actual": ""
+                },
+                {
+                  "direction": "East",
+                  "boundaries_per_documents": "",
+                  "boundaries_actual": ""
+                },
+                {
+                  "direction": "West",
+                  "boundaries_per_documents": "",
+                  "boundaries_actual": ""
+                }
+              ]
             },
             {
-              "columnId": "boundaries_actual",
-              "columnName": "Boundaries Actual",
-              "fieldType": "text",
+              "fieldId": "longitude",
+              "uiDisplayName": "Longitude",
+              "fieldType": "number",
               "isRequired": false,
-              "isEditable": true
+              "sortOrder": 2,
+              "placeholder": "Enter number for longitude"
+            },
+            {
+              "fieldId": "latitude",
+              "uiDisplayName": "Latitude",
+              "fieldType": "number",
+              "isRequired": false,
+              "sortOrder": 3,
+              "placeholder": "Enter number for latitude"
+            },
+            {
+              "fieldId": "route_map",
+              "uiDisplayName": "Route Map",
+              "fieldType": "textarea",
+              "isRequired": false,
+              "sortOrder": 4,
+              "placeholder": "e.g. Google location is attached with the report"
             }
-          ],
-          "rows": [
-            {
-              "direction": "North",
-              "boundaries_per_documents": "",
-              "boundaries_actual": ""
-            },
-            {
-              "direction": "South",
-              "boundaries_per_documents": "",
-              "boundaries_actual": ""
-            },
-            {
-              "direction": "East",
-              "boundaries_per_documents": "",
-              "boundaries_actual": ""
-            },
-            {
-              "direction": "West",
-              "boundaries_per_documents": "",
-              "boundaries_actual": ""
-            }
-          ]
-        },
-        {
-          "fieldId": "longitude",
-          "uiDisplayName": "Longitude",
-          "fieldType": "number",
-          "isRequired": false,
-          "sortOrder": 2,
-          "placeholder": "Enter number for longitude"
-        },
-        {
-          "fieldId": "latitude",
-          "uiDisplayName": "Latitude",
-          "fieldType": "number",
-          "isRequired": false,
-          "sortOrder": 3,
-          "placeholder": "Enter number for latitude"
-        },
-        {
-          "fieldId": "route_map",
-          "uiDisplayName": "Route Map",
-          "fieldType": "textarea",
-          "isRequired": false,
-          "sortOrder": 4,
-          "placeholder": "e.g. Google location is attached with the report"
-        }
           ]
         },
         {
@@ -309,82 +309,82 @@
           "sectionName": "Part C - Property Characteristics",
           "sortOrder": 3,
           "fields": [
-        {
-          "fieldId": "covered_under_land_ceiling",
-          "uiDisplayName": "Whether Covered Under Any Land Ceiling of State/Central Govt.",
-          "fieldType": "textarea",
-          "isRequired": false,
-          "defaultValue": "NA",
-          "sortOrder": 1,
-          "placeholder": "Provide details whether Covered Under Any Land Ceiling of State/Central Govt."
-        },
-        {
-          "fieldId": "specific_identification_mark",
-          "uiDisplayName": "Specific Identification Mark",
-          "fieldType": "textarea",
-          "isRequired": false,
-          "defaultValue": "NA",
-          "sortOrder": 2,
-          "placeholder": "Like a famous buildings, famous house, some landmark area etc."
-        },
-        {
-          "fieldId": "freehold_leasehold",
-          "uiDisplayName": "Feehold/Leasehold",
-          "fieldType": "select",
-          "options": [
             {
-              "value": "freehold",
-              "label": "Freehold"
+              "fieldId": "covered_under_land_ceiling",
+              "uiDisplayName": "Whether Covered Under Any Land Ceiling of State/Central Govt.",
+              "fieldType": "textarea",
+              "isRequired": false,
+              "defaultValue": "NA",
+              "sortOrder": 1,
+              "placeholder": "Provide details whether Covered Under Any Land Ceiling of State/Central Govt."
             },
             {
-              "value": "Leasehold",
-              "label": "Leasehold"
+              "fieldId": "specific_identification_mark",
+              "uiDisplayName": "Specific Identification Mark",
+              "fieldType": "textarea",
+              "isRequired": false,
+              "defaultValue": "NA",
+              "sortOrder": 2,
+              "placeholder": "Like a famous buildings, famous house, some landmark area etc."
+            },
+            {
+              "fieldId": "freehold_leasehold",
+              "uiDisplayName": "Feehold/Leasehold",
+              "fieldType": "select",
+              "options": [
+                {
+                  "value": "freehold",
+                  "label": "Freehold"
+                },
+                {
+                  "value": "Leasehold",
+                  "label": "Leasehold"
+                }
+              ],
+              "isRequired": false,
+              "sortOrder": 3
+            },
+            {
+              "fieldId": "any_restriction_regards_to_use_of_land",
+              "uiDisplayName": "Any restriction Regards to Use of Land",
+              "fieldType": "textarea",
+              "isRequired": false,
+              "defaultValue": "NA",
+              "sortOrder": 4,
+              "placeholder": "Provide details whether any restriction Regards to Use of Land"
+            },
+            {
+              "fieldId": "agricultural_land",
+              "uiDisplayName": "Agricultural Land",
+              "fieldType": "textarea",
+              "isRequired": false,
+              "sortOrder": 5,
+              "placeholder": "e.g. NA or Its not an agricultural land"
+            },
+            {
+              "fieldId": "year_of_acquisition_purchase",
+              "uiDisplayName": "Year of Acquisition/Purchase",
+              "fieldType": "text",
+              "isRequired": false,
+              "sortOrder": 6,
+              "placeholder": "e.g. 2022 as per sale deed"
+            },
+            {
+              "fieldId": "value_of_purchase_price",
+              "uiDisplayName": "Value of Purchase Price",
+              "fieldType": "text",
+              "isRequired": false,
+              "sortOrder": 7,
+              "placeholder": "e.g. Rs. 450.00 lac as mentioned in sale deed"
+            },
+            {
+              "fieldId": "occupied_by_owner_tenant_duration",
+              "uiDisplayName": "Occupied by Owner/Tenant and How Long",
+              "fieldType": "textarea",
+              "isRequired": false,
+              "sortOrder": 8,
+              "placeholder": "e.g. Occupied by the Owner"
             }
-          ],
-          "isRequired": false,
-          "sortOrder": 3
-        },
-        {
-          "fieldId": "any_restriction_regards_to_use_of_land",
-          "uiDisplayName": "Any restriction Regards to Use of Land",
-          "fieldType": "textarea",
-          "isRequired": false,
-          "defaultValue": "NA",
-          "sortOrder": 4,
-          "placeholder": "Provide details whether any restriction Regards to Use of Land"
-        },
-        {
-          "fieldId": "agricultural_land",
-          "uiDisplayName": "Agricultural Land",
-          "fieldType": "textarea",
-          "isRequired": false,
-          "sortOrder": 5,
-          "placeholder": "e.g. NA or Its not an agricultural land"
-        },
-        {
-          "fieldId": "year_of_acquisition_purchase",
-          "uiDisplayName": "Year of Acquisition/Purchase",
-          "fieldType": "text",
-          "isRequired": false,
-          "sortOrder": 6,
-          "placeholder": "e.g. 2022 as per sale deed"
-        },
-        {
-          "fieldId": "value_of_purchase_price",
-          "uiDisplayName": "Value of Purchase Price",
-          "fieldType": "text",
-          "isRequired": false,
-          "sortOrder": 7,
-          "placeholder": "e.g. Rs. 450.00 lac as mentioned in sale deed"
-        },
-        {
-          "fieldId": "occupied_by_owner_tenant_duration",
-          "uiDisplayName": "Occupied by Owner/Tenant and How Long",
-          "fieldType": "textarea",
-          "isRequired": false,
-          "sortOrder": 8,
-          "placeholder": "e.g. Occupied by the Owner"
-        }
           ]
         }
       ]
@@ -1321,7 +1321,7 @@
                 ],
                 "maxRows": 10,
                 "addRowConfig": {
-                  "buttonText": "Add Row"                  
+                  "buttonText": "Add Row"
                 },
                 "rows": [
                   {
@@ -1546,7 +1546,12 @@
           "placeholder": "Valuation of all",
           "displayFormat": "currency",
           "isReadonly": true,
-          "sortOrder": 1
+          "sortOrder": 1,
+          "calculatedField": {
+            "type": "sum",
+            "sourceFields": [],
+            "dependencies": []
+          }
         },
         {
           "fieldId": "building_total",
@@ -1556,7 +1561,12 @@
           "placeholder": "Valuation of building",
           "displayFormat": "currency",
           "isReadonly": true,
-          "sortOrder": 2
+          "sortOrder": 2,
+          "calculatedField": {
+            "type": "sum",
+            "sourceFields": [],
+            "dependencies": []
+          }
         },
         {
           "fieldId": "extra_items_total",
@@ -1566,7 +1576,24 @@
           "placeholder": "Total extra items",
           "displayFormat": "currency",
           "isReadonly": true,
-          "sortOrder": 3
+          "sortOrder": 3,
+          "calculatedField": {
+            "type": "sum",
+            "sourceFields": [
+              "portico",
+              "ornamental_front_door",
+              "sitout_verandah_grills",
+              "overhead_water_tank",
+              "extra_steel_gates"
+            ],
+            "dependencies": [
+              "portico",
+              "ornamental_front_door",
+              "sitout_verandah_grills",
+              "overhead_water_tank",
+              "extra_steel_gates"
+            ]
+          }
         },
         {
           "fieldId": "amenities_total",
@@ -1576,7 +1603,30 @@
           "placeholder": "Total amenities",
           "displayFormat": "currency",
           "isReadonly": true,
-          "sortOrder": 4
+          "sortOrder": 4,
+          "calculatedField": {
+            "type": "sum",
+            "sourceFields": [
+              "wardrobes",
+              "glazed_tiles",
+              "interior_decorations",
+              "architectural_elevation",
+              "paneling_works",
+              "aluminum_works",
+              "aluminum_handrails",
+              "false_ceiling"
+            ],
+            "dependencies": [
+              "wardrobes",
+              "glazed_tiles",
+              "interior_decorations",
+              "architectural_elevation",
+              "paneling_works",
+              "aluminum_works",
+              "aluminum_handrails",
+              "false_ceiling"
+            ]
+          }
         },
         {
           "fieldId": "services_total",
@@ -1586,7 +1636,24 @@
           "placeholder": "Total services",
           "displayFormat": "currency",
           "isReadonly": true,
-          "sortOrder": 5
+          "sortOrder": 5,
+          "calculatedField": {
+            "type": "sum",
+            "sourceFields": [
+              "water_supply_arrangements",
+              "drainage_arrangements",
+              "compound_wall",
+              "cb_deposits_fittings",
+              "pavement"
+            ],
+            "dependencies": [
+              "water_supply_arrangements",
+              "drainage_arrangements",
+              "compound_wall",
+              "cb_deposits_fittings",
+              "pavement"
+            ]
+          }
         },
         {
           "fieldId": "grand_total",
@@ -1596,7 +1663,24 @@
           "placeholder": "Total valuation",
           "displayFormat": "currency",
           "isReadonly": true,
-          "sortOrder": 6
+          "sortOrder": 6,
+          "calculatedField": {
+            "type": "sum",
+            "sourceFields": [
+              "land_total",
+              "building_total",
+              "extra_items_total",
+              "amenities_total",
+              "services_total"
+            ],
+            "dependencies": [
+              "land_total",
+              "building_total",
+              "extra_items_total",
+              "amenities_total",
+              "services_total"
+            ]
+          }
         }
       ]
     }
