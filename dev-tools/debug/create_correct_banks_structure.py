@@ -11,7 +11,7 @@ import os
 from datetime import datetime, timezone
 
 # Set MongoDB URI
-os.environ['MONGODB_URI'] = "mongodb+srv://app_user:kHxlQqJ1Uc3bmoL6@valuationreportcluster.5ixm1s7.mongodb.net/?retryWrites=true&w=majority&appName=ValuationReportCluster"
+os.environ['MONGODB_URI'] = "mongodb+srv://app_user:KOtsC5qeCc78icks@valuationreportcluster.5ixm1s7.mongodb.net/?retryWrites=true&w=majority&appName=ValuationReportCluster"
 
 # Add backend path
 sys.path.insert(0, '/Users/sandeepjangra/Downloads/development/ValuationAppV1/backend')

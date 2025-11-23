@@ -316,3 +316,409 @@
     gap: 10px;
   }
 }
+/* ===== ENHANCED MOBILE RESPONSIVE STYLES ===== */
+
+/* Tablet optimization (768px - 1024px) */
+@media (max-width: 1024px) {
+  .dashboard-container {
+    padding: 24px 16px;
+    padding-top: 90px; /* Account for fixed header */
+  }
+
+  .dashboard-title {
+    font-size: 2.2rem;
+  }
+
+  .company-info {
+    font-size: 1rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+
+  .stats-card {
+    padding: 20px;
+  }
+
+  .recent-activity {
+    padding: 24px;
+  }
+}
+
+/* Enhanced mobile (< 768px) */
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 16px 12px;
+    padding-top: 80px;
+  }
+
+  .dashboard-header {
+    margin-bottom: 24px;
+  }
+
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .dashboard-title {
+    font-size: 1.8rem;
+  }
+
+  .company-info {
+    font-size: 0.95rem;
+  }
+
+  .admin-controls {
+    width: 100%;
+  }
+
+  .toggle-container {
+    width: 100%;
+    padding: 10px 16px;
+  }
+
+  .toggle-label {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .quick-actions {
+    margin-bottom: 24px;
+  }
+
+  .create-report-btn {
+    width: 100%;
+    padding: 14px 24px;
+    font-size: 15px;
+    min-height: 50px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .stats-card {
+    padding: 18px;
+  }
+
+  .card-header {
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .card-icon {
+    width: 45px;
+    height: 45px;
+    font-size: 22px;
+  }
+
+  .card-title {
+    font-size: 16px;
+  }
+
+  .card-number {
+    font-size: 2.2rem;
+  }
+
+  .card-subtitle {
+    font-size: 13px;
+  }
+
+  .view-all {
+    font-size: 13px;
+  }
+
+  .recent-activity {
+    padding: 20px 16px;
+  }
+
+  .activity-title {
+    font-size: 1.5rem;
+  }
+
+  .activity-subtitle {
+    font-size: 13px;
+  }
+
+  .activity-item {
+    padding: 12px 16px;
+    gap: 12px;
+  }
+
+  .activity-date {
+    font-size: 13px;
+    min-width: auto;
+  }
+
+  .activity-type {
+    font-size: 15px;
+  }
+
+  .activity-company {
+    font-size: 12px;
+  }
+}
+
+/* Mobile portrait (< 600px) */
+@media (max-width: 600px) {
+  .dashboard-container {
+    padding: 12px 10px;
+    padding-top: 76px;
+  }
+
+  .dashboard-title {
+    font-size: 1.6rem;
+  }
+
+  .company-info {
+    font-size: 0.9rem;
+  }
+
+  .create-report-btn {
+    padding: 12px 20px;
+    font-size: 14px;
+  }
+
+  .card-number {
+    font-size: 2rem;
+  }
+
+  .activity-list {
+    gap: 12px;
+  }
+}
+
+/* Extra small mobile (< 480px) */
+@media (max-width: 480px) {
+  .dashboard-container {
+    padding: 10px 8px;
+    padding-top: 72px;
+  }
+
+  .dashboard-header {
+    margin-bottom: 20px;
+  }
+
+  .dashboard-title {
+    font-size: 1.4rem;
+  }
+
+  .company-info {
+    font-size: 0.85rem;
+  }
+
+  .toggle-container {
+    padding: 8px 14px;
+  }
+
+  .toggle-label {
+    font-size: 13px;
+    gap: 10px;
+  }
+
+  .toggle-btn {
+    padding: 6px 12px;
+    font-size: 11px;
+  }
+
+  .quick-actions {
+    margin-bottom: 20px;
+  }
+
+  .create-report-btn {
+    padding: 11px 18px;
+    font-size: 13px;
+    border-radius: 20px;
+  }
+
+  .stats-grid {
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+
+  .stats-card {
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .card-header {
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .card-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+    border-radius: 12px;
+  }
+
+  .card-title {
+    font-size: 15px;
+  }
+
+  .card-content {
+    margin-bottom: 16px;
+  }
+
+  .card-number {
+    font-size: 1.8rem;
+  }
+
+  .card-subtitle {
+    font-size: 12px;
+  }
+
+  .view-all {
+    font-size: 12px;
+  }
+
+  .recent-activity {
+    padding: 16px 12px;
+    border-radius: 16px;
+  }
+
+  .activity-header {
+    margin-bottom: 20px;
+  }
+
+  .activity-title {
+    font-size: 1.3rem;
+  }
+
+  .activity-subtitle {
+    font-size: 12px;
+  }
+
+  .activity-item {
+    padding: 10px 14px;
+    gap: 10px;
+    border-radius: 10px;
+  }
+
+  .activity-date {
+    font-size: 12px;
+  }
+
+  .activity-type {
+    font-size: 14px;
+    margin-bottom: 3px;
+  }
+
+  .activity-company {
+    font-size: 11px;
+  }
+}
+
+/* Very small mobile (< 360px) */
+@media (max-width: 360px) {
+  .dashboard-container {
+    padding: 8px 6px;
+    padding-top: 66px;
+  }
+
+  .dashboard-title {
+    font-size: 1.2rem;
+  }
+
+  .company-info {
+    font-size: 0.8rem;
+  }
+
+  .toggle-label {
+    font-size: 12px;
+  }
+
+  .create-report-btn {
+    padding: 10px 16px;
+    font-size: 12px;
+  }
+
+  .stats-card {
+    padding: 14px;
+  }
+
+  .card-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+
+  .card-title {
+    font-size: 14px;
+  }
+
+  .card-number {
+    font-size: 1.6rem;
+  }
+
+  .card-subtitle {
+    font-size: 11px;
+  }
+
+  .activity-title {
+    font-size: 1.2rem;
+  }
+
+  .activity-item {
+    padding: 8px 12px;
+  }
+
+  .activity-type {
+    font-size: 13px;
+  }
+
+  .activity-company {
+    font-size: 10px;
+  }
+}
+
+/* Touch optimizations */
+@media (max-width: 768px) {
+  .stats-card,
+  .create-report-btn,
+  .toggle-btn,
+  .activity-item {
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  .stats-card:active {
+    transform: scale(0.98);
+  }
+
+  .create-report-btn:active,
+  .toggle-btn:active {
+    transform: scale(0.96);
+  }
+
+  .dashboard-container {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Landscape optimization for phones */
+@media (max-width: 896px) and (max-height: 420px) {
+  .dashboard-container {
+    padding-top: 66px;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dashboard-title {
+    font-size: 1.4rem;
+  }
+
+  .activity-item {
+    flex-direction: row;
+    align-items: center;
+  }
+}

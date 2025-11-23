@@ -19,7 +19,7 @@ body {
 /* Main content area */
 .main-content {
   min-height: 100vh;
-  padding: 72px 20px 20px 20px; /* Very compact padding */
+  padding: 0px 20px 20px 20px; /* No top padding - header is sticky */
   background: linear-gradient(135deg, #faf9ff 0%, #f3f0ff 100%);
 }
 
@@ -33,7 +33,7 @@ body {
 /* Basic responsive design */
 @media (max-width: 768px) {
   .main-content {
-    padding: 62px 10px 10px 10px; /* Very compact for mobile */
+    padding: 0px 10px 10px 10px; /* No top padding for tablet */
   }
   
   .container {
@@ -43,6 +43,6 @@ body {
 
 @media (max-width: 480px) {
   .main-content {
-    padding: 75px 10px 10px 10px; /* Compact for mobile stacked header */
+    padding: 0px 10px 10px 10px; /* No top padding for mobile */
   }
 }

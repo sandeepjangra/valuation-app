@@ -13,7 +13,7 @@ import json
 import certifi
 
 # MongoDB Atlas Configuration
-MONGODB_URI = "mongodb+srv://app_user:kHxlQqJ1Uc3bmoL6@valuationreportcluster.5ixm1s7.mongodb.net/?retryWrites=true&w=majority&appName=ValuationReportCluster"
+MONGODB_URI = "mongodb+srv://app_user:KOtsC5qeCc78icks@valuationreportcluster.5ixm1s7.mongodb.net/?retryWrites=true&w=majority&appName=ValuationReportCluster"
 DB_NAME = "valuation_app_prod"
 
 class MongoDBSetup:

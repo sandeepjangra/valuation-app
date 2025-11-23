@@ -1,8 +1,8 @@
 <header class="app-header">
   <div class="header-container">
+    <!-- Logo Section - Always visible -->
     <div class="logo-section">
       <div class="logo">
-        <!-- You can replace this with an actual logo image -->
         <div class="logo-placeholder">V</div>
       </div>
       <div class="company-info">
@@ -11,28 +11,38 @@
       </div>
     </div>
     
-    <div class="right-section">
+    <!-- Hamburger Menu Button (Mobile Only) -->
+    <button class="hamburger-menu" (click)="toggleMobileMenu()" [class.active]="isMobileMenuOpen()">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    
+    <!-- Navigation and User Section (Desktop) / Mobile Menu -->
+    <div class="right-section" [class.mobile-menu-open]="isMobileMenuOpen()">
+      <!-- Navigation Links -->
       <nav class="nav-section">
-        <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
-        <a routerLink="/new-report" routerLinkActive="active">New Report</a>
-        <a routerLink="/reports" routerLinkActive="active">Reports</a>
-        <a routerLink="/banks" routerLinkActive="active">Banks</a>
+        <a routerLink="/dashboard" routerLinkActive="active" (click)="closeMobileMenu()">Dashboard</a>
+        <a routerLink="/new-report" routerLinkActive="active" (click)="closeMobileMenu()">New Report</a>
+        <a routerLink="/reports" routerLinkActive="active" (click)="closeMobileMenu()">Reports</a>
+        <a routerLink="/banks" routerLinkActive="active" (click)="closeMobileMenu()">Banks</a>
         <!-- Admin link only for system admin users -->
         @if (isSystemAdmin()) {
-          <a routerLink="/admin" routerLinkActive="active">Admin</a>
+          <a routerLink="/admin" routerLinkActive="active" (click)="closeMobileMenu()">Admin</a>
         }
         <!-- Manager-only links -->
         @if (hasManagerPermissions()) {
-          <a routerLink="/custom-templates" routerLinkActive="active">Templates</a>
-          <a routerLink="/organization/users" routerLinkActive="active">Employee Activities</a>
+          <a routerLink="/custom-templates" routerLinkActive="active" (click)="closeMobileMenu()">Templates</a>
+          <a routerLink="/organization/users" routerLinkActive="active" (click)="closeMobileMenu()">Employee Activities</a>
         }
       </nav>
       
+      <!-- User Section -->
       <div class="user-section">
         <!-- Show user button and logout when authenticated -->
         @if (isAuthenticated()) {
           <div class="user-info">
-            <a routerLink="/profile" class="user-btn" routerLinkActive="active">
+            <a routerLink="/profile" class="user-btn" routerLinkActive="active" (click)="closeMobileMenu()">
               {{ currentUser()?.first_name }} {{ currentUser()?.last_name }}
             </a>
             <button (click)="logout()" class="logout-btn">Logout</button>
@@ -41,7 +51,7 @@
         
         <!-- Show login link when not authenticated -->
         @if (!isAuthenticated()) {
-          <a routerLink="/login" class="login-btn">Login</a>
+          <a routerLink="/login" class="login-btn" (click)="closeMobileMenu()">Login</a>
         }
       </div>
     </div>

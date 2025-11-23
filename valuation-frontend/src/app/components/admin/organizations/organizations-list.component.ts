@@ -15,14 +15,20 @@ interface Organization {
   organization_id: string;
   name: string;
   status: string;
-  contact_info: {
-    email: string;
-    phone: string;
-    address: string;
+  contact_info?: {
+    email?: string;
+    phone?: string;
+    address?: string;
   };
-  subscription: {
+  subscription?: {
     plan: string;
     max_reports_per_month: number;
+  };
+  settings?: {
+    subscription_plan: string;
+    max_users: number;
+    max_reports_per_month: number;
+    max_storage_gb: number;
   };
   user_count: number;
   created_at: string;
@@ -72,15 +78,15 @@ interface Organization {
                 </div>
                 <div class="detail-row">
                   <span class="label">Plan:</span>
-                  <span class="value">{{ org.subscription.plan }}</span>
+                  <span class="value">{{ formatPlan(org.settings?.subscription_plan) }}</span>
                 </div>
                 <div class="detail-row">
                   <span class="label">Users:</span>
-                  <span class="value">{{ org.user_count }} / {{ org.subscription.max_reports_per_month }}</span>
+                  <span class="value">{{ org.user_count }} / {{ org.settings?.max_users || 25 }}</span>
                 </div>
                 <div class="detail-row">
                   <span class="label">Email:</span>
-                  <span class="value">{{ org.contact_info.email }}</span>
+                  <span class="value">{{ org.contact_info?.email || 'N/A' }}</span>
                 </div>
                 <div class="detail-row">
                   <span class="label">Created:</span>
@@ -89,17 +95,11 @@ interface Organization {
               </div>
 
               <div class="org-actions">
-                <button class="btn btn-secondary" (click)="viewOrganization(org.organization_id)">
+                <button class="btn btn-primary" (click)="viewOrganization(org.organization_id)">
                   👁️ View Details
                 </button>
                 <button class="btn btn-secondary" (click)="manageUsers(org.organization_id)">
                   👥 Manage Users
-                </button>
-                <button class="btn btn-warning" (click)="toggleOrgStatus(org)">
-                  {{ org.status === 'active' ? '⏸️ Deactivate' : '▶️ Activate' }}
-                </button>
-                <button class="btn btn-danger" (click)="confirmDelete(org)">
-                  🗑️ Delete
                 </button>
               </div>
             </div>
@@ -119,7 +119,9 @@ interface Organization {
 
     <!-- Create Organization Dialog -->
     @if (showDialog()) {
-      <div class="dialog-overlay" (click)="closeDialog()">
+      <div class="dialog-overlay" 
+           (mousedown)="onOverlayMouseDown($event)" 
+           (click)="onDialogOverlayClick($event)">
         <div class="dialog" (click)="$event.stopPropagation()">
           <div class="dialog-header">
             <h2>Create New Organization</h2>
@@ -161,9 +163,9 @@ interface Organization {
               <div class="form-group">
                 <label>Plan *</label>
                 <select [(ngModel)]="newOrg.plan" name="plan" required>
-                  <option value="basic">Basic</option>
-                  <option value="professional">Professional</option>
-                  <option value="enterprise">Enterprise</option>
+                  <option value="basic">Basic (100 reports/month, 10GB)</option>
+                  <option value="premium">Premium (500 reports/month, 50GB)</option>
+                  <option value="enterprise">Enterprise (Unlimited)</option>
                 </select>
               </div>
             </div>
@@ -177,50 +179,6 @@ interface Organization {
               </button>
             </div>
           </form>
-        </div>
-      </div>
-    }
-
-    <!-- Delete Confirmation Dialog -->
-    @if (deleteConfirmOrg()) {
-      <div class="dialog-overlay" (click)="cancelDelete()">
-        <div class="dialog delete-confirm-dialog" (click)="$event.stopPropagation()">
-          <div class="dialog-header">
-            <h2>⚠️ Confirm Deletion</h2>
-            <button class="close-btn" (click)="cancelDelete()">✕</button>
-          </div>
-
-          <div class="dialog-content">
-            <div class="warning-box">
-              <p><strong>WARNING: This action cannot be undone!</strong></p>
-              <p>You are about to permanently delete:</p>
-              <ul>
-                <li><strong>Organization:</strong> {{ deleteConfirmOrg()?.name }}</li>
-                <li><strong>Organization ID:</strong> {{ deleteConfirmOrg()?.organization_id }}</li>
-                <li><strong>All user data</strong> ({{ deleteConfirmOrg()?.user_count }} users)</li>
-                <li><strong>Entire database</strong> with all reports, templates, and files</li>
-              </ul>
-              <p class="danger-text">This will drop the entire database and cannot be recovered!</p>
-            </div>
-
-            <div class="form-group">
-              <label>Type the organization name to confirm:</label>
-              <input type="text" [(ngModel)]="deleteConfirmText" name="confirmText"
-                     [placeholder]="deleteConfirmOrg()?.name || ''"
-                     class="confirm-input">
-            </div>
-
-            <div class="dialog-actions">
-              <button type="button" class="btn btn-secondary" (click)="cancelDelete()">
-                Cancel
-              </button>
-              <button type="button" class="btn btn-danger" 
-                      (click)="executeDelete()"
-                      [disabled]="deleteConfirmText !== deleteConfirmOrg()?.name || deleting()">
-                {{ deleting() ? 'Deleting...' : '🗑️ Permanently Delete' }}
-              </button>
-            </div>
-          </div>
         </div>
       </div>
     }
@@ -354,26 +312,6 @@ interface Organization {
       background: #e5e7eb;
     }
 
-    .btn-warning {
-      background: #fbbf24;
-      color: #78350f;
-      grid-column: span 2;
-    }
-
-    .btn-warning:hover {
-      background: #f59e0b;
-    }
-
-    .btn-danger {
-      background: #ef4444;
-      color: white;
-      grid-column: span 2;
-    }
-
-    .btn-danger:hover:not(:disabled) {
-      background: #dc2626;
-    }
-
     .btn:disabled {
       opacity: 0.5;
       cursor: not-allowed;
@@ -432,6 +370,10 @@ interface Organization {
       max-width: 600px;
       max-height: 90vh;
       overflow-y: auto;
+      user-select: text;
+      -webkit-user-select: text;
+      -moz-user-select: text;
+      -ms-user-select: text;
     }
 
     .dialog-header {
@@ -511,52 +453,6 @@ interface Organization {
       padding-top: 24px;
       border-top: 1px solid #e5e7eb;
     }
-
-    .delete-confirm-dialog {
-      max-width: 600px;
-    }
-
-    .warning-box {
-      background: #fef2f2;
-      border: 2px solid #fca5a5;
-      border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 20px;
-    }
-
-    .warning-box p {
-      margin: 8px 0;
-      color: #991b1b;
-    }
-
-    .warning-box ul {
-      margin: 12px 0;
-      padding-left: 20px;
-      color: #991b1b;
-    }
-
-    .warning-box li {
-      margin: 6px 0;
-    }
-
-    .danger-text {
-      font-weight: 700;
-      color: #7f1d1d;
-      margin-top: 12px !important;
-    }
-
-    .confirm-input {
-      width: 100%;
-      padding: 10px 12px;
-      border: 2px solid #d1d5db;
-      border-radius: 8px;
-      font-size: 14px;
-    }
-
-    .confirm-input:focus {
-      outline: none;
-      border-color: #ef4444;
-    }
   `]
 })
 export class OrganizationsListComponent implements OnInit {
@@ -569,9 +465,10 @@ export class OrganizationsListComponent implements OnInit {
   error = signal<string | null>(null);
   showDialog = signal(false);
   creating = signal(false);
-  deleteConfirmOrg = signal<Organization | null>(null);
-  deleteConfirmText = '';
-  deleting = signal(false);
+  
+  // Track if user is currently selecting text to prevent dialog close
+  private isSelectingText = false;
+  private overlayMouseDownTarget: EventTarget | null = null;
 
   newOrg = {
     name: '',
@@ -579,7 +476,7 @@ export class OrganizationsListComponent implements OnInit {
     contact_phone: '',
     address: '',
     max_users: 25,
-    plan: 'professional'
+    plan: 'basic'
   };
 
   ngOnInit() {
@@ -594,12 +491,31 @@ export class OrganizationsListComponent implements OnInit {
       next: (response) => {
         if (response.success) {
           this.organizations.set(response.data);
+        } else {
+          console.error('Server returned success=false:', response);
+          this.error.set(response.error || 'Failed to load organizations. Please try again.');
         }
         this.loading.set(false);
       },
       error: (err) => {
         console.error('Failed to load organizations:', err);
-        this.error.set('Failed to load organizations. Please try again.');
+        console.error('Error status:', err.status);
+        console.error('Error message:', err.message);
+        console.error('Error details:', err.error);
+        
+        let errorMessage = 'Failed to load organizations. Please try again.';
+        
+        if (err.status === 0) {
+          errorMessage = 'Cannot connect to server. Please ensure the backend is running on port 8000.';
+        } else if (err.status === 500) {
+          errorMessage = `Server error: ${err.error?.error || 'Internal server error'}`;
+        } else if (err.error?.detail) {
+          errorMessage = err.error.detail;
+        } else if (err.error?.error) {
+          errorMessage = err.error.error;
+        }
+        
+        this.error.set(errorMessage);
         this.loading.set(false);
       }
     });
@@ -607,6 +523,38 @@ export class OrganizationsListComponent implements OnInit {
 
   showCreateDialog() {
     this.showDialog.set(true);
+  }
+  
+  onOverlayMouseDown(event: MouseEvent) {
+    // Track where the mousedown started
+    const target = event.target as HTMLElement;
+    
+    // If mousedown is on overlay, track it
+    if (target.classList.contains('dialog-overlay')) {
+      this.overlayMouseDownTarget = event.target;
+      this.isSelectingText = false;
+    } else {
+      // If mousedown is inside dialog, user might be selecting text
+      this.overlayMouseDownTarget = null;
+      this.isSelectingText = true;
+    }
+  }
+  
+  onDialogOverlayClick(event: MouseEvent) {
+    // Don't close if user was selecting text
+    if (this.isSelectingText) {
+      this.isSelectingText = false;
+      return;
+    }
+    
+    // Only close if click is directly on the overlay and mousedown was also on overlay
+    const target = event.target as HTMLElement;
+    if (this.overlayMouseDownTarget && 
+        target === this.overlayMouseDownTarget &&
+        target.classList.contains('dialog-overlay')) {
+      this.closeDialog();
+    }
+    this.overlayMouseDownTarget = null;
   }
 
   closeDialog() {
@@ -646,64 +594,17 @@ export class OrganizationsListComponent implements OnInit {
     return new Date(dateString).toLocaleDateString();
   }
 
-  confirmDelete(org: Organization) {
-    this.deleteConfirmOrg.set(org);
-    this.deleteConfirmText = '';
-  }
-
-  cancelDelete() {
-    this.deleteConfirmOrg.set(null);
-    this.deleteConfirmText = '';
-  }
-
-  executeDelete() {
-    const org = this.deleteConfirmOrg();
-    if (!org) return;
-
-    this.deleting.set(true);
-
-    this.http.delete<any>(`${this.API_BASE}/admin/organizations/${org.organization_id}`).subscribe({
-      next: (response) => {
-        if (response.success) {
-          console.log('✅ Organization deleted:', response);
-          alert(`Organization "${org.name}" has been permanently deleted along with all its data.`);
-          this.loadOrganizations();
-          this.cancelDelete();
-        }
-        this.deleting.set(false);
-      },
-      error: (err) => {
-        console.error('Failed to delete organization:', err);
-        alert('Failed to delete organization. Please try again.');
-        this.deleting.set(false);
-      }
-    });
-  }
-
-  toggleOrgStatus(org: Organization) {
-    const newStatus = org.status === 'active' ? 'inactive' : 'active';
-    const action = newStatus === 'active' ? 'activate' : 'deactivate';
+  formatPlan(plan: string | undefined): string {
+    if (!plan) return 'N/A';
     
-    if (!confirm(`Are you sure you want to ${action} "${org.name}"?\n\nThis will ${newStatus === 'inactive' ? 'disable access for all users' : 'restore access for all users'}.`)) {
-      return;
-    }
-
-    this.http.patch<any>(
-      `${this.API_BASE}/admin/organizations/${org.organization_id}/status`,
-      { status: newStatus }
-    ).subscribe({
-      next: (response) => {
-        if (response.success) {
-          console.log('✅ Organization status updated:', response);
-          alert(`Organization "${org.name}" has been ${newStatus === 'active' ? 'activated' : 'deactivated'}.`);
-          this.loadOrganizations();
-        }
-      },
-      error: (err) => {
-        console.error('Failed to update organization status:', err);
-        alert('Failed to update organization status. Please try again.');
-      }
-    });
+    const planMap: { [key: string]: string } = {
+      'basic': 'Basic',
+      'premium': 'Premium',
+      'professional': 'Professional',
+      'enterprise': 'Enterprise'
+    };
+    
+    return planMap[plan] || plan;
   }
 
   private resetForm() {
@@ -713,7 +614,7 @@ export class OrganizationsListComponent implements OnInit {
       contact_phone: '',
       address: '',
       max_users: 25,
-      plan: 'professional'
+      plan: 'basic'
     };
   }
 }

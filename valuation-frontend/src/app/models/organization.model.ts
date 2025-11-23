@@ -6,6 +6,7 @@
 // Core Organization Models
 export interface Organization {
   _id: string;
+  org_short_name: string; // New: organization short name identifier (e.g., "sk-tindwal")
   name: string;
   type: 'valuation_company' | 'system' | 'enterprise';
   description?: string;
@@ -131,7 +132,8 @@ export type AuditAction =
 export interface JwtPayload {
   sub: string;
   email: string;
-  'custom:organization_id': string;
+  'custom:org_short_name'?: string;
+  'custom:organization_id'?: string; // Backward compatibility
   'cognito:groups': UserRole[];
   iat: number;
   exp: number;
@@ -143,7 +145,8 @@ export interface JwtPayload {
 export interface OrganizationContext {
   userId: string;
   email: string;
-  organizationId: string;
+  orgShortName: string;
+  organizationId: string; // Backward compatibility alias
   roles: UserRole[];
   isSystemAdmin: boolean;
   isManager: boolean;

@@ -85,7 +85,7 @@ class CollectionFileManager:
             from pymongo import MongoClient
             
             # MongoDB configuration
-            MONGODB_URI = "mongodb+srv://app_user:kHxlQqJ1Uc3bmoL6@valuationreportcluster.5ixm1s7.mongodb.net/?retryWrites=true&w=majority&appName=ValuationReportCluster"
+            MONGODB_URI = "mongodb+srv://app_user:KOtsC5qeCc78icks@valuationreportcluster.5ixm1s7.mongodb.net/?retryWrites=true&w=majority&appName=ValuationReportCluster"
             
             # Map logical database names to actual MongoDB database names
             db_name_mapping = {

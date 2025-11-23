@@ -1,4 +1,4 @@
-import { Component, inject, computed } from '@angular/core';
+import { Component, inject, computed, signal } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
@@ -12,15 +12,34 @@ import { AuthService } from '../../services/auth.service';
 export class Header {
   private readonly authService = inject(AuthService);
 
+  // Mobile menu state
+  private mobileMenuOpen = signal(false);
+
   // Computed properties for reactive updates
   readonly isAuthenticated = computed(() => this.authService.isAuthenticated());
   readonly currentUser = computed(() => this.authService.currentUser());
   readonly orgContext = computed(() => this.authService.getOrganizationContext());
+  readonly isMobileMenuOpen = computed(() => this.mobileMenuOpen());
+
+  /**
+   * Toggle mobile menu
+   */
+  toggleMobileMenu(): void {
+    this.mobileMenuOpen.set(!this.mobileMenuOpen());
+  }
+
+  /**
+   * Close mobile menu
+   */
+  closeMobileMenu(): void {
+    this.mobileMenuOpen.set(false);
+  }
 
   /**
    * Logout user
    */
   logout(): void {
+    this.closeMobileMenu();
     this.authService.logout().subscribe();
   }
 

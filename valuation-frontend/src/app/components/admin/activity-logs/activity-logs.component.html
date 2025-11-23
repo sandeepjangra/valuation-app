@@ -1,0 +1,298 @@
+<div class="activity-logs-container">
+  <!-- Header with Stats -->
+  <div class="header">
+    <h2>Activity Logs</h2>
+    <button class="refresh-btn" (click)="refresh()" [disabled]="loading()">
+      <span class="refresh-icon">↻</span>
+      Refresh
+    </button>
+  </div>
+
+  <!-- Stats Summary -->
+  @if (stats()) {
+    <div class="stats-summary">
+      <div class="stat-card">
+        <div class="stat-label">Total Activities</div>
+        <div class="stat-value">{{ stats()!.total_activities | number }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Success Rate</div>
+        <div class="stat-value">{{ stats()!.success_rate | number:'1.1-1' }}%</div>
+        <div class="stat-detail">
+          {{ stats()!.success_count }} / {{ stats()!.total_activities }}
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Failed Actions</div>
+        <div class="stat-value error-value">{{ stats()!.failed_count | number }}</div>
+      </div>
+    </div>
+  }
+
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <div class="filters-grid">
+      <div class="filter-group">
+        <label>Search</label>
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          (input)="searchTerm.set($any($event.target).value)"
+          placeholder="Search email, org, details..."
+          class="filter-input"
+        />
+      </div>
+
+      <div class="filter-group">
+        <label>Action</label>
+        <select
+          [(ngModel)]="selectedAction"
+          (change)="selectedAction.set($any($event.target).value)"
+          class="filter-select"
+        >
+          <option value="">All Actions</option>
+          @for (action of availableActions; track action) {
+            <option [value]="action">{{ action }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Status</label>
+        <select
+          [(ngModel)]="selectedStatus"
+          (change)="selectedStatus.set($any($event.target).value)"
+          class="filter-select"
+        >
+          <option value="">All Statuses</option>
+          @for (status of availableStatuses; track status) {
+            <option [value]="status">{{ status }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Start Date</label>
+        <input
+          type="datetime-local"
+          [(ngModel)]="startDate"
+          (change)="startDate.set($any($event.target).value)"
+          class="filter-input"
+        />
+      </div>
+
+      <div class="filter-group">
+        <label>End Date</label>
+        <input
+          type="datetime-local"
+          [(ngModel)]="endDate"
+          (change)="endDate.set($any($event.target).value)"
+          class="filter-input"
+        />
+      </div>
+    </div>
+
+    <div class="filter-actions">
+      <button class="apply-btn" (click)="applyFilters()">Apply Filters</button>
+      <button class="clear-btn" (click)="clearFilters()">Clear All</button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="loading-container">
+      <div class="spinner"></div>
+      <p>Loading activity logs...</p>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (error()) {
+    <div class="error-alert">
+      <span class="error-icon">⚠️</span>
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  <!-- Activities Table -->
+  @if (!loading() && activitiesData()) {
+    <div class="table-container">
+      <table class="activities-table">
+        <thead>
+          <tr>
+            <th width="30"></th>
+            <th>Timestamp</th>
+            <th>Action</th>
+            <th>User</th>
+            <th>Organization</th>
+            <th>Status</th>
+            <th>IP Address</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (activity of activitiesData()!.activities; track activity._id) {
+            <tr>
+              <td>
+                <button
+                  class="expand-btn"
+                  (click)="toggleRow(activity._id)"
+                  [class.expanded]="isRowExpanded(activity._id)"
+                >
+                  {{ isRowExpanded(activity._id) ? '▼' : '▶' }}
+                </button>
+              </td>
+              <td>
+                <div class="timestamp">
+                  {{ formatTimestamp(activity.timestamp) }}
+                </div>
+                <div class="relative-time">
+                  {{ getRelativeTime(activity.timestamp) }}
+                </div>
+              </td>
+              <td>
+                <span
+                  class="action-badge"
+                  [style.background-color]="getActionColor(activity.action)"
+                >
+                  {{ activity.action }}
+                </span>
+              </td>
+              <td>
+                <div class="user-info">
+                  <div class="user-email">{{ activity.user_email }}</div>
+                  <div class="user-id">ID: {{ activity.user_id }}</div>
+                </div>
+              </td>
+              <td>
+                <div class="org-info">
+                  <div class="org-name">{{ activity.organization_name }}</div>
+                  <div class="org-id">{{ activity.organization_id }}</div>
+                </div>
+              </td>
+              <td>
+                <span
+                  class="status-badge"
+                  [ngClass]="getStatusBadgeClass(activity.status)"
+                >
+                  {{ activity.status }}
+                </span>
+              </td>
+              <td>
+                <span class="ip-address">{{ activity.ip_address || 'N/A' }}</span>
+              </td>
+            </tr>
+            
+            <!-- Expanded Details Row -->
+            @if (isRowExpanded(activity._id)) {
+              <tr class="details-row">
+                <td colspan="7">
+                  <div class="activity-details">
+                    <div class="details-grid">
+                      @if (activity.details && Object.keys(activity.details).length > 0) {
+                        <div class="detail-section">
+                          <h4>Details</h4>
+                          <pre>{{ activity.details | json }}</pre>
+                        </div>
+                      }
+                      
+                      @if (activity.user_agent) {
+                        <div class="detail-section">
+                          <h4>User Agent</h4>
+                          <div class="detail-value">{{ activity.user_agent }}</div>
+                        </div>
+                      }
+                      
+                      @if (activity.error_message) {
+                        <div class="detail-section error-section">
+                          <h4>Error Message</h4>
+                          <div class="error-value">{{ activity.error_message }}</div>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            }
+          } @empty {
+            <tr>
+              <td colspan="7" class="empty-state">
+                No activity logs found matching the current filters.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    @if (activitiesData()!.total_pages > 1) {
+      <div class="pagination">
+        <button
+          class="page-btn"
+          (click)="previousPage()"
+          [disabled]="currentPage() === 1"
+        >
+          Previous
+        </button>
+
+        @for (page of getPaginationRange(); track page) {
+          <button
+            class="page-number"
+            [class.active]="page === currentPage()"
+            (click)="goToPage(page)"
+          >
+            {{ page }}
+          </button>
+        }
+
+        <button
+          class="page-btn"
+          (click)="nextPage()"
+          [disabled]="currentPage() === activitiesData()!.total_pages"
+        >
+          Next
+        </button>
+
+        <div class="page-info">
+          Page {{ currentPage() }} of {{ activitiesData()!.total_pages }}
+          ({{ activitiesData()!.total_count }} total)
+        </div>
+      </div>
+    }
+  }
+
+  <!-- Top Organizations (from stats) -->
+  @if (stats() && stats()!.top_organizations.length > 0) {
+    <div class="top-orgs-section">
+      <h3>Most Active Organizations</h3>
+      <div class="org-list">
+        @for (org of stats()!.top_organizations; track org.organization_id) {
+          <div class="org-item">
+            <div class="org-name-stat">{{ org.organization_name }}</div>
+            <div class="org-count">{{ org.activity_count }} activities</div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Actions Breakdown -->
+  @if (stats() && getStatsActionEntries().length > 0) {
+    <div class="actions-breakdown-section">
+      <h3>Actions Breakdown</h3>
+      <div class="actions-grid">
+        @for (entry of getStatsActionEntries(); track entry[0]) {
+          <div class="action-stat">
+            <span
+              class="action-name"
+              [style.color]="getActionColor(entry[0])"
+            >
+              {{ entry[0] }}
+            </span>
+            <span class="action-count">{{ entry[1] }}</span>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

@@ -50,7 +50,7 @@ import { environment } from '../../../environments/environment';
                 <span class="btn-icon">👔</span>
                 <div>
                   <div class="btn-title">Manager</div>
-                  <div class="btn-subtitle">manager@demo.com</div>
+                  <div class="btn-subtitle">manager@test.com (SK Tindwal)</div>
                 </div>
               </div>
             </button>
@@ -63,7 +63,7 @@ import { environment } from '../../../environments/environment';
                 <span class="btn-icon">👤</span>
                 <div>
                   <div class="btn-title">Employee</div>
-                  <div class="btn-subtitle">employee@demo.com</div>
+                  <div class="btn-subtitle">employee@test.com (SK Tindwal)</div>
                 </div>
               </div>
             </button>
@@ -573,12 +573,12 @@ export class LoginComponent {
         organizationId: 'system_admin'
       },
       manager: {
-        email: 'manager@demo.com',
-        organizationId: 'demo_org_001'
+        email: 'manager@test.com',
+        organizationId: 'sk-tindwal' // Updated to match Phase 2 org_short_name
       },
       employee: {
-        email: 'employee@demo.com',
-        organizationId: 'demo_org_001'
+        email: 'employee@test.com',
+        organizationId: 'sk-tindwal' // Updated to match Phase 2 org_short_name
       }
     };
 

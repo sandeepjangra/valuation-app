@@ -327,3 +327,319 @@
     font-size: 13px;
   }
 }
+/* ===== ENHANCED MOBILE RESPONSIVE STYLES ===== */
+
+/* Tablet optimization (768px - 1024px) */
+@media (max-width: 1024px) {
+  .banks-container {
+    padding: 20px 16px;
+    padding-top: 90px; /* Account for fixed header */
+  }
+
+  .banks-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 18px;
+  }
+
+  .bank-card {
+    height: 210px;
+  }
+}
+
+/* Enhanced mobile (< 768px) */
+@media (max-width: 768px) {
+  .banks-container {
+    padding: 12px;
+    padding-top: 80px;
+  }
+
+  .banks-header {
+    margin-bottom: 20px;
+  }
+
+  .banks-title {
+    font-size: 22px;
+  }
+
+  .banks-subtitle {
+    font-size: 14px;
+  }
+
+  .banks-grid {
+    grid-template-columns: repeat(2, 1fr); /* Always 2 columns on mobile */
+    gap: 14px;
+  }
+
+  .bank-card {
+    height: 200px;
+  }
+
+  .bank-header {
+    padding: 10px;
+    height: 90px;
+  }
+
+  .bank-code-badge {
+    width: 60px;
+    height: 60px;
+    font-size: 18px;
+  }
+
+  .bank-logo {
+    width: 55px;
+    height: 55px;
+  }
+
+  .bank-info-section {
+    padding: 12px;
+    gap: 6px;
+  }
+
+  .bank-name {
+    font-size: 15px;
+  }
+
+  .bank-code {
+    font-size: 10px;
+    padding: 2px 6px;
+  }
+
+  .template-count {
+    font-size: 12px;
+  }
+
+  .create-report-btn {
+    padding: 9px 14px;
+    font-size: 13px;
+    min-height: 44px; /* Touch-friendly */
+  }
+
+  .back-btn {
+    padding: 10px 14px;
+    font-size: 13px;
+    min-height: 44px;
+  }
+}
+
+/* Mobile portrait (< 600px) */
+@media (max-width: 600px) {
+  .banks-container {
+    padding: 10px;
+    padding-top: 76px;
+  }
+
+  .banks-title {
+    font-size: 20px;
+  }
+
+  .banks-grid {
+    gap: 12px;
+  }
+
+  .bank-card {
+    height: 190px;
+  }
+
+  .bank-header {
+    height: 85px;
+  }
+
+  .bank-code-badge,
+  .bank-logo {
+    width: 55px;
+    height: 55px;
+  }
+
+  .bank-name {
+    font-size: 14px;
+  }
+}
+
+/* Extra small mobile (< 480px) */
+@media (max-width: 480px) {
+  .banks-container {
+    padding: 8px;
+    padding-top: 72px;
+  }
+
+  .banks-header {
+    margin-bottom: 16px;
+  }
+
+  .header-content {
+    gap: 12px;
+  }
+
+  .banks-title {
+    font-size: 18px;
+  }
+
+  .banks-subtitle {
+    font-size: 13px;
+  }
+
+  .banks-grid {
+    grid-template-columns: 1fr 1fr; /* Strict 2 columns */
+    gap: 10px;
+  }
+
+  .bank-card {
+    height: 185px;
+    border-radius: 10px;
+  }
+
+  .bank-header {
+    height: 80px;
+    padding: 8px;
+  }
+
+  .bank-code-badge,
+  .bank-logo {
+    width: 50px;
+    height: 50px;
+    font-size: 16px;
+  }
+
+  .bank-info-section {
+    padding: 10px;
+    gap: 5px;
+  }
+
+  .bank-name {
+    font-size: 13px;
+    line-height: 1.2;
+  }
+
+  .bank-code {
+    font-size: 9px;
+  }
+
+  .template-count {
+    font-size: 11px;
+  }
+
+  .create-report-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .back-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  /* Loading and error states */
+  .loading-container,
+  .error-container {
+    padding: 40px 15px;
+  }
+
+  .loading-spinner {
+    width: 35px;
+    height: 35px;
+  }
+
+  .error-message {
+    padding: 20px;
+  }
+
+  .retry-btn {
+    padding: 9px 16px;
+    font-size: 13px;
+  }
+}
+
+/* Very small mobile (< 360px) */
+@media (max-width: 360px) {
+  .banks-container {
+    padding: 6px;
+    padding-top: 66px;
+  }
+
+  .banks-title {
+    font-size: 16px;
+  }
+
+  .banks-subtitle {
+    font-size: 12px;
+  }
+
+  .banks-grid {
+    gap: 8px;
+  }
+
+  .bank-card {
+    height: 175px;
+  }
+
+  .bank-header {
+    height: 75px;
+  }
+
+  .bank-code-badge,
+  .bank-logo {
+    width: 45px;
+    height: 45px;
+    font-size: 15px;
+  }
+
+  .bank-info-section {
+    padding: 8px;
+  }
+
+  .bank-name {
+    font-size: 12px;
+  }
+
+  .bank-code {
+    font-size: 8px;
+  }
+
+  .template-count {
+    font-size: 10px;
+  }
+
+  .create-report-btn {
+    padding: 7px 10px;
+    font-size: 11px;
+  }
+}
+
+/* Touch optimizations */
+@media (max-width: 768px) {
+  /* Better tap targets */
+  .bank-card {
+    -webkit-tap-highlight-color: rgba(59, 130, 246, 0.1);
+  }
+
+  .bank-card:active {
+    transform: scale(0.98);
+  }
+
+  .back-btn,
+  .retry-btn,
+  .create-report-btn {
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  /* Smooth scrolling */
+  .banks-container {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Landscape optimization for phones */
+@media (max-width: 896px) and (max-height: 420px) {
+  .banks-container {
+    padding-top: 66px;
+  }
+
+  .banks-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  }
+
+  .bank-card {
+    height: 170px;
+  }
+}

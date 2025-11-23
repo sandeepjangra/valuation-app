@@ -292,3 +292,266 @@
     gap: 4px;
   }
 }
+/* ===== ENHANCED MOBILE RESPONSIVE STYLES ===== */
+
+/* Tablet optimization (768px - 1024px) */
+@media (max-width: 1024px) {
+  .bank-details-container {
+    padding: 20px 16px;
+    padding-top: 90px;
+  }
+
+  .bank-info {
+    padding: 24px;
+  }
+
+  .templates-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Enhanced mobile (< 768px) */
+@media (max-width: 768px) {
+  .bank-details-container {
+    padding: 12px;
+    padding-top: 80px;
+  }
+
+  .header {
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .title {
+    font-size: 22px;
+  }
+
+  .back-btn {
+    padding: 10px 14px;
+    font-size: 13px;
+    min-height: 44px;
+  }
+
+  .bank-info {
+    padding: 20px 16px;
+    border-radius: 10px;
+  }
+
+  .bank-header {
+    gap: 16px;
+    padding-bottom: 16px;
+  }
+
+  .bank-icon {
+    font-size: 40px;
+    width: 70px;
+    height: 70px;
+  }
+
+  .bank-name {
+    font-size: 20px;
+  }
+
+  .templates-section h2 {
+    font-size: 20px;
+  }
+
+  .templates-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .template-card {
+    padding: 16px;
+  }
+
+  .template-name {
+    font-size: 16px;
+  }
+
+  .create-report-btn {
+    padding: 10px 16px;
+    font-size: 14px;
+    min-height: 44px;
+  }
+
+  .retry-btn {
+    min-height: 44px;
+  }
+}
+
+/* Mobile portrait (< 600px) */
+@media (max-width: 600px) {
+  .bank-details-container {
+    padding: 10px;
+    padding-top: 76px;
+  }
+
+  .title {
+    font-size: 20px;
+  }
+
+  .bank-name {
+    font-size: 18px;
+  }
+
+  .templates-section h2 {
+    font-size: 18px;
+  }
+}
+
+/* Extra small mobile (< 480px) */
+@media (max-width: 480px) {
+  .bank-details-container {
+    padding: 8px;
+    padding-top: 72px;
+  }
+
+  .header {
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .title {
+    font-size: 18px;
+  }
+
+  .back-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .bank-info {
+    padding: 16px 12px;
+  }
+
+  .bank-header {
+    gap: 12px;
+    padding-bottom: 14px;
+  }
+
+  .bank-icon {
+    font-size: 36px;
+    width: 60px;
+    height: 60px;
+  }
+
+  .bank-name {
+    font-size: 16px;
+  }
+
+  .templates-section h2 {
+    font-size: 16px;
+    margin-bottom: 14px;
+  }
+
+  .templates-grid {
+    gap: 12px;
+  }
+
+  .template-card {
+    padding: 14px;
+    border-radius: 8px;
+  }
+
+  .template-name {
+    font-size: 15px;
+  }
+
+  .template-description {
+    font-size: 12px;
+  }
+
+  .create-report-btn {
+    padding: 9px 14px;
+    font-size: 13px;
+  }
+
+  .loading,
+  .error {
+    padding: 40px 15px;
+  }
+
+  .spinner {
+    width: 35px;
+    height: 35px;
+  }
+
+  .retry-btn {
+    padding: 9px 16px;
+    font-size: 13px;
+  }
+}
+
+/* Very small mobile (< 360px) */
+@media (max-width: 360px) {
+  .bank-details-container {
+    padding: 6px;
+    padding-top: 66px;
+  }
+
+  .title {
+    font-size: 16px;
+  }
+
+  .bank-icon {
+    width: 55px;
+    height: 55px;
+    font-size: 32px;
+  }
+
+  .bank-name {
+    font-size: 15px;
+  }
+
+  .templates-section h2 {
+    font-size: 15px;
+  }
+
+  .template-card {
+    padding: 12px;
+  }
+
+  .template-name {
+    font-size: 14px;
+  }
+
+  .template-description {
+    font-size: 11px;
+  }
+
+  .create-report-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+}
+
+/* Touch optimizations */
+@media (max-width: 768px) {
+  .template-card,
+  .back-btn,
+  .create-report-btn,
+  .retry-btn {
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  .template-card:active {
+    transform: scale(0.98);
+  }
+
+  .bank-details-container {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Landscape optimization */
+@media (max-width: 896px) and (max-height: 420px) {
+  .bank-details-container {
+    padding-top: 66px;
+  }
+
+  .templates-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

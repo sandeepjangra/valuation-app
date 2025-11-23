@@ -1,34 +1,30 @@
 .app-header {
   background: linear-gradient(135deg, #e6d7ff 0%, #d4b5ff 100%);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  position: fixed;
+  position: sticky;
   top: 0;
-  left: 0;
-  right: 0;
-  width: 100%;
   z-index: 1000;
   border-bottom: 2px solid #c299ff;
   padding: 0;
 }
 
 .header-container {
-  width: 100%; /* Full width instead of max-width constraint */
-  padding: 0 20px; /* More padding to keep content within bounds */
+  width: 100%;
+  padding: 0 20px;
   display: flex;
   align-items: center;
-  justify-content: space-between; /* Space between logo and navigation */
+  justify-content: space-between;
   height: 70px;
-  overflow: hidden; /* Prevent content from going outside */
-  box-sizing: border-box; /* Include padding in width calculation */
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
-/* Logo Section */
 .logo-section {
   display: flex;
   align-items: center;
-  gap: 12px; /* Slightly reduced gap between logo and text */
-  flex-shrink: 0; /* Prevent logo from shrinking */
-  margin-left: 5px; /* Minimal margin from very left edge */
+  gap: 12px;
+  flex-shrink: 0;
+  margin-left: 5px;
 }
 
 .logo {
@@ -72,30 +68,32 @@
   font-weight: 500;
 }
 
-/* Right Section - Contains Navigation and User */
+.hamburger-menu {
+  display: none;
+}
+
 .right-section {
   display: flex;
   align-items: center;
-  gap: 15px; /* Much more compact gap */
-  flex-shrink: 0; /* Prevent shrinking */
-  margin-right: 15px; /* Proper margin to stay within purple bar */
-  max-width: 70%; /* Limit width to ensure it stays within bounds */
+  gap: 15px;
+  flex-shrink: 0;
+  margin-right: 15px;
+  max-width: 70%;
 }
 
-/* Navigation Section */
 .nav-section {
   display: flex;
-  gap: 12px; /* Much more compact navigation gaps */
+  gap: 12px;
   align-items: center;
-  flex-wrap: nowrap; /* Prevent wrapping */
+  flex-wrap: nowrap;
 }
 
 .nav-section a {
   color: #4a148c;
   text-decoration: none;
   font-weight: 600;
-  font-size: 14px; /* Smaller font for compactness */
-  padding: 6px 12px; /* Smaller padding for compactness */
+  font-size: 14px;
+  padding: 6px 12px;
   border-radius: 20px;
   transition: all 0.3s ease;
   position: relative;
@@ -114,14 +112,13 @@
   font-weight: 700;
 }
 
-/* User Section */
 .user-section {
   display: flex;
   align-items: center;
-  flex-shrink: 0; /* Prevent login button from shrinking */
+  gap: 12px;
+  flex-shrink: 0;
 }
 
-/* User Info Section (when authenticated) */
 .user-info {
   display: flex;
   align-items: center;
@@ -129,147 +126,244 @@
 }
 
 .user-btn {
-  background: rgba(156, 39, 176, 0.1);
   color: #4a148c;
   text-decoration: none;
-  padding: 8px 16px;
-  border-radius: 20px;
   font-weight: 600;
-  font-size: 13px;
+  font-size: 14px;
+  padding: 6px 12px;
+  border-radius: 20px;
   transition: all 0.3s ease;
   white-space: nowrap;
-  border: 2px solid rgba(156, 39, 176, 0.2);
-  display: flex;
-  align-items: center;
+  background: rgba(255, 255, 255, 0.5);
 }
 
-.user-btn:hover {
-  background: rgba(156, 39, 176, 0.2);
-  transform: translateY(-1px);
-  border-color: rgba(156, 39, 176, 0.4);
-}
-
+.user-btn:hover,
 .user-btn.active {
-  background: rgba(156, 39, 176, 0.3);
-  font-weight: 700;
-  border-color: rgba(156, 39, 176, 0.5);
-}
-
-.logout-btn {
-  background: linear-gradient(135deg, #dc2626, #b91c1c);
-  color: white;
-  border: none;
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-weight: 600;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
-  white-space: nowrap;
-}
-
-.logout-btn:hover {
-  background: linear-gradient(135deg, #b91c1c, #991b1b);
+  background: rgba(255, 255, 255, 0.8);
+  color: #6a1b9a;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
 }
 
+.logout-btn,
 .login-btn {
   background: linear-gradient(135deg, #9c27b0, #673ab7);
   color: white;
   text-decoration: none;
-  padding: 8px 16px; /* Smaller padding for compactness */
+  padding: 8px 16px;
   border-radius: 25px;
   font-weight: 600;
-  font-size: 13px; /* Smaller font size */
+  font-size: 13px;
   transition: all 0.3s ease;
   box-shadow: 0 3px 10px rgba(156, 39, 176, 0.3);
-  white-space: nowrap; /* Prevent text wrapping */
+  white-space: nowrap;
+  border: none;
+  cursor: pointer;
+  display: inline-block;
 }
 
+.logout-btn:hover,
 .login-btn:hover {
   background: linear-gradient(135deg, #8e24aa, #5e35b1);
   transform: translateY(-2px);
   box-shadow: 0 5px 15px rgba(156, 39, 176, 0.4);
 }
 
-/* Responsive Design */
+@media (max-width: 1024px) {
+  .right-section {
+    gap: 12px;
+    max-width: 65%;
+  }
+
+  .nav-section {
+    gap: 10px;
+  }
+
+  .nav-section a {
+    font-size: 13px;
+    padding: 5px 10px;
+  }
+}
+
 @media (max-width: 768px) {
   .header-container {
-    padding: 0 15px; /* Minimal padding on mobile too */
+    padding: 0 15px;
     height: 60px;
   }
-  
+
   .logo-section {
-    margin-left: 2px; /* Even closer on mobile */
-    gap: 8px; /* Smaller gap on mobile */
-  }
-  
-  .right-section {
-    gap: 8px; /* Very compact gap on mobile */
-    margin-right: 10px; /* Proper margin on mobile */
-    max-width: 65%; /* Smaller max width on mobile */
-  }
-  
-  .user-info {
+    margin-left: 2px;
     gap: 8px;
   }
-  
-  .user-btn {
-    padding: 6px 12px;
-    font-size: 12px;
-  }
-  
-  .logout-btn {
-    padding: 5px 10px;
-    font-size: 11px;
-  }
-  
-  .company-name {
-    font-size: 18px; /* Smaller on mobile */
-  }
-  
-  .company-tagline {
-    font-size: 9px;
-  }
-  
-  .nav-section {
-    gap: 8px; /* Very compact navigation gaps */
-  }
-  
-  .nav-section a {
-    font-size: 12px; /* Smaller font on mobile */
-    padding: 4px 8px; /* Much smaller padding */
-  }
-  
-  .login-btn {
-    padding: 6px 12px; /* Much smaller login button on mobile */
-    font-size: 12px;
-  }
-  
+
   .logo-placeholder {
-    width: 30px; /* Smaller logo on mobile */
-    height: 30px;
-    font-size: 16px;
+    width: 35px;
+    height: 35px;
+    font-size: 18px;
+  }
+
+  .company-name {
+    font-size: 18px;
+  }
+
+  .company-tagline {
+    font-size: 10px;
+  }
+
+  .hamburger-menu {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    width: 28px;
+    height: 24px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    z-index: 1002;
+  }
+
+  .hamburger-menu span {
+    width: 100%;
+    height: 3px;
+    background: #4a148c;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+  }
+
+  .hamburger-menu.active span:nth-child(1) {
+    transform: translateY(8px) rotate(45deg);
+  }
+
+  .hamburger-menu.active span:nth-child(2) {
+    opacity: 0;
+  }
+
+  .hamburger-menu.active span:nth-child(3) {
+    transform: translateY(-8px) rotate(-45deg);
+  }
+
+  .right-section {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    background: white;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    max-height: 0;
+    max-width: 100%;
+    margin: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .right-section.mobile-menu-open {
+    max-height: calc(100vh - 60px);
+    opacity: 1;
+    padding: 16px 0;
+  }
+
+  .nav-section {
+    flex-direction: column;
+    gap: 0;
+    width: 100%;
+  }
+
+  .nav-section a {
+    width: 100%;
+    padding: 14px 20px;
+    font-size: 15px;
+    border-radius: 0;
+    text-align: left;
+  }
+
+  .nav-section a:hover {
+    background: #f5f5f5;
+    transform: none;
+  }
+
+  .nav-section a.active {
+    background: rgba(156, 39, 176, 0.08);
+  }
+
+  .user-section {
+    width: 100%;
+    padding: 12px 20px;
+    border-top: 1px solid #e0e0e0;
+    margin-top: 8px;
+  }
+
+  .user-info {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .user-btn {
+    width: 100%;
+    text-align: center;
+    padding: 12px;
+  }
+
+  .logout-btn,
+  .login-btn {
+    width: 100%;
+    padding: 12px;
+    text-align: center;
   }
 }
 
 @media (max-width: 480px) {
   .header-container {
-    flex-direction: column;
-    height: auto;
-    padding: 10px 15px;
-    gap: 10px;
+    height: 56px;
+    padding: 0 12px;
   }
-  
+
+  .logo-placeholder {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+
+  .company-name {
+    font-size: 16px;
+  }
+
+  .company-tagline {
+    font-size: 9px;
+  }
+
   .right-section {
-    gap: 15px;
+    top: 56px;
   }
-  
-  .nav-section {
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px;
+
+  .right-section.mobile-menu-open {
+    max-height: calc(100vh - 56px);
+  }
+}
+
+@media (max-width: 360px) {
+  .header-container {
+    height: 50px;
+  }
+
+  .company-name {
+    font-size: 14px;
+  }
+
+  .company-tagline {
+    display: none;
+  }
+
+  .right-section {
+    top: 50px;
+  }
+
+  .right-section.mobile-menu-open {
+    max-height: calc(100vh - 50px);
   }
 }

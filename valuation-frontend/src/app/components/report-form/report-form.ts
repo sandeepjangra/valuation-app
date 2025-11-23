@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject, computed } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -7,6 +7,7 @@ import { CommonField, BankBranch, ProcessedTemplateData, FieldGroup, TemplateFie
 import { TemplateService } from '../../services/template.service';
 import { CustomTemplateService } from '../../services/custom-template.service';
 import { CalculationService } from '../../services/calculation.service';
+import { AuthService } from '../../services/auth.service';
 import { TemplateAutofillModalComponent, AutoFillChoice } from '../custom-templates/template-autofill-modal.component';
 import { DynamicTableComponent } from '../dynamic-table/dynamic-table.component';
 
@@ -17,6 +18,9 @@ import { DynamicTableComponent } from '../dynamic-table/dynamic-table.component'
   styleUrl: './report-form.css',
 })
 export class ReportForm implements OnInit {
+  
+  // Dependency Injection
+  private readonly authService = inject(AuthService);
   
   // Query parameters from navigation
   selectedBankCode: string = '';
@@ -48,6 +52,13 @@ export class ReportForm implements OnInit {
 
   // Calculated fields tracking
   calculatedFieldsMap: Map<string, CalculatedFieldConfig> = new Map();
+  
+  // Role-based permissions (NEW!)
+  protected readonly canSubmitReports = computed(() => this.authService.canSubmitReports());
+  protected readonly canDeleteReports = computed(() => this.authService.hasPermission('reports', 'delete'));
+  protected readonly isManager = computed(() => this.authService.isManager());
+  protected readonly isEmployee = computed(() => this.authService.isEmployee() && !this.authService.isManager());
+  protected readonly currentUserRole = computed(() => this.authService.getCurrentRole());
 
   constructor(
     private router: Router,

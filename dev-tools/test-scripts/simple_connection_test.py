@@ -11,7 +11,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 async def test_connection():
     """Test MongoDB Atlas connection with proper SSL handling"""
     
-    connection_string = "mongodb+srv://app_user:kHxlQqJ1Uc3bmoL6@valuationreportcluster.5ixm1s7.mongodb.net/valuation_app_prod?retryWrites=true&w=majority&appName=ValuationReportCluster"
+    connection_string = "mongodb+srv://app_user:KOtsC5qeCc78icks@valuationreportcluster.5ixm1s7.mongodb.net/valuation_app_prod?retryWrites=true&w=majority&appName=ValuationReportCluster"
     
     print("🔗 Testing MongoDB Atlas Connection...")
     print(f"📋 Cluster: valuationreportcluster.5ixm1s7.mongodb.net")

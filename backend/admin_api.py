@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from bson import ObjectId
 import json
 import logging
-from backend.database.multi_db_manager import MultiDatabaseSession, DatabaseType
+from database.multi_db_manager import MultiDatabaseSession, DatabaseType
 
 logger = logging.getLogger(__name__)
 
@@ -577,4 +577,126 @@ async def fix_sortorder_gap() -> Dict[str, Any]:
             
     except Exception as e:
         logger.error(f"Failed to fix sortOrder: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@admin_router.get("/server-logs")
+async def get_server_logs(
+    log_type: str = Query("backend", description="Type of log file (backend, frontend, api_server)"),
+    level: Optional[str] = Query(None, description="Filter by log level (ERROR, WARNING, INFO)"),
+    limit: int = Query(100, ge=1, le=1000, description="Number of log entries to return"),
+    search: Optional[str] = Query(None, description="Search term to filter logs")
+) -> Dict[str, Any]:
+    """
+    Get server logs with filtering options.
+    Only returns ERROR and WARNING level logs by default to show server issues.
+    """
+    try:
+        import re
+        from pathlib import Path
+        
+        # Define log file paths
+        log_dir = Path(__file__).parent.parent / "logs"
+        log_files = {
+            "backend": log_dir / "backend.log",
+            "frontend": log_dir / "frontend.log",
+            "api_server": log_dir / "api_server.log",
+            "backend_nohup": log_dir / "backend_nohup.log"
+        }
+        
+        if log_type not in log_files:
+            raise HTTPException(status_code=400, detail=f"Invalid log type. Choose from: {list(log_files.keys())}")
+        
+        log_file = log_files[log_type]
+        
+        if not log_file.exists():
+            return {
+                "success": True,
+                "data": {
+                    "logs": [],
+                    "total": 0,
+                    "log_file": str(log_file),
+                    "message": "Log file not found"
+                }
+            }
+        
+        # Read log file
+        logs = []
+        error_count = 0
+        warning_count = 0
+        
+        # Simple pattern to extract log level
+        level_pattern = re.compile(r'(ERROR|WARNING|INFO|DEBUG|CRITICAL|⚠️)')
+        
+        with open(log_file, 'r', encoding='utf-8', errors='ignore') as f:
+            lines = f.readlines()
+            
+            # Read from the end of file to get recent logs
+            lines = lines[-10000:] if len(lines) > 10000 else lines
+            
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+                
+                # Find log level in the line
+                level_match = level_pattern.search(line)
+                log_level = level_match.group(1) if level_match else 'INFO'
+                
+                # Handle warning symbol
+                if log_level == '⚠️':
+                    log_level = 'WARNING'
+                
+                # Apply level filter
+                if level and log_level != level:
+                    continue
+                
+                # Apply search filter
+                if search and search.lower() not in line.lower():
+                    continue
+                
+                # Default: only show ERROR and WARNING unless level is explicitly specified
+                if not level and log_level not in ['ERROR', 'WARNING', 'CRITICAL']:
+                    continue
+                
+                # Extract timestamp if present
+                timestamp_match = re.search(r'(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}[,.]?\d*)', line)
+                timestamp = timestamp_match.group(1) if timestamp_match else ''
+                
+                # Create log entry
+                log_entry = {
+                    'timestamp': timestamp,
+                    'level': log_level,
+                    'logger': '',
+                    'message': line,
+                    'raw': line
+                }
+                
+                logs.append(log_entry)
+                
+                if log_level in ['ERROR', 'CRITICAL']:
+                    error_count += 1
+                elif log_level == 'WARNING':
+                    warning_count += 1
+        
+        # Sort by presence of timestamp, then reverse (most recent first)
+        logs.sort(key=lambda x: x['timestamp'] or '', reverse=True)
+        
+        # Apply limit
+        total_logs = len(logs)
+        logs = logs[:limit]
+        
+        return {
+            "success": True,
+            "data": {
+                "logs": logs,
+                "total": total_logs,
+                "error_count": error_count,
+                "warning_count": warning_count,
+                "log_file": str(log_file),
+                "showing": len(logs)
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error reading server logs: {e}")
         raise HTTPException(status_code=500, detail=str(e))

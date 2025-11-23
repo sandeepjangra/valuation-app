@@ -121,32 +121,59 @@ class CognitoJWTValidator:
     def _get_development_claims(self, token: str) -> Dict[str, Any]:
         """Generate development claims for testing (DO NOT USE IN PRODUCTION)"""
         
-        # New token format: "dev_username_domain_orgid_role"
-        # Example: "dev_manager_test.com_demo_org_001_manager"
+        # Token format: "dev_username_domain_org_short_name_role"
+        # Example: "dev_manager_test.com_sk_tindwal_manager"
+        # Hyphens in org_short_name are replaced with underscores in token
+        # Known roles: system_admin, manager, employee
+        
         if token.startswith("dev_"):
             parts = token.replace("dev_", "").split("_")
             if len(parts) >= 4:
                 username = parts[0]
                 domain = parts[1]
                 
-                # Reconstruct org_id and role
-                # Look for role at the end and work backwards
-                # Handle special case where org_id and role are the same (e.g., system_admin)
-                if len(parts) >= 6 and "_".join(parts[2:4]) == "_".join(parts[4:6]):
-                    # Case: system_admin_system_admin
-                    org_id = "_".join(parts[2:4])  # system_admin
-                    role = "_".join(parts[4:6])    # system_admin
+                # Known roles (including those with underscores)
+                known_roles = ["system_admin", "manager", "employee", "admin"]
+                
+                # Find role by checking from the end
+                role = None
+                org_end_index = len(parts)
+                
+                # Check for two-part role (system_admin)
+                if len(parts) >= 2 and "_".join(parts[-2:]) in known_roles:
+                    role = "_".join(parts[-2:])
+                    org_end_index = -2
+                # Check for single-part role
+                elif parts[-1] in known_roles:
+                    role = parts[-1]
+                    org_end_index = -1
                 else:
-                    # Normal case: separate org_id and role
-                    org_id = "_".join(parts[2:-1])  # Everything except last part
-                    role = parts[-1]                # Last part
+                    # Default to last part
+                    role = parts[-1]
+                    org_end_index = -1
+                
+                # Everything between domain and role is org_short_name
+                if org_end_index == -1:
+                    org_token_parts = parts[2:-1]
+                else:  # org_end_index == -2
+                    org_token_parts = parts[2:-2]
+                    
+                org_token = "_".join(org_token_parts) if org_token_parts else "system_admin"
+                
+                # Convert underscores back to hyphens for org_short_name
+                # Special case: "system_admin" stays as-is
+                if org_token == "system_admin":
+                    org_short_name = "system_admin"
+                else:
+                    org_short_name = org_token.replace("_", "-")
                     
                 email = f"{username}@{domain}"
                 
                 return {
                     "sub": f"dev_user_{username}",
                     "email": email,
-                    "custom:organization_id": org_id,
+                    "custom:org_short_name": org_short_name,
+                    "custom:organization_id": org_short_name,  # Backward compatibility
                     "cognito:groups": [role],
                     "iat": int(datetime.now(timezone.utc).timestamp()),
                     "exp": int(datetime.now(timezone.utc).timestamp()) + 3600,  # 1 hour
@@ -157,7 +184,8 @@ class CognitoJWTValidator:
         return {
             "sub": "dev_user_test",
             "email": "test@example.com",
-            "custom:organization_id": "demo_org_001",
+            "custom:org_short_name": "sk-tindwal",
+            "custom:organization_id": "sk-tindwal",  # Backward compatibility
             "cognito:groups": ["employee"],
             "iat": int(datetime.now(timezone.utc).timestamp()),
             "exp": int(datetime.now(timezone.utc).timestamp()) + 3600,
@@ -175,7 +203,12 @@ class OrganizationContext:
     def __init__(self, jwt_claims: Dict[str, Any]):
         self.user_id = jwt_claims.get("sub")
         self.email = jwt_claims.get("email")
-        self.organization_id = jwt_claims.get("custom:organization_id")
+        self.org_short_name = jwt_claims.get("custom:org_short_name")
+        # Backward compatibility: fallback to organization_id if org_short_name not found
+        if not self.org_short_name:
+            self.org_short_name = jwt_claims.get("custom:organization_id")
+        
+        self.organization_id = self.org_short_name  # Alias for backward compatibility
         self.roles = jwt_claims.get("cognito:groups", [])
         self.is_system_admin = "system_admin" in self.roles
         self.is_manager = "manager" in self.roles or self.is_system_admin
@@ -183,18 +216,18 @@ class OrganizationContext:
         self.dev_mode = jwt_claims.get("dev_mode", False)
         
         # Validate required fields
-        if not self.organization_id:
-            raise HTTPException(status_code=401, detail="Organization ID not found in token")
+        if not self.org_short_name:
+            raise HTTPException(status_code=401, detail="Organization short name not found in token")
         
         if not self.roles:
             raise HTTPException(status_code=401, detail="User roles not found in token")
     
-    def can_access_organization(self, target_org_id: str) -> bool:
+    def can_access_organization(self, target_org_short_name: str) -> bool:
         """Check if user can access the target organization"""
         if self.is_system_admin:
             return True  # System admin can access all organizations
         
-        return self.organization_id == target_org_id
+        return self.org_short_name == target_org_short_name
     
     def has_permission(self, resource: str, action: str) -> bool:
         """Check if user has permission for specific resource and action"""
@@ -232,7 +265,8 @@ class OrganizationContext:
         return {
             "user_id": self.user_id,
             "email": self.email,
-            "organization_id": self.organization_id,
+            "org_short_name": self.org_short_name,
+            "organization_id": self.organization_id,  # Backward compatibility
             "roles": self.roles,
             "is_system_admin": self.is_system_admin,
             "is_manager": self.is_manager,
@@ -252,7 +286,7 @@ async def get_organization_context(
         # Create organization context
         org_context = OrganizationContext(jwt_claims)
         
-        logger.debug(f"🏢 Organization context created: {org_context.organization_id} ({org_context.email})")
+        logger.debug(f"🏢 Organization context created: {org_context.org_short_name} ({org_context.email})")
         return org_context
         
     except Exception as e:
@@ -274,37 +308,38 @@ class OrganizationMiddleware:
     ) -> None:
         """Validate that user can access the organization specified in URL"""
         
-        # Extract organization ID from URL path
-        url_org_id = None
+        # Extract organization short name from URL path
+        url_org_short_name = None
         path_parts = request.url.path.split("/")
         
-        # Look for /org/{org_id}/ pattern in URL
+        # Look for /org/{org_short_name}/ pattern in URL
         try:
             if "org" in path_parts:
                 org_index = path_parts.index("org")
                 if org_index + 1 < len(path_parts):
-                    url_org_id = path_parts[org_index + 1]
+                    url_org_short_name = path_parts[org_index + 1]
         except (ValueError, IndexError):
             pass
         
-        if url_org_id:
+        if url_org_short_name:
             # Validate access to URL organization
-            if not org_context.can_access_organization(url_org_id):
+            if not org_context.can_access_organization(url_org_short_name):
                 await self._log_access_violation(
                     org_context, 
-                    f"Attempted access to organization: {url_org_id}",
+                    f"Attempted access to organization: {url_org_short_name}",
                     request
                 )
                 raise HTTPException(
                     status_code=403, 
-                    detail=f"Access denied to organization: {url_org_id}"
+                    detail=f"Access denied to organization: {url_org_short_name}"
                 )
         
         # Verify organization exists and is active
         if not org_context.is_system_admin:
+            # Check in val_app_config database
             org_exists = await self.db_manager.find_one(
-                "admin", "organizations",
-                {"organization_id": org_context.organization_id, "status": "active"}
+                "val_app_config", "organizations",
+                {"org_short_name": org_context.org_short_name, "is_active": True}
             )
             
             if not org_exists:
@@ -322,10 +357,10 @@ class OrganizationMiddleware:
         """Apply automatic organization filtering to database queries"""
         
         if collection_name in FILTERED_COLLECTIONS and not org_context.is_system_admin:
-            # Add organization_id filter for security-critical collections
-            query_filter["organization_id"] = org_context.organization_id
+            # Add org_short_name filter for security-critical collections
+            query_filter["org_short_name"] = org_context.org_short_name
             
-            logger.debug(f"🔒 Applied organization filter: {collection_name} -> {org_context.organization_id}")
+            logger.debug(f"🔒 Applied organization filter: {collection_name} -> {org_context.org_short_name}")
         
         return query_filter
     
@@ -451,17 +486,20 @@ def create_organization_middleware(db_manager: MultiDatabaseManager) -> Organiza
     return OrganizationMiddleware(db_manager)
 
 # Development helper for testing
-def create_dev_token(email: str, organization_id: str, role: str) -> str:
+def create_dev_token(email: str, org_short_name: str, role: str) -> str:
     """Create a development token for testing"""
-    # Format: dev_email_domain_orgid_role
-    # Example: dev_manager_test.com_demo_org_001_manager
+    # Format: dev_email_domain_org-short-name_role
+    # Example: dev_manager_test.com_sk-tindwal_manager
     email_parts = email.split('@')
     if len(email_parts) == 2:
         username, domain = email_parts
-        return f"dev_{username}_{domain}_{organization_id}_{role}"
+        # Replace hyphens with underscores in org_short_name for token format
+        org_token = org_short_name.replace("-", "_")
+        return f"dev_{username}_{domain}_{org_token}_{role}"
     else:
         # Fallback format
-        return f"dev_{email.replace('@', '_')}_{organization_id}_{role}"
+        org_token = org_short_name.replace("-", "_")
+        return f"dev_{email.replace('@', '_')}_{org_token}_{role}"
 
 # Environment validation
 def validate_environment():

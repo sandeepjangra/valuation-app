@@ -326,9 +326,16 @@ export class OrganizationInterceptor implements HttpInterceptor {
     if (orgContext && !this.shouldSkipOrganizationHeaders(request.url)) {
       const modifiedRequest = request.clone({
         setHeaders: {
-          'X-Organization-ID': orgContext.organizationId,
+          'X-Organization-Short-Name': orgContext.orgShortName,
+          'X-Organization-ID': orgContext.organizationId, // Backward compatibility
           'X-User-Roles': orgContext.roles.join(',')
         }
+      });
+      
+      console.log('📤 Adding organization headers:', {
+        orgShortName: orgContext.orgShortName,
+        roles: orgContext.roles,
+        url: request.url
       });
       
       return next.handle(modifiedRequest);

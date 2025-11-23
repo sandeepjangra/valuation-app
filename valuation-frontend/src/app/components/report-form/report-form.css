@@ -1,7 +1,8 @@
 .report-form-container {
   min-height: 100vh;
   background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
-  padding: 20px;
+  padding: 5px;
+  padding-top: 0;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
@@ -655,7 +656,7 @@
   justify-content: flex-end;
 }
 
-.cancel-button, .save-draft-button, .submit-button {
+.cancel-button, .save-draft-button, .submit-button, .save-button {
   padding: 12px 24px;
   border-radius: 8px;
   font-size: 14px;
@@ -704,6 +705,45 @@
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+}
+
+/* Save button for employees (blue, informative) */
+.save-button {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.save-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.save-button:disabled {
+  background: #d1d5db;
+  color: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Employee info message */
+.employee-info-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  color: #1e40af;
+  font-size: 13px;
+}
+
+.employee-info-message svg {
+  flex-shrink: 0;
+  color: #3b82f6;
 }
 
 /* Responsive Design */
@@ -885,13 +925,26 @@
   border-bottom: 2px solid #e5e7eb;
 }
 
+/* Bank-Specific Fields Container */
+.compact-field-groups {
+  background: white;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+}
+
 /* Valuation section styling */
 .valuation-section {
-  margin-bottom: 28px;
-  padding: 20px;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  margin-bottom: 24px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+}
+
+.valuation-section:last-child {
+  margin-bottom: 0;
 }
 
 .section-title {
@@ -1116,5 +1169,405 @@ fieldset:disabled .form-textarea {
   .table-input {
     font-size: 12px;
     padding: 4px 6px;
+  }
+}
+/* ===== ENHANCED MOBILE RESPONSIVE STYLES ===== */
+
+/* Tablet optimization (768px - 1024px) */
+@media (max-width: 1024px) {
+  .report-form-container {
+    padding: 16px;
+  }
+
+  .page-header {
+    padding: 20px;
+  }
+
+  .form-section {
+    padding: 24px;
+  }
+
+  .page-title {
+    font-size: 24px;
+  }
+
+  .fields-grid {
+    gap: 16px;
+  }
+
+  .field-container {
+    min-width: 0;
+  }
+}
+
+/* Mobile landscape and small tablets (600px - 768px) */
+@media (max-width: 768px) {
+  .report-form-container {
+    padding: 12px;
+  }
+
+  .page-header {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .page-title {
+    font-size: 20px;
+  }
+
+  .form-section {
+    padding: 20px;
+    border-radius: 8px;
+  }
+
+  .section-title {
+    font-size: 18px;
+  }
+
+  .tab-button {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+
+  .sub-tab-button {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  /* Make tabs scrollable horizontally on mobile */
+  .tabs-header {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    padding-bottom: 8px;
+  }
+
+  .tabs-header::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .tabs-header::-webkit-scrollbar-thumb {
+    background: #8b5cf6;
+    border-radius: 4px;
+  }
+
+  .sub-tabs-header {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Form fields */
+  .field-label {
+    font-size: 13px;
+  }
+
+  .field-input,
+  .field-select,
+  .field-textarea {
+    font-size: 15px; /* Larger for better mobile input */
+    padding: 12px;
+  }
+
+  .field-textarea {
+    min-height: 100px;
+  }
+}
+
+/* Mobile portrait (< 600px) */
+@media (max-width: 600px) {
+  .report-form-container {
+    padding: 8px;
+  }
+
+  .page-header {
+    padding: 12px;
+  }
+
+  .page-title {
+    font-size: 18px;
+  }
+
+  .form-section {
+    padding: 16px;
+  }
+
+  .section-title {
+    font-size: 16px;
+    margin-bottom: 16px;
+  }
+
+  /* Stack action buttons vertically */
+  .action-buttons {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .cancel-button,
+  .save-draft-button,
+  .submit-button {
+    width: 100%;
+    padding: 14px 20px;
+    font-size: 15px;
+  }
+
+  /* Tabs become compact */
+  .tab-button {
+    padding: 8px 12px;
+    font-size: 12px;
+    min-width: auto;
+    white-space: nowrap;
+  }
+
+  .sub-tab-button {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .field-count,
+  .sub-tab-button .field-count {
+    font-size: 10px;
+    padding: 2px 6px;
+  }
+
+  /* Group fields optimization */
+  .group-field-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+/* Extra small mobile (< 480px) */
+@media (max-width: 480px) {
+  .report-form-container {
+    padding: 6px;
+  }
+
+  .page-header {
+    padding: 10px;
+    margin-bottom: 12px;
+  }
+
+  .header-content {
+    gap: 12px;
+  }
+
+  .page-title {
+    font-size: 16px;
+  }
+
+  .template-name {
+    padding: 8px 12px;
+  }
+
+  .template-label {
+    font-size: 12px;
+  }
+
+  .form-section {
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+
+  .section-title {
+    font-size: 15px;
+  }
+
+  .section-subtitle {
+    font-size: 12px;
+  }
+
+  /* Compact field styling */
+  .field-label {
+    font-size: 12px;
+    margin-bottom: 6px;
+  }
+
+  .field-input,
+  .field-select {
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .field-textarea {
+    padding: 10px;
+    font-size: 14px;
+    min-height: 80px;
+  }
+
+  /* Compact buttons */
+  .back-button {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .cancel-button,
+  .save-draft-button,
+  .submit-button {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+
+  /* Tables become scrollable */
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .valuation-table {
+    min-width: 600px; /* Ensure table doesn't collapse too much */
+    font-size: 11px;
+  }
+
+  .valuation-table th,
+  .valuation-table td {
+    padding: 6px 4px;
+    font-size: 11px;
+  }
+
+  /* Section headers become more compact */
+  .sub-tabs-section {
+    margin-bottom: 16px;
+  }
+
+  .sub-tabs-header {
+    padding-bottom: 12px;
+    gap: 6px;
+  }
+}
+
+/* Very small mobile (< 360px) */
+@media (max-width: 360px) {
+  .report-form-container {
+    padding: 4px;
+  }
+
+  .page-header {
+    padding: 8px;
+  }
+
+  .page-title {
+    font-size: 14px;
+  }
+
+  .form-section {
+    padding: 10px;
+  }
+
+  .section-title {
+    font-size: 14px;
+  }
+
+  .field-label {
+    font-size: 11px;
+  }
+
+  .field-input,
+  .field-select,
+  .field-textarea {
+    font-size: 13px;
+    padding: 8px;
+  }
+
+  .tab-button {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .sub-tab-button {
+    padding: 5px 8px;
+    font-size: 10px;
+  }
+
+  .valuation-table {
+    font-size: 10px;
+    min-width: 500px;
+  }
+
+  .valuation-table th,
+  .valuation-table td {
+    padding: 4px 3px;
+  }
+}
+
+/* Touch-friendly improvements for all mobile sizes */
+@media (max-width: 768px) {
+  /* Larger touch targets */
+  button,
+  a,
+  .tab-button,
+  .sub-tab-button,
+  select,
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-height: 44px; /* Apple's recommended minimum touch target */
+  }
+
+  /* Better spacing for checkboxes and radios */
+  input[type="checkbox"],
+  input[type="radio"] {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* Prevent text selection on buttons */
+  button,
+  .tab-button,
+  .sub-tab-button {
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  /* Smooth scrolling */
+  .tabs-header,
+  .sub-tabs-header,
+  .table-container {
+    scroll-behavior: smooth;
+  }
+
+  /* Loading states - more visible on mobile */
+  .loading-overlay {
+    background: rgba(255, 255, 255, 0.95);
+  }
+
+  .loading-spinner {
+    width: 60px;
+    height: 60px;
+  }
+}
+
+/* Landscape orientation optimization for phones */
+@media (max-width: 896px) and (max-height: 420px) {
+  .report-form-container {
+    padding: 12px;
+  }
+
+  .page-header {
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+
+  .form-section {
+    padding: 16px;
+  }
+
+  /* Reduce vertical spacing in landscape */
+  .fields-grid {
+    gap: 12px;
+  }
+
+  .field-container {
+    margin-bottom: 0;
+  }
+
+  /* Make tabs more compact in landscape */
+  .tabs-header {
+    padding: 8px 0;
+  }
+
+  .tab-button {
+    padding: 6px 12px;
   }
 }

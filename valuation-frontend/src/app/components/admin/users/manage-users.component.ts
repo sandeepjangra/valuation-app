@@ -81,9 +81,21 @@ interface User {
                     </span>
                   </td>
                   <td>{{ formatDate(user.created_at) }}</td>
-                  <td>
-                    <button class="btn btn-sm" (click)="editUserRole(user)">
-                      ✏️ Edit Role
+                  <td class="actions-cell">
+                    <button class="btn btn-sm btn-edit" (click)="editUser(user)" title="Edit user details">
+                      ✏️ Edit
+                    </button>
+                    @if (user.status === 'active') {
+                      <button class="btn btn-sm btn-warning" (click)="toggleUserStatus(user)" title="Deactivate user">
+                        🚫 Deactivate
+                      </button>
+                    } @else {
+                      <button class="btn btn-sm btn-success" (click)="toggleUserStatus(user)" title="Activate user">
+                        ✅ Activate
+                      </button>
+                    }
+                    <button class="btn btn-sm btn-danger" (click)="confirmDeleteUser(user)" title="Delete user permanently">
+                      🗑️ Delete
                     </button>
                   </td>
                 </tr>
@@ -103,48 +115,47 @@ interface User {
       }
     </div>
 
-    <!-- Add User Dialog -->
+    <!-- Add/Edit User Dialog -->
     @if (showDialog()) {
       <div class="dialog-overlay" (click)="closeDialog()">
         <div class="dialog" (click)="$event.stopPropagation()">
           <div class="dialog-header">
-            <h2>{{ editingUser() ? 'Edit User Role' : 'Add New User' }}</h2>
+            <h2>{{ editingUser() ? 'Edit User' : 'Add New User' }}</h2>
             <button class="close-btn" (click)="closeDialog()">✕</button>
           </div>
 
           <form (ngSubmit)="submitUser()" class="dialog-content">
+            <div class="form-group">
+              <label>Full Name *</label>
+              <input type="text" [(ngModel)]="userForm.full_name" name="full_name" required
+                     [disabled]="!!editingUser()"
+                     placeholder="John Doe">
+              @if (editingUser()) {
+                <small class="help-text">Name cannot be changed after creation</small>
+              }
+            </div>
+
+            <div class="form-group">
+              <label>Email Address *</label>
+              <input type="email" [(ngModel)]="userForm.email" name="email" required
+                     [disabled]="!!editingUser()"
+                     placeholder="john.doe@company.com">
+              @if (editingUser()) {
+                <small class="help-text">Email cannot be changed after creation</small>
+              }
+            </div>
+
+            <div class="form-group">
+              <label>Phone</label>
+              <input type="tel" [(ngModel)]="userForm.phone" name="phone"
+                     placeholder="+1-555-0123">
+            </div>
+
             @if (!editingUser()) {
-              <div>
-                <div class="form-group">
-                  <label>Full Name *</label>
-                  <input type="text" [(ngModel)]="userForm.full_name" name="full_name" required
-                         placeholder="John Doe">
-                </div>
-
-                <div class="form-group">
-                  <label>Email Address *</label>
-                  <input type="email" [(ngModel)]="userForm.email" name="email" required
-                         placeholder="john.doe@company.com">
-                </div>
-
-                <div class="form-group">
-                  <label>Phone (Optional)</label>
-                  <input type="tel" [(ngModel)]="userForm.phone" name="phone"
-                         placeholder="+1-555-0123">
-                </div>
-
-                <div class="form-group">
-                  <label>Password *</label>
-                  <input type="password" [(ngModel)]="userForm.password" name="password" required
-                         placeholder="Minimum 8 characters">
-                </div>
-              </div>
-            }
-
-            @if (editingUser()) {
-              <div class="user-info">
-                <p><strong>Name:</strong> {{ editingUser()?.name }}</p>
-                <p><strong>Email:</strong> {{ editingUser()?.email }}</p>
+              <div class="form-group">
+                <label>Password *</label>
+                <input type="password" [(ngModel)]="userForm.password" name="password" required
+                       placeholder="Minimum 8 characters">
               </div>
             }
 
@@ -164,10 +175,44 @@ interface User {
                 Cancel
               </button>
               <button type="submit" class="btn btn-primary" [disabled]="submitting()">
-                {{ submitting() ? 'Saving...' : (editingUser() ? 'Update Role' : 'Add User') }}
+                {{ submitting() ? 'Saving...' : (editingUser() ? 'Update User' : 'Add User') }}
               </button>
             </div>
           </form>
+        </div>
+      </div>
+    }
+
+    <!-- Delete Confirmation Dialog -->
+    @if (showDeleteConfirm()) {
+      <div class="dialog-overlay" (click)="cancelDelete()">
+        <div class="dialog delete-dialog" (click)="$event.stopPropagation()">
+          <div class="dialog-header">
+            <h2>⚠️ Confirm Delete</h2>
+            <button class="close-btn" (click)="cancelDelete()">✕</button>
+          </div>
+
+          <div class="dialog-content">
+            <div class="warning-box">
+              <p><strong>Are you sure you want to delete this user?</strong></p>
+              <p class="user-details">
+                <strong>Name:</strong> {{ userToDelete()?.name }}<br>
+                <strong>Email:</strong> {{ userToDelete()?.email }}
+              </p>
+              <p class="warning-text">
+                ⚠️ This action cannot be undone. The user will be permanently removed from the organization.
+              </p>
+            </div>
+
+            <div class="dialog-actions">
+              <button type="button" class="btn btn-secondary" (click)="cancelDelete()">
+                Cancel
+              </button>
+              <button type="button" class="btn btn-danger" (click)="deleteUser()" [disabled]="deleting()">
+                {{ deleting() ? 'Deleting...' : 'Delete User' }}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     }
@@ -315,10 +360,60 @@ interface User {
       font-size: 13px;
       background: #f3f4f6;
       color: #374151;
+      margin-right: 6px;
     }
 
     .btn-sm:hover {
       background: #e5e7eb;
+    }
+
+    .btn-sm.btn-edit {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .btn-sm.btn-edit:hover {
+      background: #2563eb;
+    }
+
+    .btn-sm.btn-warning {
+      background: #f59e0b;
+      color: white;
+    }
+
+    .btn-sm.btn-warning:hover {
+      background: #d97706;
+    }
+
+    .btn-sm.btn-success {
+      background: #10b981;
+      color: white;
+    }
+
+    .btn-sm.btn-success:hover {
+      background: #059669;
+    }
+
+    .btn-sm.btn-danger {
+      background: #ef4444;
+      color: white;
+    }
+
+    .btn-sm.btn-danger:hover {
+      background: #dc2626;
+    }
+
+    .btn.btn-danger {
+      background: #ef4444;
+      color: white;
+    }
+
+    .btn.btn-danger:hover:not(:disabled) {
+      background: #dc2626;
+    }
+
+    .actions-cell {
+      white-space: nowrap;
     }
 
     .btn:disabled {
@@ -454,6 +549,12 @@ interface User {
       border-color: #3b82f6;
     }
 
+    .form-group input:disabled {
+      background: #f3f4f6;
+      cursor: not-allowed;
+      color: #6b7280;
+    }
+
     .help-text {
       display: block;
       margin-top: 6px;
@@ -468,6 +569,40 @@ interface User {
       margin-top: 24px;
       padding-top: 24px;
       border-top: 1px solid #e5e7eb;
+    }
+
+    .delete-dialog .dialog {
+      max-width: 500px;
+    }
+
+    .warning-box {
+      background: #fef2f2;
+      border: 2px solid #fca5a5;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .warning-box p {
+      margin: 0 0 12px 0;
+      color: #991b1b;
+    }
+
+    .warning-box p:last-child {
+      margin-bottom: 0;
+    }
+
+    .user-details {
+      background: white;
+      padding: 12px;
+      border-radius: 6px;
+      margin: 12px 0;
+      color: #374151 !important;
+    }
+
+    .warning-text {
+      font-weight: 600;
+      font-size: 14px;
     }
   `]
 })
@@ -484,6 +619,9 @@ export class ManageUsersComponent implements OnInit {
   showDialog = signal(false);
   submitting = signal(false);
   editingUser = signal<User | null>(null);
+  showDeleteConfirm = signal(false);
+  deleting = signal(false);
+  userToDelete = signal<User | null>(null);
 
   userForm = {
     full_name: '',
@@ -524,13 +662,22 @@ export class ManageUsersComponent implements OnInit {
 
   showAddUserDialog() {
     this.editingUser.set(null);
+    this.resetForm();
+    this.showDialog.set(true);
+  }
+
+  editUser(user: User) {
+    this.editingUser.set(user);
+    this.userForm.full_name = user.name;
+    this.userForm.email = user.email;
+    this.userForm.phone = user._id; // Will get phone from backend
+    this.userForm.role = user.role;
+    this.userForm.password = ''; // Not needed for edit
     this.showDialog.set(true);
   }
 
   editUserRole(user: User) {
-    this.editingUser.set(user);
-    this.userForm.role = user.role;
-    this.showDialog.set(true);
+    this.editUser(user);
   }
 
   closeDialog() {
@@ -542,23 +689,30 @@ export class ManageUsersComponent implements OnInit {
     this.submitting.set(true);
 
     if (this.editingUser()) {
-      // Update role
+      // Update user
       const userId = this.editingUser()!.user_id;
+      const updateData = {
+        phone: this.userForm.phone,
+        role: this.userForm.role
+      };
+      
       this.http.put<any>(
-        `${this.API_BASE}/admin/users/${userId}/role`,
-        { role: this.userForm.role }
+        `${this.API_BASE}/admin/organizations/${this.organizationId()}/users/${userId}`,
+        updateData
       ).subscribe({
         next: (response) => {
           if (response.success) {
-            console.log('✅ User role updated:', response.data);
+            console.log('✅ User updated:', response.data);
+            alert(`User "${this.editingUser()!.name}" has been updated successfully.`);
             this.loadUsers(this.organizationId());
             this.closeDialog();
           }
           this.submitting.set(false);
         },
         error: (err) => {
-          console.error('Failed to update role:', err);
-          alert('Failed to update user role. Please try again.');
+          console.error('Failed to update user:', err);
+          const errorMessage = err.error?.detail || err.error?.error || 'Failed to update user. Please try again.';
+          alert(errorMessage);
           this.submitting.set(false);
         }
       });
@@ -571,6 +725,7 @@ export class ManageUsersComponent implements OnInit {
         next: (response) => {
           if (response.success) {
             console.log('✅ User added:', response.data);
+            alert(`User "${this.userForm.email}" has been added successfully.`);
             this.loadUsers(this.organizationId());
             this.closeDialog();
           }
@@ -578,11 +733,76 @@ export class ManageUsersComponent implements OnInit {
         },
         error: (err) => {
           console.error('Failed to add user:', err);
-          alert('Failed to add user. Please try again.');
+          const errorMessage = err.error?.detail || err.error?.error || 'Failed to add user. Please try again.';
+          alert(errorMessage);
           this.submitting.set(false);
         }
       });
     }
+  }
+
+  toggleUserStatus(user: User) {
+    const action = user.status === 'active' ? 'deactivate' : 'activate';
+    const confirmMsg = user.status === 'active' 
+      ? `Are you sure you want to deactivate ${user.name}? They will not be able to access the system.`
+      : `Are you sure you want to activate ${user.name}?`;
+    
+    if (!confirm(confirmMsg)) return;
+
+    this.http.put<any>(
+      `${this.API_BASE}/admin/organizations/${this.organizationId()}/users/${user.user_id}/status`,
+      { is_active: user.status !== 'active' }
+    ).subscribe({
+      next: (response) => {
+        if (response.success) {
+          console.log(`✅ User ${action}d:`, response.data);
+          alert(`User "${user.name}" has been ${action}d successfully.`);
+          this.loadUsers(this.organizationId());
+        }
+      },
+      error: (err) => {
+        console.error(`Failed to ${action} user:`, err);
+        const errorMessage = err.error?.detail || err.error?.error || `Failed to ${action} user. Please try again.`;
+        alert(errorMessage);
+      }
+    });
+  }
+
+  confirmDeleteUser(user: User) {
+    this.userToDelete.set(user);
+    this.showDeleteConfirm.set(true);
+  }
+
+  cancelDelete() {
+    this.showDeleteConfirm.set(false);
+    this.userToDelete.set(null);
+  }
+
+  deleteUser() {
+    const user = this.userToDelete();
+    if (!user) return;
+
+    this.deleting.set(true);
+
+    this.http.delete<any>(
+      `${this.API_BASE}/admin/organizations/${this.organizationId()}/users/${user.user_id}`
+    ).subscribe({
+      next: (response) => {
+        if (response.success) {
+          console.log('✅ User deleted:', response.data);
+          alert(`User "${user.name}" has been deleted successfully.`);
+          this.loadUsers(this.organizationId());
+          this.cancelDelete();
+        }
+        this.deleting.set(false);
+      },
+      error: (err) => {
+        console.error('Failed to delete user:', err);
+        const errorMessage = err.error?.detail || err.error?.error || 'Failed to delete user. Please try again.';
+        alert(errorMessage);
+        this.deleting.set(false);
+      }
+    });
   }
 
   goBack() {

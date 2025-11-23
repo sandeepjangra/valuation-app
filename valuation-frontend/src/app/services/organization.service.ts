@@ -84,15 +84,33 @@ export class OrganizationService {
   /**
    * Get all organizations (system admin only)
    */
-  getAllOrganizations(): Observable<Organization[]> {
-    return this.http.get<ApiResponse<Organization[]>>(`${this.API_BASE}/system/organizations`)
+  getAllOrganizations(includeInactive = false, includeSystem = false): Observable<Organization[]> {
+    const params = new HttpParams()
+      .set('active_only', (!includeInactive).toString())
+      .set('include_system', includeSystem.toString());
+      
+    return this.http.get<Organization[]>(`${this.API_BASE}/organizations/`, { params })
       .pipe(
-        map(response => {
-          if (!response.success || !response.data) {
-            throw new Error(response.message || 'Failed to get organizations');
-          }
-          return response.data;
-        }),
+        catchError(this.handleError.bind(this))
+      );
+  }
+
+  /**
+   * Get organization by short name
+   */
+  getOrganizationByShortName(shortName: string): Observable<Organization> {
+    return this.http.get<Organization>(`${this.API_BASE}/organizations/${shortName}`)
+      .pipe(
+        catchError(this.handleError.bind(this))
+      );
+  }
+
+  /**
+   * Get organization by ID
+   */
+  getOrganizationById(id: string): Observable<Organization> {
+    return this.http.get<Organization>(`${this.API_BASE}/organizations/${id}`)
+      .pipe(
         catchError(this.handleError.bind(this))
       );
   }

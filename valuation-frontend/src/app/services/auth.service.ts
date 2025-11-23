@@ -93,8 +93,15 @@ export class AuthService {
   private initializeAuthState(): void {
     const token = this.getStoredToken();
     
-    if (token && this.isTokenValid(token)) {
+    if (token) {
       try {
+        if (!this.isTokenValid(token)) {
+          console.log('⚠️ Token expired, clearing stored data');
+          this.clearStoredData();
+          this._isAuthenticated.set(false);
+          return;
+        }
+        
         const payload = this.parseJwtPayload(token);
         const orgContext = this.createOrganizationContext(payload, token);
         const user = this.getStoredUser();
@@ -109,11 +116,19 @@ export class AuthService {
         // Set up token refresh
         this.scheduleTokenRefresh(payload.exp);
         
-        console.log('✅ Auth state initialized from stored token');
+        console.log('✅ Auth state initialized from stored token', {
+          email: orgContext.email,
+          orgShortName: orgContext.orgShortName,
+          roles: orgContext.roles
+        });
       } catch (error) {
         console.error('❌ Failed to initialize auth state:', error);
-        this.logout();
+        this.clearStoredData();
+        this._isAuthenticated.set(false);
       }
+    } else {
+      console.log('ℹ️ No stored token found');
+      this._isAuthenticated.set(false);
     }
   }
 
@@ -138,19 +153,23 @@ export class AuthService {
   /**
    * Login with development token (for testing)
    */
-  loginWithDevToken(email: string, organizationId: string, role: UserRole): Observable<boolean> {
+  loginWithDevToken(email: string, orgShortName: string, role: UserRole): Observable<boolean> {
     this._isLoading.set(true);
     
     // Create development token (matching backend format)
+    // Backend expects: dev_username_domain_org-short-name_role
+    // Convert hyphens in org_short_name to underscores for token
     const [username, domain] = email.split('@');
-    const devToken = `dev_${username}_${domain}_${organizationId}_${role}`;
+    const orgForToken = orgShortName.replace(/-/g, '_');
+    const devToken = `dev_${username}_${domain}_${orgForToken}_${role}`;
     
     try {
       // Create mock JWT payload for development
       const mockPayload: JwtPayload = {
         sub: `dev_user_${username}`,
         email: email,
-        'custom:organization_id': organizationId,
+        'custom:org_short_name': orgShortName,
+        'custom:organization_id': orgShortName, // Backward compatibility
         'cognito:groups': [role],
         iat: Math.floor(Date.now() / 1000),
         exp: Math.floor(Date.now() / 1000) + 3600, // 1 hour
@@ -160,7 +179,7 @@ export class AuthService {
       // Create mock user data
       const mockUser: User = {
         _id: mockPayload.sub,
-        organization_id: organizationId,
+        organization_id: orgShortName,
         email: email,
         first_name: username,
         roles: [role],
@@ -174,9 +193,9 @@ export class AuthService {
         expires_in: 3600,
         user: mockUser,
         organization: {
-          id: organizationId,
-          name: organizationId === 'system_admin' ? 'System Administration' : 'Demo Organization 001',
-          type: organizationId === 'system_admin' ? 'system' : 'valuation_company'
+          id: orgShortName,
+          name: orgShortName === 'system_admin' ? 'System Administration' : 'Demo Organization',
+          type: orgShortName === 'system_admin' ? 'system' : 'valuation_company'
         }
       };
 
@@ -203,30 +222,31 @@ export class AuthService {
       this.tokenRefreshTimer = undefined;
     }
 
-    // Call logout endpoint if authenticated
-    const logoutRequest = this._isAuthenticated() 
-      ? this.http.post(`${this.API_BASE}/auth/logout`, {})
-      : of({});
-
-    return logoutRequest.pipe(
-      catchError(() => of({})), // Ignore logout endpoint errors
-      tap(() => {
-        // Clear all stored data
-        this.clearStoredData();
-        
-        // Reset signals
-        this._isAuthenticated.set(false);
-        this._currentUser.set(null);
-        this._organizationContext.set(null);
-        this._isLoading.set(false);
-        
-        // Redirect to login
-        this.router.navigate(['/login']);
-        
-        console.log('✅ Logout completed');
-      }),
-      map(() => true)
-    );
+    // Clear all stored data immediately
+    this.clearStoredData();
+    
+    // Reset signals
+    this._isAuthenticated.set(false);
+    this._currentUser.set(null);
+    this._organizationContext.set(null);
+    this._isLoading.set(false);
+    
+    console.log('✅ Logout completed - user signed out');
+    
+    // Redirect to login
+    this.router.navigate(['/login']);
+    
+    // Optionally call logout endpoint (don't wait for it)
+    if (this._isAuthenticated()) {
+      this.http.post(`${this.API_BASE}/auth/logout`, {})
+        .pipe(catchError(() => of({})))
+        .subscribe({
+          next: () => console.log('✅ Logout endpoint called successfully'),
+          error: () => console.log('⚠️ Logout endpoint failed (ignored)')
+        });
+    }
+    
+    return of(true);
   }
 
   /**
@@ -280,6 +300,24 @@ export class AuthService {
    */
   getOrganizationContext(): OrganizationContext | null {
     return this._organizationContext();
+  }
+
+  /**
+   * Get current organization short name
+   */
+  getOrgShortName(): string | null {
+    return this._organizationContext()?.orgShortName || null;
+  }
+
+  /**
+   * Get current user role(s)
+   */
+  getCurrentRole(): UserRole | null {
+    const roles = this.userRoles();
+    if (roles.includes('system_admin')) return 'system_admin';
+    if (roles.includes('manager')) return 'manager';
+    if (roles.includes('employee')) return 'employee';
+    return null;
   }
 
   /**
@@ -448,27 +486,31 @@ export class AuthService {
     try {
       // Handle development tokens
       if (token.startsWith('dev_')) {
-        // Parse development token format: dev_username_domain_orgid_role
+        // Parse development token format: dev_username_domain_org-short-name_role
+        // Backend converts hyphens to underscores in token, we need to convert back
         const parts = token.replace('dev_', '').split('_');
         if (parts.length >= 4) {
           const username = parts[0];
           const domain = parts[1];
           const email = `${username}@${domain}`;
           
-          // Handle system_admin case
-          let orgId: string, role: string;
+          // Handle special case: system_admin
+          let orgShortName: string, role: string;
           if (parts.length >= 6 && parts[2] === 'system' && parts[3] === 'admin') {
-            orgId = 'system_admin';
+            orgShortName = 'system_admin';
             role = 'system_admin';
           } else {
-            orgId = parts.slice(2, -1).join('_');
+            // Join org parts (all except last which is role) and convert underscores back to hyphens
+            const orgParts = parts.slice(2, -1);
+            orgShortName = orgParts.join('_').replace(/_/g, '-');
             role = parts[parts.length - 1];
           }
           
           return {
             sub: `dev_user_${username}`,
             email: email,
-            'custom:organization_id': orgId,
+            'custom:org_short_name': orgShortName,
+            'custom:organization_id': orgShortName, // Backward compatibility
             'cognito:groups': [role as UserRole],
             iat: Math.floor(Date.now() / 1000),
             exp: Math.floor(Date.now() / 1000) + 3600,
@@ -485,6 +527,12 @@ export class AuthService {
       }
       
       const payload = JSON.parse(atob(parts[1]));
+      
+      // Ensure org_short_name is present, fallback to organization_id for backward compatibility
+      if (!payload['custom:org_short_name'] && payload['custom:organization_id']) {
+        payload['custom:org_short_name'] = payload['custom:organization_id'];
+      }
+      
       return payload as JwtPayload;
       
     } catch (error) {
@@ -495,12 +543,14 @@ export class AuthService {
 
   private createOrganizationContext(payload: JwtPayload, token: string): OrganizationContext {
     const roles = payload['cognito:groups'] || [];
-    const organizationId = payload['custom:organization_id'];
+    // Use org_short_name if available, fallback to organization_id for backward compatibility
+    const orgShortName = payload['custom:org_short_name'] || payload['custom:organization_id'] || 'unknown';
     
     return {
       userId: payload.sub,
       email: payload.email,
-      organizationId: organizationId,
+      orgShortName: orgShortName,
+      organizationId: orgShortName, // Backward compatibility alias
       roles: roles,
       isSystemAdmin: roles.includes('system_admin'),
       isManager: roles.includes('manager') || roles.includes('system_admin'),

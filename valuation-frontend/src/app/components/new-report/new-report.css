@@ -1,6 +1,6 @@
 .new-report-container {
-  min-height: calc(100vh - 70px); /* Account for header */
-  max-height: calc(100vh - 70px); /* Account for header */
+  min-height: calc(100vh - 70px);
+  max-height: calc(100vh - 70px);
   overflow: hidden;
   background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
   padding: 16px;

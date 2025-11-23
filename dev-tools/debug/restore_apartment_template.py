@@ -4,7 +4,7 @@ Script to restore the SBI apartment template in MongoDB with proper 4-document s
 """
 
 import os
-os.environ["MONGODB_URI"] = "mongodb+srv://app_user:kHxlQqJ1Uc3bmoL6@valuationreportcluster.5ixm1s7.mongodb.net/?retryWrites=true&w=majority&appName=ValuationReportCluster"
+os.environ["MONGODB_URI"] = "mongodb+srv://app_user:KOtsC5qeCc78icks@valuationreportcluster.5ixm1s7.mongodb.net/?retryWrites=true&w=majority&appName=ValuationReportCluster"
 os.environ["MONGODB_ADMIN_DB_NAME"] = "valuation_admin"
 
 import asyncio

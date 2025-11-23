@@ -5,6 +5,18 @@
 
 set -e  # Exit on error
 
+# Get the directory where this script is located
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# Calculate project root (script is in scripts/server/, so go up 2 levels)
+PROJECT_ROOT="$( cd "$SCRIPT_DIR/../.." && pwd )"
+
+# Change to project root directory
+cd "$PROJECT_ROOT"
+
+echo "📂 Working directory: $PROJECT_ROOT"
+echo ""
+
 # Color codes for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -14,7 +26,6 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # Configuration
-PROJECT_ROOT="/Users/sandeepjangra/Downloads/development/ValuationAppV1"
 BACKEND_PORT=8000
 FRONTEND_PORT=4200
 BACKEND_HEALTH_URL="http://localhost:${BACKEND_PORT}/api/health"
@@ -63,60 +74,6 @@ kill_port() {
         lsof -ti:$port | xargs kill -9 2>/dev/null || true
         sleep 2
     fi
-}
-
-# Function to wait for backend health check
-wait_for_backend() {
-    local elapsed=0
-    print_info "Waiting for backend to be ready (max ${MAX_WAIT_BACKEND}s)..."
-    
-    while [ $elapsed -lt $MAX_WAIT_BACKEND ]; do
-        if curl -s -f "$BACKEND_HEALTH_URL" > /dev/null 2>&1; then
-            print_success "Backend is ready! (took ${elapsed}s)"
-            return 0
-        fi
-        
-        # Show progress indicator
-        echo -n "."
-        sleep 1
-        elapsed=$((elapsed + 1))
-    done
-    
-    echo ""
-    print_error "Backend failed to start within ${MAX_WAIT_BACKEND}s"
-    print_info "Check logs: tail -f $BACKEND_LOG"
-    return 1
-}
-
-# Function to wait for frontend health check
-wait_for_frontend() {
-    local elapsed=0
-    print_info "Waiting for frontend to compile and serve (max ${MAX_WAIT_FRONTEND}s)..."
-    print_warning "This may take 30-60 seconds for initial compilation..."
-    
-    while [ $elapsed -lt $MAX_WAIT_FRONTEND ]; do
-        # Check if Angular compilation is complete by looking for specific output
-        if curl -s -f "$FRONTEND_HEALTH_URL" > /dev/null 2>&1; then
-            # Verify it's actually the Angular app, not just a placeholder
-            if curl -s "$FRONTEND_HEALTH_URL" | grep -q "app-root" 2>/dev/null; then
-                print_success "Frontend is ready! (took ${elapsed}s)"
-                return 0
-            fi
-        fi
-        
-        # Show progress indicator every 5 seconds
-        if [ $((elapsed % 5)) -eq 0 ]; then
-            echo -n "."
-        fi
-        
-        sleep 1
-        elapsed=$((elapsed + 1))
-    done
-    
-    echo ""
-    print_error "Frontend failed to start within ${MAX_WAIT_FRONTEND}s"
-    print_info "Check logs: tail -f $FRONTEND_LOG"
-    return 1
 }
 
 # Function to check Python virtual environment
@@ -170,6 +127,16 @@ echo ""
 
 # Step 2: Pre-flight checks
 print_header "Step 2: Pre-flight Checks"
+
+# Verify we're in the correct directory
+if [ ! -f "backend/main.py" ]; then
+    print_error "Cannot find backend/main.py - are you in the correct directory?"
+    print_info "Current directory: $(pwd)"
+    print_info "Expected directory: Project root with backend/ and valuation-frontend/ folders"
+    exit 1
+fi
+print_success "Project directory verified"
+
 if ! check_venv; then
     exit 1
 fi
@@ -187,6 +154,17 @@ print_info "Port: $BACKEND_PORT"
 print_info "Log:  $BACKEND_LOG"
 
 cd "${PROJECT_ROOT}"
+
+# Load environment variables from .env file
+if [ -f ".env" ]; then
+    print_info "Loading environment variables from .env"
+    export $(grep -v '^#' .env | xargs)
+else
+    print_error ".env file not found!"
+    print_info "Please create .env file in project root with MONGODB_URI"
+    exit 1
+fi
+
 source valuation_env/bin/activate
 cd backend
 
@@ -198,38 +176,35 @@ nohup uvicorn main:app --host 0.0.0.0 --port $BACKEND_PORT --reload > "$BACKEND_
 BACKEND_PID=$!
 
 print_info "Backend PID: $BACKEND_PID"
+echo ""
 
-# Wait for backend to be ready
-if ! wait_for_backend; then
-    print_error "Backend startup failed!"
-    echo ""
-    print_info "Last 20 lines of backend log:"
+# Wait for backend to be ready in background
+print_info "Backend is starting... (will verify in background)"
+print_info "Check startup: tail -f $BACKEND_LOG"
+echo ""
+
+# Quick check - wait up to 5 seconds for initial startup
+sleep 2
+if ! kill -0 $BACKEND_PID 2>/dev/null; then
+    print_error "Backend process died immediately! Check logs:"
     tail -20 "$BACKEND_LOG"
     exit 1
 fi
 
-# Verify backend API
-print_info "Testing backend API endpoints..."
-BACKEND_TEST_PASSED=true
+# Try a quick health check (don't wait long)
+QUICK_CHECK=0
+for i in {1..3}; do
+    if curl -s -f "$BACKEND_HEALTH_URL" > /dev/null 2>&1; then
+        print_success "Backend is responding!"
+        QUICK_CHECK=1
+        break
+    fi
+    sleep 1
+done
 
-# Test health endpoint
-if curl -s -f "$BACKEND_HEALTH_URL" > /dev/null 2>&1; then
-    print_success "Health endpoint: OK"
-else
-    print_error "Health endpoint: FAILED"
-    BACKEND_TEST_PASSED=false
-fi
-
-# Test common fields endpoint
-if curl -s -f "http://localhost:${BACKEND_PORT}/api/common-fields" > /dev/null 2>&1; then
-    print_success "Common fields endpoint: OK"
-else
-    print_warning "Common fields endpoint: FAILED (non-critical)"
-fi
-
-if [ "$BACKEND_TEST_PASSED" = false ]; then
-    print_error "Backend tests failed!"
-    exit 1
+if [ $QUICK_CHECK -eq 0 ]; then
+    print_warning "Backend is still starting up (this is normal)"
+    print_info "It may take 5-10 seconds to be fully ready"
 fi
 
 echo ""
@@ -249,57 +224,74 @@ nohup ng serve --host localhost --port $FRONTEND_PORT > "$FRONTEND_LOG" 2>&1 &
 FRONTEND_PID=$!
 
 print_info "Frontend PID: $FRONTEND_PID"
+echo ""
 
-# Wait for frontend to be ready
-if ! wait_for_frontend; then
-    print_error "Frontend startup failed!"
-    echo ""
-    print_info "Last 30 lines of frontend log:"
-    tail -30 "$FRONTEND_LOG"
-    
-    print_warning "Frontend may still be compiling. Check logs with:"
-    print_info "tail -f $FRONTEND_LOG"
+print_info "Frontend is compiling... (will take 30-60 seconds)"
+print_info "Check progress: tail -f $FRONTEND_LOG"
+echo ""
+
+# Quick check - make sure process didn't die immediately
+sleep 2
+if ! kill -0 $FRONTEND_PID 2>/dev/null; then
+    print_error "Frontend process died immediately! Check logs:"
+    tail -20 "$FRONTEND_LOG"
     exit 1
 fi
 
+print_info "Frontend compilation in progress (runs in background)"
 echo ""
 
 # Step 5: Final Status Report
 print_header "============================================"
-print_header "✅ Startup Complete!"
+print_header "✅ Servers Started!"
 print_header "============================================"
 echo ""
 
-print_success "Backend:  http://localhost:$BACKEND_PORT"
-print_success "Frontend: http://localhost:$FRONTEND_PORT"
+print_success "Backend:  http://localhost:$BACKEND_PORT (PID: $BACKEND_PID)"
+print_success "Frontend: http://localhost:$FRONTEND_PORT (PID: $FRONTEND_PID)"
 echo ""
 
-print_info "API Endpoints:"
-echo "  - Health:         http://localhost:$BACKEND_PORT/api/health"
-echo "  - Common Fields:  http://localhost:$BACKEND_PORT/api/common-fields"
-echo "  - Banks:          http://localhost:$BACKEND_PORT/api/banks"
-echo "  - Custom Templates: http://localhost:$BACKEND_PORT/api/custom-templates"
+print_warning "⏳ Please wait 30-60 seconds for frontend to compile"
 echo ""
 
-print_info "Frontend Pages:"
-echo "  - Dashboard:      http://localhost:$FRONTEND_PORT/dashboard"
-echo "  - New Report:     http://localhost:$FRONTEND_PORT/new-report"
-echo "  - Custom Templates: http://localhost:$FRONTEND_PORT/custom-templates"
+print_info "📋 Quick Reference:"
+echo ""
+echo "  Backend Ready When:"
+echo "    curl http://localhost:$BACKEND_PORT/api/health"
+echo ""
+echo "  Frontend Ready When:"
+echo "    curl http://localhost:$FRONTEND_PORT | grep app-root"
 echo ""
 
-print_info "Process Management:"
-echo "  - Backend PID:  $BACKEND_PID"
-echo "  - Frontend PID: $FRONTEND_PID"
-echo ""
-
-print_info "To stop servers:"
-echo "  pkill -f 'ng serve'"
-echo "  pkill -f 'uvicorn'"
-echo ""
-
-print_info "To view logs:"
+print_info "📊 Monitor Progress:"
 echo "  Backend:  tail -f $BACKEND_LOG"
 echo "  Frontend: tail -f $FRONTEND_LOG"
 echo ""
 
-print_success "🎉 All systems operational!"
+print_info "🛑 Stop Servers:"
+echo "  ./scripts/server/stop-servers.sh"
+echo ""
+
+print_info "🔍 Check Status:"
+echo "  ps aux | grep -E '(uvicorn|ng serve)' | grep -v grep"
+echo ""
+
+# Wait a few seconds and do a final health check
+print_info "⏱️  Waiting 5 seconds for backend to fully initialize..."
+sleep 5
+
+if curl -s -f "$BACKEND_HEALTH_URL" > /dev/null 2>&1; then
+    print_success "✅ Backend is ready and responding!"
+    echo ""
+    print_info "🌐 API Endpoints Available:"
+    echo "  - Health:           http://localhost:$BACKEND_PORT/api/health"
+    echo "  - Banks:            http://localhost:$BACKEND_PORT/api/banks"
+    echo "  - Custom Templates: http://localhost:$BACKEND_PORT/api/custom-templates"
+else
+    print_warning "⚠️  Backend is still initializing (check logs)"
+fi
+
+echo ""
+print_success "🎉 Startup script completed - servers running in background!"
+print_info "📝 All output is being logged to files listed above"
+echo ""

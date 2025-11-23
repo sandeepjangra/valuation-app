@@ -18,6 +18,24 @@ if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
 from utils.logger import RequestResponseLogger
+from utils.activity_logger import ActivityLogger, ActivityAction, get_client_ip, get_user_agent
+
+# System databases that must NEVER be deleted
+PROTECTED_DATABASES = [
+    'val_app_config',      # Main configuration database
+    'valuation_admin',     # Admin database
+    'shared_resources',    # Shared resources across all orgs
+    'admin',               # MongoDB admin database
+    'local',               # MongoDB local database
+    'config'               # MongoDB config database
+]
+
+from utils.auth_middleware import (
+    get_organization_context, 
+    OrganizationContext, 
+    require_permission,
+    require_role
+)
 
 # Load environment variables
 try:
@@ -111,6 +129,15 @@ app = FastAPI(title="Valuation App API", version="1.0.0")
 
 # Initialize request/response logger
 api_logger = RequestResponseLogger()
+
+# Global activity logger instance (initialized on startup)
+activity_logger: Optional[ActivityLogger] = None
+
+# Import and include routers
+from organization_api import router as organization_router
+from admin_api import admin_router
+app.include_router(organization_router)
+app.include_router(admin_router)
 
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -207,7 +234,7 @@ def json_serializer(obj):
     return str(obj)
 
 # Authentication helper functions
-def create_dev_token(email: str, organization_id: str, role: str) -> Dict[str, Any]:
+def create_dev_token(email: str, org_short_name: str, role: str) -> Dict[str, Any]:
     """Create a development JWT token"""
     import time
     
@@ -215,7 +242,8 @@ def create_dev_token(email: str, organization_id: str, role: str) -> Dict[str, A
     payload = {
         "sub": f"dev_user_{email.split('@')[0]}",
         "email": email,
-        "custom:organization_id": organization_id,
+        "custom:org_short_name": org_short_name,
+        "custom:organization_id": org_short_name,  # Backward compatibility
         "cognito:groups": [role],
         "iat": int(time.time()),
         "exp": int(time.time()) + 3600,  # 1 hour
@@ -223,14 +251,17 @@ def create_dev_token(email: str, organization_id: str, role: str) -> Dict[str, A
     }
     
     # For development, we'll use a simple token (in production, use proper JWT)
-    dev_token = f"dev_{email.split('@')[0]}_{organization_id}_{role}"
+    # Replace hyphens with underscores for token format
+    org_token = org_short_name.replace("-", "_")
+    dev_token = f"dev_{email.split('@')[0]}_{email.split('@')[1]}_{org_token}_{role}"
     
     return {
         "access_token": dev_token,
         "expires_in": 3600,
         "user": {
             "_id": payload["sub"],
-            "organization_id": organization_id,
+            "org_short_name": org_short_name,
+            "organization_id": org_short_name,  # Backward compatibility
             "email": email,
             "first_name": email.split('@')[0].title(),
             "roles": [role],
@@ -239,16 +270,19 @@ def create_dev_token(email: str, organization_id: str, role: str) -> Dict[str, A
             "updated_at": datetime.now(timezone.utc).isoformat()
         },
         "organization": {
-            "id": organization_id,
-            "name": "System Administration" if organization_id == "system_admin" else "Demo Organization 001",
-            "type": "system" if organization_id == "system_admin" else "valuation_company"
+            "org_short_name": org_short_name,
+            "id": org_short_name,  # Backward compatibility
+            "name": "System Administration" if org_short_name == "system_admin" else "Demo Organization 001",
+            "type": "system" if org_short_name == "system_admin" else "valuation_company"
         }
     }
 
 # Authentication endpoints
 @app.post("/api/auth/login")
-async def login(login_request: LoginRequest):
+async def login(login_request: LoginRequest, request: Request):
     """Traditional login endpoint - fetches user from database and returns role"""
+    global activity_logger
+    
     logger.info(f"🔐 Login attempt for: {login_request.email}")
     
     try:
@@ -267,6 +301,24 @@ async def login(login_request: LoginRequest):
         
         if not user:
             logger.warning(f"❌ User not found: {login_request.email}")
+            
+            # Log failed login attempt
+            if activity_logger is None:
+                activity_logger = ActivityLogger(db_manager)
+                await activity_logger.initialize()
+            
+            await activity_logger.log_activity(
+                action=ActivityAction.LOGIN,
+                user_id="unknown",
+                user_email=login_request.email,
+                organization_id="unknown",
+                organization_name="Unknown",
+                status="failed",
+                error_message="User not found",
+                ip_address=get_client_ip(request),
+                user_agent=get_user_agent(request)
+            )
+            
             await db_manager.disconnect()
             raise HTTPException(status_code=401, detail="Invalid email or password")
         
@@ -277,10 +329,35 @@ async def login(login_request: LoginRequest):
         user_id = user.get("user_id")
         email = user.get("email")
         full_name = user.get("full_name")
-        organization_id = user.get("organization_id")
+        organization_id = user.get("organization_id")  # Legacy field
         role = user.get("role")  # Get actual role from database
         
+        # Get organization details to fetch org_short_name
+        # Try val_app_config first (new schema), fallback to admin database
+        config_db = db_manager.get_database("val_app_config")
+        org = await config_db.organizations.find_one({
+            "metadata.original_organization_id": organization_id
+        })
+        
+        # Fallback to admin database for legacy orgs
+        if not org:
+            admin_db = db_manager.get_database("admin")
+            org = await admin_db.organizations.find_one({
+                "organization_id": organization_id,
+                "isActive": True
+            })
+        
+        if not org:
+            logger.error(f"❌ Organization not found for user: {organization_id}")
+            await db_manager.disconnect()
+            raise HTTPException(status_code=500, detail="Organization not found")
+        
+        # Get org_short_name (new schema) or fallback to organization_id
+        org_short_name = org.get("org_short_name", organization_id)
+        org_name = org.get("org_name") or org.get("name", "Unknown Organization")
+        
         # Update last_login timestamp
+        admin_db = db_manager.get_database("admin")
         await admin_db.users.update_one(
             {"user_id": user_id},
             {
@@ -291,30 +368,43 @@ async def login(login_request: LoginRequest):
             }
         )
         
-        # Get organization details
-        org = await admin_db.organizations.find_one({
-            "organization_id": organization_id,
-            "isActive": True
-        })
+        # Log successful login activity
+        if activity_logger is None:
+            activity_logger = ActivityLogger(db_manager)
+            await activity_logger.initialize()
         
-        org_name = org.get("name", "Unknown Organization") if org else "Unknown Organization"
+        await activity_logger.log_activity(
+            action=ActivityAction.LOGIN,
+            user_id=user_id,
+            user_email=email,
+            organization_id=org_short_name,
+            organization_name=org_name,
+            details={
+                "full_name": full_name,
+                "role": role
+            },
+            status="success",
+            ip_address=get_client_ip(request),
+            user_agent=get_user_agent(request)
+        )
         
         await db_manager.disconnect()
         
-        # Create development token with actual user data
-        token_data = create_dev_token(email, organization_id, role)
+        # Create development token with org_short_name
+        token_data = create_dev_token(email, org_short_name, role)
         
         # Add user information to response
         token_data["user"] = {
             "user_id": user_id,
             "email": email,
             "full_name": full_name,
-            "organization_id": organization_id,
+            "org_short_name": org_short_name,
+            "organization_id": organization_id,  # Backward compatibility
             "organization_name": org_name,
             "role": role
         }
         
-        logger.info(f"✅ Login successful for {email} with role {role} in org {organization_id}")
+        logger.info(f"✅ Login successful for {email} with role {role} in org {org_short_name}")
         
         return JSONResponse(
             status_code=200,
@@ -338,10 +428,13 @@ async def dev_login(dev_request: DevLoginRequest):
     logger.info(f"🧪 Development login for: {dev_request.email} as {dev_request.role}")
     
     try:
-        # Create development token
-        token_data = create_dev_token(dev_request.email, dev_request.organizationId, dev_request.role)
+        # organizationId in dev_request is now org_short_name
+        org_short_name = dev_request.organizationId
         
-        logger.info(f"✅ Development login successful for {dev_request.email}")
+        # Create development token with org_short_name
+        token_data = create_dev_token(dev_request.email, org_short_name, dev_request.role)
+        
+        logger.info(f"✅ Development login successful for {dev_request.email} in org {org_short_name}")
         
         return JSONResponse(
             status_code=200,
@@ -373,6 +466,366 @@ async def logout():
 @app.get("/api/health")
 async def health_check():
     return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
+
+
+# ================================
+# ADMIN DASHBOARD - HEALTH CHECK
+# ================================
+
+@app.get("/api/admin/dashboard/health")
+async def admin_health_check(request: Request):
+    """
+    Comprehensive system health check for admin dashboard
+    Monitors: Backend API, MongoDB, Storage, System Resources
+    """
+    request_data = await api_logger.log_request(request)
+    
+    logger.info("🏥 Running comprehensive health check")
+    
+    try:
+        import psutil
+        import time
+        from database.multi_db_manager import MultiDatabaseManager
+        
+        health_status = {
+            "overall_status": "healthy",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "services": {},
+            "system_resources": {},
+            "performance_metrics": {}
+        }
+        
+        # 1. Backend API Health
+        health_status["services"]["backend_api"] = {
+            "status": "up",
+            "response_time_ms": 0,
+            "message": "FastAPI running"
+        }
+        
+        # 2. MongoDB Health
+        mongo_start = time.time()
+        try:
+            db_manager = MultiDatabaseManager()
+            await db_manager.connect()
+            
+            # Test connection with a simple query
+            config_db = db_manager.client.val_app_config
+            org_count = await config_db.organizations.count_documents({})
+            
+            mongo_response_time = round((time.time() - mongo_start) * 1000, 2)
+            
+            # Get database count
+            db_names = await db_manager.client.list_database_names()
+            
+            health_status["services"]["mongodb"] = {
+                "status": "up",
+                "response_time_ms": mongo_response_time,
+                "message": "Connected",
+                "details": {
+                    "databases_count": len(db_names),
+                    "organizations_count": org_count
+                }
+            }
+            
+            await db_manager.disconnect()
+            
+        except Exception as e:
+            health_status["services"]["mongodb"] = {
+                "status": "down",
+                "response_time_ms": round((time.time() - mongo_start) * 1000, 2),
+                "message": f"Connection failed: {str(e)}",
+                "error": str(e)
+            }
+            health_status["overall_status"] = "degraded"
+        
+        # 3. Storage Health (Check disk space)
+        try:
+            disk_usage = psutil.disk_usage('/')
+            
+            storage_status = "up"
+            if disk_usage.percent > 90:
+                storage_status = "critical"
+                health_status["overall_status"] = "degraded"
+            elif disk_usage.percent > 80:
+                storage_status = "warning"
+            
+            health_status["services"]["storage"] = {
+                "status": storage_status,
+                "response_time_ms": 0,
+                "message": f"{disk_usage.percent}% used",
+                "details": {
+                    "total_gb": round(disk_usage.total / (1024**3), 2),
+                    "used_gb": round(disk_usage.used / (1024**3), 2),
+                    "free_gb": round(disk_usage.free / (1024**3), 2),
+                    "percent_used": disk_usage.percent
+                }
+            }
+        except Exception as e:
+            health_status["services"]["storage"] = {
+                "status": "unknown",
+                "response_time_ms": 0,
+                "message": f"Could not check storage: {str(e)}"
+            }
+        
+        # 4. System Resources
+        try:
+            cpu_percent = psutil.cpu_percent(interval=0.1)
+            memory = psutil.virtual_memory()
+            disk = psutil.disk_usage('/')
+            
+            health_status["system_resources"] = {
+                "cpu": {
+                    "percent": round(cpu_percent, 1),
+                    "status": "normal" if cpu_percent < 80 else "high"
+                },
+                "memory": {
+                    "percent": round(memory.percent, 1),
+                    "total_gb": round(memory.total / (1024**3), 2),
+                    "used_gb": round(memory.used / (1024**3), 2),
+                    "available_gb": round(memory.available / (1024**3), 2),
+                    "status": "normal" if memory.percent < 80 else "high"
+                },
+                "disk": {
+                    "percent": round(disk.percent, 1),
+                    "total_gb": round(disk.total / (1024**3), 2),
+                    "used_gb": round(disk.used / (1024**3), 2),
+                    "free_gb": round(disk.free / (1024**3), 2),
+                    "status": "normal" if disk.percent < 80 else "high"
+                }
+            }
+            
+            # Update overall status based on resources
+            if cpu_percent > 90 or memory.percent > 90 or disk.percent > 90:
+                health_status["overall_status"] = "degraded"
+                
+        except Exception as e:
+            logger.warning(f"Could not get system resources: {e}")
+            health_status["system_resources"] = {
+                "error": "Could not retrieve system resources"
+            }
+        
+        # 5. Performance Metrics (placeholder for now)
+        health_status["performance_metrics"] = {
+            "uptime_seconds": round(time.time() - psutil.boot_time(), 0) if hasattr(psutil, 'boot_time') else 0,
+            "requests_per_minute": 0,  # TODO: Implement request counter
+            "avg_response_time_ms": 0,  # TODO: Implement from logs
+            "error_rate_percent": 0     # TODO: Implement from logs
+        }
+        
+        logger.info(f"✅ Health check completed: {health_status['overall_status']}")
+        
+        response = JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "data": health_status
+            }
+        )
+        
+        api_logger.log_response(response, request_data)
+        return response
+        
+    except Exception as e:
+        logger.error(f"❌ Health check failed: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        error_response = JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "error": str(e),
+                "overall_status": "down"
+            }
+        )
+        
+        api_logger.log_response(error_response, request_data)
+        return error_response
+
+
+# ================================
+# ADMIN - ACTIVITY LOGS ENDPOINTS
+# ================================
+
+@app.get("/api/admin/dashboard/activity-logs")
+async def get_activity_logs(
+    request: Request,
+    page: int = 1,
+    page_size: int = 50,
+    organization_id: Optional[str] = None,
+    user_id: Optional[str] = None,
+    action: Optional[str] = None,
+    status: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    search: Optional[str] = None
+):
+    """
+    Get activity logs with filtering and pagination
+    
+    Query Parameters:
+    - page: Page number (default: 1)
+    - page_size: Items per page (default: 50, max: 100)
+    - organization_id: Filter by organization
+    - user_id: Filter by user
+    - action: Filter by action type (LOGIN, CREATE_REPORT, etc.)
+    - status: Filter by status (success, failed)
+    - start_date: Filter by start date (ISO format)
+    - end_date: Filter by end date (ISO format)
+    - search: Search in user email, organization name, or details
+    """
+    global activity_logger
+    request_data = await api_logger.log_request(request)
+    
+    try:
+        # Initialize activity logger if not already done
+        if activity_logger is None:
+            from database.multi_db_manager import MultiDatabaseManager
+            db_manager = MultiDatabaseManager()
+            await db_manager.connect()
+            activity_logger = ActivityLogger(db_manager)
+            await activity_logger.initialize()
+        
+        # Validate and limit page size
+        page_size = min(page_size, 100)
+        skip = (page - 1) * page_size
+        
+        # Parse date filters
+        start_datetime = None
+        end_datetime = None
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+            except ValueError:
+                raise HTTPException(status_code=400, detail="Invalid start_date format. Use ISO format.")
+        
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+            except ValueError:
+                raise HTTPException(status_code=400, detail="Invalid end_date format. Use ISO format.")
+        
+        # Get activities from activity logger
+        result = await activity_logger.get_activities(
+            skip=skip,
+            limit=page_size,
+            organization_id=organization_id,
+            user_id=user_id,
+            action=action,
+            status=status,
+            start_date=start_datetime,
+            end_date=end_datetime,
+            search=search
+        )
+        
+        response = JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "data": result
+            }
+        )
+        
+        api_logger.log_response(response, request_data)
+        return response
+        
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        logger.error(f"❌ Failed to fetch activity logs: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        error_response = JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "error": str(e)
+            }
+        )
+        
+        api_logger.log_response(error_response, request_data)
+        return error_response
+
+
+@app.get("/api/admin/dashboard/activity-stats")
+async def get_activity_stats(
+    request: Request,
+    organization_id: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None
+):
+    """
+    Get activity statistics
+    
+    Query Parameters:
+    - organization_id: Filter by organization
+    - start_date: Filter by start date (ISO format)
+    - end_date: Filter by end date (ISO format)
+    """
+    global activity_logger
+    request_data = await api_logger.log_request(request)
+    
+    try:
+        # Initialize activity logger if not already done
+        if activity_logger is None:
+            from database.multi_db_manager import MultiDatabaseManager
+            db_manager = MultiDatabaseManager()
+            await db_manager.connect()
+            activity_logger = ActivityLogger(db_manager)
+            await activity_logger.initialize()
+        
+        # Parse date filters
+        start_datetime = None
+        end_datetime = None
+        if start_date:
+            try:
+                start_datetime = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+            except ValueError:
+                raise HTTPException(status_code=400, detail="Invalid start_date format. Use ISO format.")
+        
+        if end_date:
+            try:
+                end_datetime = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+            except ValueError:
+                raise HTTPException(status_code=400, detail="Invalid end_date format. Use ISO format.")
+        
+        # Get statistics
+        stats = await activity_logger.get_activity_stats(
+            organization_id=organization_id,
+            start_date=start_datetime,
+            end_date=end_datetime
+        )
+        
+        response = JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "data": stats
+            }
+        )
+        
+        api_logger.log_response(response, request_data)
+        return response
+        
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        logger.error(f"❌ Failed to fetch activity stats: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        error_response = JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "error": str(e)
+            }
+        )
+        
+        api_logger.log_response(error_response, request_data)
+        return error_response
+
 
 # ================================
 # ROLE-BASED ACCESS CONTROL HELPERS
@@ -768,79 +1221,133 @@ async def create_organization(org_request: CreateOrganizationRequest, request: R
         db_manager = MultiDatabaseManager()
         await db_manager.connect()
         
-        # Generate organization ID from name
-        org_name_clean = re.sub(r'[^a-z0-9]+', '_', org_request.name.lower())
-        org_id_base = org_name_clean[:20]  # Limit to 20 chars
+        # Generate org_short_name (URL-safe identifier) from name
+        def slugify(text: str) -> str:
+            """Convert text to URL-safe slug"""
+            text = text.lower().strip()
+            text = re.sub(r'[^\w\s-]', '', text)
+            text = re.sub(r'[-\s]+', '-', text)
+            return text
         
-        # Check if org ID exists, add number suffix if needed
-        admin_db = db_manager.get_database("admin")
+        org_short_name_base = slugify(org_request.name)[:30]  # Limit to 30 chars
+        
+        # Get val_app_config database
+        config_db = db_manager.client.val_app_config
+        orgs_collection = config_db.organizations
+        
+        # Check if org_short_name exists, add number suffix if needed
+        org_short_name = org_short_name_base
         counter = 1
+        
+        while await orgs_collection.find_one({"org_short_name": org_short_name}):
+            counter += 1
+            org_short_name = f"{org_short_name_base}-{counter}"
+        
+        logger.info(f"📝 Generated org_short_name: {org_short_name}")
+        
+        # Generate legacy organization_id for backward compatibility
+        org_id_base = re.sub(r'[^a-z0-9]+', '_', org_request.name.lower())[:20]
         org_id = f"{org_id_base}_{counter:03d}"
         
-        while await admin_db.organizations.find_one({"organization_id": org_id}):
-            counter += 1
-            org_id = f"{org_id_base}_{counter:03d}"
+        # Determine max reports based on plan
+        max_reports_map = {
+            "basic": 100,
+            "premium": 500,
+            "enterprise": -1  # Unlimited
+        }
+        max_reports = max_reports_map.get(org_request.plan, 100)
         
-        logger.info(f"📝 Generated organization ID: {org_id}")
+        # Determine storage limit based on plan
+        storage_map = {
+            "basic": 10,
+            "premium": 50,
+            "enterprise": -1  # Unlimited
+        }
+        storage_gb = storage_map.get(org_request.plan, 10)
         
-        # Create organization document
+        # Create organization document with NEW unified schema
         org_document = {
-            "organization_id": org_id,
-            "name": org_request.name,
-            "status": "active",
+            # Core identity
+            "org_name": org_request.name,
+            "org_short_name": org_short_name,  # URL-safe unique identifier
+            "org_display_name": org_request.name,
+            "organization_type": org_request.type if hasattr(org_request, 'type') else "valuation_company",
+            "description": org_request.description if hasattr(org_request, 'description') else None,
+            
+            # System flags
+            "is_system_org": False,
+            "is_active": True,
+            
+            # Contact information
             "contact_info": {
                 "email": org_request.contact_email,
-                "phone": org_request.contact_phone,
-                "address": org_request.address
+                "phone": org_request.contact_phone if hasattr(org_request, 'contact_phone') else None,
+                "address": org_request.address if hasattr(org_request, 'address') else None
             },
+            
+            # Settings & Limits
             "settings": {
+                "s3_prefix": org_id,  # Use legacy org_id for S3 compatibility
+                "subscription_plan": org_request.plan,
                 "max_users": org_request.max_users,
+                "max_reports_per_month": max_reports,
+                "max_storage_gb": storage_gb,
                 "features_enabled": ["reports", "templates", "file_upload"],
-                "s3_prefix": org_id,
                 "timezone": "UTC",
-                "date_format": "YYYY-MM-DD"
+                "date_format": "DD/MM/YYYY"
             },
-            "subscription": {
-                "plan": org_request.plan,
-                "max_reports_per_month": 100 if org_request.plan == "basic" else 500,
-                "storage_limit_gb": 10 if org_request.plan == "basic" else 50,
-                "expires_at": None
+            
+            # Backward compatibility metadata
+            "metadata": {
+                "original_organization_id": org_id,
+                "database_name": org_short_name,
+                "created_from": "admin_ui",
+                "migration_date": None
             },
+            
+            # Audit fields
             "created_by": "system_admin",  # TODO: Get from JWT
             "created_at": datetime.now(timezone.utc),
-            "updated_at": datetime.now(timezone.utc),
-            "isActive": True,
-            "version": 1
+            "updated_at": datetime.now(timezone.utc)
         }
         
-        # Insert into valuation_admin.organizations
-        result = await admin_db.organizations.insert_one(org_document)
-        logger.info(f"✅ Created organization document: {result.inserted_id}")
+        # Insert into val_app_config.organizations
+        result = await orgs_collection.insert_one(org_document)
+        logger.info(f"✅ Created organization in val_app_config: {result.inserted_id}")
         
-        # Initialize organization database structure
-        success = await db_manager.ensure_org_database_structure(org_id)
+        # Initialize organization database structure using org_short_name
+        success = await db_manager.ensure_org_database_structure(org_short_name)
         
         if not success:
-            logger.error(f"❌ Failed to initialize database for {org_id}")
+            logger.error(f"❌ Failed to initialize database for {org_short_name}")
             # Rollback - delete org document
-            await admin_db.organizations.delete_one({"_id": result.inserted_id})
+            await orgs_collection.delete_one({"_id": result.inserted_id})
             raise HTTPException(status_code=500, detail="Failed to initialize organization database")
         
-        logger.info(f"✅ Organization database initialized: {org_id}")
+        logger.info(f"✅ Organization database initialized: {org_short_name}")
         
         await db_manager.disconnect()
         
-        # Return organization data
-        org_document["_id"] = str(result.inserted_id)
-        org_document["created_at"] = org_document["created_at"].isoformat()
-        org_document["updated_at"] = org_document["updated_at"].isoformat()
+        # Return organization data (convert to API format)
+        org_response = {
+            "_id": str(result.inserted_id),
+            "organization_id": org_id,  # Legacy field for backward compat
+            "org_short_name": org_short_name,
+            "name": org_request.name,
+            "status": "active",
+            "contact_info": org_document["contact_info"],
+            "settings": org_document["settings"],
+            "created_at": org_document["created_at"].isoformat(),
+            "updated_at": org_document["updated_at"].isoformat(),
+            "isActive": True
+        }
         
         response = JSONResponse(
             status_code=201,
             content={
                 "success": True,
                 "message": f"Organization '{org_request.name}' created successfully",
-                "data": org_document
+                "data": org_response
             }
         )
         
@@ -873,26 +1380,47 @@ async def list_organizations(request: Request):
         db_manager = MultiDatabaseManager()
         await db_manager.connect()
         
-        admin_db = db_manager.get_database("admin")
+        # Get organizations from val_app_config
+        config_db = db_manager.client.val_app_config
+        orgs_collection = config_db.organizations
         
-        # Get all active organizations
-        orgs_cursor = admin_db.organizations.find({"isActive": True})
+        # Get all active organizations (excluding system org)
+        orgs_cursor = orgs_collection.find({
+            "is_active": True,
+            "is_system_org": {"$ne": True}
+        })
         organizations = await orgs_cursor.to_list(length=None)
         
-        # Get user count for each organization and convert ObjectId
+        # Transform to match UI expectations (backward compatible format)
+        formatted_orgs = []
         for org in organizations:
-            org_id = org.get("organization_id")
-            user_count = await admin_db.users.count_documents({
-                "organization_id": org_id,
-                "isActive": True
-            })
-            org["user_count"] = user_count
-            org["_id"] = str(org["_id"])
+            # Get user count from org-specific database
+            org_short_name = org.get("org_short_name")
+            user_count = 0
+            
+            if org_short_name:
+                try:
+                    org_db = db_manager.client[org_short_name]
+                    user_count = await org_db.users.count_documents({"is_active": True}) if hasattr(org_db, 'users') else 0
+                except:
+                    user_count = 0
+            
+            formatted_org = {
+                "_id": str(org["_id"]),
+                "organization_id": org.get("metadata", {}).get("original_organization_id", org_short_name),
+                "org_short_name": org_short_name,
+                "name": org.get("org_name"),
+                "status": "active" if org.get("is_active") else "inactive",
+                "contact_info": org.get("contact_info", {}),
+                "settings": org.get("settings", {}),
+                "user_count": user_count,
+                "created_at": org.get("created_at").isoformat() if org.get("created_at") else None,
+                "updated_at": org.get("updated_at").isoformat() if org.get("updated_at") else None,
+                "isActive": org.get("is_active", True)
+            }
+            formatted_orgs.append(formatted_org)
         
-        # Convert all datetime objects to ISO format
-        organizations = convert_datetimes_to_iso(organizations)
-        
-        logger.info(f"✅ Found {len(organizations)} organizations")
+        logger.info(f"✅ Found {len(formatted_orgs)} organizations from val_app_config")
         
         await db_manager.disconnect()
         
@@ -900,8 +1428,8 @@ async def list_organizations(request: Request):
             status_code=200,
             content={
                 "success": True,
-                "data": organizations,
-                "total": len(organizations)
+                "data": formatted_orgs,
+                "total": len(formatted_orgs)
             }
         )
         
@@ -910,6 +1438,8 @@ async def list_organizations(request: Request):
         
     except Exception as e:
         logger.error(f"❌ Error fetching organizations: {str(e)}")
+        import traceback
+        traceback.print_exc()
         error_response = JSONResponse(
             status_code=500,
             content={"success": False, "error": str(e)}
@@ -927,48 +1457,74 @@ async def get_organization(org_id: str, request: Request):
     
     try:
         from database.multi_db_manager import MultiDatabaseManager
+        from bson import ObjectId
         
         db_manager = MultiDatabaseManager()
         await db_manager.connect()
         
-        admin_db = db_manager.get_database("admin")
+        # Get organizations from val_app_config
+        config_db = db_manager.client.val_app_config
+        orgs_collection = config_db.organizations
         
-        # Get organization
-        org = await admin_db.organizations.find_one({
-            "organization_id": org_id,
-            "isActive": True
-        })
+        # Try to find by org_short_name first, then by ObjectId, then by legacy organization_id
+        org = None
+        if ObjectId.is_valid(org_id):
+            org = await orgs_collection.find_one({"_id": ObjectId(org_id)})
+        
+        if not org:
+            org = await orgs_collection.find_one({"org_short_name": org_id})
+        
+        if not org:
+            org = await orgs_collection.find_one({"metadata.original_organization_id": org_id})
         
         if not org:
             raise HTTPException(status_code=404, detail=f"Organization {org_id} not found")
         
-        # Get users in this organization
-        users_cursor = admin_db.users.find({
-            "organization_id": org_id,
-            "isActive": True
-        })
-        users = await users_cursor.to_list(length=None)
+        org_short_name = org.get("org_short_name")
         
-        # Clean up user data
-        for user in users:
-            user["_id"] = str(user["_id"])
-            user.pop("cognito_id", None)  # Don't expose cognito_id
-            user["created_at"] = user.get("created_at", datetime.now(timezone.utc)).isoformat()
-            user["updated_at"] = user.get("updated_at", datetime.now(timezone.utc)).isoformat()
-            # Handle nullable last_login
-            if user.get("last_login"):
-                user["last_login"] = user["last_login"].isoformat()
+        # Get users from org-specific database
+        users = []
+        if org_short_name:
+            try:
+                org_db = db_manager.client[org_short_name]
+                if hasattr(org_db, 'users'):
+                    users_cursor = org_db.users.find({"is_active": True})
+                    users = await users_cursor.to_list(length=None)
+                    
+                    # Clean up user data
+                    for user in users:
+                        user["_id"] = str(user["_id"])
+                        if user.get("created_at"):
+                            user["created_at"] = user["created_at"].isoformat()
+                        if user.get("updated_at"):
+                            user["updated_at"] = user["updated_at"].isoformat()
+                        if user.get("last_login"):
+                            user["last_login"] = user["last_login"].isoformat()
+            except Exception as e:
+                logger.warning(f"Could not fetch users for org {org_short_name}: {e}")
+                users = []
         
-        org["_id"] = str(org["_id"])
-        org["created_at"] = org["created_at"].isoformat()
-        org["updated_at"] = org["updated_at"].isoformat()
-        
-        # Handle nullable datetime in subscription
-        if org.get("subscription", {}).get("expires_at"):
-            org["subscription"]["expires_at"] = org["subscription"]["expires_at"].isoformat()
-        
-        org["users"] = users
-        org["user_count"] = len(users)
+        # Format response (backward compatible)
+        org_response = {
+            "_id": str(org["_id"]),
+            "organization_id": org.get("metadata", {}).get("original_organization_id", org_short_name),
+            "org_short_name": org_short_name,
+            "name": org.get("org_name"),
+            "status": "active" if org.get("is_active") else "inactive",
+            "contact_info": org.get("contact_info", {}),
+            "settings": org.get("settings", {}),
+            "subscription": {
+                "plan": org.get("settings", {}).get("subscription_plan"),
+                "max_reports_per_month": org.get("settings", {}).get("max_reports_per_month"),
+                "storage_limit_gb": org.get("settings", {}).get("max_storage_gb"),
+                "expires_at": None
+            },
+            "created_at": org.get("created_at").isoformat() if org.get("created_at") else None,
+            "updated_at": org.get("updated_at").isoformat() if org.get("updated_at") else None,
+            "isActive": org.get("is_active", True),
+            "users": users,
+            "user_count": len(users)
+        }
         
         logger.info(f"✅ Found organization {org_id} with {len(users)} users")
         
@@ -976,7 +1532,7 @@ async def get_organization(org_id: str, request: Request):
         
         response = JSONResponse(
             status_code=200,
-            content={"success": True, "data": org}
+            content={"success": True, "data": org_response}
         )
         
         api_logger.log_response(response, request_data)
@@ -986,6 +1542,8 @@ async def get_organization(org_id: str, request: Request):
         raise http_exc
     except Exception as e:
         logger.error(f"❌ Error fetching organization: {str(e)}")
+        import traceback
+        traceback.print_exc()
         error_response = JSONResponse(
             status_code=500,
             content={"success": False, "error": str(e)}
@@ -995,58 +1553,120 @@ async def get_organization(org_id: str, request: Request):
 
 
 @app.delete("/api/admin/organizations/{org_id}")
-async def delete_organization(org_id: str, request: Request):
+async def delete_organization(org_id: str, hard_delete: bool = False, request: Request = None):
     """
-    Delete organization and all its data (System Admin only)
-    WARNING: This will drop the entire organization database and remove all data permanently
+    Delete organization and optionally its database (System Admin only)
+    
+    Parameters:
+    - org_id: Organization short name, _id, or legacy organization_id
+    - hard_delete: If true, also drops the organization database (default: false)
+    
+    WARNING: Hard delete will permanently remove all data!
     """
     request_data = await api_logger.log_request(request)
     
-    logger.info(f"🗑️ Deleting organization: {org_id}")
+    logger.info(f"🗑️ Deleting organization: {org_id} (hard_delete={hard_delete})")
     
     try:
         from database.multi_db_manager import MultiDatabaseManager
+        from bson import ObjectId
         
         db_manager = MultiDatabaseManager()
         await db_manager.connect()
         
-        admin_db = db_manager.get_database("admin")
+        # Get val_app_config database
+        config_db = db_manager.client.val_app_config
+        orgs_collection = config_db.organizations
         
-        # Check if organization exists
-        org = await admin_db.organizations.find_one({"organization_id": org_id})
+        # Find organization by org_short_name or _id
+        org = None
+        
+        # Try org_short_name first
+        org = await orgs_collection.find_one({"org_short_name": org_id})
+        
+        # Try ObjectId if not found
+        if not org and ObjectId.is_valid(org_id):
+            org = await orgs_collection.find_one({"_id": ObjectId(org_id)})
+        
+        # Try legacy organization_id
+        if not org:
+            org = await orgs_collection.find_one({"metadata.original_organization_id": org_id})
         
         if not org:
             raise HTTPException(status_code=404, detail=f"Organization {org_id} not found")
         
-        org_name = org.get("name", org_id)
+        org_name = org.get("org_name", org_id)
+        org_short_name = org.get("org_short_name")
+        is_system_org = org.get("is_system_org", False)
         
-        # Get organization database name
-        org_db_name = org_id.replace("-", "_")
+        # PROTECTION: Prevent deletion of system organization
+        if is_system_org:
+            raise HTTPException(
+                status_code=403, 
+                detail="Cannot delete system organization"
+            )
         
-        # Drop the entire organization database
-        logger.warning(f"⚠️ Dropping database: {org_db_name}")
-        await db_manager.client.drop_database(org_db_name)
-        logger.info(f"✅ Dropped database: {org_db_name}")
+        # PROTECTION: Prevent deletion of protected databases
+        if org_short_name in PROTECTED_DATABASES:
+            raise HTTPException(
+                status_code=403,
+                detail=f"Cannot delete organization with protected database: {org_short_name}"
+            )
         
-        # Delete all users belonging to this organization
-        users_result = await admin_db.users.delete_many({"organization_id": org_id})
-        logger.info(f"✅ Deleted {users_result.deleted_count} users from organization")
+        # Soft delete - set is_active to False
+        await orgs_collection.update_one(
+            {"_id": org["_id"]},
+            {
+                "$set": {
+                    "is_active": False,
+                    "deleted_at": datetime.now(timezone.utc),
+                    "deleted_by": "system_admin"  # TODO: Get from JWT
+                }
+            }
+        )
+        logger.info(f"✅ Organization soft-deleted: {org_name}")
         
-        # Delete organization document
-        org_result = await admin_db.organizations.delete_one({"organization_id": org_id})
-        logger.info(f"✅ Deleted organization document")
+        users_deactivated = 0
+        database_dropped = False
+        
+        # Deactivate all users belonging to this organization
+        try:
+            org_db = db_manager.client[org_short_name]
+            users_result = await org_db.users.update_many(
+                {"is_active": True},
+                {"$set": {"is_active": False, "deleted_at": datetime.now(timezone.utc)}}
+            )
+            users_deactivated = users_result.modified_count
+            logger.info(f"✅ Deactivated {users_deactivated} users from organization")
+        except Exception as e:
+            logger.warning(f"⚠️ Could not deactivate users: {e}")
+        
+        # Hard delete: Drop the organization database
+        if hard_delete:
+            # Double-check it's not a protected database
+            if org_short_name not in PROTECTED_DATABASES:
+                logger.warning(f"⚠️ HARD DELETE: Dropping database: {org_short_name}")
+                await db_manager.client.drop_database(org_short_name)
+                database_dropped = True
+                logger.info(f"✅ Database permanently deleted: {org_short_name}")
+            else:
+                logger.error(f"❌ Attempted to drop protected database: {org_short_name}")
         
         await db_manager.disconnect()
+        
+        delete_type = "permanently deleted (hard delete)" if hard_delete else "deactivated (soft delete)"
         
         response = JSONResponse(
             status_code=200,
             content={
                 "success": True,
-                "message": f"Organization '{org_name}' and all its data have been permanently deleted",
-                "deleted": {
-                    "organization": org_id,
-                    "database": org_db_name,
-                    "users_count": users_result.deleted_count
+                "message": f"Organization '{org_name}' has been {delete_type}",
+                "data": {
+                    "organization": org_short_name,
+                    "org_name": org_name,
+                    "delete_type": "hard" if hard_delete else "soft",
+                    "database_dropped": database_dropped,
+                    "users_deactivated": users_deactivated
                 }
             }
         )
@@ -1069,6 +1689,159 @@ async def delete_organization(org_id: str, request: Request):
         return error_response
 
 
+@app.patch("/api/admin/organizations/{org_id}")
+async def update_organization(org_id: str, request: Request):
+    """
+    Update organization details with change tracking (System Admin only)
+    
+    Tracks all changes in organization_changes collection for audit trail.
+    Only non-immutable fields can be updated.
+    
+    Immutable fields: _id, org_short_name, created_at, created_by
+    """
+    request_data = await api_logger.log_request(request)
+    
+    logger.info(f"✏️ Updating organization: {org_id}")
+    
+    try:
+        from database.multi_db_manager import MultiDatabaseManager
+        from bson import ObjectId
+        from utils.change_tracker import (
+            compute_changes,
+            validate_editable_fields,
+            build_update_document,
+            create_change_record
+        )
+        
+        # Parse request body
+        body = await request.json()
+        
+        # Validate that only editable fields are being updated
+        is_valid, error_msg = validate_editable_fields(body)
+        if not is_valid:
+            raise HTTPException(status_code=400, detail=error_msg)
+        
+        db_manager = MultiDatabaseManager()
+        await db_manager.connect()
+        
+        # Get collections
+        config_db = db_manager.client.val_app_config
+        orgs_collection = config_db.organizations
+        changes_collection = config_db.organization_changes
+        
+        # Find organization by org_short_name, _id, or legacy organization_id
+        org = None
+        
+        # Try org_short_name first
+        org = await orgs_collection.find_one({"org_short_name": org_id})
+        
+        # Try ObjectId if not found
+        if not org and ObjectId.is_valid(org_id):
+            org = await orgs_collection.find_one({"_id": ObjectId(org_id)})
+        
+        # Try legacy organization_id
+        if not org:
+            org = await orgs_collection.find_one({"metadata.original_organization_id": org_id})
+        
+        if not org:
+            raise HTTPException(status_code=404, detail=f"Organization {org_id} not found")
+        
+        org_name = org.get("org_name", org_id)
+        current_version = org.get("current_version", 0)
+        
+        # Compute what changed (delta)
+        changes = compute_changes(org, body)
+        
+        if not changes:
+            # No changes detected
+            await db_manager.disconnect()
+            response = JSONResponse(
+                status_code=200,
+                content={
+                    "success": True,
+                    "message": "No changes detected",
+                    "data": {
+                        "_id": str(org["_id"]),
+                        "org_short_name": org.get("org_short_name"),
+                        "org_name": org_name
+                    }
+                }
+            )
+            api_logger.log_response(response, request_data)
+            return response
+        
+        # Create change history record
+        new_version = await create_change_record(
+            changes_collection=changes_collection,
+            org_id=org["_id"],
+            changes=changes,
+            changed_by="system_admin",  # TODO: Get from JWT token
+            change_type="update",
+            current_version=current_version
+        )
+        
+        logger.info(f"📝 Created change record version {new_version} with {len(changes)} changes")
+        
+        # Build update document
+        update_fields = build_update_document(changes)
+        update_fields["current_version"] = new_version
+        update_fields["updated_at"] = datetime.now(timezone.utc)
+        update_fields["updated_by"] = "system_admin"  # TODO: Get from JWT token
+        
+        # Update organization with new values
+        await orgs_collection.update_one(
+            {"_id": org["_id"]},
+            {"$set": update_fields}
+        )
+        
+        logger.info(f"✅ Updated organization: {org_name} (version {new_version})")
+        
+        # Get updated organization
+        updated_org = await orgs_collection.find_one({"_id": org["_id"]})
+        
+        await db_manager.disconnect()
+        
+        # Format response
+        org_response = {
+            "_id": str(updated_org["_id"]),
+            "org_short_name": updated_org.get("org_short_name"),
+            "org_name": updated_org.get("org_name"),
+            "org_display_name": updated_org.get("org_display_name"),
+            "contact_info": updated_org.get("contact_info", {}),
+            "settings": updated_org.get("settings", {}),
+            "is_active": updated_org.get("is_active", True),
+            "current_version": new_version,
+            "updated_at": updated_org.get("updated_at").isoformat() if updated_org.get("updated_at") else None,
+            "changes_applied": len(changes)
+        }
+        
+        response = JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "message": f"Organization '{org_name}' updated successfully",
+                "data": org_response,
+                "changes": changes  # Include what changed for transparency
+            }
+        )
+        
+        api_logger.log_response(response, request_data)
+        return response
+        
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        logger.error(f"❌ Error updating organization: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        error_response = JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+        api_logger.log_response(error_response, request_data)
+        return error_response
+
+
 @app.patch("/api/admin/organizations/{org_id}/status")
 async def update_organization_status(org_id: str, request: Request):
     """
@@ -1081,6 +1854,8 @@ async def update_organization_status(org_id: str, request: Request):
     
     try:
         from database.multi_db_manager import MultiDatabaseManager
+        from bson import ObjectId
+        from utils.change_tracker import create_change_record
         
         # Parse request body to get new status
         body = await request.json()
@@ -1095,38 +1870,91 @@ async def update_organization_status(org_id: str, request: Request):
         db_manager = MultiDatabaseManager()
         await db_manager.connect()
         
-        admin_db = db_manager.get_database("admin")
+        # Get collections
+        config_db = db_manager.client.val_app_config
+        orgs_collection = config_db.organizations
+        changes_collection = config_db.organization_changes
         
-        # Check if organization exists
-        org = await admin_db.organizations.find_one({"organization_id": org_id})
+        # Find organization by org_short_name or _id
+        org = None
+        
+        # Try org_short_name first
+        org = await orgs_collection.find_one({"org_short_name": org_id})
+        
+        # Try ObjectId if not found
+        if not org and ObjectId.is_valid(org_id):
+            org = await orgs_collection.find_one({"_id": ObjectId(org_id)})
+        
+        # Try legacy organization_id
+        if not org:
+            org = await orgs_collection.find_one({"metadata.original_organization_id": org_id})
         
         if not org:
             raise HTTPException(status_code=404, detail=f"Organization {org_id} not found")
         
-        org_name = org.get("name", org_id)
-        current_status = "active" if org.get("isActive", True) else "inactive"
+        org_name = org.get("org_name", org_id)
+        org_short_name = org.get("org_short_name")
+        current_status = "active" if org.get("is_active", True) else "inactive"
+        current_version = org.get("current_version", 0)
+        
+        # Skip if status is already set to desired value
+        if current_status == new_status:
+            await db_manager.disconnect()
+            response = JSONResponse(
+                status_code=200,
+                content={
+                    "success": True,
+                    "message": f"Organization is already {new_status}",
+                    "data": {
+                        "org_short_name": org_short_name,
+                        "org_name": org_name,
+                        "status": current_status
+                    }
+                }
+            )
+            api_logger.log_response(response, request_data)
+            return response
+        
+        # Create change record for status change
+        is_active = (new_status == "active")
+        change_type = "deactivate" if new_status == "inactive" else "activate"
+        
+        changes = [{
+            "field": "is_active",
+            "old_value": org.get("is_active", True),
+            "new_value": is_active
+        }]
+        
+        new_version = await create_change_record(
+            changes_collection=changes_collection,
+            org_id=org["_id"],
+            changes=changes,
+            changed_by="system_admin",  # TODO: Get from JWT token
+            change_type=change_type,
+            current_version=current_version
+        )
         
         # Update organization status
-        is_active = (new_status == "active")
-        
-        update_result = await admin_db.organizations.update_one(
-            {"organization_id": org_id},
+        update_result = await orgs_collection.update_one(
+            {"_id": org["_id"]},
             {
                 "$set": {
-                    "isActive": is_active,
+                    "is_active": is_active,
                     "status": new_status,
-                    "updated_at": datetime.now(timezone.utc)
+                    "current_version": new_version,
+                    "updated_at": datetime.now(timezone.utc),
+                    "updated_by": "system_admin"  # TODO: Get from JWT token
                 }
             }
         )
         
-        # Also update all users in this organization
-        users_result = await admin_db.users.update_many(
-            {"organization_id": org_id},
+        # Also update all users in this organization's database
+        org_db = db_manager.client[org_short_name]
+        users_result = await org_db.users.update_many(
+            {},  # All users in this org
             {
                 "$set": {
-                    "isActive": is_active,
-                    "status": new_status,
+                    "is_active": is_active,
                     "updated_at": datetime.now(timezone.utc)
                 }
             }
@@ -1143,7 +1971,8 @@ async def update_organization_status(org_id: str, request: Request):
                 "success": True,
                 "message": f"Organization '{org_name}' status changed to {new_status}",
                 "data": {
-                    "organization_id": org_id,
+                    "org_short_name": org_short_name,
+                    "org_name": org_name,
                     "previous_status": current_status,
                     "new_status": new_status,
                     "users_updated": users_result.modified_count
@@ -1182,6 +2011,8 @@ async def add_user_to_organization(org_id: str, user_request: AddUserToOrgReques
     
     try:
         from database.multi_db_manager import MultiDatabaseManager
+        from bson import ObjectId
+        from utils.user_change_tracker import create_user_creation_record
         
         # Validate role
         if user_request.role not in ["manager", "employee"]:
@@ -1190,22 +2021,43 @@ async def add_user_to_organization(org_id: str, user_request: AddUserToOrgReques
         db_manager = MultiDatabaseManager()
         await db_manager.connect()
         
-        admin_db = db_manager.get_database("admin")
+        # Get organization from val_app_config database
+        config_db = db_manager.client.val_app_config
+        orgs_collection = config_db.organizations
         
-        # Check if organization exists
-        org = await admin_db.organizations.find_one({
-            "organization_id": org_id,
-            "isActive": True
-        })
+        # Try to find organization by org_short_name, ObjectId, or legacy organization_id
+        org = None
+        if ObjectId.is_valid(org_id):
+            org = await orgs_collection.find_one({"_id": ObjectId(org_id)})
         
         if not org:
+            org = await orgs_collection.find_one({"org_short_name": org_id})
+        
+        if not org:
+            org = await orgs_collection.find_one({"metadata.original_organization_id": org_id})
+        
+        if not org:
+            await db_manager.disconnect()
             raise HTTPException(status_code=404, detail=f"Organization {org_id} not found")
         
-        # Check if user already exists
-        existing_user = await admin_db.users.find_one({"email": user_request.email})
+        if not org.get("is_active", False):
+            await db_manager.disconnect()
+            raise HTTPException(status_code=400, detail=f"Organization {org_id} is not active")
+        
+        org_short_name = org.get("org_short_name")
+        if not org_short_name:
+            await db_manager.disconnect()
+            raise HTTPException(status_code=500, detail="Organization missing org_short_name")
+        
+        # Get organization-specific database
+        org_db = db_manager.client[org_short_name]
+        
+        # Check if user already exists in organization database
+        existing_user = await org_db.users.find_one({"email": user_request.email})
         
         if existing_user:
-            raise HTTPException(status_code=400, detail=f"User with email {user_request.email} already exists")
+            await db_manager.disconnect()
+            raise HTTPException(status_code=400, detail=f"User with email {user_request.email} already exists in this organization")
         
         # Generate user ID
         import uuid
@@ -1214,31 +2066,29 @@ async def add_user_to_organization(org_id: str, user_request: AddUserToOrgReques
         # Hash password
         hashed_password = pwd_context.hash(user_request.password)
         
-        # Create user document
+        # Create user document for organization database
         user_document = {
-            "user_id": user_id,
+            "_id": user_id,
             "email": user_request.email,
             "full_name": user_request.full_name,
-            "phone": user_request.phone,
+            "phone": user_request.phone or "",
             "password_hash": hashed_password,
-            "organization_id": org_id,
+            "org_id": str(org["_id"]),
+            "org_short_name": org_short_name,
             "role": user_request.role,
-            "status": "active",
-            "cognito_id": None,  # Will be set after Cognito user creation
+            "is_active": True,
             "created_by": "system_admin",  # TODO: Get from JWT
             "created_at": datetime.now(timezone.utc),
             "updated_at": datetime.now(timezone.utc),
             "last_login": None,
-            "isActive": True,
-            "version": 1
+            "current_version": 1  # Start version tracking
         }
         
-        # Insert into valuation_admin.users
-        result = await admin_db.users.insert_one(user_document)
-        logger.info(f"✅ Created user document: {result.inserted_id}")
+        # Insert into organization database users collection
+        result = await org_db.users.insert_one(user_document)
+        logger.info(f"✅ Created user in {org_short_name}.users: {user_id}")
         
-        # Create user settings in organization database
-        org_db = db_manager.get_org_database(org_id)
+        # Create user settings
         user_settings = {
             "_id": user_id,
             "user_email": user_request.email,
@@ -1252,7 +2102,17 @@ async def add_user_to_organization(org_id: str, user_request: AddUserToOrgReques
         }
         
         await org_db.users_settings.insert_one(user_settings)
-        logger.info(f"✅ Created user settings in {org_id}.users_settings")
+        logger.info(f"✅ Created user settings in {org_short_name}.users_settings")
+        
+        # Create user change tracking record
+        user_changes_collection = org_db.user_changes
+        await create_user_creation_record(
+            changes_collection=user_changes_collection,
+            user_id=user_id,
+            user_data=user_document,
+            created_by="system_admin"  # TODO: Get from JWT
+        )
+        logger.info(f"📝 Created user change record for {user_id} (version 1)")
         
         # Log activity
         activity_log = {
@@ -1272,18 +2132,26 @@ async def add_user_to_organization(org_id: str, user_request: AddUserToOrgReques
         await db_manager.disconnect()
         
         # Return user data (remove sensitive fields)
-        user_document["_id"] = str(result.inserted_id)
-        user_document["created_at"] = user_document["created_at"].isoformat()
-        user_document["updated_at"] = user_document["updated_at"].isoformat()
-        user_document.pop("cognito_id", None)  # Don't expose
-        user_document.pop("password_hash", None)  # Don't expose password hash
+        user_response = {
+            "_id": user_id,
+            "email": user_request.email,
+            "full_name": user_request.full_name,
+            "phone": user_request.phone or "",
+            "org_id": str(org["_id"]),
+            "org_short_name": org_short_name,
+            "role": user_request.role,
+            "is_active": True,
+            "created_at": user_document["created_at"].isoformat(),
+            "updated_at": user_document["updated_at"].isoformat(),
+            "current_version": 1
+        }
         
         response = JSONResponse(
             status_code=201,
             content={
                 "success": True,
                 "message": f"User '{user_request.email}' added to organization successfully",
-                "data": user_document
+                "data": user_response
             }
         )
         
@@ -1314,30 +2182,55 @@ async def list_organization_users(org_id: str, request: Request):
     
     try:
         from database.multi_db_manager import MultiDatabaseManager
+        from bson import ObjectId
         
         db_manager = MultiDatabaseManager()
         await db_manager.connect()
         
-        admin_db = db_manager.get_database("admin")
+        # Get organization from val_app_config database
+        config_db = db_manager.client.val_app_config
+        orgs_collection = config_db.organizations
         
-        # Get users for this organization
-        users_cursor = admin_db.users.find({
-            "organization_id": org_id,
-            "isActive": True
-        })
+        # Try to find organization by org_short_name, ObjectId, or legacy organization_id
+        org = None
+        if ObjectId.is_valid(org_id):
+            org = await orgs_collection.find_one({"_id": ObjectId(org_id)})
+        
+        if not org:
+            org = await orgs_collection.find_one({"org_short_name": org_id})
+        
+        if not org:
+            org = await orgs_collection.find_one({"metadata.original_organization_id": org_id})
+        
+        if not org:
+            await db_manager.disconnect()
+            raise HTTPException(status_code=404, detail=f"Organization {org_id} not found")
+        
+        org_short_name = org.get("org_short_name")
+        if not org_short_name:
+            await db_manager.disconnect()
+            raise HTTPException(status_code=500, detail="Organization missing org_short_name")
+        
+        # Get users from organization-specific database
+        org_db = db_manager.client[org_short_name]
+        users_cursor = org_db.users.find({"is_active": True})
         users = await users_cursor.to_list(length=None)
         
-        # Clean up user data
+        # Format user data for frontend
+        formatted_users = []
         for user in users:
-            user["_id"] = str(user["_id"])
-            user.pop("cognito_id", None)
-            user["created_at"] = user.get("created_at", datetime.now(timezone.utc)).isoformat()
-            user["updated_at"] = user.get("updated_at", datetime.now(timezone.utc)).isoformat()
-            # Handle nullable last_login
-            if user.get("last_login"):
-                user["last_login"] = user["last_login"].isoformat()
+            formatted_user = {
+                "_id": str(user["_id"]),
+                "user_id": user.get("_id"),  # For compatibility
+                "name": user.get("full_name", ""),
+                "email": user.get("email", ""),
+                "role": user.get("role", "employee"),
+                "status": "active" if user.get("is_active", True) else "inactive",
+                "created_at": user.get("created_at").isoformat() if user.get("created_at") else None
+            }
+            formatted_users.append(formatted_user)
         
-        logger.info(f"✅ Found {len(users)} users in organization {org_id}")
+        logger.info(f"✅ Found {len(formatted_users)} users in {org_short_name}")
         
         await db_manager.disconnect()
         
@@ -1345,16 +2238,349 @@ async def list_organization_users(org_id: str, request: Request):
             status_code=200,
             content={
                 "success": True,
-                "data": users,
-                "total": len(users)
+                "data": formatted_users,
+                "total": len(formatted_users)
             }
         )
         
         api_logger.log_response(response, request_data)
         return response
         
+    except HTTPException as http_exc:
+        raise http_exc
     except Exception as e:
         logger.error(f"❌ Error fetching users: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        error_response = JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+        api_logger.log_response(error_response, request_data)
+        return error_response
+
+
+@app.put("/api/admin/organizations/{org_id}/users/{user_id}")
+async def update_organization_user(org_id: str, user_id: str, update_data: dict, request: Request):
+    """Update user details in an organization"""
+    request_data = await api_logger.log_request(request)
+    
+    logger.info(f"🔄 Updating user {user_id} in organization {org_id}")
+    
+    try:
+        from database.multi_db_manager import MultiDatabaseManager
+        from bson import ObjectId
+        from utils.user_change_tracker import (
+            compute_user_changes,
+            create_user_change_record
+        )
+        
+        db_manager = MultiDatabaseManager()
+        await db_manager.connect()
+        
+        # Get organization
+        config_db = db_manager.client.val_app_config
+        orgs_collection = config_db.organizations
+        
+        org = None
+        if ObjectId.is_valid(org_id):
+            org = await orgs_collection.find_one({"_id": ObjectId(org_id)})
+        if not org:
+            org = await orgs_collection.find_one({"org_short_name": org_id})
+        if not org:
+            org = await orgs_collection.find_one({"metadata.original_organization_id": org_id})
+        
+        if not org:
+            await db_manager.disconnect()
+            raise HTTPException(status_code=404, detail=f"Organization {org_id} not found")
+        
+        org_short_name = org.get("org_short_name")
+        org_db = db_manager.client[org_short_name]
+        
+        # Find user
+        user = await org_db.users.find_one({"_id": user_id})
+        if not user:
+            await db_manager.disconnect()
+            raise HTTPException(status_code=404, detail=f"User {user_id} not found")
+        
+        current_version = user.get("current_version", 0)
+        
+        # Prepare update fields (only allow phone and role)
+        update_fields = {}
+        if "phone" in update_data:
+            update_fields["phone"] = update_data["phone"]
+        if "role" in update_data:
+            if update_data["role"] not in ["manager", "employee"]:
+                raise HTTPException(status_code=400, detail="Role must be 'manager' or 'employee'")
+            update_fields["role"] = update_data["role"]
+        
+        if not update_fields:
+            await db_manager.disconnect()
+            raise HTTPException(status_code=400, detail="No valid fields to update")
+        
+        # Compute changes
+        changes = compute_user_changes(user, update_fields)
+        
+        if not changes:
+            # No changes detected
+            await db_manager.disconnect()
+            return JSONResponse(
+                status_code=200,
+                content={
+                    "success": True,
+                    "message": "No changes detected",
+                    "data": {"user_id": user_id}
+                }
+            )
+        
+        # Create change record
+        user_changes_collection = org_db.user_changes
+        new_version = await create_user_change_record(
+            changes_collection=user_changes_collection,
+            user_id=user_id,
+            changes=changes,
+            changed_by="system_admin",  # TODO: Get from JWT
+            change_type="update",
+            current_version=current_version
+        )
+        
+        logger.info(f"📝 Created user change record version {new_version} with {len(changes)} changes")
+        
+        # Update user with new values
+        update_fields["updated_at"] = datetime.now(timezone.utc)
+        update_fields["current_version"] = new_version
+        
+        result = await org_db.users.update_one(
+            {"_id": user_id},
+            {"$set": update_fields}
+        )
+        
+        logger.info(f"✅ Updated user {user_id} (version {new_version})")
+        
+        # Log activity
+        activity_log = {
+            "user_id": "system_admin",
+            "action": "user_updated",
+            "resource_type": "user",
+            "resource_id": user_id,
+            "details": {
+                "email": user.get("email"),
+                "updated_fields": list(update_fields.keys()),
+                "version": new_version
+            },
+            "timestamp": datetime.now(timezone.utc)
+        }
+        await org_db.activity_logs.insert_one(activity_log)
+        
+        await db_manager.disconnect()
+        
+        response = JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "message": f"User {user.get('email')} updated successfully",
+                "data": {
+                    "user_id": user_id,
+                    "updated_fields": [c["field"] for c in changes],
+                    "version": new_version
+                }
+            }
+        )
+        
+        api_logger.log_response(response, request_data)
+        return response
+        
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        logger.error(f"❌ Error updating user: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        error_response = JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+        api_logger.log_response(error_response, request_data)
+        return error_response
+
+
+@app.put("/api/admin/organizations/{org_id}/users/{user_id}/status")
+async def toggle_user_status(org_id: str, user_id: str, status_data: dict, request: Request):
+    """Activate or deactivate a user"""
+    request_data = await api_logger.log_request(request)
+    
+    is_active = status_data.get("is_active", True)
+    action = "activate" if is_active else "deactivate"
+    logger.info(f"🔄 {action.capitalize()}ing user {user_id} in organization {org_id}")
+    
+    try:
+        from database.multi_db_manager import MultiDatabaseManager
+        from bson import ObjectId
+        
+        db_manager = MultiDatabaseManager()
+        await db_manager.connect()
+        
+        # Get organization
+        config_db = db_manager.client.val_app_config
+        orgs_collection = config_db.organizations
+        
+        org = None
+        if ObjectId.is_valid(org_id):
+            org = await orgs_collection.find_one({"_id": ObjectId(org_id)})
+        if not org:
+            org = await orgs_collection.find_one({"org_short_name": org_id})
+        if not org:
+            org = await orgs_collection.find_one({"metadata.original_organization_id": org_id})
+        
+        if not org:
+            await db_manager.disconnect()
+            raise HTTPException(status_code=404, detail=f"Organization {org_id} not found")
+        
+        org_short_name = org.get("org_short_name")
+        org_db = db_manager.client[org_short_name]
+        
+        # Find user
+        user = await org_db.users.find_one({"_id": user_id})
+        if not user:
+            await db_manager.disconnect()
+            raise HTTPException(status_code=404, detail=f"User {user_id} not found")
+        
+        # Update status
+        result = await org_db.users.update_one(
+            {"_id": user_id},
+            {"$set": {
+                "is_active": is_active,
+                "updated_at": datetime.now(timezone.utc)
+            }}
+        )
+        
+        logger.info(f"✅ {action.capitalize()}d user {user_id}")
+        
+        # Log activity
+        activity_log = {
+            "user_id": "system_admin",
+            "action": f"user_{action}d",
+            "resource_type": "user",
+            "resource_id": user_id,
+            "details": {
+                "email": user.get("email"),
+                "is_active": is_active
+            },
+            "timestamp": datetime.now(timezone.utc)
+        }
+        await org_db.activity_logs.insert_one(activity_log)
+        
+        await db_manager.disconnect()
+        
+        response = JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "message": f"User {user.get('email')} {action}d successfully",
+                "data": {"user_id": user_id, "is_active": is_active}
+            }
+        )
+        
+        api_logger.log_response(response, request_data)
+        return response
+        
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        logger.error(f"❌ Error {action}ing user: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        error_response = JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+        api_logger.log_response(error_response, request_data)
+        return error_response
+
+
+@app.delete("/api/admin/organizations/{org_id}/users/{user_id}")
+async def delete_organization_user(org_id: str, user_id: str, request: Request):
+    """Delete a user from an organization (hard delete)"""
+    request_data = await api_logger.log_request(request)
+    
+    logger.info(f"🗑️ Deleting user {user_id} from organization {org_id}")
+    
+    try:
+        from database.multi_db_manager import MultiDatabaseManager
+        from bson import ObjectId
+        
+        db_manager = MultiDatabaseManager()
+        await db_manager.connect()
+        
+        # Get organization
+        config_db = db_manager.client.val_app_config
+        orgs_collection = config_db.organizations
+        
+        org = None
+        if ObjectId.is_valid(org_id):
+            org = await orgs_collection.find_one({"_id": ObjectId(org_id)})
+        if not org:
+            org = await orgs_collection.find_one({"org_short_name": org_id})
+        if not org:
+            org = await orgs_collection.find_one({"metadata.original_organization_id": org_id})
+        
+        if not org:
+            await db_manager.disconnect()
+            raise HTTPException(status_code=404, detail=f"Organization {org_id} not found")
+        
+        org_short_name = org.get("org_short_name")
+        org_db = db_manager.client[org_short_name]
+        
+        # Find user
+        user = await org_db.users.find_one({"_id": user_id})
+        if not user:
+            await db_manager.disconnect()
+            raise HTTPException(status_code=404, detail=f"User {user_id} not found")
+        
+        user_email = user.get("email")
+        
+        # Delete user
+        await org_db.users.delete_one({"_id": user_id})
+        
+        # Delete user settings if exists
+        await org_db.users_settings.delete_one({"_id": user_id})
+        
+        logger.info(f"✅ Deleted user {user_id} ({user_email})")
+        
+        # Log activity
+        activity_log = {
+            "user_id": "system_admin",
+            "action": "user_deleted",
+            "resource_type": "user",
+            "resource_id": user_id,
+            "details": {
+                "email": user_email,
+                "full_name": user.get("full_name")
+            },
+            "timestamp": datetime.now(timezone.utc)
+        }
+        await org_db.activity_logs.insert_one(activity_log)
+        
+        await db_manager.disconnect()
+        
+        response = JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "message": f"User {user_email} deleted successfully",
+                "data": {"user_id": user_id}
+            }
+        )
+        
+        api_logger.log_response(response, request_data)
+        return response
+        
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        logger.error(f"❌ Error deleting user: {str(e)}")
+        import traceback
+        traceback.print_exc()
         error_response = JSONResponse(
             status_code=500,
             content={"success": False, "error": str(e)}
@@ -1464,25 +2690,15 @@ class ReportUpdateRequest(BaseModel):
     status: Optional[str] = None
 
 @app.post("/api/reports")
-async def create_report(report_request: ReportCreateRequest, request: Request):
+async def create_report(
+    report_request: ReportCreateRequest, 
+    request: Request,
+    org_context: OrganizationContext = Depends(get_organization_context)
+):
     """Create a new report (Manager and Employee can create)"""
     request_data = await api_logger.log_request(request)
     
     try:
-        from utils.auth_middleware import get_organization_context
-        from fastapi.security import HTTPAuthorizationCredentials
-        
-        # Get auth token
-        auth_header = request.headers.get("Authorization")
-        if not auth_header or not auth_header.startswith("Bearer "):
-            raise HTTPException(status_code=401, detail="Missing authorization header")
-        
-        token = auth_header.replace("Bearer ", "")
-        credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
-        
-        # Get organization context from token
-        org_context = await get_organization_context(credentials)
-        
         # Check permission
         if not org_context.has_permission("reports", "create"):
             raise HTTPException(status_code=403, detail="Insufficient permissions to create reports")
@@ -1493,7 +2709,8 @@ async def create_report(report_request: ReportCreateRequest, request: Request):
         db_manager = MultiDatabaseManager()
         await db_manager.connect()
         
-        org_db = db_manager.get_org_database(org_context.organization_id)
+        # Use org_short_name for database lookup
+        org_db = db_manager.get_org_database(org_context.org_short_name)
         
         # Generate report ID
         report_id = f"rpt_{uuid.uuid4().hex[:12]}"
@@ -1570,25 +2787,16 @@ async def create_report(report_request: ReportCreateRequest, request: Request):
 
 
 @app.put("/api/reports/{report_id}")
-async def update_report(report_id: str, update_request: ReportUpdateRequest, request: Request):
+async def update_report(
+    report_id: str, 
+    update_request: ReportUpdateRequest, 
+    request: Request,
+    org_context: OrganizationContext = Depends(get_organization_context)
+):
     """Update a report (Manager and Employee can update)"""
     request_data = await api_logger.log_request(request)
     
     try:
-        from utils.auth_middleware import get_organization_context
-        from fastapi.security import HTTPAuthorizationCredentials
-        
-        # Get auth token
-        auth_header = request.headers.get("Authorization")
-        if not auth_header or not auth_header.startswith("Bearer "):
-            raise HTTPException(status_code=401, detail="Missing authorization header")
-        
-        token = auth_header.replace("Bearer ", "")
-        credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
-        
-        # Get organization context from token
-        org_context = await get_organization_context(credentials)
-        
         # Check permission
         if not org_context.has_permission("reports", "update"):
             raise HTTPException(status_code=403, detail="Insufficient permissions to update reports")
@@ -1598,12 +2806,12 @@ async def update_report(report_id: str, update_request: ReportUpdateRequest, req
         db_manager = MultiDatabaseManager()
         await db_manager.connect()
         
-        org_db = db_manager.get_org_database(org_context.organization_id)
+        # Use org_short_name for database lookup
+        org_db = db_manager.get_org_database(org_context.org_short_name)
         
-        # Find existing report
+        # Find existing report (filter by org for security)
         report = await org_db.reports.find_one({
-            "report_id": report_id,
-            "organization_id": org_context.organization_id
+            "report_id": report_id
         })
         
         if not report:
@@ -1635,7 +2843,7 @@ async def update_report(report_id: str, update_request: ReportUpdateRequest, req
         
         # Log activity
         await log_activity(
-            organization_id=org_context.organization_id,
+            organization_id=org_context.org_short_name,
             user_id=org_context.user_id,
             user_email=org_context.email,
             action="report_updated",
@@ -1675,25 +2883,15 @@ async def update_report(report_id: str, update_request: ReportUpdateRequest, req
 
 
 @app.post("/api/reports/{report_id}/submit")
-async def submit_report(report_id: str, request: Request):
-    """Submit a report for review (ONLY Manager can submit)"""
+async def submit_report(
+    report_id: str, 
+    request: Request,
+    org_context: OrganizationContext = Depends(get_organization_context)
+):
+    """Submit a report for review (Manager ONLY - Employees cannot submit)"""
     request_data = await api_logger.log_request(request)
     
     try:
-        from utils.auth_middleware import get_organization_context
-        from fastapi.security import HTTPAuthorizationCredentials
-        
-        # Get auth token
-        auth_header = request.headers.get("Authorization")
-        if not auth_header or not auth_header.startswith("Bearer "):
-            raise HTTPException(status_code=401, detail="Missing authorization header")
-        
-        token = auth_header.replace("Bearer ", "")
-        credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
-        
-        # Get organization context from token
-        org_context = await get_organization_context(credentials)
-        
         # Check permission - ONLY Manager can submit
         if not org_context.has_permission("reports", "submit"):
             raise HTTPException(
@@ -1706,12 +2904,12 @@ async def submit_report(report_id: str, request: Request):
         db_manager = MultiDatabaseManager()
         await db_manager.connect()
         
-        org_db = db_manager.get_org_database(org_context.organization_id)
+        # Use org_short_name for database lookup
+        org_db = db_manager.get_org_database(org_context.org_short_name)
         
-        # Find existing report
+        # Find existing report (auto-filtered by org database)
         report = await org_db.reports.find_one({
-            "report_id": report_id,
-            "organization_id": org_context.organization_id
+            "report_id": report_id
         })
         
         if not report:
@@ -1742,7 +2940,7 @@ async def submit_report(report_id: str, request: Request):
         
         # Log activity - IMPORTANT: This shows Manager submitted the report
         await log_activity(
-            organization_id=org_context.organization_id,
+            organization_id=org_context.org_short_name,
             user_id=org_context.user_id,
             user_email=org_context.email,
             action="report_submitted",

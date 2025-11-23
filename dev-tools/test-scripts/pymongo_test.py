@@ -11,7 +11,7 @@ from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
 def test_connection():
     """Test connection using PyMongo directly"""
     
-    connection_string = "mongodb+srv://app_user:kHxlQqJ1Uc3bmoL6@valuationreportcluster.5ixm1s7.mongodb.net/valuation_app_prod?retryWrites=true&w=majority&appName=ValuationReportCluster"
+    connection_string = "mongodb+srv://app_user:KOtsC5qeCc78icks@valuationreportcluster.5ixm1s7.mongodb.net/valuation_app_prod?retryWrites=true&w=majority&appName=ValuationReportCluster"
     
     print("🔗 Testing MongoDB Atlas Connection (PyMongo)...")
     print(f"📋 Cluster: valuationreportcluster.5ixm1s7.mongodb.net")
