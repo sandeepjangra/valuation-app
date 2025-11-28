@@ -38,31 +38,33 @@
   @if (!isLoading() && templateData()) {
     <div class="form-content">
       <!-- Section Tabs -->
-      <div class="section-tabs">
-        <button 
-          type="button"
-          class="section-tab"
-          [class.active]="activeSection() === 'metadata'"
-          (click)="onSectionChange('metadata')">
-          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-          Template Info
-        </button>
-        
-        <button 
-          type="button"
-          class="section-tab"
-          [class.active]="activeSection() === 'fields'"
-          (click)="onSectionChange('fields')">
-          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-          </svg>
-          Field Values
-          @if (getFilledFieldsCount() > 0) {
-            <span class="badge">{{ getFilledFieldsCount() }} / {{ getTotalFieldsCount() }}</span>
-          }
-        </button>
+      <div class="section-tabs-container">
+        <div class="section-tabs">
+          <button 
+            type="button"
+            class="section-tab"
+            [class.active]="activeSection() === 'metadata'"
+            (click)="onSectionChange('metadata')">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            Template Info
+          </button>
+          
+          <button 
+            type="button"
+            class="section-tab"
+            [class.active]="activeSection() === 'fields'"
+            (click)="onSectionChange('fields')">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            Field Values
+            @if (getFilledFieldsCount() > 0) {
+              <span class="badge">{{ getFilledFieldsCount() }} / {{ getTotalFieldsCount() }}</span>
+            }
+          </button>
+        </div>
       </div>
 
       <!-- Metadata Section -->
@@ -98,21 +100,6 @@
               <span class="help-text">{{ metadataForm.get('description')?.value?.length || 0 }} / 500 characters</span>
             </div>
 
-            <div class="info-box">
-              <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-              <div>
-                <h4>Template Guidelines</h4>
-                <ul>
-                  <li>Choose a descriptive name that indicates when to use this template</li>
-                  <li>You can create up to 3 templates for each bank and property type combination</li>
-                  <li>Fill in default values for fields you commonly use</li>
-                  <li>Leave fields empty if they vary for each report</li>
-                </ul>
-              </div>
-            </div>
-
             <div class="form-actions">
               <button type="button" class="btn btn-primary" (click)="onSectionChange('fields')">
                 Next: Fill Field Values
@@ -141,76 +128,24 @@
           </div>
 
           <form [formGroup]="fieldsForm">
-            <!-- Common Fields -->
-            @if (templateData()!.commonFieldGroups.length > 0) {
-              <div class="fields-group">
-                <h4 class="group-title">Common Fields</h4>
-                @for (group of templateData()!.commonFieldGroups; track group.groupName) {
-                  <div class="field-section">
-                    <h5 class="section-title">{{ group.displayName }}</h5>
-                    <div class="fields-grid">
-                      @for (field of group.fields; track field.fieldId) {
-                        <div class="field-item" [class.filled]="isFieldFilled(field.fieldId)">
-                          <label [for]="field.fieldId">
-                            {{ field.uiDisplayName }}
-                            @if (field.isRequired) {
-                              <span class="required-marker">*</span>
-                            }
-                          </label>
-                          
-                          @switch (field.fieldType) {
-                            @case ('textarea') {
-                              <textarea 
-                                [id]="field.fieldId"
-                                class="form-control"
-                                [formControlName]="field.fieldId"
-                                [placeholder]="field.placeholder || ''"
-                                rows="3"></textarea>
-                            }
-                            @case ('select') {
-                              <select 
-                                [id]="field.fieldId"
-                                class="form-control"
-                                [formControlName]="field.fieldId">
-                                <option value="">Select...</option>
-                                @for (option of field.options; track option.value) {
-                                  <option [value]="option.value">{{ option.label }}</option>
-                                }
-                              </select>
-                            }
-                            @default {
-                              <input 
-                                [id]="field.fieldId"
-                                [type]="field.fieldType || 'text'"
-                                class="form-control"
-                                [formControlName]="field.fieldId"
-                                [placeholder]="field.placeholder || ''">
-                            }
-                          }
-                        </div>
-                      }
-                    </div>
-                  </div>
-                }
-              </div>
-            }
-
             <!-- Bank Specific Fields -->
             @if (templateData()!.bankSpecificTabs.length > 0) {
               <div class="fields-group">
-                <h4 class="group-title">Bank Specific Fields</h4>
+                <h4 class="group-title">Field Values</h4>
                 
                 <!-- Bank Tabs -->
-                <div class="bank-tabs">
-                  @for (tab of templateData()!.bankSpecificTabs; track tab.tabId) {
-                    <button 
-                      type="button"
-                      class="bank-tab"
-                      [class.active]="activeBankSpecificTab() === tab.tabId"
-                      (click)="onBankTabChange(tab.tabId)">
-                      {{ tab.tabName }}
-                    </button>
-                  }
+                <div class="bank-tabs-container">
+                  <div class="bank-tabs">
+                    @for (tab of templateData()!.bankSpecificTabs; track tab.tabId) {
+                      <button 
+                        type="button"
+                        class="bank-tab"
+                        [class.active]="activeBankSpecificTab() === tab.tabId"
+                        (click)="onBankTabChange(tab.tabId)">
+                        {{ tab.tabName }}
+                      </button>
+                    }
+                  </div>
                 </div>
 
                 <!-- Active Tab Content -->

@@ -163,8 +163,15 @@ export const routes: Routes = [
         children: [
           {
             path: '',
-            redirectTo: 'health',
+            redirectTo: 'overview',
             pathMatch: 'full'
+          },
+          {
+            path: 'overview',
+            loadComponent: () => 
+              import('./components/admin/overview/admin-overview.component')
+                .then(m => m.AdminOverviewComponent),
+            title: 'Admin Overview'
           },
           {
             path: 'health',

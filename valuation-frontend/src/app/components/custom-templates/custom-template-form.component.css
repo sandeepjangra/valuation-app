@@ -113,14 +113,14 @@
 .form-content {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1rem 2rem;
 }
 
 /* Section Tabs */
 .section-tabs {
   display: flex;
   gap: 1rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
   border-bottom: 2px solid #e2e8f0;
 }
 
@@ -170,8 +170,9 @@
 .section-content {
   background: white;
   border-radius: 0.75rem;
-  padding: 2rem;
+  padding: 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-top: 1rem;
 }
 
 /* Metadata Form */
@@ -231,11 +232,11 @@
 .info-box {
   display: flex;
   gap: 1rem;
-  padding: 1rem;
+  padding: 0.75rem 1rem;
   background: #ebf8ff;
   border: 1px solid #bee3f8;
   border-radius: 0.5rem;
-  margin-top: 1.5rem;
+  margin-top: 1rem;
 }
 
 .info-box .icon {
@@ -264,13 +265,131 @@
   margin-bottom: 0.25rem;
 }
 
+/* Section Tabs */
+.section-tabs-container {
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 2rem;
+}
+
+.section-tabs {
+  display: flex;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  height: 50px; /* Compact height */
+}
+
+.section-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: #718096;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  height: 100%;
+}
+
+.section-tab:hover {
+  color: #4299e1;
+  background: #f7fafc;
+}
+
+.section-tab.active {
+  color: #4299e1;
+  border-bottom-color: #4299e1;
+  background: #ebf8ff;
+}
+
+.section-tab .icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.section-tab .badge {
+  background: #4299e1;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.125rem 0.5rem;
+  border-radius: 1rem;
+  margin-left: 0.25rem;
+}
+
+/* Bank Tabs */
+.bank-tabs-container {
+  background: #f7fafc;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 1.5rem;
+  padding: 0.5rem 0;
+}
+
+.bank-tabs {
+  display: flex;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  height: 44px; /* Compact height */
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.bank-tabs::-webkit-scrollbar {
+  height: 2px;
+}
+
+.bank-tabs::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.bank-tabs::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 2px;
+}
+
+.bank-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #4a5568;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  height: 100%;
+  min-width: 120px;
+}
+
+.bank-tab:hover {
+  color: #4299e1;
+  background: white;
+}
+
+.bank-tab.active {
+  color: #4299e1;
+  border-bottom-color: #4299e1;
+  background: white;
+  font-weight: 600;
+}
+
 /* Fields Section */
 .fields-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
   border-bottom: 1px solid #e2e8f0;
 }
 
@@ -299,7 +418,7 @@
 
 /* Fields Group */
 .fields-group {
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 }
 
 .group-title {
@@ -312,7 +431,7 @@
 }
 
 .field-section {
-  margin-bottom: 2rem;
+  margin-bottom: 1.25rem;
 }
 
 .section-title {
@@ -325,7 +444,7 @@
 .fields-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .field-item {
@@ -363,7 +482,7 @@
 .bank-tabs {
   display: flex;
   gap: 0.5rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
   flex-wrap: wrap;
 }
 
@@ -391,6 +510,8 @@
 
 .tab-content {
   animation: fadeIn 0.3s;
+  padding-top: 0;
+  margin-top: 1rem;
 }
 
 @keyframes fadeIn {
@@ -465,8 +586,8 @@
 
 /* Form Actions */
 .form-actions {
-  margin-top: 2rem;
-  padding-top: 1.5rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
   border-top: 1px solid #e2e8f0;
 }
 
@@ -501,20 +622,44 @@
     grid-template-columns: 1fr;
   }
 
+  /* Mobile navigation adjustments */
+  .section-tabs-container {
+    margin: 0 -1rem;
+    padding: 0 1rem;
+  }
+
   .section-tabs {
-    flex-direction: column;
-    gap: 0;
+    height: 44px; /* Smaller on mobile */
   }
 
   .section-tab {
-    border-bottom: 1px solid #e2e8f0;
-    border-left: 3px solid transparent;
-    margin-bottom: 0;
+    padding: 0.5rem 1rem;
+    font-size: 0.8125rem;
+    min-width: 100px;
   }
 
-  .section-tab.active {
-    border-bottom-color: transparent;
-    border-left-color: #4299e1;
+  .bank-tabs-container {
+    margin: 0 -1rem;
+    padding: 0.5rem 1rem;
+  }
+
+  .bank-tabs {
+    height: 40px; /* Smaller on mobile */
+  }
+
+  .bank-tab {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    min-width: 100px;
+  }
+
+  .section-content {
+    padding: 1.5rem 1rem;
+    margin-top: 0.5rem;
+  }
+
+  .tab-content {
+    padding-top: 1rem;
   }
 
   .action-bar {

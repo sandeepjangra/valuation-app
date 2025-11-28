@@ -9,12 +9,12 @@
   flex-direction: column;
 }
 
-/* Header Section */
+/* Header Section - Compact */
 .page-header {
   background: white;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 16px;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
   box-shadow: 0 2px 8px rgba(139, 92, 246, 0.1);
   border: 1px solid rgba(139, 92, 246, 0.1);
   flex-shrink: 0;
@@ -51,27 +51,27 @@
 
 .page-title {
   color: #1f2937;
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
-  margin: 0 0 8px 0;
+  margin: 0 0 4px 0;
 }
 
 .page-subtitle {
   color: #6b7280;
-  font-size: 16px;
+  font-size: 14px;
   margin: 0;
 }
 
-/* Progress Steps */
+/* Progress Steps - Compact */
 .progress-steps {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   background: white;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.1);
+  border-radius: 8px;
+  padding: 12px 16px;
+  box-shadow: 0 1px 4px rgba(139, 92, 246, 0.08);
   flex-shrink: 0;
 }
 
@@ -79,7 +79,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   opacity: 0.5;
   transition: all 0.3s ease;
 }
@@ -93,8 +93,8 @@
 }
 
 .step-number {
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background: #e5e7eb;
   color: #6b7280;
@@ -102,7 +102,7 @@
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 12px;
   transition: all 0.3s ease;
 }
 
@@ -117,10 +117,11 @@
 }
 
 .step-label {
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 500;
   color: #6b7280;
   text-align: center;
+  white-space: nowrap;
 }
 
 .step.active .step-label {
@@ -132,10 +133,10 @@
 }
 
 .step-connector {
-  width: 60px;
+  width: 40px;
   height: 2px;
   background: #e5e7eb;
-  margin: 0 16px;
+  margin: 0 12px;
   transition: all 0.3s ease;
 }
 
@@ -190,7 +191,7 @@
 }
 
 .section-header {
-  margin-bottom: 20px;
+  margin-bottom: 12px;
   flex-shrink: 0;
 }
 
@@ -213,14 +214,14 @@
 
 .section-title {
   color: #1f2937;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
-  margin: 0 0 8px 0;
+  margin: 0 0 4px 0;
 }
 
 .section-subtitle {
   color: #6b7280;
-  font-size: 16px;
+  font-size: 14px;
   margin: 0;
 }
 
@@ -460,36 +461,36 @@
   box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
 }
 
-/* Templates Grid */
+/* Templates Grid - Compact */
 .templates-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 12px;
-  margin-top: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
   flex: 1;
   overflow-y: auto;
   padding-right: 8px;
-  max-height: calc(100vh - 380px); /* Ensure it fits within viewport */
+  max-height: calc(100vh - 320px); /* Reduced height due to compact header */
 }
 
 .template-card {
   background: white;
   border: 2px solid #e5e7eb;
-  border-radius: 12px;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
-  height: 160px;
+  height: 120px;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 16px;
+  padding: 12px;
 }
 
 .template-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.15);
   border-color: #8b5cf6;
 }
 
@@ -502,11 +503,11 @@
 /* Template Icon Section */
 .template-icon-section {
   flex: 0 0 auto;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .template-icon {
-  font-size: 32px;
+  font-size: 24px;
   display: block;
 }
 
@@ -515,29 +516,29 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .template-name {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: #1f2937;
   margin: 0;
-  line-height: 1.2;
+  line-height: 1.1;
 }
 
 .template-type {
-  font-size: 12px;
+  font-size: 11px;
   color: #8b5cf6;
   font-weight: 500;
 }
 
 .template-version {
-  font-size: 11px;
+  font-size: 10px;
   color: #6b7280;
   background: #f1f5f9;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 1px 4px;
+  border-radius: 3px;
   display: inline-block;
   font-weight: 500;
 }
@@ -573,32 +574,32 @@
   margin: 0 0 24px 0;
 }
 
-/* Selection Summary */
+/* Selection Summary - Compact */
 .selection-summary {
-  margin: 20px 0;
+  margin: 12px 0;
   flex: 1;
   overflow-y: auto;
-  max-height: calc(100vh - 380px); /* Ensure it fits within viewport */
+  max-height: calc(100vh - 320px); /* Reduced due to compact layout */
 }
 
 .summary-card {
   background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
   border: 1px solid rgba(139, 92, 246, 0.2);
-  border-radius: 12px;
-  padding: 24px;
+  border-radius: 8px;
+  padding: 16px;
 }
 
 .summary-title {
   color: #1f2937;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
-  margin: 0 0 20px 0;
+  margin: 0 0 12px 0;
 }
 
 .selection-item {
   display: flex;
   align-items: center;
-  padding: 10px 0;
+  padding: 8px 0;
   border-bottom: 1px solid rgba(139, 92, 246, 0.1);
 }
 
@@ -609,14 +610,16 @@
 .selection-label {
   color: #6b7280;
   font-weight: 500;
-  width: 120px;
+  width: 100px;
   flex-shrink: 0;
+  font-size: 13px;
 }
 
 .selection-value {
   color: #1f2937;
   font-weight: 500;
   display: flex;
+  font-size: 13px;
   align-items: center;
   gap: 8px;
 }
@@ -629,6 +632,19 @@
   margin-top: 20px;
   padding-top: 16px;
   border-top: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+/* Action Buttons at Top - Compact */
+.action-buttons-top {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin: 16px 0;
+  padding: 12px 16px;
+  background: #f8f9ff;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
   flex-shrink: 0;
 }
 

@@ -33,10 +33,7 @@ import { Router, RouterModule } from '@angular/router';
       <div class="tab-content">
         @switch (activeTab()) {
           @case ('overview') {
-            <div class="coming-soon">
-              <h2>📊 Overview Dashboard</h2>
-              <p>Coming soon...</p>
-            </div>
+            <router-outlet></router-outlet>
           }
           @case ('organizations') {
             <router-outlet></router-outlet>
@@ -165,7 +162,7 @@ import { Router, RouterModule } from '@angular/router';
   `]
 })
 export class AdminDashboardComponent implements OnInit {
-  activeTab = signal('health');
+  activeTab = signal('overview');
   systemStatus = signal<'healthy' | 'degraded' | 'down'>('healthy');
 
   tabs = [
@@ -184,7 +181,9 @@ export class AdminDashboardComponent implements OnInit {
     
     // Set initial active tab based on current route
     const currentPath = this.router.url;
-    if (currentPath.includes('/admin/health')) {
+    if (currentPath.includes('/admin/overview')) {
+      this.activeTab.set('overview');
+    } else if (currentPath.includes('/admin/health')) {
       this.activeTab.set('health');
     } else if (currentPath.includes('/admin/activity')) {
       this.activeTab.set('activity-logs');
@@ -199,7 +198,9 @@ export class AdminDashboardComponent implements OnInit {
     this.activeTab.set(tabId);
     
     // Navigate to the appropriate route
-    if (tabId === 'health') {
+    if (tabId === 'overview') {
+      this.router.navigate(['/admin', 'overview']);
+    } else if (tabId === 'health') {
       this.router.navigate(['/admin', 'health']);
     } else if (tabId === 'activity-logs') {
       this.router.navigate(['/admin', 'activity']);
@@ -208,7 +209,6 @@ export class AdminDashboardComponent implements OnInit {
     } else if (tabId === 'server-logs') {
       this.router.navigate(['/admin', 'server-logs']);
     }
-    // Other tabs don't have routes yet
   }
 
   loadSystemStatus() {

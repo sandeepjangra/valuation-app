@@ -202,16 +202,18 @@
                 <p class="section-subtitle">Bank-specific fields for {{ selectedPropertyType }} property valuation</p>
               </div>
               
-            <!-- Inline Sub-tabs -->
-            <div class="inline-sub-tabs" *ngIf="getBankSpecificTabs().length > 1">
-              <button type="button" 
-                      *ngFor="let tab of getBankSpecificTabs()" 
-                      class="inline-sub-tab-button" 
-                      [class.active]="activeBankSpecificTab === tab.tabId"
-                      (click)="switchBankSpecificTab(tab.tabId)">
-                {{ tab.tabName }}
-                <span class="tab-field-count">({{ tab.fields.length }})</span>
-              </button>
+            <!-- Bank-Specific Tabs -->
+            <div *ngIf="getBankSpecificTabs().length > 1">
+              <div class="inline-sub-tabs">
+                <button type="button" 
+                        *ngFor="let tab of getBankSpecificTabs()" 
+                        class="inline-sub-tab-button" 
+                        [class.active]="activeBankSpecificTab === tab.tabId"
+                        (click)="switchBankSpecificTab(tab.tabId)">
+                  {{ tab.tabName }}
+                  <span class="tab-field-count">({{ tab.fields.length }})</span>
+                </button>
+              </div>
             </div>
             </div>
 

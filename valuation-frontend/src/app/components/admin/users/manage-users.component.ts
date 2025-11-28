@@ -15,6 +15,7 @@ interface User {
   user_id: string;
   name: string;
   email: string;
+  phone: string;
   role: 'manager' | 'employee';
   status: string;
   created_at: string;
@@ -139,6 +140,7 @@ interface User {
               <label>Email Address *</label>
               <input type="email" [(ngModel)]="userForm.email" name="email" required
                      [disabled]="!!editingUser()"
+                     autocomplete="off"
                      placeholder="john.doe@company.com">
               @if (editingUser()) {
                 <small class="help-text">Email cannot be changed after creation</small>
@@ -670,7 +672,7 @@ export class ManageUsersComponent implements OnInit {
     this.editingUser.set(user);
     this.userForm.full_name = user.name;
     this.userForm.email = user.email;
-    this.userForm.phone = user._id; // Will get phone from backend
+    this.userForm.phone = user.phone || '';  // Use actual phone from user data
     this.userForm.role = user.role;
     this.userForm.password = ''; // Not needed for edit
     this.showDialog.set(true);

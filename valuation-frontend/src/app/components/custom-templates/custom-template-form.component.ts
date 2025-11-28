@@ -166,14 +166,8 @@ export class CustomTemplateFormComponent implements OnInit {
   private buildFieldControls(data: ProcessedTemplateData): void {
     const formGroup: any = {};
 
-    // Add common fields
-    data.commonFieldGroups.forEach(group => {
-      group.fields.forEach(field => {
-        formGroup[field.fieldId] = [''];
-      });
-    });
-
-    // Add bank-specific fields
+    // Skip common fields - they are entered by user, not saved in templates
+    // Only add bank-specific fields
     data.bankSpecificTabs.forEach(tab => {
       // Tab-level fields
       tab.fields.forEach(field => {

@@ -221,6 +221,16 @@
       <p class="section-subtitle">Review your selections and proceed to the report form</p>
     </div>
 
+    <!-- Action Buttons at Top -->
+    <div class="action-buttons-top">
+      <button class="cancel-button" (click)="cancelAndGoBack()">
+        Cancel
+      </button>
+      <button class="proceed-button primary" (click)="proceedToForm()">
+        Create Report Form
+      </button>
+    </div>
+
     <div class="selection-summary">
       <div class="summary-card">
         <h3 class="summary-title">Your Selections</h3>
@@ -261,21 +271,9 @@
             <span class="no-template-badge">None (Empty form)</span>
           </div>
         </div>
-
-        <div class="selection-item">
-          <div class="selection-label">Form Fields:</div>
-          <div class="selection-value">{{ selectedTemplate.fields.length }} fields to complete</div>
-        </div>
       </div>
     </div>
 
-    <div class="action-buttons">
-      <button class="cancel-button" (click)="cancelAndGoBack()">
-        Cancel
-      </button>
-      <button class="proceed-button primary" (click)="proceedToForm()">
-        Create Report Form
-      </button>
-    </div>
+
   </div>
 </div>

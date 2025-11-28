@@ -14,6 +14,83 @@
   margin-bottom: 24px;
   box-shadow: 0 2px 8px rgba(139, 92, 246, 0.1);
   border: 1px solid rgba(139, 92, 246, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+
+
+.inline-sub-tabs {
+  display: flex;
+  gap: 0;
+  margin: 0;
+  padding: 12px 0;
+  height: 60px;
+  align-items: center;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+
+
+.inline-sub-tabs::-webkit-scrollbar {
+  height: 3px;
+}
+
+.inline-sub-tabs::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.inline-sub-tabs::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 3px;
+}
+
+.inline-sub-tab-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  min-width: 140px;
+  height: 44px;
+}
+
+.inline-sub-tab-button:hover {
+  color: #4f46e5;
+  background: rgba(79, 70, 229, 0.05);
+}
+
+.inline-sub-tab-button.active {
+  color: #4f46e5;
+  border-bottom-color: #4f46e5;
+  background: rgba(79, 70, 229, 0.1);
+  font-weight: 600;
+}
+
+.tab-field-count {
+  background: #e5e7eb;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: 4px;
+}
+
+.inline-sub-tab-button.active .tab-field-count {
+  background: #4f46e5;
+  color: white;
 }
 
 .header-content {
@@ -320,8 +397,9 @@
 .compact-field-groups {
   background: #fafbfc;
   border-radius: 8px;
-  padding: 20px;
+  padding: 24px 20px 20px 20px; /* Extra top padding for sticky tabs */
   border: 1px solid #e2e8f0;
+  margin-top: 16px; /* Space below sticky tabs */
 }
 
 /* Tabs Section */
