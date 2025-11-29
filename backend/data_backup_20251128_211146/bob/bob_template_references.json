@@ -1,0 +1,114 @@
+[
+  {
+    "templateId": "BOB_LAND_REF_001",
+    "templateCode": "land",
+    "templateName": "BOB Land Property Valuation",
+    "templateType": "property_valuation",
+    "propertyType": "land",
+    "description": "Template for land property valuation with common and BOB-specific fields",
+    "version": "2.0",
+    "isActive": true,
+    "fields": {
+      "commonFields": {
+        "collectionRef": "common_form_fields",
+        "filter": {
+          "isActive": true,
+          "applicableFor": "all"
+        }
+      },
+      "bankSpecificFields": {
+        "collectionRef": "bob_land_property_details",
+        "filter": {
+          "isActive": true
+        }
+      }
+    },
+    "aggregationPipeline": [
+      {
+        "$lookup": {
+          "from": "common_form_fields",
+          "pipeline": [
+            {
+              "$match": {
+                "isActive": true,
+                "applicableFor": "all"
+              }
+            }
+          ],
+          "as": "commonFields"
+        }
+      },
+      {
+        "$lookup": {
+          "from": "bob_land_property_details",
+          "pipeline": [
+            {
+              "$match": {
+                "isActive": true
+              }
+            }
+          ],
+          "as": "bankSpecificTabs"
+        }
+      }
+    ],
+    "createdAt": "2025-11-02T20:00:00.000+00:00",
+    "updatedAt": "2025-11-02T20:00:00.000+00:00"
+  },
+  {
+    "templateId": "BOB_APARTMENT_REF_001",
+    "templateCode": "apartment",
+    "templateName": "BOB Apartment Property Valuation",
+    "templateType": "property_valuation",
+    "propertyType": "apartment",
+    "description": "Template for apartment property valuation with common and BOB-specific fields",
+    "version": "2.0",
+    "isActive": true,
+    "fields": {
+      "commonFields": {
+        "collectionRef": "common_form_fields",
+        "filter": {
+          "isActive": true,
+          "applicableFor": "all"
+        }
+      },
+      "bankSpecificFields": {
+        "collectionRef": "bob_apartment_property_details",
+        "filter": {
+          "isActive": true
+        }
+      }
+    },
+    "aggregationPipeline": [
+      {
+        "$lookup": {
+          "from": "common_form_fields",
+          "pipeline": [
+            {
+              "$match": {
+                "isActive": true,
+                "applicableFor": "all"
+              }
+            }
+          ],
+          "as": "commonFields"
+        }
+      },
+      {
+        "$lookup": {
+          "from": "bob_apartment_property_details",
+          "pipeline": [
+            {
+              "$match": {
+                "isActive": true
+              }
+            }
+          ],
+          "as": "bankSpecificTabs"
+        }
+      }
+    ],
+    "createdAt": "2025-11-02T20:00:00.000+00:00",
+    "updatedAt": "2025-11-02T20:00:00.000+00:00"
+  }
+]

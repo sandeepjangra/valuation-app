@@ -1,9 +1,11 @@
 {
-  "_id": "690fc53fee787899a6b27c70",
+  "_id": {
+    "$oid": "690fc53fee787899a6b27c70"
+  },
   "metadata": {
     "generated_at": "2025-10-25T12:00:00.000000+00:00",
     "collection_name": "bob_land_property_details",
-    "total_documents": 5,
+    "total_documents": 4,
     "version": "2.0",
     "database": "valuation_admin",
     "description": "Dynamic tab structure for BOB Land Property Details template"
@@ -36,14 +38,8 @@
           },
           {
             "sectionId": "part_c",
-            "sectionName": "Part C - Property Information",
+            "sectionName": "Part C - Others",
             "sortOrder": 3,
-            "description": "Information/Details about the property"
-          },
-          {
-            "sectionId": "part_d",
-            "sectionName": "Part D - Others",
-            "sortOrder": 4,
             "description": "Other details"
           }
         ],
@@ -196,9 +192,9 @@
           ]
         },
         {
-          "sectionId": "part_d",
-          "sectionName": "Part D - Others",
-          "sortOrder": 4,
+          "sectionId": "part_c",
+          "sectionName": "Part C - Others",
+          "sortOrder": 3,
           "fields": [
             {
               "fieldId": "boundaries_dimensions_table",
@@ -250,7 +246,6 @@
                   "boundaries_actual": ""
                 }
               ],
-              "placeholder": "",
               "includeInCustomTemplate": true
             },
             {
@@ -280,7 +275,6 @@
                   "placeholder": "Enter number for latitude"
                 }
               ],
-              "placeholder": "",
               "includeInCustomTemplate": true
             }
           ]
@@ -829,8 +823,6 @@
                   "sortOrder": 3
                 }
               ],
-              "isRequired": false,
-              "placeholder": "",
               "includeInCustomTemplate": true
             },
             {
@@ -864,8 +856,6 @@
                   "sortOrder": 3
                 }
               ],
-              "isRequired": false,
-              "placeholder": "",
               "includeInCustomTemplate": true
             },
             {
@@ -896,8 +886,6 @@
                   "placeholder": "Total Extent of the Plot * Valuation Rate"
                 }
               ],
-              "isRequired": false,
-              "placeholder": "",
               "includeInCustomTemplate": true
             }
           ]
@@ -926,7 +914,6 @@
               "defaultValue": "no",
               "helpText": "Select whether a building exists on the property",
               "sortOrder": 1,
-              "placeholder": "",
               "includeInCustomTemplate": true
             },
             {
@@ -1014,8 +1001,6 @@
                   "sortOrder": 3
                 }
               ],
-              "isRequired": false,
-              "placeholder": "",
               "includeInCustomTemplate": true
             },
             {
@@ -1072,8 +1057,6 @@
                   "sortOrder": 3
                 }
               ],
-              "isRequired": false,
-              "placeholder": "",
               "includeInCustomTemplate": true
             },
             {
@@ -1155,8 +1138,6 @@
                   "sortOrder": 3
                 }
               ],
-              "isRequired": false,
-              "placeholder": "",
               "includeInCustomTemplate": true
             },
             {
@@ -1241,8 +1222,6 @@
                   "sortOrder": 4
                 }
               ],
-              "isRequired": false,
-              "placeholder": "",
               "includeInCustomTemplate": true
             },
             {
@@ -1294,8 +1273,6 @@
                   "sortOrder": 2
                 }
               ],
-              "isRequired": false,
-              "placeholder": "",
               "includeInCustomTemplate": true
             }
           ]
@@ -2141,7 +2118,11 @@
     }
   ],
   "isActive": true,
-  "createdAt": "2025-10-25T13:40:42.089000",
-  "updatedAt": "2025-10-25T13:40:42.089000",
+  "createdAt": {
+    "$date": "2025-10-25T13:40:42.089Z"
+  },
+  "updatedAt": {
+    "$date": "2025-10-25T13:40:42.089Z"
+  },
   "version": 1
 }

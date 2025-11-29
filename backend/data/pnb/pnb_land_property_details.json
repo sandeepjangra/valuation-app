@@ -1,24 +1,24 @@
 {
-  "_id": "68fe62e49b4958619c87f3b7",
+  "_id": "68fe62939b4958619c87f3b1",
   "metadata": {
     "generated_at": "2025-10-25T12:00:00.000000+00:00",
-    "collection_name": "cbi_all_property_details",
+    "collection_name": "pnb_all_property_details",
     "total_documents": 5,
     "version": "2.0",
     "database": "valuation_admin",
-    "description": "Dynamic tab structure for cbi all Property Details template"
+    "description": "Dynamic tab structure for pnb all Property Details template"
   },
   "templateMetadata": {
-    "templateId": "cbi_all_TEMPLATE_V1",
-    "templateName": "cbi all Property Valuation",
-    "bankCode": "cbi",
+    "templateId": "pnb_all_TEMPLATE_V1",
+    "templateName": "pnb all Property Valuation",
+    "bankCode": "pnb",
     "propertyType": "all",
     "version": "2.0",
     "tabs": [
       {
         "tabId": "property_details",
         "tabName": "Property Details",
-        "documentSource": "cbi_all_PROPERTY_DETAILS_V1",
+        "documentSource": "pnb_all_PROPERTY_DETAILS_V1",
         "sortOrder": 1,
         "hasSections": false,
         "description": "Basic property information and location details"
@@ -26,7 +26,7 @@
       {
         "tabId": "site_characteristics",
         "tabName": "Site Characteristics",
-        "documentSource": "cbi_all_SITE_CHARACTERISTICS_V1",
+        "documentSource": "pnb_all_SITE_CHARACTERISTICS_V1",
         "sortOrder": 2,
         "hasSections": false,
         "description": "Site conditions, amenities, and infrastructure details"
@@ -34,7 +34,7 @@
       {
         "tabId": "valuation",
         "tabName": "Valuation",
-        "documentSource": "cbi_all_VALUATION_V1",
+        "documentSource": "pnb_all_VALUATION_V1",
         "sortOrder": 3,
         "hasSections": true,
         "sections": [
@@ -56,7 +56,7 @@
       {
         "tabId": "construction_specifications",
         "tabName": "Construction Specifications",
-        "documentSource": "cbi_all_CONSTRUCTION_SPECS_V1",
+        "documentSource": "pnb_all_CONSTRUCTION_SPECS_V1",
         "sortOrder": 4,
         "hasSections": false,
         "description": "Construction materials and specifications"
@@ -64,7 +64,7 @@
       {
         "tabId": "detailed_valuation",
         "tabName": "Detailed Valuation",
-        "documentSource": "cbi_all_DETAILED_VALUATION_V1",
+        "documentSource": "pnb_all_DETAILED_VALUATION_V1",
         "sortOrder": 5,
         "hasSections": false,
         "description": "Detailed valuation components and final calculations"
@@ -74,9 +74,9 @@
   "documents": [
     {
       "_id": "68fa78b4e25b49fc725d349a",
-      "templateId": "cbi_all_PROPERTY_DETAILS_V1",
-      "templateName": "cbi all Property Details",
-      "bankCode": "cbi",
+      "templateId": "pnb_all_PROPERTY_DETAILS_V1",
+      "templateName": "pnb all Property Details",
+      "bankCode": "pnb",
       "propertyType": "all",
       "templateCategory": "property_details",
       "createdAt": "2025-10-23T18:49:24.051693+00:00",
@@ -481,9 +481,9 @@
     },
     {
       "_id": "68fa78b4e25b49fc725d349b",
-      "templateId": "cbi_all_SITE_CHARACTERISTICS_V1",
-      "templateName": "cbi all Site Characteristics",
-      "bankCode": "cbi",
+      "templateId": "pnb_all_SITE_CHARACTERISTICS_V1",
+      "templateName": "pnb all Site Characteristics",
+      "bankCode": "pnb",
       "propertyType": "all",
       "templateCategory": "site_characteristics",
       "createdAt": "2025-10-23T18:49:24.051768+00:00",
@@ -738,9 +738,9 @@
     },
     {
       "_id": "68fa78b4e25b49fc725d349c",
-      "templateId": "cbi_all_VALUATION_V1",
-      "templateName": "cbi all Valuation",
-      "bankCode": "cbi",
+      "templateId": "pnb_all_VALUATION_V1",
+      "templateName": "pnb all Valuation",
+      "bankCode": "pnb",
       "propertyType": "all",
       "templateCategory": "valuation",
       "createdAt": "2025-10-23T18:49:24.051829+00:00",
@@ -1050,9 +1050,9 @@
     },
     {
       "_id": "68fa78b4e25b49fc725d349d",
-      "templateId": "cbi_all_CONSTRUCTION_SPECS_V1",
-      "templateName": "cbi all Construction Specifications",
-      "bankCode": "cbi",
+      "templateId": "pnb_all_CONSTRUCTION_SPECS_V1",
+      "templateName": "pnb all Construction Specifications",
+      "bankCode": "pnb",
       "propertyType": "all",
       "templateCategory": "construction_specifications",
       "createdAt": "2025-10-23T18:49:24.051881+00:00",
@@ -1506,9 +1506,9 @@
     },
     {
       "_id": "68fa78b4e25b49fc725d349e",
-      "templateId": "cbi_all_DETAILED_VALUATION_V1",
-      "templateName": "cbi all Detailed Valuation",
-      "bankCode": "cbi",
+      "templateId": "pnb_all_DETAILED_VALUATION_V1",
+      "templateName": "pnb all Detailed Valuation",
+      "bankCode": "pnb",
       "propertyType": "all",
       "templateCategory": "detailed_valuation",
       "createdAt": "2025-10-23T18:49:24.051909+00:00",

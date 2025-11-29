@@ -415,68 +415,6 @@
           "sortOrder": 17,
           "placeholder": "Currently occupied by"
         }
-      ],
-      "sections": [
-        {
-          "sectionId": "part_d_others",
-          "sectionName": "Part D - Others",
-          "sortOrder": 999,
-          "fields": [
-            {
-              "fieldId": "boundaries_dimensions_table",
-              "uiDisplayName": "Boundaries and Dimensions Table",
-              "fieldType": "table",
-              "isRequired": false,
-              "sortOrder": 1,
-              "columns": [
-                {
-                  "columnId": "direction",
-                  "columnName": "Direction",
-                  "fieldType": "text",
-                  "isReadonly": true
-                },
-                {
-                  "columnId": "boundaries_per_documents",
-                  "columnName": "Boundaries As Per Documents",
-                  "fieldType": "text",
-                  "isRequired": false,
-                  "isEditable": true
-                },
-                {
-                  "columnId": "boundaries_actual",
-                  "columnName": "Boundaries Actual",
-                  "fieldType": "text",
-                  "isRequired": false,
-                  "isEditable": true
-                }
-              ],
-              "rows": [
-                {
-                  "direction": "North",
-                  "boundaries_per_documents": "",
-                  "boundaries_actual": ""
-                },
-                {
-                  "direction": "South",
-                  "boundaries_per_documents": "",
-                  "boundaries_actual": ""
-                },
-                {
-                  "direction": "East",
-                  "boundaries_per_documents": "",
-                  "boundaries_actual": ""
-                },
-                {
-                  "direction": "West",
-                  "boundaries_per_documents": "",
-                  "boundaries_actual": ""
-                }
-              ],
-              "placeholder": "",
-              "includeInCustomTemplate": true
-            }
-          ]
-        }
       ]
     },
     {

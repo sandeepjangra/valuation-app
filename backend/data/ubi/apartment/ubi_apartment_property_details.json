@@ -1,24 +1,24 @@
 {
-  "_id": "68fe62e49b4958619c87f3b7",
+  "_id": "68fde82e8c01cf75e635d25e",
   "metadata": {
     "generated_at": "2025-10-25T12:00:00.000000+00:00",
-    "collection_name": "cbi_all_property_details",
+    "collection_name": "ubi_apartment_property_details",
     "total_documents": 5,
     "version": "2.0",
     "database": "valuation_admin",
-    "description": "Dynamic tab structure for cbi all Property Details template"
+    "description": "Dynamic tab structure for ubi apartment Property Details template"
   },
   "templateMetadata": {
-    "templateId": "cbi_all_TEMPLATE_V1",
-    "templateName": "cbi all Property Valuation",
-    "bankCode": "cbi",
-    "propertyType": "all",
+    "templateId": "ubi_apartment_TEMPLATE_V1",
+    "templateName": "ubi apartment Property Valuation",
+    "bankCode": "ubi",
+    "propertyType": "apartment",
     "version": "2.0",
     "tabs": [
       {
         "tabId": "property_details",
         "tabName": "Property Details",
-        "documentSource": "cbi_all_PROPERTY_DETAILS_V1",
+        "documentSource": "ubi_apartment_PROPERTY_DETAILS_V1",
         "sortOrder": 1,
         "hasSections": false,
         "description": "Basic property information and location details"
@@ -26,7 +26,7 @@
       {
         "tabId": "site_characteristics",
         "tabName": "Site Characteristics",
-        "documentSource": "cbi_all_SITE_CHARACTERISTICS_V1",
+        "documentSource": "ubi_apartment_SITE_CHARACTERISTICS_V1",
         "sortOrder": 2,
         "hasSections": false,
         "description": "Site conditions, amenities, and infrastructure details"
@@ -34,15 +34,15 @@
       {
         "tabId": "valuation",
         "tabName": "Valuation",
-        "documentSource": "cbi_all_VALUATION_V1",
+        "documentSource": "ubi_apartment_VALUATION_V1",
         "sortOrder": 3,
         "hasSections": true,
         "sections": [
           {
             "sectionId": "part_a",
-            "sectionName": "Part A - all Valuation",
+            "sectionName": "Part A - apartment Valuation",
             "sortOrder": 1,
-            "description": "all area calculations and market rates"
+            "description": "apartment area calculations and market rates"
           },
           {
             "sectionId": "part_b",
@@ -51,12 +51,12 @@
             "description": "Building specifications and construction details"
           }
         ],
-        "description": "all and building valuation calculations"
+        "description": "apartment and building valuation calculations"
       },
       {
         "tabId": "construction_specifications",
         "tabName": "Construction Specifications",
-        "documentSource": "cbi_all_CONSTRUCTION_SPECS_V1",
+        "documentSource": "ubi_apartment_CONSTRUCTION_SPECS_V1",
         "sortOrder": 4,
         "hasSections": false,
         "description": "Construction materials and specifications"
@@ -64,7 +64,7 @@
       {
         "tabId": "detailed_valuation",
         "tabName": "Detailed Valuation",
-        "documentSource": "cbi_all_DETAILED_VALUATION_V1",
+        "documentSource": "ubi_apartment_DETAILED_VALUATION_V1",
         "sortOrder": 5,
         "hasSections": false,
         "description": "Detailed valuation components and final calculations"
@@ -74,10 +74,10 @@
   "documents": [
     {
       "_id": "68fa78b4e25b49fc725d349a",
-      "templateId": "cbi_all_PROPERTY_DETAILS_V1",
-      "templateName": "cbi all Property Details",
-      "bankCode": "cbi",
-      "propertyType": "all",
+      "templateId": "ubi_apartment_PROPERTY_DETAILS_V1",
+      "templateName": "ubi apartment Property Details",
+      "bankCode": "ubi",
+      "propertyType": "apartment",
       "templateCategory": "property_details",
       "createdAt": "2025-10-23T18:49:24.051693+00:00",
       "updatedAt": "2025-10-23T18:49:24.051693+00:00",
@@ -295,7 +295,7 @@
           "isRequired": false,
           "defaultValue": "NA",
           "sortOrder": 10,
-          "placeholder": "In case it is an agricultural all, any conversion to house site plots is contemplated"
+          "placeholder": "In case it is an agricultural apartment, any conversion to house site plots is contemplated"
         },
         {
           "fieldId": "boundaries",
@@ -448,28 +448,50 @@
                   "fieldType": "text",
                   "isRequired": false,
                   "isEditable": true
+                },
+                {
+                  "columnId": "dimensions_per_documents",
+                  "columnName": "Dimensions As Per Documents",
+                  "fieldType": "number",
+                  "isRequired": false,
+                  "isEditable": true
+                },
+                {
+                  "columnId": "dimensions_actuals",
+                  "columnName": "Dimensions Actuals",
+                  "fieldType": "number",
+                  "isRequired": false,
+                  "isEditable": true
                 }
               ],
               "rows": [
                 {
                   "direction": "North",
                   "boundaries_per_documents": "",
-                  "boundaries_actual": ""
+                  "boundaries_actual": "",
+                  "dimensions_per_documents": "",
+                  "dimensions_actuals": ""
                 },
                 {
                   "direction": "South",
                   "boundaries_per_documents": "",
-                  "boundaries_actual": ""
+                  "boundaries_actual": "",
+                  "dimensions_per_documents": "",
+                  "dimensions_actuals": ""
                 },
                 {
                   "direction": "East",
                   "boundaries_per_documents": "",
-                  "boundaries_actual": ""
+                  "boundaries_actual": "",
+                  "dimensions_per_documents": "",
+                  "dimensions_actuals": ""
                 },
                 {
                   "direction": "West",
                   "boundaries_per_documents": "",
-                  "boundaries_actual": ""
+                  "boundaries_actual": "",
+                  "dimensions_per_documents": "",
+                  "dimensions_actuals": ""
                 }
               ],
               "placeholder": "",
@@ -481,10 +503,10 @@
     },
     {
       "_id": "68fa78b4e25b49fc725d349b",
-      "templateId": "cbi_all_SITE_CHARACTERISTICS_V1",
-      "templateName": "cbi all Site Characteristics",
-      "bankCode": "cbi",
-      "propertyType": "all",
+      "templateId": "ubi_apartment_SITE_CHARACTERISTICS_V1",
+      "templateName": "ubi apartment Site Characteristics",
+      "bankCode": "ubi",
+      "propertyType": "apartment",
       "templateCategory": "site_characteristics",
       "createdAt": "2025-10-23T18:49:24.051768+00:00",
       "updatedAt": "2025-10-23T18:49:24.051768+00:00",
@@ -546,21 +568,21 @@
           "sortOrder": 4
         },
         {
-          "fieldId": "all_level_topography",
-          "technicalName": "all_level_topography",
-          "uiDisplayName": "Level of all with Topographical Conditions",
+          "fieldId": "apartment_level_topography",
+          "technicalName": "apartment_level_topography",
+          "uiDisplayName": "Level of apartment with Topographical Conditions",
           "fieldType": "text",
           "isRequired": false,
-          "placeholder": "Describe all level and topographical conditions",
+          "placeholder": "Describe apartment level and topographical conditions",
           "sortOrder": 5
         },
         {
-          "fieldId": "all_shape",
-          "technicalName": "all_shape",
-          "uiDisplayName": "Shape of all",
+          "fieldId": "apartment_shape",
+          "technicalName": "apartment_shape",
+          "uiDisplayName": "Shape of apartment",
           "fieldType": "text",
           "isRequired": false,
-          "placeholder": "Describe the shape of the all",
+          "placeholder": "Describe the shape of the apartment",
           "sortOrder": 6
         },
         {
@@ -645,9 +667,9 @@
           "sortOrder": 13
         },
         {
-          "fieldId": "alllocked_status",
-          "technicalName": "alllocked_status",
-          "uiDisplayName": "Is it a all-locked all?",
+          "fieldId": "apartmentlocked_status",
+          "technicalName": "apartmentlocked_status",
+          "uiDisplayName": "Is it a apartment-locked apartment?",
           "fieldType": "select",
           "options": [
             {
@@ -738,19 +760,19 @@
     },
     {
       "_id": "68fa78b4e25b49fc725d349c",
-      "templateId": "cbi_all_VALUATION_V1",
-      "templateName": "cbi all Valuation",
-      "bankCode": "cbi",
-      "propertyType": "all",
+      "templateId": "ubi_apartment_VALUATION_V1",
+      "templateName": "ubi apartment Valuation",
+      "bankCode": "ubi",
+      "propertyType": "apartment",
       "templateCategory": "valuation",
       "createdAt": "2025-10-23T18:49:24.051829+00:00",
       "updatedAt": "2025-10-23T18:49:24.051829+00:00",
       "isActive": true,
-      "uiName": "all Valuation",
+      "uiName": "apartment Valuation",
       "sections": [
         {
           "sectionId": "part_a",
-          "sectionName": "Part A - all Valuation",
+          "sectionName": "Part A - apartment Valuation",
           "sortOrder": 1,
           "fields": [
             {
@@ -786,7 +808,7 @@
                     "acres"
                   ],
                   "isRequired": true,
-                  "placeholder": "Enter area of the all",
+                  "placeholder": "Enter area of the apartment",
                   "sortOrder": 3
                 }
               ],
@@ -846,9 +868,9 @@
                   "sortOrder": 1
                 },
                 {
-                  "fieldId": "estimated_all_value",
-                  "technicalName": "estimated_all_value",
-                  "uiDisplayName": "Estimated Value of all",
+                  "fieldId": "estimated_apartment_value",
+                  "technicalName": "estimated_apartment_value",
+                  "uiDisplayName": "Estimated Value of apartment",
                   "fieldType": "currency",
                   "formula": "total_extent_plot * valuation_rate",
                   "displayFormat": "currency",
@@ -1050,10 +1072,10 @@
     },
     {
       "_id": "68fa78b4e25b49fc725d349d",
-      "templateId": "cbi_all_CONSTRUCTION_SPECS_V1",
-      "templateName": "cbi all Construction Specifications",
-      "bankCode": "cbi",
-      "propertyType": "all",
+      "templateId": "ubi_apartment_CONSTRUCTION_SPECS_V1",
+      "templateName": "ubi apartment Construction Specifications",
+      "bankCode": "ubi",
+      "propertyType": "apartment",
       "templateCategory": "construction_specifications",
       "createdAt": "2025-10-23T18:49:24.051881+00:00",
       "updatedAt": "2025-10-23T18:49:24.051881+00:00",
@@ -1506,10 +1528,10 @@
     },
     {
       "_id": "68fa78b4e25b49fc725d349e",
-      "templateId": "cbi_all_DETAILED_VALUATION_V1",
-      "templateName": "cbi all Detailed Valuation",
-      "bankCode": "cbi",
-      "propertyType": "all",
+      "templateId": "ubi_apartment_DETAILED_VALUATION_V1",
+      "templateName": "ubi apartment Detailed Valuation",
+      "bankCode": "ubi",
+      "propertyType": "apartment",
       "templateCategory": "detailed_valuation",
       "createdAt": "2025-10-23T18:49:24.051909+00:00",
       "updatedAt": "2025-10-23T18:49:24.051909+00:00",
@@ -1517,11 +1539,11 @@
       "uiName": "Detailed Valuation",
       "fields": [
         {
-          "fieldId": "all_total",
-          "technicalName": "all_total",
-          "uiDisplayName": "all",
+          "fieldId": "apartment_total",
+          "technicalName": "apartment_total",
+          "uiDisplayName": "apartment",
           "fieldType": "currency",
-          "placeholder": "Valuation of all",
+          "placeholder": "Valuation of apartment",
           "displayFormat": "currency",
           "isReadonly": true,
           "sortOrder": 1

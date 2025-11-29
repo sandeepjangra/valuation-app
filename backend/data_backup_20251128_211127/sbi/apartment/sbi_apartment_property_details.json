@@ -212,7 +212,6 @@
                   "sortOrder": 3
                 }
               ],
-              "placeholder": "",
               "includeInCustomTemplate": true
             },
             {
@@ -239,7 +238,6 @@
                   "placeholder": "Flat No. 304, Tower B, Green Valley Apartments, Sector 18, Noida, Uttar Pradesh - 201301"
                 }
               ],
-              "placeholder": "",
               "includeInCustomTemplate": true
             },
             {
@@ -322,7 +320,6 @@
                   "placeholder": "Additional observations or remarks about the property location"
                 }
               ],
-              "placeholder": "",
               "includeInCustomTemplate": true
             }
           ]
@@ -440,8 +437,6 @@
                   "sortOrder": 4
                 }
               ],
-              "isRequired": false,
-              "placeholder": "",
               "includeInCustomTemplate": true
             },
             {
@@ -532,7 +527,6 @@
                   "dimensions_actuals": ""
                 }
               ],
-              "placeholder": "",
               "includeInCustomTemplate": true
             },
             {
@@ -562,7 +556,6 @@
                   "placeholder": "Enter number for latitude"
                 }
               ],
-              "placeholder": "",
               "includeInCustomTemplate": true
             },
             {
@@ -599,8 +592,6 @@
                   "placeholder": "Currently occupied by"
                 }
               ],
-              "isRequired": false,
-              "placeholder": "",
               "includeInCustomTemplate": true
             }
           ]
@@ -761,7 +752,6 @@
                   "placeholder": "Select maintenance of the building"
                 }
               ],
-              "placeholder": "",
               "includeInCustomTemplate": true
             },
             {
@@ -934,7 +924,6 @@
                   "placeholder": "Select Pavement Laid Around the Building"
                 }
               ],
-              "placeholder": "",
               "includeInCustomTemplate": true
             }
           ]
@@ -1058,7 +1047,6 @@
                   "placeholder": "e.g., Oil bound distemper paint on walls"
                 }
               ],
-              "placeholder": "",
               "includeInCustomTemplate": true
             },
             {
@@ -1117,7 +1105,6 @@
                   "placeholder": "Provide Meter Card details"
                 }
               ],
-              "placeholder": "",
               "includeInCustomTemplate": true
             },
             {
@@ -1192,7 +1179,6 @@
                   "placeholder": "If rented, what is the monthly rent?"
                 }
               ],
-              "placeholder": "",
               "includeInCustomTemplate": true
             }
           ]
@@ -1263,7 +1249,6 @@
                   "placeholder": "Any negative factors are observed which affect"
                 }
               ],
-              "placeholder": "",
               "includeInCustomTemplate": true
             },
             {
@@ -1322,7 +1307,6 @@
                   "placeholder": "e.g., The rates are derived as per the discussion with the local residence, property consultants and  prevailing market rates in the market for such property as on date. Market rates are higher than the collector rates of the area because of factors such as Marketability, Transferability, Physical, Legal, Social, Scarcity, Utility, Size, Location,Sale instances  and more important is  demand.Property has beenvalued at the prevailing market rate. "
                 }
               ],
-              "placeholder": "",
               "includeInCustomTemplate": true
             }
           ]
@@ -1381,7 +1365,6 @@
                   "placeholder": "Enter depreciated ratio of the building"
                 }
               ],
-              "placeholder": "",
               "includeInCustomTemplate": true
             },
             {
@@ -1428,7 +1411,6 @@
                   "placeholder": "Enter final composite rate after depreciation (e.g., 5500.50 per sft.)"
                 }
               ],
-              "placeholder": "",
               "includeInCustomTemplate": true
             }
           ]
@@ -1559,7 +1541,6 @@
                   "isReadonly": true
                 }
               ],
-              "placeholder": "",
               "includeInCustomTemplate": true
             }
           ]
@@ -1612,14 +1593,15 @@
           "prefix": "Rs.",
           "suffix": "Lac"
         }
-      ],
-      "sections": []
+      ]
     }
   ],
   "isActive": true,
   "createdAt": {
     "$date": "2025-10-31T22:57:23.064Z"
   },
-  "updatedAt": "2025-11-02T20:24:03.269832Z",
+  "updatedAt": {
+    "$date": "2025-10-31T22:57:23.064Z"
+  },
   "version": 2
 }

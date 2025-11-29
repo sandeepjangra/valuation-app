@@ -1,0 +1,826 @@
+{
+  "metadata": {
+    "generated_at": "2025-10-24T21:57:20.681001+00:00",
+    "collection_name": "cbi_all_property_details",
+    "total_documents": 4,
+    "version": "1.0",
+    "database": "valuation_admin"
+  },
+  "documents": [
+    {
+      "_id": "68fbf71ee18de0422ba70b89",
+      "templateId": "CBI_ALL_PROPERTY_DETAILS_V1",
+      "templateName": "CBI Property Details",
+      "bankCode": "CBI",
+      "propertyType": "All",
+      "templateCategory": "property_details",
+      "createdAt": "2025-10-24T21:57:20.681148+00:00",
+      "updatedAt": "2025-10-24T21:57:20.681152+00:00",
+      "isActive": true,
+      "fields": [
+        {
+          "fieldId": "property_type_selection",
+          "uiDisplayName": "Property Type",
+          "fieldType": "select",
+          "options": [
+            {
+              "value": "land",
+              "label": "Land/Plot"
+            },
+            {
+              "value": "apartment",
+              "label": "Apartment/Flat"
+            },
+            {
+              "value": "house",
+              "label": "Independent House"
+            },
+            {
+              "value": "commercial",
+              "label": "Commercial Property"
+            }
+          ],
+          "isRequired": true,
+          "sortOrder": 1
+        },
+        {
+          "fieldId": "list_of_documents",
+          "uiDisplayName": "Required Documents",
+          "fieldType": "multiselect",
+          "options": [
+            {
+              "value": "title_deed",
+              "label": "Title Deed"
+            },
+            {
+              "value": "sale_deed",
+              "label": "Sale Deed"
+            },
+            {
+              "value": "mutation_certificate",
+              "label": "Mutation Certificate"
+            },
+            {
+              "value": "property_card",
+              "label": "Property Card"
+            },
+            {
+              "value": "occupancy_certificate",
+              "label": "Occupancy Certificate"
+            },
+            {
+              "value": "building_approval",
+              "label": "Building Plan Approval"
+            },
+            {
+              "value": "government_approval",
+              "label": "Government Approval Letters"
+            },
+            {
+              "value": "clearance_certificate",
+              "label": "Clearance Certificates"
+            },
+            {
+              "value": "valuation_certificate",
+              "label": "Previous Valuation Certificate"
+            }
+          ],
+          "helpText": "Select all applicable documents for CBI valuation",
+          "isRequired": false,
+          "sortOrder": 2
+        },
+        {
+          "fieldId": "property_address",
+          "uiDisplayName": "Property Address",
+          "fieldType": "textarea",
+          "isRequired": true,
+          "placeholder": "Enter complete property address",
+          "sortOrder": 3
+        },
+        {
+          "fieldId": "property_description",
+          "uiDisplayName": "Property Description",
+          "fieldType": "textarea",
+          "isRequired": false,
+          "placeholder": "Describe the property in detail",
+          "sortOrder": 4
+        },
+        {
+          "fieldId": "property_location_details",
+          "uiDisplayName": "Location Details",
+          "fieldType": "group",
+          "isRequired": false,
+          "sortOrder": 5,
+          "subFields": [
+            {
+              "fieldId": "survey_number",
+              "uiDisplayName": "Survey Number",
+              "fieldType": "text",
+              "sortOrder": 1
+            },
+            {
+              "fieldId": "plot_number",
+              "uiDisplayName": "Plot Number",
+              "fieldType": "text",
+              "sortOrder": 2
+            },
+            {
+              "fieldId": "ward_number",
+              "uiDisplayName": "Ward Number",
+              "fieldType": "text",
+              "sortOrder": 3
+            },
+            {
+              "fieldId": "village_town",
+              "uiDisplayName": "Village/Town",
+              "fieldType": "text",
+              "sortOrder": 4
+            },
+            {
+              "fieldId": "district",
+              "uiDisplayName": "District",
+              "fieldType": "text",
+              "sortOrder": 5
+            },
+            {
+              "fieldId": "state",
+              "uiDisplayName": "State",
+              "fieldType": "select",
+              "options": [
+                {
+                  "value": "kerala",
+                  "label": "Kerala"
+                },
+                {
+                  "value": "tamil_nadu",
+                  "label": "Tamil Nadu"
+                },
+                {
+                  "value": "karnataka",
+                  "label": "Karnataka"
+                },
+                {
+                  "value": "andhra_pradesh",
+                  "label": "Andhra Pradesh"
+                },
+                {
+                  "value": "telangana",
+                  "label": "Telangana"
+                },
+                {
+                  "value": "other",
+                  "label": "Other"
+                }
+              ],
+              "sortOrder": 6
+            }
+          ]
+        },
+        {
+          "fieldId": "area_measurements",
+          "uiDisplayName": "Area Measurements",
+          "fieldType": "group",
+          "sortOrder": 6,
+          "subFields": [
+            {
+              "fieldId": "total_area",
+              "uiDisplayName": "Total Area",
+              "fieldType": "number_with_unit",
+              "units": [
+                "sq_ft",
+                "sq_yd",
+                "sq_m",
+                "acres"
+              ],
+              "sortOrder": 1
+            },
+            {
+              "fieldId": "built_up_area",
+              "uiDisplayName": "Built-up Area (if applicable)",
+              "fieldType": "number_with_unit",
+              "units": [
+                "sq_ft",
+                "sq_yd",
+                "sq_m"
+              ],
+              "sortOrder": 2
+            },
+            {
+              "fieldId": "carpet_area",
+              "uiDisplayName": "Carpet Area (for apartments)",
+              "fieldType": "number_with_unit",
+              "units": [
+                "sq_ft",
+                "sq_yd",
+                "sq_m"
+              ],
+              "sortOrder": 3
+            }
+          ]
+        },
+        {
+          "fieldId": "property_boundaries",
+          "uiDisplayName": "Property Boundaries",
+          "fieldType": "group",
+          "sortOrder": 7,
+          "subFields": [
+            {
+              "fieldId": "north_boundary",
+              "uiDisplayName": "North",
+              "fieldType": "text",
+              "sortOrder": 1
+            },
+            {
+              "fieldId": "south_boundary",
+              "uiDisplayName": "South",
+              "fieldType": "text",
+              "sortOrder": 2
+            },
+            {
+              "fieldId": "east_boundary",
+              "uiDisplayName": "East",
+              "fieldType": "text",
+              "sortOrder": 3
+            },
+            {
+              "fieldId": "west_boundary",
+              "uiDisplayName": "West",
+              "fieldType": "text",
+              "sortOrder": 4
+            }
+          ]
+        },
+        {
+          "fieldId": "amenities_infrastructure",
+          "uiDisplayName": "Amenities & Infrastructure",
+          "fieldType": "multiselect",
+          "options": [
+            {
+              "value": "water_supply",
+              "label": "Municipal Water Supply"
+            },
+            {
+              "value": "electricity",
+              "label": "Electricity Connection"
+            },
+            {
+              "value": "sewerage",
+              "label": "Sewerage System"
+            },
+            {
+              "value": "road_access",
+              "label": "Proper Road Access"
+            },
+            {
+              "value": "public_transport",
+              "label": "Public Transport"
+            },
+            {
+              "value": "schools_nearby",
+              "label": "Schools Nearby"
+            },
+            {
+              "value": "hospitals_nearby",
+              "label": "Hospitals Nearby"
+            },
+            {
+              "value": "shopping_centers",
+              "label": "Shopping Centers"
+            }
+          ],
+          "sortOrder": 8
+        },
+        {
+          "fieldId": "ownership_details",
+          "uiDisplayName": "Ownership Details",
+          "fieldType": "group",
+          "sortOrder": 9,
+          "subFields": [
+            {
+              "fieldId": "owner_name",
+              "uiDisplayName": "Property Owner Name",
+              "fieldType": "text",
+              "sortOrder": 1
+            },
+            {
+              "fieldId": "ownership_type",
+              "uiDisplayName": "Ownership Type",
+              "fieldType": "select",
+              "options": [
+                {
+                  "value": "individual",
+                  "label": "Individual"
+                },
+                {
+                  "value": "joint",
+                  "label": "Joint Ownership"
+                },
+                {
+                  "value": "company",
+                  "label": "Company"
+                },
+                {
+                  "value": "trust",
+                  "label": "Trust"
+                },
+                {
+                  "value": "society",
+                  "label": "Society"
+                }
+              ],
+              "sortOrder": 2
+            },
+            {
+              "fieldId": "acquisition_date",
+              "uiDisplayName": "Date of Acquisition",
+              "fieldType": "date",
+              "sortOrder": 3
+            }
+          ]
+        }
+      ],
+      "uiName": "Property Details"
+    },
+    {
+      "_id": "68fbf71ee18de0422ba70b8a",
+      "templateId": "CBI_ALL_SITE_EVALUATION_V1",
+      "templateName": "CBI Site Evaluation",
+      "bankCode": "CBI",
+      "propertyType": "All",
+      "templateCategory": "site_evaluation",
+      "createdAt": "2025-10-24T21:57:20.681251+00:00",
+      "updatedAt": "2025-10-24T21:57:20.681255+00:00",
+      "isActive": true,
+      "fields": [
+        {
+          "fieldId": "locality_type",
+          "uiDisplayName": "Locality Type",
+          "fieldType": "select",
+          "options": [
+            {
+              "value": "prime_residential",
+              "label": "Prime Residential"
+            },
+            {
+              "value": "residential",
+              "label": "Residential"
+            },
+            {
+              "value": "commercial",
+              "label": "Commercial"
+            },
+            {
+              "value": "industrial",
+              "label": "Industrial"
+            },
+            {
+              "value": "mixed_use",
+              "label": "Mixed Use"
+            }
+          ],
+          "isRequired": true,
+          "sortOrder": 1
+        },
+        {
+          "fieldId": "development_status",
+          "uiDisplayName": "Area Development Status",
+          "fieldType": "select",
+          "options": [
+            {
+              "value": "fully_developed",
+              "label": "Fully Developed"
+            },
+            {
+              "value": "developing",
+              "label": "Under Development"
+            },
+            {
+              "value": "planned",
+              "label": "Planned Development"
+            },
+            {
+              "value": "undeveloped",
+              "label": "Undeveloped"
+            }
+          ],
+          "isRequired": true,
+          "sortOrder": 2
+        },
+        {
+          "fieldId": "connectivity_score",
+          "uiDisplayName": "Connectivity Assessment",
+          "fieldType": "group",
+          "sortOrder": 3,
+          "subFields": [
+            {
+              "fieldId": "road_connectivity",
+              "uiDisplayName": "Road Connectivity",
+              "fieldType": "select",
+              "options": [
+                {
+                  "value": "excellent",
+                  "label": "Excellent"
+                },
+                {
+                  "value": "good",
+                  "label": "Good"
+                },
+                {
+                  "value": "average",
+                  "label": "Average"
+                },
+                {
+                  "value": "poor",
+                  "label": "Poor"
+                }
+              ],
+              "sortOrder": 1
+            },
+            {
+              "fieldId": "public_transport",
+              "uiDisplayName": "Public Transport Access",
+              "fieldType": "select",
+              "options": [
+                {
+                  "value": "excellent",
+                  "label": "Excellent"
+                },
+                {
+                  "value": "good",
+                  "label": "Good"
+                },
+                {
+                  "value": "average",
+                  "label": "Average"
+                },
+                {
+                  "value": "poor",
+                  "label": "Poor"
+                }
+              ],
+              "sortOrder": 2
+            },
+            {
+              "fieldId": "highway_distance",
+              "uiDisplayName": "Distance to Major Highway (km)",
+              "fieldType": "decimal",
+              "sortOrder": 3
+            }
+          ]
+        },
+        {
+          "fieldId": "market_factors",
+          "uiDisplayName": "Market Factors",
+          "fieldType": "group",
+          "sortOrder": 4,
+          "subFields": [
+            {
+              "fieldId": "demand_level",
+              "uiDisplayName": "Market Demand Level",
+              "fieldType": "select",
+              "options": [
+                {
+                  "value": "high",
+                  "label": "High"
+                },
+                {
+                  "value": "medium",
+                  "label": "Medium"
+                },
+                {
+                  "value": "low",
+                  "label": "Low"
+                }
+              ],
+              "sortOrder": 1
+            },
+            {
+              "fieldId": "appreciation_potential",
+              "uiDisplayName": "Appreciation Potential",
+              "fieldType": "select",
+              "options": [
+                {
+                  "value": "high",
+                  "label": "High"
+                },
+                {
+                  "value": "medium",
+                  "label": "Medium"
+                },
+                {
+                  "value": "low",
+                  "label": "Low"
+                }
+              ],
+              "sortOrder": 2
+            },
+            {
+              "fieldId": "comparable_sales",
+              "uiDisplayName": "Recent Comparable Sales Available",
+              "fieldType": "select",
+              "options": [
+                {
+                  "value": "yes",
+                  "label": "Yes"
+                },
+                {
+                  "value": "no",
+                  "label": "No"
+                }
+              ],
+              "sortOrder": 3
+            }
+          ]
+        }
+      ],
+      "uiName": "Site Evaluation"
+    },
+    {
+      "_id": "68fbf71ee18de0422ba70b8b",
+      "templateId": "CBI_ALL_VALUATION_V1",
+      "templateName": "CBI Property Valuation",
+      "bankCode": "CBI",
+      "propertyType": "All",
+      "templateCategory": "valuation",
+      "createdAt": "2025-10-24T21:57:20.681317+00:00",
+      "updatedAt": "2025-10-24T21:57:20.681320+00:00",
+      "isActive": true,
+      "sections": [
+        {
+          "sectionId": "market_valuation",
+          "sectionName": "Market Valuation",
+          "sortOrder": 1,
+          "fields": [
+            {
+              "fieldId": "market_rate_per_unit",
+              "uiDisplayName": "Market Rate per Unit",
+              "fieldType": "currency",
+              "isRequired": true,
+              "sortOrder": 1,
+              "includeInCustomTemplate": true
+            },
+            {
+              "fieldId": "government_rate",
+              "uiDisplayName": "Government Circle/Guidance Rate",
+              "fieldType": "currency",
+              "isRequired": true,
+              "sortOrder": 2,
+              "includeInCustomTemplate": true
+            },
+            {
+              "fieldId": "valuation_method",
+              "uiDisplayName": "Valuation Method Used",
+              "fieldType": "select",
+              "options": [
+                {
+                  "value": "comparative",
+                  "label": "Comparative Market Analysis"
+                },
+                {
+                  "value": "income",
+                  "label": "Income Approach"
+                },
+                {
+                  "value": "cost",
+                  "label": "Cost Approach"
+                },
+                {
+                  "value": "hybrid",
+                  "label": "Hybrid Method"
+                }
+              ],
+              "isRequired": true,
+              "sortOrder": 3,
+              "includeInCustomTemplate": true
+            },
+            {
+              "fieldId": "estimated_market_value",
+              "uiDisplayName": "Estimated Market Value",
+              "fieldType": "calculated",
+              "formula": "total_area * market_rate_per_unit",
+              "displayFormat": "currency",
+              "isReadonly": true,
+              "sortOrder": 4,
+              "includeInCustomTemplate": true
+            }
+          ]
+        },
+        {
+          "sectionId": "adjustments",
+          "sectionName": "Valuation Adjustments",
+          "sortOrder": 2,
+          "fields": [
+            {
+              "fieldId": "location_factor",
+              "uiDisplayName": "Location Factor (%)",
+              "fieldType": "decimal",
+              "helpText": "Positive for premium locations, negative for disadvantaged",
+              "sortOrder": 1,
+              "includeInCustomTemplate": true
+            },
+            {
+              "fieldId": "condition_factor",
+              "uiDisplayName": "Property Condition Factor (%)",
+              "fieldType": "decimal",
+              "helpText": "Adjustment based on property condition",
+              "sortOrder": 2,
+              "includeInCustomTemplate": true
+            },
+            {
+              "fieldId": "age_factor",
+              "uiDisplayName": "Age Factor (%)",
+              "fieldType": "decimal",
+              "helpText": "Depreciation based on property age",
+              "sortOrder": 3,
+              "includeInCustomTemplate": true
+            },
+            {
+              "fieldId": "final_adjusted_value",
+              "uiDisplayName": "Final Adjusted Value",
+              "fieldType": "calculated",
+              "formula": "estimated_market_value + (estimated_market_value * (location_factor + condition_factor + age_factor) / 100)",
+              "displayFormat": "currency",
+              "isReadonly": true,
+              "sortOrder": 4,
+              "includeInCustomTemplate": true
+            }
+          ]
+        }
+      ],
+      "uiName": "Property Valuation"
+    },
+    {
+      "_id": "68fbf71ee18de0422ba70b8c",
+      "templateId": "CBI_ALL_LEGAL_VERIFICATION_V1",
+      "templateName": "CBI Legal Verification",
+      "bankCode": "CBI",
+      "propertyType": "All",
+      "templateCategory": "legal_verification",
+      "createdAt": "2025-10-24T21:57:20.681395+00:00",
+      "updatedAt": "2025-10-24T21:57:20.681398+00:00",
+      "isActive": true,
+      "fields": [
+        {
+          "fieldId": "title_verification",
+          "uiDisplayName": "Title Verification Status",
+          "fieldType": "group",
+          "sortOrder": 1,
+          "subFields": [
+            {
+              "fieldId": "title_clear",
+              "uiDisplayName": "Title Clear",
+              "fieldType": "select",
+              "options": [
+                {
+                  "value": "yes",
+                  "label": "Yes"
+                },
+                {
+                  "value": "no",
+                  "label": "No"
+                },
+                {
+                  "value": "pending",
+                  "label": "Verification Pending"
+                }
+              ],
+              "sortOrder": 1
+            },
+            {
+              "fieldId": "encumbrance_check",
+              "uiDisplayName": "Encumbrance Certificate Verified",
+              "fieldType": "select",
+              "options": [
+                {
+                  "value": "verified",
+                  "label": "Verified"
+                },
+                {
+                  "value": "not_verified",
+                  "label": "Not Verified"
+                },
+                {
+                  "value": "issues_found",
+                  "label": "Issues Found"
+                }
+              ],
+              "sortOrder": 2
+            },
+            {
+              "fieldId": "mutation_status",
+              "uiDisplayName": "Mutation Status",
+              "fieldType": "select",
+              "options": [
+                {
+                  "value": "completed",
+                  "label": "Completed"
+                },
+                {
+                  "value": "pending",
+                  "label": "Pending"
+                },
+                {
+                  "value": "not_required",
+                  "label": "Not Required"
+                }
+              ],
+              "sortOrder": 3
+            }
+          ]
+        },
+        {
+          "fieldId": "legal_issues",
+          "uiDisplayName": "Legal Issues Identified",
+          "fieldType": "multiselect",
+          "options": [
+            {
+              "value": "none",
+              "label": "No Issues"
+            },
+            {
+              "value": "pending_litigation",
+              "label": "Pending Litigation"
+            },
+            {
+              "value": "disputed_ownership",
+              "label": "Disputed Ownership"
+            },
+            {
+              "value": "pending_approvals",
+              "label": "Pending Approvals"
+            },
+            {
+              "value": "violation_notice",
+              "label": "Municipal Violation Notice"
+            },
+            {
+              "value": "other",
+              "label": "Other Issues"
+            }
+          ],
+          "sortOrder": 2
+        },
+        {
+          "fieldId": "compliance_status",
+          "uiDisplayName": "Regulatory Compliance",
+          "fieldType": "group",
+          "sortOrder": 3,
+          "subFields": [
+            {
+              "fieldId": "building_approval",
+              "uiDisplayName": "Building Plan Approval",
+              "fieldType": "select",
+              "options": [
+                {
+                  "value": "approved",
+                  "label": "Approved"
+                },
+                {
+                  "value": "not_applicable",
+                  "label": "Not Applicable"
+                },
+                {
+                  "value": "pending",
+                  "label": "Pending"
+                },
+                {
+                  "value": "not_available",
+                  "label": "Not Available"
+                }
+              ],
+              "sortOrder": 1
+            },
+            {
+              "fieldId": "environmental_clearance",
+              "uiDisplayName": "Environmental Clearance (if required)",
+              "fieldType": "select",
+              "options": [
+                {
+                  "value": "obtained",
+                  "label": "Obtained"
+                },
+                {
+                  "value": "not_required",
+                  "label": "Not Required"
+                },
+                {
+                  "value": "pending",
+                  "label": "Pending"
+                }
+              ],
+              "sortOrder": 2
+            }
+          ]
+        },
+        {
+          "fieldId": "legal_opinion",
+          "uiDisplayName": "Legal Opinion/Remarks",
+          "fieldType": "textarea",
+          "placeholder": "Enter detailed legal verification remarks",
+          "sortOrder": 4
+        }
+      ],
+      "uiName": "Legal Verification"
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "metadata": {
+    "generated_at": "2025-10-25T11:45:11.800276+00:00",
+    "collection_name": "users",
+    "total_documents": 1,
+    "version": "1.0",
+    "database": "main"
+  },
+  "documents": [
+    {
+      "_id": "68f2bc1e48d7e9bb72404590",
+      "userId": "ADMIN001",
+      "email": "admin@valuationapp.com",
+      "password": "$2b$12$LQv3c1yqBwcVsvDxjl.Mlu.dLF8MCpI9O.6SPaA0J45UyY8VX1XB2",
+      "profile": {
+        "firstName": "System",
+        "lastName": "Administrator",
+        "displayName": "Admin User",
+        "phone": "+91-9999999999",
+        "avatar": null
+      },
+      "role": "ADMIN",
+      "permissions": {
+        "canCreateReports": true,
+        "canApproveReports": true,
+        "canManageUsers": true,
+        "canViewAllReports": true,
+        "assignedBanks": [
+          "SBI",
+          "PNB",
+          "UCO",
+          "HDFC"
+        ]
+      },
+      "valuationLicense": {
+        "licenseNumber": "ADMIN/SYSTEM/2025",
+        "issuedBy": "System Generated",
+        "validFrom": "2025-10-17T21:58:54.768000",
+        "validUntil": "2035-10-15T21:58:54.768000",
+        "isActive": true
+      },
+      "managerId": null,
+      "lastLogin": null,
+      "isActive": true,
+      "createdAt": "2025-10-17T21:58:54.768000",
+      "updatedAt": "2025-10-17T21:58:54.768000"
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "timestamp": "2025-11-28T21:11:56.146610",
+  "templates_updated": [
+    "common_form_fields",
+    "bob_land_property_details",
+    "boi_apartment_property_details",
+    "boi_land_property_details",
+    "cbi_all_property_details",
+    "hdfc_all_property_details",
+    "pnb_land_property_details",
+    "sbi_apartment_property_details",
+    "sbi_land_property_details",
+    "ubi_apartment_property_details",
+    "ubi_land_property_details",
+    "uco_apartment_property_details",
+    "uco_land_property_details"
+  ],
+  "field_counts": {
+    "common_form_fields": {
+      "count": 6,
+      "value": false
+    },
+    "bob_land_property_details": {
+      "count": 14,
+      "value": true
+    },
+    "boi_apartment_property_details": {
+      "count": 23,
+      "value": true
+    },
+    "boi_land_property_details": {
+      "count": 30,
+      "value": true
+    },
+    "cbi_all_property_details": {
+      "count": 15,
+      "value": true
+    },
+    "hdfc_all_property_details": {
+      "count": 15,
+      "value": true
+    },
+    "pnb_land_property_details": {
+      "count": 15,
+      "value": true
+    },
+    "sbi_apartment_property_details": {
+      "count": 23,
+      "value": true
+    },
+    "sbi_land_property_details": {
+      "count": 32,
+      "value": true
+    },
+    "ubi_apartment_property_details": {
+      "count": 15,
+      "value": true
+    },
+    "ubi_land_property_details": {
+      "count": 15,
+      "value": true
+    },
+    "uco_apartment_property_details": {
+      "count": 34,
+      "value": true
+    },
+    "uco_land_property_details": {
+      "count": 30,
+      "value": true
+    }
+  }
+}

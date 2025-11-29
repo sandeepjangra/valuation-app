@@ -1,0 +1,25 @@
+{
+  "timestamp": "2025-11-28T22:08:33.278155",
+  "templates_processed": [
+    "bob/bob_land_property_details.json",
+    "boi/boi_apartment_property_details.json",
+    "boi/boi_land_property_details.json",
+    "cbi/cbi_all_property_details.json",
+    "hdfc/hdfc_all_property_details.json",
+    "pnb/pnb_land_property_details.json",
+    "sbi/apartment/sbi_apartment_property_details.json",
+    "sbi/land/sbi_land_property_details.json",
+    "ubi/apartment/ubi_apartment_property_details.json",
+    "ubi/land/ubi_land_property_details.json",
+    "uco/apartment/uco_apartment_property_details.json",
+    "uco/land/uco_land_property_details.json"
+  ],
+  "tables_added": {},
+  "tables_standardized": {
+    "uco/land/uco_land_property_details.json": [
+      "Standardized building_specifications_table",
+      "Standardized floor_wise_valuation_table"
+    ]
+  },
+  "errors": []
+}

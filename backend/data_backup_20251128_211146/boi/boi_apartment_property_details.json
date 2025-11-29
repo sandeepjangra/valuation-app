@@ -1,24 +1,24 @@
 {
-  "_id": "68fde4bf8c01cf75e635d25a",
+  "_id": "690fa2d5ee787899a6b27c64",
   "metadata": {
     "generated_at": "2025-10-31T00:00:00.000000+00:00",
-    "collection_name": "sbi_apartment_property_details",
+    "collection_name": "boi_apartment_property_details",
     "total_documents": 4,
     "version": "2.0",
     "database": "valuation_admin",
-    "description": "Dynamic tab structure for SBI Apartment Property Details template"
+    "description": "Dynamic tab structure for BOI Apartment Property Details template"
   },
   "templateMetadata": {
-    "templateId": "SBI_APARTMENT_TEMPLATE_V1",
-    "templateName": "SBI Apartment Property Valuation",
-    "bankCode": "SBI",
+    "templateId": "BOI_APARTMENT_TEMPLATE_V1",
+    "templateName": "BOI Apartment Property Valuation",
+    "bankCode": "BOI",
     "propertyType": "apartment",
     "version": "2.0",
     "tabs": [
       {
         "tabId": "apartment_details",
         "tabName": "Apartment Details",
-        "documentSource": "SBI_APARTMENT_PROPERTY_DETAILS_V1",
+        "documentSource": "BOI_APARTMENT_PROPERTY_DETAILS_V1",
         "sortOrder": 1,
         "hasSections": true,
         "sections": [
@@ -52,7 +52,7 @@
       {
         "tabId": "apartment_characteristics",
         "tabName": "Apartment Characteristics",
-        "documentSource": "SBI_APARTMENT_CHARACTERISTICS_V1",
+        "documentSource": "BOI_APARTMENT_CHARACTERISTICS_V1",
         "sortOrder": 2,
         "hasSections": true,
         "sections": [
@@ -74,7 +74,7 @@
       {
         "tabId": "valuation",
         "tabName": "Valuation",
-        "documentSource": "SBI_APARTMENT_VALUATION_V1",
+        "documentSource": "BOI_APARTMENT_VALUATION_V1",
         "sortOrder": 3,
         "hasSections": true,
         "sections": [
@@ -102,7 +102,7 @@
       {
         "tabId": "final_valuation_summary",
         "tabName": "Final Valuation Summary",
-        "documentSource": "SBI_APARTMENT_FINAL_SUMMARY_V1",
+        "documentSource": "BOI_APARTMENT_FINAL_SUMMARY_V1",
         "sortOrder": 4,
         "hasSections": false,
         "description": "Final valuation summary with market, realizable, and distress values"
@@ -112,9 +112,9 @@
   "documents": [
     {
       "_id": "68fde4bf8c01cf75e635d25b",
-      "templateId": "SBI_APARTMENT_PROPERTY_DETAILS_V1",
-      "templateName": "SBI Apartment Property Details",
-      "bankCode": "SBI",
+      "templateId": "BOI_APARTMENT_PROPERTY_DETAILS_V1",
+      "templateName": "BOI Apartment Property Details",
+      "bankCode": "BOI",
       "propertyType": "apartment",
       "templateCategory": "apartment_details",
       "sortOrder": 1,
@@ -290,11 +290,19 @@
                   "placeholder": "e.g., Gautam Buddha Nagar District"
                 },
                 {
+                  "fieldId": "pin_code",
+                  "uiDisplayName": "Pincode",
+                  "fieldType": "number",
+                  "isRequired": true,
+                  "sortOrder": 6,
+                  "placeholder": "e.g., 125001"
+                },
+                {
                   "fieldId": "date_of_issue_validity_layout",
                   "uiDisplayName": "Date of issue and validity of layout of approved map/plan",
                   "fieldType": "text",
                   "isRequired": true,
-                  "sortOrder": 6,
+                  "sortOrder": 7,
                   "placeholder": "e.g., Issued: 15/03/2020, Valid till: 15/03/2025"
                 },
                 {
@@ -302,7 +310,7 @@
                   "uiDisplayName": "Approved map / plan issuing authority",
                   "fieldType": "text",
                   "isRequired": true,
-                  "sortOrder": 7,
+                  "sortOrder": 8,
                   "placeholder": "e.g., Noida Development Authority (NOIDA)"
                 },
                 {
@@ -310,7 +318,7 @@
                   "uiDisplayName": "Whether genuineness or authenticity of approved map/plan is verified",
                   "fieldType": "text",
                   "isRequired": true,
-                  "sortOrder": 8,
+                  "sortOrder": 9,
                   "placeholder": "e.g., Yes, verified with issuing authority"
                 },
                 {
@@ -318,7 +326,7 @@
                   "uiDisplayName": "Any Comments",
                   "fieldType": "text",
                   "isRequired": true,
-                  "sortOrder": 9,
+                  "sortOrder": 10,
                   "placeholder": "Additional observations or remarks about the property location"
                 }
               ],
@@ -609,9 +617,9 @@
     },
     {
       "_id": "68fde4bf8c01cf75e635d25c",
-      "templateId": "SBI_APARTMENT_CHARACTERISTICS_V1",
-      "templateName": "SBI Apartment Characteristics",
-      "bankCode": "SBI",
+      "templateId": "BOI_APARTMENT_CHARACTERISTICS_V1",
+      "templateName": "BOI Apartment Characteristics",
+      "bankCode": "BOI",
       "propertyType": "apartment",
       "templateCategory": "apartment_characteristics",
       "sortOrder": 2,
@@ -633,12 +641,12 @@
               "sortOrder": 1,
               "subFields": [
                 {
-                  "fieldId": "total_floors",
-                  "uiDisplayName": "Total Number of Floors",
+                  "fieldId": "nature_of_appartment",
+                  "uiDisplayName": "Nature of Appartment",
                   "fieldType": "text",
                   "isRequired": true,
                   "sortOrder": 1,
-                  "placeholder": "e.g., G + 5 Floors"
+                  "placeholder": "e.g., Studio Apartment / 1 BHK / 2 BHK"
                 },
                 {
                   "fieldId": "construction_year",
@@ -649,8 +657,16 @@
                   "placeholder": "2010"
                 },
                 {
-                  "fieldId": "construction_type",
-                  "uiDisplayName": "Type of Construction",
+                  "fieldId": "number_of_floors",
+                  "uiDisplayName": "Number of Floors in the Building",
+                  "fieldType": "text",
+                  "isRequired": true,
+                  "sortOrder": 3,
+                  "placeholder": "e.g., 12 (total flats in the building)"
+                },
+                {
+                  "fieldId": "structure_type",
+                  "uiDisplayName": "Type of Structure",
                   "fieldType": "select",
                   "options": [
                     {
@@ -671,7 +687,7 @@
                     }
                   ],
                   "isRequired": true,
-                  "sortOrder": 3,
+                  "sortOrder": 4,
                   "placeholder": "Select type of construction"
                 },
                 {
@@ -679,7 +695,7 @@
                   "uiDisplayName": "Dwelling Units in the Building",
                   "fieldType": "text",
                   "isRequired": true,
-                  "sortOrder": 4,
+                  "sortOrder": 5,
                   "placeholder": "e.g., 12 (total flats in the building)"
                 },
                 {
@@ -687,7 +703,7 @@
                   "uiDisplayName": "Quality of Construction",
                   "fieldType": "select",
                   "isRequired": true,
-                  "sortOrder": 5,
+                  "sortOrder": 6,
                   "options": [
                     {
                       "value": "premium",
@@ -713,7 +729,7 @@
                   "uiDisplayName": "Appearance of the Building",
                   "fieldType": "select",
                   "isRequired": true,
-                  "sortOrder": 6,
+                  "sortOrder": 7,
                   "options": [
                     {
                       "value": "premium",
@@ -739,7 +755,7 @@
                   "uiDisplayName": "Maintenance of the Building",
                   "fieldType": "select",
                   "isRequired": true,
-                  "sortOrder": 7,
+                  "sortOrder": 8,
                   "options": [
                     {
                       "value": "premium",
@@ -794,26 +810,26 @@
                   "placeholder": "Select elevator/lift availability"
                 },
                 {
-                  "fieldId": "power_backup",
-                  "uiDisplayName": "Power Backup",
+                  "fieldId": "protected_water_supply",
+                  "uiDisplayName": "Protected Water Supply",
                   "fieldType": "select",
                   "options": [
                     {
-                      "value": "generator",
-                      "label": "Generator Backup"
+                      "value": "yes",
+                      "label": "Yes"
                     },
                     {
-                      "value": "inverter",
-                      "label": "Inverter/UPS"
+                      "value": "no",
+                      "label": "No"
                     },
                     {
                       "value": "none",
-                      "label": "No Backup"
+                      "label": "No Supply"
                     }
                   ],
                   "isRequired": true,
                   "sortOrder": 2,
-                  "placeholder": "Select type of power backup available"
+                  "placeholder": "Is water supply exists"
                 },
                 {
                   "fieldId": "water_supply",
@@ -1115,6 +1131,40 @@
                   "isRequired": true,
                   "sortOrder": 6,
                   "placeholder": "Provide Meter Card details"
+                },
+                {
+                  "fieldId": "maintenance_of_apartment",
+                  "uiDisplayName": "Maintenance of the Apartment",
+                  "fieldType": "select",
+                  "isRequired": true,
+                  "sortOrder": 7,
+                  "placeholder": "Provide maintenance of the Apartment details",
+                  "options": [
+                    {
+                      "value": "premium",
+                      "label": "Premium"
+                    },
+                    {
+                      "value": "good",
+                      "label": "Good"
+                    },
+                    {
+                      "value": "average",
+                      "label": "Average"
+                    },
+                    {
+                      "value": "fair",
+                      "label": "Fair"
+                    }
+                  ]
+                },
+                {
+                  "fieldId": "sales_deed_executed_name",
+                  "uiDisplayName": "Sale deed Executed in the name of",
+                  "fieldType": "text",
+                  "isRequired": true,
+                  "sortOrder": 8,
+                  "placeholder": "e.g. Shri Surjeet Singh S/o Shri Niranjan Singh and Shri Manjeet Singh S/o Shri Surjeet Singh"
                 }
               ],
               "placeholder": "",
@@ -1201,9 +1251,9 @@
     },
     {
       "_id": "68fde4bf8c01cf75e635d25d",
-      "templateId": "SBI_APARTMENT_VALUATION_V1",
-      "templateName": "SBI Apartment Valuation",
-      "bankCode": "SBI",
+      "templateId": "BOI_APARTMENT_VALUATION_V1",
+      "templateName": "BOI Apartment Valuation",
+      "bankCode": "BOI",
       "propertyType": "apartment",
       "templateCategory": "valuation",
       "sortOrder": 3,
@@ -1397,7 +1447,8 @@
                   "fieldType": "text",
                   "isRequired": true,
                   "isReadonly": false,
-                  "sortOrder": 1
+                  "sortOrder": 1,
+                  "placeholder": "Enter total composite rate arrived for valuation (e.g., 7000 per sft.)"
                 },
                 {
                   "fieldId": "depreciation_building_rate",
@@ -1405,7 +1456,8 @@
                   "fieldType": "text",
                   "isRequired": true,
                   "isReadonly": false,
-                  "sortOrder": 2
+                  "sortOrder": 2,
+                  "placeholder": "Enter depreciated building rate (e.g., 4500.75 per sft.)"
                 },
                 {
                   "fieldId": "rate_for_land_and_others",
@@ -1413,12 +1465,13 @@
                   "fieldType": "text",
                   "isRequired": true,
                   "isReadonly": false,
-                  "sortOrder": 3
+                  "sortOrder": 3,
+                  "placeholder": "Enter rate for land & other (e.g., 1000.25 per sft.)"
                 },
                 {
                   "fieldId": "final_composite_rate_after_depreciation",
                   "uiDisplayName": "Final Composite Rate after Depreciation",
-                  "fieldType": "decimal",
+                  "fieldType": "text",
                   "isRequired": true,
                   "isReadonly": false,
                   "sortOrder": 4,
@@ -1459,33 +1512,33 @@
                 },
                 {
                   "columnId": "qty",
-                  "columnName": "Qty.",
-                  "fieldType": "text",
+                  "columnName": "Qty./ Area Sq.ft.",
+                  "fieldType": "number",
                   "isRequired": false,
                   "isEditable": true
                 },
                 {
                   "columnId": "rate_per_unit",
                   "columnName": "Rate per unit Rs.",
-                  "fieldType": "text",
+                  "fieldType": "number",
                   "isRequired": false,
                   "isEditable": true
                 },
                 {
                   "columnId": "estimated_value",
                   "columnName": "Estimated value Rs.",
-                  "fieldType": "text",
+                  "fieldType": "number",
                   "isRequired": false,
-                  "isEditable": true
+                  "isEditable": false
                 }
               ],
               "rows": [
                 {
                   "sr_no": "1.",
                   "description": "Value of the flat (incl. car parking, if provided)",
-                  "qty": "Covered area - 614 sft.",
-                  "rate_per_unit": "Rs 6840/- per sft. of covered Area (Composite rate of land and building adopted)",
-                  "estimated_value": "41,99,760/-"
+                  "qty": "-",
+                  "rate_per_unit": "-",
+                  "estimated_value": "-"
                 },
                 {
                   "sr_no": "2.",
@@ -1555,7 +1608,7 @@
                   "description": "Total value of flat",
                   "qty": "-",
                   "rate_per_unit": "-",
-                  "estimated_value": "Say Rs.42.00 lac",
+                  "estimated_value": "",
                   "isReadonly": true
                 }
               ],
@@ -1568,9 +1621,9 @@
     },
     {
       "_id": "68fde4bf8c01cf75e635d25e",
-      "templateId": "SBI_APARTMENT_FINAL_SUMMARY_V1",
-      "templateName": "SBI Apartment Final Valuation Summary",
-      "bankCode": "SBI",
+      "templateId": "BOI_APARTMENT_FINAL_SUMMARY_V1",
+      "templateName": "BOI Apartment Final Valuation Summary",
+      "bankCode": "BOI",
       "propertyType": "apartment",
       "templateCategory": "final_valuation_summary",
       "sortOrder": 4,
@@ -1617,9 +1670,7 @@
     }
   ],
   "isActive": true,
-  "createdAt": {
-    "$date": "2025-10-31T22:57:23.064Z"
-  },
+  "createdAt": "2025-10-31T22:57:23.064000",
   "updatedAt": "2025-11-02T20:24:03.269832Z",
   "version": 2
 }

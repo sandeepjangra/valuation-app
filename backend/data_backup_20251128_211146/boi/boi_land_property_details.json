@@ -1,24 +1,24 @@
 {
-  "_id": "690fc53fee787899a6b27c70",
+  "_id": "6908f8c0a4d514006aa42135",
   "metadata": {
     "generated_at": "2025-10-25T12:00:00.000000+00:00",
-    "collection_name": "bob_land_property_details",
+    "collection_name": "boi_land_property_details",
     "total_documents": 5,
     "version": "2.0",
     "database": "valuation_admin",
-    "description": "Dynamic tab structure for BOB Land Property Details template"
+    "description": "Dynamic tab structure for BOI Land Property Details template"
   },
   "templateMetadata": {
-    "templateId": "BOB_LAND_TEMPLATE_V1",
-    "templateName": "BOB Land Property Valuation",
-    "bankCode": "BOB",
+    "templateId": "BOI_LAND_TEMPLATE_V1",
+    "templateName": "BOI Land Property Valuation",
+    "bankCode": "BOI",
     "propertyType": "Land",
     "version": "2.0",
     "tabs": [
       {
         "tabId": "property_details",
         "tabName": "Property Details",
-        "documentSource": "BOB_LAND_PROPERTY_DETAILS_V1",
+        "documentSource": "BOI_LAND_PROPERTY_DETAILS_V1",
         "sortOrder": 1,
         "hasSections": true,
         "sections": [
@@ -52,7 +52,7 @@
       {
         "tabId": "site_characteristics",
         "tabName": "Site Characteristics",
-        "documentSource": "BOB_LAND_SITE_CHARACTERISTICS_V1",
+        "documentSource": "BOI_LAND_SITE_CHARACTERISTICS_V1",
         "sortOrder": 2,
         "hasSections": true,
         "sections": [
@@ -104,7 +104,7 @@
       {
         "tabId": "valuation",
         "tabName": "Valuation",
-        "documentSource": "BOB_LAND_VALUATION_V1",
+        "documentSource": "BOI_LAND_VALUATION_V1",
         "sortOrder": 3,
         "hasSections": true,
         "sections": [
@@ -126,15 +126,35 @@
       {
         "tabId": "construction_specifications",
         "tabName": "Construction Specifications",
-        "documentSource": "BOB_LAND_CONSTRUCTION_SPECS_V1",
+        "documentSource": "BOI_LAND_CONSTRUCTION_SPECS_V1",
         "sortOrder": 4,
-        "hasSections": false,
+        "hasSections": true,
+        "sections": [
+          {
+            "sectionId": "group_1",
+            "sectionName": "Group 1 - Dynamic Table",
+            "sortOrder": 1,
+            "description": "Construction specifications dynamic table"
+          },
+          {
+            "sectionId": "group_2",
+            "sectionName": "Group 2 - Remaining Specifications",
+            "sortOrder": 2,
+            "description": "Additional construction specifications and details"
+          },
+          {
+            "sectionId": "group_3",
+            "sectionName": "Group 3 - Additional",
+            "sortOrder": 3,
+            "description": "Additional fields"
+          }
+        ],
         "description": "Construction materials and specifications"
       },
       {
         "tabId": "detailed_valuation",
         "tabName": "Detailed Valuation",
-        "documentSource": "BOB_LAND_DETAILED_VALUATION_V1",
+        "documentSource": "BOI_LAND_DETAILED_VALUATION_V1",
         "sortOrder": 5,
         "hasSections": false,
         "description": "Detailed valuation components and final calculations"
@@ -143,10 +163,9 @@
   },
   "documents": [
     {
-      "_id": "68fa78b4e25b49fc725d349a",
-      "templateId": "BOB_LAND_PROPERTY_DETAILS_V1",
-      "templateName": "BOB Land Property Details",
-      "bankCode": "BOB",
+      "templateId": "BOI_LAND_PROPERTY_DETAILS_V1",
+      "templateName": "BOI Land Property Details",
+      "bankCode": "BOI",
       "propertyType": "Land",
       "templateCategory": "property_details",
       "createdAt": "2025-10-23T18:49:24.051693+00:00",
@@ -160,12 +179,39 @@
           "sortOrder": 1,
           "fields": [
             {
-              "fieldId": "list_of_documents_produced",
-              "uiDisplayName": "List of documents produced",
+              "fieldId": "agreement_to_sell",
+              "uiDisplayName": "Agreement To Sell",
               "fieldType": "textarea",
               "isRequired": false,
-              "placeholder": "Enter List of documents provided, if any",
+              "placeholder": "Enter Agreement to Sell details, if any",
               "sortOrder": 1,
+              "includeInCustomTemplate": true
+            },
+            {
+              "fieldId": "allotment_letter",
+              "uiDisplayName": "Allotment Letter",
+              "fieldType": "textarea",
+              "isRequired": false,
+              "placeholder": "Enter Allotment Letter details, if any",
+              "sortOrder": 2,
+              "includeInCustomTemplate": true
+            },
+            {
+              "fieldId": "layout_plan",
+              "uiDisplayName": "Layout Plan",
+              "fieldType": "textarea",
+              "isRequired": false,
+              "placeholder": "Enter Layout Plan details, if any",
+              "sortOrder": 3,
+              "includeInCustomTemplate": true
+            },
+            {
+              "fieldId": "sales_deed",
+              "uiDisplayName": "Sales Deed",
+              "fieldType": "textarea",
+              "isRequired": false,
+              "placeholder": "Enter Sales Deed details, if any",
+              "sortOrder": 4,
               "includeInCustomTemplate": true
             }
           ]
@@ -176,12 +222,21 @@
           "sortOrder": 2,
           "fields": [
             {
+              "fieldId": "name_owner",
+              "uiDisplayName": "Name of Onwer",
+              "fieldType": "textarea",
+              "isRequired": false,
+              "placeholder": "Enter Name of the owner(s) and his/their address (es) with Phone no",
+              "sortOrder": 1,
+              "includeInCustomTemplate": true
+            },
+            {
               "fieldId": "postal_address",
               "uiDisplayName": "Postal Address",
               "fieldType": "textarea",
               "isRequired": false,
               "placeholder": "Enter postal address",
-              "sortOrder": 1,
+              "sortOrder": 2,
               "includeInCustomTemplate": true
             },
             {
@@ -190,7 +245,251 @@
               "fieldType": "textarea",
               "isRequired": false,
               "placeholder": "Describe the property",
+              "sortOrder": 3,
+              "includeInCustomTemplate": true
+            },
+            {
+              "fieldId": "property_location",
+              "uiDisplayName": "Property Location",
+              "fieldType": "group",
+              "isRequired": false,
+              "sortOrder": 4,
+              "subFields": [
+                {
+                  "fieldId": "plot_survey_no",
+                  "uiDisplayName": "Plot No./Survey No.",
+                  "fieldType": "text",
+                  "sortOrder": 1,
+                  "placeholder": "Enter Plot No./Survey No."
+                },
+                {
+                  "fieldId": "door_no",
+                  "uiDisplayName": "Door No.",
+                  "fieldType": "text",
+                  "sortOrder": 2,
+                  "placeholder": "Enter Door Number"
+                },
+                {
+                  "fieldId": "ts_no_village",
+                  "uiDisplayName": "T.S. No./Village",
+                  "fieldType": "text",
+                  "sortOrder": 3,
+                  "placeholder": "Enter T.S. No./Village"
+                },
+                {
+                  "fieldId": "ward_taluka_tehsil",
+                  "uiDisplayName": "Ward/Taluka/Tehsil",
+                  "fieldType": "text",
+                  "sortOrder": 4,
+                  "placeholder": "Enter Ward/Taluka/Tehsil"
+                },
+                {
+                  "fieldId": "mandal_district",
+                  "uiDisplayName": "Mandal/District",
+                  "fieldType": "text",
+                  "sortOrder": 5,
+                  "placeholder": "Enter Mandal or District"
+                }
+              ],
+              "placeholder": "",
+              "includeInCustomTemplate": true
+            },
+            {
+              "fieldId": "city_town_village",
+              "uiDisplayName": "City/Town/Village",
+              "fieldType": "select",
+              "options": [
+                {
+                  "value": "city",
+                  "label": "City"
+                },
+                {
+                  "value": "town",
+                  "label": "Town"
+                },
+                {
+                  "value": "village",
+                  "label": "Village"
+                }
+              ],
+              "isRequired": true,
+              "sortOrder": 5,
+              "placeholder": "",
+              "includeInCustomTemplate": true
+            }
+          ]
+        },
+        {
+          "sectionId": "part_c",
+          "sectionName": "Part C - Property Information",
+          "sortOrder": 3,
+          "fields": [
+            {
+              "fieldId": "area_classification",
+              "uiDisplayName": "Area Classification",
+              "fieldType": "group",
+              "sortOrder": 1,
+              "subFields": [
+                {
+                  "fieldId": "socio_economic_class",
+                  "uiDisplayName": "High/Middle/Poor",
+                  "fieldType": "select",
+                  "options": [
+                    {
+                      "value": "high",
+                      "label": "High"
+                    },
+                    {
+                      "value": "middle",
+                      "label": "Middle"
+                    },
+                    {
+                      "value": "poor",
+                      "label": "Poor"
+                    }
+                  ],
+                  "isRequired": true,
+                  "sortOrder": 1
+                },
+                {
+                  "fieldId": "urban_rural",
+                  "uiDisplayName": "Urban/Semi Urban/Rural",
+                  "fieldType": "select",
+                  "options": [
+                    {
+                      "value": "urban",
+                      "label": "Urban"
+                    },
+                    {
+                      "value": "semi_urban",
+                      "label": "Semi Urban"
+                    },
+                    {
+                      "value": "rural",
+                      "label": "Rural"
+                    }
+                  ],
+                  "isRequired": true,
+                  "sortOrder": 2
+                },
+                {
+                  "fieldId": "area_type",
+                  "uiDisplayName": "Area Type",
+                  "fieldType": "select",
+                  "options": [
+                    {
+                      "value": "residential",
+                      "label": "Residential"
+                    },
+                    {
+                      "value": "commercial",
+                      "label": "Commercial"
+                    },
+                    {
+                      "value": "industrial",
+                      "label": "Industrial"
+                    }
+                  ],
+                  "isRequired": true,
+                  "sortOrder": 3
+                },
+                {
+                  "fieldId": "municipal_corporation",
+                  "uiDisplayName": "Municipal Corporation",
+                  "fieldType": "select",
+                  "options": [
+                    {
+                      "value": "panchkula",
+                      "label": "Municipal Corporation Panchkula"
+                    },
+                    {
+                      "value": "chandigarh",
+                      "label": "Municipal Corporation Chandigarh"
+                    }
+                  ],
+                  "isRequired": false,
+                  "sortOrder": 4
+                }
+              ],
+              "isRequired": false,
+              "placeholder": "",
+              "includeInCustomTemplate": true
+            },
+            {
+              "fieldId": "government_regulation",
+              "uiDisplayName": "Government Regulation",
+              "fieldType": "group",
               "sortOrder": 2,
+              "subFields": [
+                {
+                  "fieldId": "state_enactments",
+                  "uiDisplayName": "State/Central Govt Enactments",
+                  "fieldType": "text",
+                  "isRequired": false,
+                  "defaultValue": "NA",
+                  "sortOrder": 1,
+                  "placeholder": "Whether covered under any State/ Central Govt. enactments..."
+                },
+                {
+                  "fieldId": "agriculture_conversion",
+                  "uiDisplayName": "Agricultural Conversion",
+                  "fieldType": "text",
+                  "isRequired": false,
+                  "defaultValue": "NA",
+                  "sortOrder": 2,
+                  "placeholder": "In case it is an agricultural land, any conversion to house site plots is contemplated"
+                }
+              ],
+              "isRequired": false,
+              "placeholder": "",
+              "includeInCustomTemplate": true
+            },
+            {
+              "fieldId": "land_area_and_occupancy",
+              "uiDisplayName": "Land Area & Occupancy",
+              "fieldType": "group",
+              "sortOrder": 3,
+              "subFields": [
+                {
+                  "fieldId": "site_area",
+                  "uiDisplayName": "Site Area",
+                  "fieldType": "number",
+                  "units": [
+                    "sqyd",
+                    "sqm",
+                    "sqft"
+                  ],
+                  "isRequired": false,
+                  "defaultValue": "NA",
+                  "sortOrder": 1,
+                  "placeholder": "Enter site area"
+                },
+                {
+                  "fieldId": "valuation_area",
+                  "uiDisplayName": "Valuation Area",
+                  "fieldType": "number",
+                  "units": [
+                    "sqyd",
+                    "sqm",
+                    "sqft"
+                  ],
+                  "isRequired": false,
+                  "defaultValue": "NA",
+                  "sortOrder": 2,
+                  "placeholder": "Enter area consider for valuation"
+                },
+                {
+                  "fieldId": "occupied_by",
+                  "uiDisplayName": "Occupied By",
+                  "fieldType": "text",
+                  "isRequired": false,
+                  "defaultValue": "NA",
+                  "sortOrder": 3,
+                  "placeholder": "Currently occupied by"
+                }
+              ],
+              "isRequired": false,
+              "placeholder": "",
               "includeInCustomTemplate": true
             }
           ]
@@ -226,28 +525,50 @@
                   "fieldType": "text",
                   "isRequired": false,
                   "isEditable": true
+                },
+                {
+                  "columnId": "dimensions_per_documents",
+                  "columnName": "Dimensions As Per Documents",
+                  "fieldType": "number",
+                  "isRequired": false,
+                  "isEditable": true
+                },
+                {
+                  "columnId": "dimensions_actuals",
+                  "columnName": "Dimensions Actuals",
+                  "fieldType": "number",
+                  "isRequired": false,
+                  "isEditable": true
                 }
               ],
               "rows": [
                 {
                   "direction": "North",
                   "boundaries_per_documents": "",
-                  "boundaries_actual": ""
+                  "boundaries_actual": "",
+                  "dimensions_per_documents": "",
+                  "dimensions_actuals": ""
                 },
                 {
                   "direction": "South",
                   "boundaries_per_documents": "",
-                  "boundaries_actual": ""
+                  "boundaries_actual": "",
+                  "dimensions_per_documents": "",
+                  "dimensions_actuals": ""
                 },
                 {
                   "direction": "East",
                   "boundaries_per_documents": "",
-                  "boundaries_actual": ""
+                  "boundaries_actual": "",
+                  "dimensions_per_documents": "",
+                  "dimensions_actuals": ""
                 },
                 {
                   "direction": "West",
                   "boundaries_per_documents": "",
-                  "boundaries_actual": ""
+                  "boundaries_actual": "",
+                  "dimensions_per_documents": "",
+                  "dimensions_actuals": ""
                 }
               ],
               "placeholder": "",
@@ -285,13 +606,13 @@
             }
           ]
         }
-      ]
+      ],
+      "_id": null
     },
     {
-      "_id": "68fa78b4e25b49fc725d349b",
-      "templateId": "BOB_LAND_SITE_CHARACTERISTICS_V1",
-      "templateName": "BOB Land Site Characteristics",
-      "bankCode": "BOB",
+      "templateId": "BOI_LAND_SITE_CHARACTERISTICS_V1",
+      "templateName": "BOI Land Site Characteristics",
+      "bankCode": "BOI",
       "propertyType": "Land",
       "templateCategory": "site_characteristics",
       "createdAt": "2025-10-23T18:49:24.051768+00:00",
@@ -773,13 +1094,13 @@
             }
           ]
         }
-      ]
+      ],
+      "_id": null
     },
     {
-      "_id": "68fa78b4e25b49fc725d349c",
-      "templateId": "BOB_LAND_VALUATION_V1",
-      "templateName": "BOB Land Valuation",
-      "bankCode": "BOB",
+      "templateId": "BOI_LAND_VALUATION_V1",
+      "templateName": "BOI Land Valuation",
+      "bankCode": "BOI",
       "propertyType": "Land",
       "templateCategory": "land_valuation",
       "createdAt": "2025-10-23T18:49:24.051829+00:00",
@@ -1030,46 +1351,23 @@
               },
               "subFields": [
                 {
-                  "fieldId": "number_of_floors",
-                  "technicalName": "number_of_floors",
-                  "uiDisplayName": "Number of Floors",
-                  "fieldType": "number",
-                  "validation": {
-                    "min": 1,
-                    "max": 50
-                  },
+                  "fieldId": "number_of_floors_height",
+                  "technicalName": "number_of_floors_height",
+                  "uiDisplayName": "Number of Floors & Hieght",
+                  "fieldType": "textarea",
                   "isRequired": true,
-                  "placeholder": "Enter number of floors",
+                  "placeholder": "Enter number of floors and height",
                   "sortOrder": 1
-                },
-                {
-                  "fieldId": "floor_height",
-                  "technicalName": "floor_height",
-                  "uiDisplayName": "Average Floor Height (ft)",
-                  "fieldType": "number",
-                  "validation": {
-                    "min": 8,
-                    "max": 20
-                  },
-                  "isRequired": true,
-                  "placeholder": "Enter height in feet",
-                  "helpText": "Typical floor height in feet",
-                  "sortOrder": 2
                 },
                 {
                   "fieldId": "plinth_area_floorwise",
                   "technicalName": "plinth_area_floorwise",
-                  "uiDisplayName": "Total Plinth Area",
-                  "fieldType": "number",
-                  "units": [
-                    "sqft",
-                    "sqm",
-                    "sqyd"
-                  ],
+                  "uiDisplayName": "Plinth Area Floor-wise",
+                  "fieldType": "textarea",
                   "isRequired": true,
-                  "placeholder": "Enter total plinth area",
+                  "placeholder": "Enter total plinth area floor-wise",
                   "helpText": "Total built-up area across all floors",
-                  "sortOrder": 3
+                  "sortOrder": 2
                 }
               ],
               "isRequired": false,
@@ -1173,10 +1471,10 @@
                 {
                   "fieldId": "approved_map_date_validity",
                   "technicalName": "approved_map_date_validity",
-                  "uiDisplayName": "Building Plan Approval Date",
-                  "fieldType": "date",
-                  "isRequired": false,
-                  "placeholder": "Select approval date",
+                  "uiDisplayName": "Plan Approval Date & Validity",
+                  "fieldType": "textarea",
+                  "isRequired": true,
+                  "placeholder": "e.g. Sanctioned Vide Memo No. 425 Dated 01.06.2010  by MC Zirakpur, Valid up to 01.06.2025",
                   "sortOrder": 1
                 },
                 {
@@ -1300,766 +1598,595 @@
             }
           ]
         }
-      ]
+      ],
+      "_id": null
     },
     {
-      "_id": "68fa78b4e25b49fc725d349d",
-      "templateId": "BOB_LAND_CONSTRUCTION_SPECS_V1",
-      "templateName": "BOB Land Construction Specifications",
-      "bankCode": "BOB",
+      "templateId": "BOI_LAND_CONSTRUCTION_SPECS_V1",
+      "templateName": "BOI Land Construction Specifications",
+      "bankCode": "BOI",
       "propertyType": "Land",
       "templateCategory": "construction_specifications",
       "createdAt": "2025-10-23T18:49:24.051881+00:00",
       "updatedAt": "2025-10-23T18:49:24.051881+00:00",
       "isActive": true,
       "uiName": "Construction Specification",
-      "fields": [
+      "sections": [
         {
-          "fieldId": "structural_components",
-          "uiDisplayName": "Structural Components",
-          "fieldType": "group",
+          "sectionId": "group_1",
+          "sectionName": "Group 1 - Dynamic Table",
           "sortOrder": 1,
-          "description": "Primary structural elements and foundation details",
-          "subFields": [
+          "fields": [
             {
-              "fieldId": "foundation",
-              "technicalName": "foundation",
-              "uiDisplayName": "Foundation",
-              "fieldType": "select",
-              "options": [
-                {
-                  "value": "spread_footing",
-                  "label": "Spread Footing"
+              "fieldId": "floor_wise_construction_specifications_table",
+              "uiDisplayName": "Floor Wise Construction Specifications",
+              "fieldType": "dynamic_table",
+              "sortOrder": 1,
+              "tableConfig": {
+                "tableType": "column_dynamic",
+                "fixedColumns": [
+                  {
+                    "columnId": "sr_no",
+                    "columnName": "Sr. No.",
+                    "fieldType": "text",
+                    "isReadonly": true
+                  },
+                  {
+                    "columnId": "description",
+                    "columnName": "Description",
+                    "fieldType": "text",
+                    "isReadonly": true
+                  }
+                ],
+                "dynamicColumns": {
+                  "columnType": "floor",
+                  "defaultColumns": [
+                    {
+                      "columnId": "ground_floor",
+                      "columnName": "Ground Floor",
+                      "fieldType": "textarea",
+                      "isRequired": false
+                    }
+                  ],
+                  "addColumnConfig": {
+                    "buttonText": "Add Floor",
+                    "columnNamePattern": "Floor {number}",
+                    "maxColumns": 10
+                  }
                 },
-                {
-                  "value": "raft_foundation",
-                  "label": "Raft Foundation"
-                },
-                {
-                  "value": "pile_foundation",
-                  "label": "Pile Foundation"
-                },
-                {
-                  "value": "none",
-                  "label": "No Foundation"
-                }
-              ],
-              "placeholder": "Select foundation type",
-              "sortOrder": 1
-            },
-            {
-              "fieldId": "basement",
-              "technicalName": "basement",
-              "uiDisplayName": "Basement",
-              "fieldType": "select",
-              "options": [
-                {
-                  "value": "full_basement",
-                  "label": "Full Basement"
-                },
-                {
-                  "value": "partial_basement",
-                  "label": "Partial Basement"
-                },
-                {
-                  "value": "none",
-                  "label": "No Basement"
-                }
-              ],
-              "placeholder": "Select basement type",
-              "sortOrder": 2
-            },
-            {
-              "fieldId": "superstructure",
-              "technicalName": "superstructure",
-              "uiDisplayName": "Superstructure",
-              "fieldType": "select",
-              "options": [
-                {
-                  "value": "brick_masonry",
-                  "label": "Brick Masonry"
-                },
-                {
-                  "value": "rcc_framed",
-                  "label": "RCC Framed"
-                },
-                {
-                  "value": "steel_framed",
-                  "label": "Steel Framed"
-                },
-                {
-                  "value": "load_bearing",
-                  "label": "Load Bearing"
-                }
-              ],
-              "placeholder": "Select superstructure type",
-              "sortOrder": 3
-            },
-            {
-              "fieldId": "rcc_works",
-              "technicalName": "rcc_works",
-              "uiDisplayName": "RCC Works",
-              "fieldType": "select",
-              "options": [
-                {
-                  "value": "columns_beams",
-                  "label": "Columns & Beams"
-                },
-                {
-                  "value": "slabs",
-                  "label": "Slabs"
-                },
-                {
-                  "value": "staircase",
-                  "label": "Staircase"
-                },
-                {
-                  "value": "none",
-                  "label": "No RCC Works"
-                }
-              ],
-              "placeholder": "Select RCC works type",
-              "sortOrder": 4
+                "rows": [
+                  {
+                    "sr_no": "1.",
+                    "description": "Foundation"
+                  },
+                  {
+                    "sr_no": "2.",
+                    "description": "Basement"
+                  },
+                  {
+                    "sr_no": "3.",
+                    "description": "Superstructure"
+                  },
+                  {
+                    "sr_no": "4.",
+                    "description": "Joinery / Doors & Windows (Please furnish details about size of frames, shutters, glazing, fitting etc. and specify the species of timber )"
+                  },
+                  {
+                    "sr_no": "5.",
+                    "description": "RCC works"
+                  },
+                  {
+                    "sr_no": "6.",
+                    "description": "Plastering"
+                  },
+                  {
+                    "sr_no": "7.",
+                    "description": "Flooring, Skirting, dadoing"
+                  },
+                  {
+                    "sr_no": "8.",
+                    "description": "Special finish as marble, granite, wooden paneling, grills, etc."
+                  },
+                  {
+                    "sr_no": "9.",
+                    "description": "Roofing including weather proof course"
+                  },
+                  {
+                    "sr_no": "10.",
+                    "description": "Drainage"
+                  },
+                  {
+                    "sr_no": "11.",
+                    "description": "Compound Wall Height"
+                  },
+                  {
+                    "sr_no": "12.",
+                    "description": "Compound Wall Height"
+                  },
+                  {
+                    "sr_no": "13.",
+                    "description": "Type of Wall Construction"
+                  },
+                  {
+                    "sr_no": "14.",
+                    "description": "Type of wiring"
+                  },
+                  {
+                    "sr_no": "15.",
+                    "description": "Class of fittings (superior / ordinary / poor)"
+                  },
+                  {
+                    "sr_no": "16.",
+                    "description": "Fan points"
+                  },
+                  {
+                    "sr_no": "17.",
+                    "description": "Spare plug points"
+                  },
+                  {
+                    "sr_no": "18.",
+                    "description": "No. of water closets and their type"
+                  },
+                  {
+                    "sr_no": "19.",
+                    "description": "No. of wash basins"
+                  },
+                  {
+                    "sr_no": "20.",
+                    "description": "No. of urinals"
+                  },
+                  {
+                    "sr_no": "21.",
+                    "description": "No. of bath tubs"
+                  },
+                  {
+                    "sr_no": "22.",
+                    "description": "Water meter, taps, etc."
+                  },
+                  {
+                    "sr_no": "23.",
+                    "description": "Any other fixtures- sink"
+                  }
+                ]
+              },
+              "isRequired": false,
+              "placeholder": "",
+              "includeInCustomTemplate": true
             }
           ]
         },
         {
-          "fieldId": "building_finishes",
-          "uiDisplayName": "Building Finishes & Surfaces",
-          "fieldType": "group",
+          "sectionId": "group_2",
+          "sectionName": "Group 2 - Remaining Specifications",
           "sortOrder": 2,
-          "description": "Surface treatments, finishes, and protective coatings",
-          "subFields": [
+          "fields": [
             {
-              "fieldId": "plastering",
-              "technicalName": "plastering",
-              "uiDisplayName": "Plastering Type",
-              "fieldType": "select",
-              "options": [
+              "fieldId": "compound_wall_details",
+              "uiDisplayName": "Boundary & Compound",
+              "fieldType": "group",
+              "sortOrder": 1,
+              "description": "Compound wall specifications and boundary details",
+              "subFields": [
                 {
-                  "value": "cement_plaster",
-                  "label": "Cement Plaster"
+                  "fieldId": "compound_wall",
+                  "technicalName": "compound_wall",
+                  "uiDisplayName": "Compound Wall Type",
+                  "fieldType": "select",
+                  "options": [
+                    {
+                      "value": "brick_wall",
+                      "label": "Brick Wall"
+                    },
+                    {
+                      "value": "rcc_wall",
+                      "label": "RCC Wall"
+                    },
+                    {
+                      "value": "stone_wall",
+                      "label": "Stone Wall"
+                    },
+                    {
+                      "value": "wire_fencing",
+                      "label": "Wire Fencing"
+                    },
+                    {
+                      "value": "none",
+                      "label": "No Compound Wall"
+                    }
+                  ],
+                  "sortOrder": 1
                 },
                 {
-                  "value": "gypsum_plaster",
-                  "label": "Gypsum Plaster"
+                  "fieldId": "height",
+                  "technicalName": "height",
+                  "uiDisplayName": "Wall Height (ft)",
+                  "fieldType": "number",
+                  "placeholder": "Enter height in feet",
+                  "validation": {
+                    "min": 0,
+                    "max": 20
+                  },
+                  "sortOrder": 2
                 },
                 {
-                  "value": "lime_plaster",
-                  "label": "Lime Plaster"
+                  "fieldId": "length",
+                  "technicalName": "length",
+                  "uiDisplayName": "Wall Length (ft)",
+                  "fieldType": "number",
+                  "placeholder": "Enter length in feet",
+                  "validation": {
+                    "min": 0,
+                    "max": 1000
+                  },
+                  "sortOrder": 3
                 },
                 {
-                  "value": "none",
-                  "label": "No Plastering"
+                  "fieldId": "construction_type",
+                  "technicalName": "construction_type",
+                  "uiDisplayName": "Wall Construction Type",
+                  "fieldType": "select",
+                  "options": [
+                    {
+                      "value": "brick_cement",
+                      "label": "Brick with Cement Mortar"
+                    },
+                    {
+                      "value": "rcc_precast",
+                      "label": "RCC Precast"
+                    },
+                    {
+                      "value": "stone_masonry",
+                      "label": "Stone Masonry"
+                    }
+                  ],
+                  "sortOrder": 4
                 }
               ],
-              "sortOrder": 1
+              "isRequired": false,
+              "placeholder": "",
+              "includeInCustomTemplate": true
             },
             {
-              "fieldId": "flooring_skirting_dadoing",
-              "technicalName": "flooring_skirting_dadoing",
-              "uiDisplayName": "Flooring & Skirting",
-              "fieldType": "select",
-              "options": [
+              "fieldId": "extra_items",
+              "technicalName": "extra_items",
+              "uiDisplayName": "Extra Items",
+              "fieldType": "group",
+              "sortOrder": 2,
+              "subFields": [
                 {
-                  "value": "ceramic_tiles",
-                  "label": "Ceramic Tiles"
+                  "fieldId": "portico",
+                  "technicalName": "portico",
+                  "uiDisplayName": "Portico",
+                  "fieldType": "currency",
+                  "placeholder": "Amount in Rs",
+                  "sortOrder": 1
                 },
                 {
-                  "value": "marble",
-                  "label": "Marble"
+                  "fieldId": "ornamental_front_door",
+                  "technicalName": "ornamental_front_door",
+                  "uiDisplayName": "Ornamental Front Door",
+                  "fieldType": "currency",
+                  "placeholder": "Amount in Rs",
+                  "sortOrder": 2
                 },
                 {
-                  "value": "vitrified_tiles",
-                  "label": "Vitrified Tiles"
+                  "fieldId": "sitout_verandah_grills",
+                  "technicalName": "sitout_verandah_grills",
+                  "uiDisplayName": "Sit out/Verandah with Steel Grills",
+                  "fieldType": "currency",
+                  "placeholder": "Amount in Rs",
+                  "sortOrder": 3
                 },
                 {
-                  "value": "concrete",
-                  "label": "Concrete"
+                  "fieldId": "overhead_water_tank",
+                  "technicalName": "overhead_water_tank",
+                  "uiDisplayName": "Overhead Water Tank",
+                  "fieldType": "currency",
+                  "placeholder": "Amount in Rs",
+                  "sortOrder": 4
+                },
+                {
+                  "fieldId": "extra_steel_gates",
+                  "technicalName": "extra_steel_gates",
+                  "uiDisplayName": "Extra Steel/Collapsible Gates",
+                  "fieldType": "currency",
+                  "placeholder": "Amount in Rs",
+                  "sortOrder": 5
                 }
               ],
-              "sortOrder": 2
+              "isRequired": false,
+              "placeholder": "",
+              "includeInCustomTemplate": true
             },
             {
-              "fieldId": "special_finish",
-              "technicalName": "special_finish",
-              "uiDisplayName": "Special Finishes",
-              "fieldType": "select",
-              "options": [
+              "fieldId": "amenities",
+              "technicalName": "amenities",
+              "uiDisplayName": "Amenities",
+              "fieldType": "group",
+              "sortOrder": 3,
+              "subFields": [
                 {
-                  "value": "marble_cladding",
-                  "label": "Marble Cladding"
+                  "fieldId": "wardrobes",
+                  "technicalName": "wardrobes",
+                  "uiDisplayName": "Wardrobes",
+                  "fieldType": "currency",
+                  "placeholder": "Amount in Rs",
+                  "sortOrder": 1
                 },
                 {
-                  "value": "granite",
-                  "label": "Granite"
+                  "fieldId": "glazed_tiles",
+                  "technicalName": "glazed_tiles",
+                  "uiDisplayName": "Glazed Tiles",
+                  "fieldType": "currency",
+                  "placeholder": "Amount in Rs",
+                  "sortOrder": 2
                 },
                 {
-                  "value": "wooden_paneling",
-                  "label": "Wooden Paneling"
+                  "fieldId": "extra_sinks_bathtubs",
+                  "technicalName": "extra_sinks_bathtubs",
+                  "uiDisplayName": "Extra Sinks & Bath Tubs",
+                  "fieldType": "currency",
+                  "placeholder": "Amount in Rs",
+                  "sortOrder": 3
                 },
                 {
-                  "value": "glass_work",
-                  "label": "Glass Work"
+                  "fieldId": "marble_ceramic_flooring",
+                  "technicalName": "marble_ceramic_flooring",
+                  "uiDisplayName": "Marble/Ceramic Tiles Flooring",
+                  "fieldType": "currency",
+                  "placeholder": "Amount in Rs",
+                  "sortOrder": 4
                 },
                 {
-                  "value": "none",
-                  "label": "No Special Finishes"
+                  "fieldId": "interior_decorations",
+                  "technicalName": "interior_decorations",
+                  "uiDisplayName": "Interior Decorations",
+                  "fieldType": "currency",
+                  "placeholder": "Amount in Rs",
+                  "sortOrder": 5
+                },
+                {
+                  "fieldId": "architectural_elevation",
+                  "technicalName": "architectural_elevation",
+                  "uiDisplayName": "Architectural Elevation Works",
+                  "fieldType": "currency",
+                  "placeholder": "Amount in Rs",
+                  "sortOrder": 6
+                },
+                {
+                  "fieldId": "paneling_works",
+                  "technicalName": "paneling_works",
+                  "uiDisplayName": "Paneling Works",
+                  "fieldType": "currency",
+                  "placeholder": "Amount in Rs",
+                  "sortOrder": 7
+                },
+                {
+                  "fieldId": "aluminum_works",
+                  "technicalName": "aluminum_works",
+                  "uiDisplayName": "Aluminum Works",
+                  "fieldType": "currency",
+                  "placeholder": "Amount in Rs",
+                  "sortOrder": 8
+                },
+                {
+                  "fieldId": "aluminum_handrails",
+                  "technicalName": "aluminum_handrails",
+                  "uiDisplayName": "Aluminum Hand Rails",
+                  "fieldType": "currency",
+                  "placeholder": "Amount in Rs",
+                  "sortOrder": 9
+                },
+                {
+                  "fieldId": "false_ceiling",
+                  "technicalName": "false_ceiling",
+                  "uiDisplayName": "False Ceiling",
+                  "fieldType": "currency",
+                  "placeholder": "Amount in Rs",
+                  "sortOrder": 10
                 }
               ],
-              "sortOrder": 3
+              "isRequired": false,
+              "placeholder": "",
+              "includeInCustomTemplate": true
+            },
+            {
+              "fieldId": "miscellaneous",
+              "technicalName": "miscellaneous",
+              "uiDisplayName": "Miscellaneous",
+              "fieldType": "group",
+              "sortOrder": 4,
+              "subFields": [
+                {
+                  "fieldId": "separate_toilet",
+                  "technicalName": "separate_toilet",
+                  "uiDisplayName": "Separate Toilet Room",
+                  "fieldType": "currency",
+                  "placeholder": "Amount in Rs",
+                  "sortOrder": 1
+                },
+                {
+                  "fieldId": "separate_lumber_room",
+                  "technicalName": "separate_lumber_room",
+                  "uiDisplayName": "Separate Lumber Room",
+                  "fieldType": "currency",
+                  "placeholder": "Amount in Rs",
+                  "sortOrder": 2
+                },
+                {
+                  "fieldId": "separate_water_tank_sump",
+                  "technicalName": "separate_water_tank_sump",
+                  "uiDisplayName": "Separate Water Tank/Sump",
+                  "fieldType": "currency",
+                  "placeholder": "Amount in Rs",
+                  "sortOrder": 3
+                },
+                {
+                  "fieldId": "trees_gardening",
+                  "technicalName": "trees_gardening",
+                  "uiDisplayName": "Trees, Gardening",
+                  "fieldType": "currency",
+                  "placeholder": "Amount in Rs",
+                  "sortOrder": 4
+                }
+              ],
+              "isRequired": false,
+              "placeholder": "",
+              "includeInCustomTemplate": true
+            },
+            {
+              "fieldId": "services",
+              "technicalName": "services",
+              "uiDisplayName": "Services",
+              "fieldType": "group",
+              "sortOrder": 5,
+              "subFields": [
+                {
+                  "fieldId": "water_supply_arrangements",
+                  "technicalName": "water_supply_arrangements",
+                  "uiDisplayName": "Water Supply Arrangements",
+                  "fieldType": "currency",
+                  "placeholder": "Amount in Rs",
+                  "sortOrder": 1
+                },
+                {
+                  "fieldId": "drainage_arrangements",
+                  "technicalName": "drainage_arrangements",
+                  "uiDisplayName": "Drainage Arrangements",
+                  "fieldType": "currency",
+                  "placeholder": "Amount in Rs",
+                  "sortOrder": 2
+                },
+                {
+                  "fieldId": "compound_wall",
+                  "technicalName": "compound_wall",
+                  "uiDisplayName": "Compound Wall Cost",
+                  "fieldType": "currency",
+                  "placeholder": "Amount in Rs",
+                  "sortOrder": 3
+                },
+                {
+                  "fieldId": "cb_deposits_fittings",
+                  "technicalName": "cb_deposits_fittings",
+                  "uiDisplayName": "C.B. Deposits, Fittings etc.",
+                  "fieldType": "currency",
+                  "placeholder": "Amount in Rs",
+                  "sortOrder": 4
+                },
+                {
+                  "fieldId": "pavement",
+                  "technicalName": "pavement",
+                  "uiDisplayName": "Pavement",
+                  "fieldType": "currency",
+                  "placeholder": "Amount in Rs",
+                  "sortOrder": 5
+                }
+              ],
+              "isRequired": false,
+              "placeholder": "",
+              "includeInCustomTemplate": true
             }
           ]
         },
         {
-          "fieldId": "openings_fittings",
-          "uiDisplayName": "Openings & Fittings",
-          "fieldType": "group",
+          "sectionId": "group_3",
+          "sectionName": "Group 3 - Additional",
           "sortOrder": 3,
-          "description": "Doors, windows, joinery, and related fittings",
-          "subFields": [
+          "fields": [
             {
-              "fieldId": "joinery_doors_windows",
-              "technicalName": "joinery_doors_windows",
-              "uiDisplayName": "Doors & Windows Specification",
-              "fieldType": "select",
-              "options": [
-                {
-                  "value": "teak_wood",
-                  "label": "Teak Wood"
+              "fieldId": "valuation_floor_wise_table",
+              "uiDisplayName": "Valuation Floor Wise",
+              "fieldType": "dynamic_table",
+              "sortOrder": 1,
+              "tableConfig": {
+                "tableType": "row_dynamic",
+                "allowAddRows": true,
+                "maxRows": 10,
+                "addRowConfig": {
+                  "buttonText": "Add Row",
+                  "rowTemplate": {
+                    "sr_no": "",
+                    "particulars_of_item": "",
+                    "covered_area_sft": "",
+                    "roof_height_feet": "",
+                    "age_of_building_years": "",
+                    "estimated_replacement_rate": "",
+                    "present_replacement_cost": "",
+                    "depreciation_138_pa": "",
+                    "net_value_after_depreciation": ""
+                  }
                 },
-                {
-                  "value": "sal_wood",
-                  "label": "Sal Wood"
-                },
-                {
-                  "value": "plywood",
-                  "label": "Plywood"
-                },
-                {
-                  "value": "aluminum",
-                  "label": "Aluminum"
-                },
-                {
-                  "value": "upvc",
-                  "label": "UPVC"
-                }
-              ],
-              "sortOrder": 1
-            },
-            {
-              "fieldId": "roofing_weatherproof",
-              "technicalName": "roofing_weatherproof",
-              "uiDisplayName": "Roofing & Waterproofing",
-              "fieldType": "select",
-              "options": [
-                {
-                  "value": "rcc_slab",
-                  "label": "RCC Slab"
-                },
-                {
-                  "value": "mangalore_tiles",
-                  "label": "Mangalore Tiles"
-                },
-                {
-                  "value": "metal_sheet",
-                  "label": "Metal Sheet"
-                },
-                {
-                  "value": "waterproofing_done",
-                  "label": "Waterproofing Applied"
-                }
-              ],
-              "sortOrder": 2
-            }
-          ]
-        },
-        {
-          "fieldId": "drainage_utilities",
-          "uiDisplayName": "Drainage & Utilities",
-          "fieldType": "group",
-          "sortOrder": 4,
-          "description": "Drainage systems and utility installations",
-          "subFields": [
-            {
-              "fieldId": "drainage",
-              "technicalName": "drainage",
-              "uiDisplayName": "Drainage System",
-              "fieldType": "select",
-              "options": [
-                {
-                  "value": "underground_pipes",
-                  "label": "Underground Pipes"
-                },
-                {
-                  "value": "surface_drain",
-                  "label": "Surface Drain"
-                },
-                {
-                  "value": "septic_tank",
-                  "label": "Septic Tank"
-                },
-                {
-                  "value": "municipal_sewer",
-                  "label": "Municipal Sewer"
-                }
-              ],
-              "sortOrder": 1
-            }
-          ]
-        },
-        {
-          "fieldId": "compound_wall_details",
-          "uiDisplayName": "Boundary & Compound",
-          "fieldType": "group",
-          "sortOrder": 5,
-          "description": "Compound wall specifications and boundary details",
-          "subFields": [
-            {
-              "fieldId": "compound_wall",
-              "technicalName": "compound_wall",
-              "uiDisplayName": "Compound Wall Type",
-              "fieldType": "select",
-              "options": [
-                {
-                  "value": "brick_wall",
-                  "label": "Brick Wall"
-                },
-                {
-                  "value": "rcc_wall",
-                  "label": "RCC Wall"
-                },
-                {
-                  "value": "stone_wall",
-                  "label": "Stone Wall"
-                },
-                {
-                  "value": "wire_fencing",
-                  "label": "Wire Fencing"
-                },
-                {
-                  "value": "none",
-                  "label": "No Compound Wall"
-                }
-              ],
-              "sortOrder": 1
-            },
-            {
-              "fieldId": "height",
-              "technicalName": "height",
-              "uiDisplayName": "Wall Height (ft)",
-              "fieldType": "number",
-              "placeholder": "Enter height in feet",
-              "validation": {
-                "min": 0,
-                "max": 20
+                "fixedColumns": [
+                  {
+                    "columnId": "sr_no",
+                    "columnName": "Sr.No.",
+                    "fieldType": "text",
+                    "isReadonly": true
+                  },
+                  {
+                    "columnId": "particulars_of_item",
+                    "columnName": "Particulars of item",
+                    "fieldType": "text",
+                    "isRequired": false
+                  },
+                  {
+                    "columnId": "covered_area_sft",
+                    "columnName": "Covered area in sft.",
+                    "fieldType": "number",
+                    "isRequired": false
+                  },
+                  {
+                    "columnId": "roof_height_feet",
+                    "columnName": "Roof height in feet",
+                    "fieldType": "number",
+                    "isRequired": false
+                  },
+                  {
+                    "columnId": "age_of_building_years",
+                    "columnName": "Age of building in years",
+                    "fieldType": "number",
+                    "isRequired": false
+                  },
+                  {
+                    "columnId": "estimated_replacement_rate",
+                    "columnName": "Estimated replacement rate of construction per sft.",
+                    "fieldType": "currency",
+                    "isRequired": false
+                  },
+                  {
+                    "columnId": "present_replacement_cost",
+                    "columnName": "Present Replacement cost Rs.",
+                    "fieldType": "currency",
+                    "isRequired": false
+                  },
+                  {
+                    "columnId": "depreciation_138_pa",
+                    "columnName": "Depreciation @1.38 % PA",
+                    "fieldType": "currency",
+                    "isRequired": false
+                  },
+                  {
+                    "columnId": "net_value_after_depreciation",
+                    "columnName": "Net value after depreciation Rs.",
+                    "fieldType": "currency",
+                    "isRequired": false
+                  }
+                ],
+                "rows": []
               },
-              "sortOrder": 2
-            },
-            {
-              "fieldId": "length",
-              "technicalName": "length",
-              "uiDisplayName": "Wall Length (ft)",
-              "fieldType": "number",
-              "placeholder": "Enter length in feet",
-              "validation": {
-                "min": 0,
-                "max": 1000
-              },
-              "sortOrder": 3
-            },
-            {
-              "fieldId": "construction_type",
-              "technicalName": "construction_type",
-              "uiDisplayName": "Wall Construction Type",
-              "fieldType": "select",
-              "options": [
-                {
-                  "value": "brick_cement",
-                  "label": "Brick with Cement Mortar"
-                },
-                {
-                  "value": "rcc_precast",
-                  "label": "RCC Precast"
-                },
-                {
-                  "value": "stone_masonry",
-                  "label": "Stone Masonry"
-                }
-              ],
-              "sortOrder": 4
-            }
-          ]
-        },
-        {
-          "fieldId": "electrical_installation",
-          "technicalName": "electrical_installation",
-          "uiDisplayName": "Electrical Installation",
-          "fieldType": "group",
-          "sortOrder": 6,
-          "subFields": [
-            {
-              "fieldId": "wiring_type",
-              "uiDisplayName": "Type of Wiring",
-              "fieldType": "select",
-              "options": [
-                {
-                  "value": "concealed_conduit",
-                  "label": "Concealed Conduit"
-                },
-                {
-                  "value": "surface_conduit",
-                  "label": "Surface Conduit"
-                },
-                {
-                  "value": "trunking",
-                  "label": "Trunking"
-                }
-              ],
-              "sortOrder": 1
-            },
-            {
-              "fieldId": "fittings_class",
-              "uiDisplayName": "Class of Fittings",
-              "fieldType": "select",
-              "options": [
-                {
-                  "value": "superior",
-                  "label": "Superior"
-                },
-                {
-                  "value": "ordinary",
-                  "label": "Ordinary"
-                },
-                {
-                  "value": "poor",
-                  "label": "Poor"
-                }
-              ],
-              "sortOrder": 2
-            },
-            {
-              "fieldId": "fan_points",
-              "uiDisplayName": "Fan Points",
-              "fieldType": "number",
-              "placeholder": "Number of fan points",
-              "validation": {
-                "min": 0,
-                "max": 50
-              },
-              "sortOrder": 3
-            },
-            {
-              "fieldId": "spare_plug_points",
-              "uiDisplayName": "Spare Plug Points",
-              "fieldType": "number",
-              "placeholder": "Number of spare plug points",
-              "validation": {
-                "min": 0,
-                "max": 50
-              },
-              "sortOrder": 4
-            }
-          ]
-        },
-        {
-          "fieldId": "plumbing_installation",
-          "technicalName": "plumbing_installation",
-          "uiDisplayName": "Plumbing Installation",
-          "fieldType": "group",
-          "sortOrder": 7,
-          "subFields": [
-            {
-              "fieldId": "water_closets",
-              "uiDisplayName": "No. of Water Closets and Type",
-              "fieldType": "text",
-              "placeholder": "Number of water closets and their type",
-              "sortOrder": 1
-            },
-            {
-              "fieldId": "wash_basins",
-              "uiDisplayName": "No. of Wash Basins",
-              "fieldType": "number",
-              "placeholder": "Number of wash basins",
-              "validation": {
-                "min": 0,
-                "max": 20
-              },
-              "sortOrder": 2
-            },
-            {
-              "fieldId": "urinals",
-              "uiDisplayName": "No. of Urinals",
-              "fieldType": "number",
-              "placeholder": "Number of urinals",
-              "validation": {
-                "min": 0,
-                "max": 10
-              },
-              "sortOrder": 3
-            },
-            {
-              "fieldId": "bath_tubs",
-              "uiDisplayName": "No. of Bath Tubs",
-              "fieldType": "number",
-              "placeholder": "Number of bath tubs",
-              "validation": {
-                "min": 0,
-                "max": 10
-              },
-              "sortOrder": 4
-            },
-            {
-              "fieldId": "water_meter_taps",
-              "uiDisplayName": "Water Meter, Taps, etc.",
-              "fieldType": "text",
-              "placeholder": "Water meter and taps installed",
-              "sortOrder": 5
-            },
-            {
-              "fieldId": "other_fixtures_sink",
-              "uiDisplayName": "Other Fixtures - Sink",
-              "fieldType": "text",
-              "placeholder": "Any other items",
-              "sortOrder": 6
-            }
-          ]
-        },
-        {
-          "fieldId": "extra_items",
-          "technicalName": "extra_items",
-          "uiDisplayName": "Extra Items",
-          "fieldType": "group",
-          "sortOrder": 8,
-          "subFields": [
-            {
-              "fieldId": "portico",
-              "technicalName": "portico",
-              "uiDisplayName": "Portico",
-              "fieldType": "currency",
-              "placeholder": "Amount in Rs",
-              "sortOrder": 1
-            },
-            {
-              "fieldId": "ornamental_front_door",
-              "technicalName": "ornamental_front_door",
-              "uiDisplayName": "Ornamental Front Door",
-              "fieldType": "currency",
-              "placeholder": "Amount in Rs",
-              "sortOrder": 2
-            },
-            {
-              "fieldId": "sitout_verandah_grills",
-              "technicalName": "sitout_verandah_grills",
-              "uiDisplayName": "Sit out/Verandah with Steel Grills",
-              "fieldType": "currency",
-              "placeholder": "Amount in Rs",
-              "sortOrder": 3
-            },
-            {
-              "fieldId": "overhead_water_tank",
-              "technicalName": "overhead_water_tank",
-              "uiDisplayName": "Overhead Water Tank",
-              "fieldType": "currency",
-              "placeholder": "Amount in Rs",
-              "sortOrder": 4
-            },
-            {
-              "fieldId": "extra_steel_gates",
-              "technicalName": "extra_steel_gates",
-              "uiDisplayName": "Extra Steel/Collapsible Gates",
-              "fieldType": "currency",
-              "placeholder": "Amount in Rs",
-              "sortOrder": 5
-            }
-          ]
-        },
-        {
-          "fieldId": "amenities",
-          "technicalName": "amenities",
-          "uiDisplayName": "Amenities",
-          "fieldType": "group",
-          "sortOrder": 9,
-          "subFields": [
-            {
-              "fieldId": "wardrobes",
-              "technicalName": "wardrobes",
-              "uiDisplayName": "Wardrobes",
-              "fieldType": "currency",
-              "placeholder": "Amount in Rs",
-              "sortOrder": 1
-            },
-            {
-              "fieldId": "glazed_tiles",
-              "technicalName": "glazed_tiles",
-              "uiDisplayName": "Glazed Tiles",
-              "fieldType": "currency",
-              "placeholder": "Amount in Rs",
-              "sortOrder": 2
-            },
-            {
-              "fieldId": "extra_sinks_bathtubs",
-              "technicalName": "extra_sinks_bathtubs",
-              "uiDisplayName": "Extra Sinks & Bath Tubs",
-              "fieldType": "currency",
-              "placeholder": "Amount in Rs",
-              "sortOrder": 3
-            },
-            {
-              "fieldId": "marble_ceramic_flooring",
-              "technicalName": "marble_ceramic_flooring",
-              "uiDisplayName": "Marble/Ceramic Tiles Flooring",
-              "fieldType": "currency",
-              "placeholder": "Amount in Rs",
-              "sortOrder": 4
-            },
-            {
-              "fieldId": "interior_decorations",
-              "technicalName": "interior_decorations",
-              "uiDisplayName": "Interior Decorations",
-              "fieldType": "currency",
-              "placeholder": "Amount in Rs",
-              "sortOrder": 5
-            },
-            {
-              "fieldId": "architectural_elevation",
-              "technicalName": "architectural_elevation",
-              "uiDisplayName": "Architectural Elevation Works",
-              "fieldType": "currency",
-              "placeholder": "Amount in Rs",
-              "sortOrder": 6
-            },
-            {
-              "fieldId": "paneling_works",
-              "technicalName": "paneling_works",
-              "uiDisplayName": "Paneling Works",
-              "fieldType": "currency",
-              "placeholder": "Amount in Rs",
-              "sortOrder": 7
-            },
-            {
-              "fieldId": "aluminum_works",
-              "technicalName": "aluminum_works",
-              "uiDisplayName": "Aluminum Works",
-              "fieldType": "currency",
-              "placeholder": "Amount in Rs",
-              "sortOrder": 8
-            },
-            {
-              "fieldId": "aluminum_handrails",
-              "technicalName": "aluminum_handrails",
-              "uiDisplayName": "Aluminum Hand Rails",
-              "fieldType": "currency",
-              "placeholder": "Amount in Rs",
-              "sortOrder": 9
-            },
-            {
-              "fieldId": "false_ceiling",
-              "technicalName": "false_ceiling",
-              "uiDisplayName": "False Ceiling",
-              "fieldType": "currency",
-              "placeholder": "Amount in Rs",
-              "sortOrder": 10
-            }
-          ]
-        },
-        {
-          "fieldId": "miscellaneous",
-          "technicalName": "miscellaneous",
-          "uiDisplayName": "Miscellaneous",
-          "fieldType": "group",
-          "sortOrder": 10,
-          "subFields": [
-            {
-              "fieldId": "separate_toilet",
-              "technicalName": "separate_toilet",
-              "uiDisplayName": "Separate Toilet Room",
-              "fieldType": "currency",
-              "placeholder": "Amount in Rs",
-              "sortOrder": 1
-            },
-            {
-              "fieldId": "separate_lumber_room",
-              "technicalName": "separate_lumber_room",
-              "uiDisplayName": "Separate Lumber Room",
-              "fieldType": "currency",
-              "placeholder": "Amount in Rs",
-              "sortOrder": 2
-            },
-            {
-              "fieldId": "separate_water_tank_sump",
-              "technicalName": "separate_water_tank_sump",
-              "uiDisplayName": "Separate Water Tank/Sump",
-              "fieldType": "currency",
-              "placeholder": "Amount in Rs",
-              "sortOrder": 3
-            },
-            {
-              "fieldId": "trees_gardening",
-              "technicalName": "trees_gardening",
-              "uiDisplayName": "Trees, Gardening",
-              "fieldType": "currency",
-              "placeholder": "Amount in Rs",
-              "sortOrder": 4
-            }
-          ]
-        },
-        {
-          "fieldId": "services",
-          "technicalName": "services",
-          "uiDisplayName": "Services",
-          "fieldType": "group",
-          "sortOrder": 11,
-          "subFields": [
-            {
-              "fieldId": "water_supply_arrangements",
-              "technicalName": "water_supply_arrangements",
-              "uiDisplayName": "Water Supply Arrangements",
-              "fieldType": "currency",
-              "placeholder": "Amount in Rs",
-              "sortOrder": 1
-            },
-            {
-              "fieldId": "drainage_arrangements",
-              "technicalName": "drainage_arrangements",
-              "uiDisplayName": "Drainage Arrangements",
-              "fieldType": "currency",
-              "placeholder": "Amount in Rs",
-              "sortOrder": 2
-            },
-            {
-              "fieldId": "compound_wall",
-              "technicalName": "compound_wall",
-              "uiDisplayName": "Compound Wall Cost",
-              "fieldType": "currency",
-              "placeholder": "Amount in Rs",
-              "sortOrder": 3
-            },
-            {
-              "fieldId": "cb_deposits_fittings",
-              "technicalName": "cb_deposits_fittings",
-              "uiDisplayName": "C.B. Deposits, Fittings etc.",
-              "fieldType": "currency",
-              "placeholder": "Amount in Rs",
-              "sortOrder": 4
-            },
-            {
-              "fieldId": "pavement",
-              "technicalName": "pavement",
-              "uiDisplayName": "Pavement",
-              "fieldType": "currency",
-              "placeholder": "Amount in Rs",
-              "sortOrder": 5
+              "isRequired": false,
+              "placeholder": "",
+              "includeInCustomTemplate": true
             }
           ]
         }
-      ]
+      ],
+      "_id": null
     },
     {
-      "_id": "68fa78b4e25b49fc725d349e",
-      "templateId": "BOB_LAND_DETAILED_VALUATION_V1",
-      "templateName": "BOB Land Detailed Valuation",
-      "bankCode": "BOB",
+      "templateId": "BOI_LAND_DETAILED_VALUATION_V1",
+      "templateName": "BOI Land Detailed Valuation",
+      "bankCode": "BOI",
       "propertyType": "Land",
       "templateCategory": "detailed_valuation",
       "createdAt": "2025-10-23T18:49:24.051909+00:00",
@@ -2137,7 +2264,8 @@
           "isReadonly": true,
           "sortOrder": 7
         }
-      ]
+      ],
+      "_id": null
     }
   ],
   "isActive": true,

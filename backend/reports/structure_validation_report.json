@@ -1,0 +1,102 @@
+{
+  "timestamp": "2025-11-28T21:11:49.331138",
+  "canonical": "uco_land_property_details",
+  "templates_validated": [
+    "bob_land_property_details",
+    "boi_apartment_property_details",
+    "boi_land_property_details",
+    "cbi_all_property_details",
+    "hdfc_all_property_details",
+    "pnb_land_property_details",
+    "sbi_apartment_property_details",
+    "sbi_land_property_details",
+    "ubi_apartment_property_details",
+    "ubi_land_property_details",
+    "uco_apartment_property_details",
+    "uco_land_property_details"
+  ],
+  "issues": {
+    "extra_document_keys": [
+      {
+        "collection": "boi_apartment_property_details",
+        "extra_keys": [
+          "sortOrder"
+        ]
+      },
+      {
+        "collection": "cbi_all_property_details",
+        "extra_keys": [
+          "fields"
+        ]
+      },
+      {
+        "collection": "hdfc_all_property_details",
+        "extra_keys": [
+          "fields"
+        ]
+      },
+      {
+        "collection": "pnb_land_property_details",
+        "extra_keys": [
+          "fields"
+        ]
+      },
+      {
+        "collection": "sbi_apartment_property_details",
+        "extra_keys": [
+          "sortOrder"
+        ]
+      },
+      {
+        "collection": "ubi_apartment_property_details",
+        "extra_keys": [
+          "fields"
+        ]
+      },
+      {
+        "collection": "ubi_land_property_details",
+        "extra_keys": [
+          "fields"
+        ]
+      }
+    ],
+    "missing_document_keys": [
+      {
+        "collection": "boi_land_property_details",
+        "missing_keys": [
+          "_id"
+        ]
+      },
+      {
+        "collection": "cbi_all_property_details",
+        "missing_keys": [
+          "sections"
+        ]
+      },
+      {
+        "collection": "hdfc_all_property_details",
+        "missing_keys": [
+          "sections"
+        ]
+      },
+      {
+        "collection": "pnb_land_property_details",
+        "missing_keys": [
+          "sections"
+        ]
+      },
+      {
+        "collection": "ubi_apartment_property_details",
+        "missing_keys": [
+          "sections"
+        ]
+      },
+      {
+        "collection": "ubi_land_property_details",
+        "missing_keys": [
+          "sections"
+        ]
+      }
+    ]
+  }
+}

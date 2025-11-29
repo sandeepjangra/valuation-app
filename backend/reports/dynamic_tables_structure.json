@@ -1,0 +1,429 @@
+{
+  "floor_wise_construction_specifications_table": {
+    "template": "boi/boi_land_property_details.json",
+    "section": "Group 1 - Dynamic Table",
+    "field": {
+      "fieldId": "floor_wise_construction_specifications_table",
+      "uiDisplayName": "Floor Wise Construction Specifications",
+      "fieldType": "dynamic_table",
+      "sortOrder": 1,
+      "tableConfig": {
+        "tableType": "column_dynamic",
+        "fixedColumns": [
+          {
+            "columnId": "sr_no",
+            "columnName": "Sr. No.",
+            "fieldType": "text",
+            "isReadonly": true
+          },
+          {
+            "columnId": "description",
+            "columnName": "Description",
+            "fieldType": "text",
+            "isReadonly": true
+          }
+        ],
+        "dynamicColumns": {
+          "columnType": "floor",
+          "defaultColumns": [
+            {
+              "columnId": "ground_floor",
+              "columnName": "Ground Floor",
+              "fieldType": "textarea",
+              "isRequired": false
+            }
+          ],
+          "addColumnConfig": {
+            "buttonText": "Add Floor",
+            "columnNamePattern": "Floor {number}",
+            "maxColumns": 10
+          }
+        },
+        "rows": [
+          {
+            "sr_no": "1.",
+            "description": "Foundation"
+          },
+          {
+            "sr_no": "2.",
+            "description": "Basement"
+          },
+          {
+            "sr_no": "3.",
+            "description": "Superstructure"
+          },
+          {
+            "sr_no": "4.",
+            "description": "Joinery / Doors & Windows (Please furnish details about size of frames, shutters, glazing, fitting etc. and specify the species of timber )"
+          },
+          {
+            "sr_no": "5.",
+            "description": "RCC works"
+          },
+          {
+            "sr_no": "6.",
+            "description": "Plastering"
+          },
+          {
+            "sr_no": "7.",
+            "description": "Flooring, Skirting, dadoing"
+          },
+          {
+            "sr_no": "8.",
+            "description": "Special finish as marble, granite, wooden paneling, grills, etc."
+          },
+          {
+            "sr_no": "9.",
+            "description": "Roofing including weather proof course"
+          },
+          {
+            "sr_no": "10.",
+            "description": "Drainage"
+          },
+          {
+            "sr_no": "11.",
+            "description": "Compound Wall Height"
+          },
+          {
+            "sr_no": "12.",
+            "description": "Compound Wall Height"
+          },
+          {
+            "sr_no": "13.",
+            "description": "Type of Wall Construction"
+          },
+          {
+            "sr_no": "14.",
+            "description": "Type of wiring"
+          },
+          {
+            "sr_no": "15.",
+            "description": "Class of fittings (superior / ordinary / poor)"
+          },
+          {
+            "sr_no": "16.",
+            "description": "Fan points"
+          },
+          {
+            "sr_no": "17.",
+            "description": "Spare plug points"
+          },
+          {
+            "sr_no": "18.",
+            "description": "No. of water closets and their type"
+          },
+          {
+            "sr_no": "19.",
+            "description": "No. of wash basins"
+          },
+          {
+            "sr_no": "20.",
+            "description": "No. of urinals"
+          },
+          {
+            "sr_no": "21.",
+            "description": "No. of bath tubs"
+          },
+          {
+            "sr_no": "22.",
+            "description": "Water meter, taps, etc."
+          },
+          {
+            "sr_no": "23.",
+            "description": "Any other fixtures- sink"
+          }
+        ]
+      },
+      "isRequired": false,
+      "placeholder": "",
+      "includeInCustomTemplate": true
+    }
+  },
+  "valuation_floor_wise_table": {
+    "template": "boi/boi_land_property_details.json",
+    "section": "Group 3 - Additional",
+    "field": {
+      "fieldId": "valuation_floor_wise_table",
+      "uiDisplayName": "Valuation Floor Wise",
+      "fieldType": "dynamic_table",
+      "sortOrder": 1,
+      "tableConfig": {
+        "tableType": "row_dynamic",
+        "allowAddRows": true,
+        "maxRows": 10,
+        "addRowConfig": {
+          "buttonText": "Add Row",
+          "rowTemplate": {
+            "sr_no": "",
+            "particulars_of_item": "",
+            "covered_area_sft": "",
+            "roof_height_feet": "",
+            "age_of_building_years": "",
+            "estimated_replacement_rate": "",
+            "present_replacement_cost": "",
+            "depreciation_138_pa": "",
+            "net_value_after_depreciation": ""
+          }
+        },
+        "fixedColumns": [
+          {
+            "columnId": "sr_no",
+            "columnName": "Sr.No.",
+            "fieldType": "text",
+            "isReadonly": true
+          },
+          {
+            "columnId": "particulars_of_item",
+            "columnName": "Particulars of item",
+            "fieldType": "text",
+            "isRequired": false
+          },
+          {
+            "columnId": "covered_area_sft",
+            "columnName": "Covered area in sft.",
+            "fieldType": "number",
+            "isRequired": false
+          },
+          {
+            "columnId": "roof_height_feet",
+            "columnName": "Roof height in feet",
+            "fieldType": "number",
+            "isRequired": false
+          },
+          {
+            "columnId": "age_of_building_years",
+            "columnName": "Age of building in years",
+            "fieldType": "number",
+            "isRequired": false
+          },
+          {
+            "columnId": "estimated_replacement_rate",
+            "columnName": "Estimated replacement rate of construction per sft.",
+            "fieldType": "currency",
+            "isRequired": false
+          },
+          {
+            "columnId": "present_replacement_cost",
+            "columnName": "Present Replacement cost Rs.",
+            "fieldType": "currency",
+            "isRequired": false
+          },
+          {
+            "columnId": "depreciation_138_pa",
+            "columnName": "Depreciation @1.38 % PA",
+            "fieldType": "currency",
+            "isRequired": false
+          },
+          {
+            "columnId": "net_value_after_depreciation",
+            "columnName": "Net value after depreciation Rs.",
+            "fieldType": "currency",
+            "isRequired": false
+          }
+        ],
+        "rows": []
+      },
+      "isRequired": false,
+      "placeholder": "",
+      "includeInCustomTemplate": true
+    }
+  },
+  "building_specifications_table": {
+    "template": "uco/land/uco_land_property_details.json",
+    "section": "Part B - Building Details",
+    "field": {
+      "fieldId": "building_specifications_table",
+      "uiDisplayName": "Building Specifications",
+      "fieldType": "dynamic_table",
+      "sortOrder": 1,
+      "tableConfig": {
+        "tableType": "column_dynamic",
+        "fixedColumns": [
+          {
+            "columnId": "sr_no",
+            "columnName": "Sr. No.",
+            "fieldType": "text",
+            "isReadonly": true
+          },
+          {
+            "columnId": "description",
+            "columnName": "Description",
+            "fieldType": "text",
+            "isReadonly": true
+          }
+        ],
+        "dynamicColumns": {
+          "columnType": "floor",
+          "defaultColumns": [
+            {
+              "columnId": "ground_floor",
+              "columnName": "Ground Floor",
+              "fieldType": "text",
+              "isRequired": false
+            }
+          ],
+          "addColumnConfig": {
+            "buttonText": "Add Floor",
+            "columnNamePattern": "Floor {number}",
+            "maxColumns": 10
+          }
+        },
+        "rows": [
+          {
+            "sr_no": "1.",
+            "description": "Description"
+          },
+          {
+            "sr_no": "2.",
+            "description": "Foundation"
+          },
+          {
+            "sr_no": "3.",
+            "description": "Basement"
+          },
+          {
+            "sr_no": "4.",
+            "description": "Superstructure"
+          },
+          {
+            "sr_no": "5.",
+            "description": "Joinery/Door and Windows"
+          },
+          {
+            "sr_no": "6.",
+            "description": "RCC Works"
+          },
+          {
+            "sr_no": "7.",
+            "description": "Plastering"
+          },
+          {
+            "sr_no": "8.",
+            "description": "Flooring/Skirting"
+          },
+          {
+            "sr_no": "9.",
+            "description": "Any Special Finishing"
+          },
+          {
+            "sr_no": "10.",
+            "description": "Water Proof Course"
+          },
+          {
+            "sr_no": "11.",
+            "description": "Drainage"
+          },
+          {
+            "sr_no": "12.",
+            "description": "Compound Wall"
+          },
+          {
+            "sr_no": "13.",
+            "description": "Electrical Installation"
+          },
+          {
+            "sr_no": "14.",
+            "description": "Plumbing Installation"
+          },
+          {
+            "sr_no": "15.",
+            "description": "Bore Well"
+          },
+          {
+            "sr_no": "16.",
+            "description": "Wardrobes"
+          },
+          {
+            "sr_no": "17.",
+            "description": "Development of Open Areas"
+          }
+        ]
+      },
+      "isRequired": false,
+      "placeholder": "",
+      "includeInCustomTemplate": true
+    }
+  },
+  "floor_wise_valuation_table": {
+    "template": "uco/land/uco_land_property_details.json",
+    "section": "Part C - Floor-wise Valuation",
+    "field": {
+      "fieldId": "floor_wise_valuation_table",
+      "uiDisplayName": "Floor-wise Valuation Details",
+      "fieldType": "dynamic_table",
+      "sortOrder": 1,
+      "tableConfig": {
+        "tableType": "row_dynamic",
+        "fixedColumns": [
+          {
+            "columnId": "sr_no",
+            "columnName": "Sr. No.",
+            "fieldType": "text",
+            "isReadonly": true
+          },
+          {
+            "columnId": "floors_level",
+            "columnName": "Floors/Level",
+            "fieldType": "text",
+            "isRequired": false
+          },
+          {
+            "columnId": "particulars_description",
+            "columnName": "Particulars/Description of the Items",
+            "fieldType": "textarea",
+            "isRequired": false
+          },
+          {
+            "columnId": "plinth_covered_area",
+            "columnName": "Plinth/Covered Area (in Sq.ft.)",
+            "fieldType": "number",
+            "isRequired": false
+          },
+          {
+            "columnId": "estimated_replacement_rate",
+            "columnName": "Estimated Replacement Rate per Sq.ft. (in Rs.)",
+            "fieldType": "currency",
+            "isRequired": false
+          },
+          {
+            "columnId": "estimated_replacement_cost",
+            "columnName": "Estimated Replacement Cost",
+            "fieldType": "currency",
+            "isRequired": false
+          },
+          {
+            "columnId": "depreciation",
+            "columnName": "Depreciation for 2 yr. @ 1.5% per year",
+            "fieldType": "currency",
+            "isRequired": false
+          },
+          {
+            "columnId": "net_value",
+            "columnName": "Net Value",
+            "fieldType": "currency",
+            "isRequired": false
+          }
+        ],
+        "maxRows": 10,
+        "addRowConfig": {
+          "buttonText": "Add Row"
+        },
+        "rows": [
+          {
+            "sr_no": "1.",
+            "floors_level": "",
+            "particulars_description": "",
+            "plinth_covered_area": "",
+            "estimated_replacement_rate": "",
+            "estimated_replacement_cost": "",
+            "depreciation": "",
+            "net_value": ""
+          }
+        ]
+      },
+      "isRequired": false,
+      "placeholder": "",
+      "includeInCustomTemplate": true
+    }
+  }
+}

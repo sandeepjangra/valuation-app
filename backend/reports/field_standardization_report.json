@@ -1,0 +1,109 @@
+{
+  "timestamp": "2025-11-28T21:11:56.146392",
+  "total_unique_fields": 99,
+  "shared_fields_count": 71,
+  "shared_fields": {
+    "list_of_documents_produced": 3,
+    "postal_address": 5,
+    "property_description": 5,
+    "boundaries_dimensions_table": 5,
+    "coordinates": 5,
+    "plot_size": 8,
+    "market_rate": 8,
+    "estimated_valuation": 8,
+    "building_constructed": 3,
+    "building_basic_info": 3,
+    "building_dimensions": 3,
+    "building_condition": 3,
+    "approval_documents": 3,
+    "no_building_remarks": 3,
+    "agreement_to_sell": 4,
+    "allotment_letter": 4,
+    "layout_plan": 4,
+    "sales_deed": 4,
+    "building_plan_sanction": 2,
+    "owner_details": 2,
+    "property_details": 2,
+    "location_details": 2,
+    "area_classification": 4,
+    "state_central_govt_enactments": 2,
+    "land_area_and_occupancy": 4,
+    "building_details": 2,
+    "infrastructure_facilities": 2,
+    "flat_details": 2,
+    "bills_and_receipts": 2,
+    "others": 2,
+    "market_demand": 2,
+    "rate_adopted_after_depreciation": 2,
+    "building_age_assessment": 2,
+    "depreciation_rates": 2,
+    "valuation_table": 2,
+    "property_location": 2,
+    "city_town_village": 2,
+    "government_regulation": 2,
+    "building_type": 7,
+    "construction_type": 7,
+    "construction_year": 7,
+    "number_of_floors": 5,
+    "floor_height": 5,
+    "plinth_area_floorwise": 5,
+    "exterior_condition": 5,
+    "interior_condition": 5,
+    "approved_map_date_validity": 5,
+    "approved_map_authority": 5,
+    "map_authenticity_verified": 5,
+    "valuer_comments_authenticity": 5,
+    "details_of_enquiries_to_govt_officials": 2,
+    "property_ownership": 2,
+    "area_type": 2,
+    "municipal_corporation": 2,
+    "longitude": 2,
+    "latitude": 2,
+    "route_map": 2,
+    "covered_under_land_ceiling": 2,
+    "specific_identification_mark": 2,
+    "freehold_leasehold": 2,
+    "any_restriction_regards_to_use_of_land": 2,
+    "agricultural_land": 2,
+    "year_of_acquisition_purchase": 2,
+    "value_of_purchase_price": 2,
+    "occupied_by_owner_tenant_duration": 2,
+    "future_life_building": 2,
+    "floors_height": 2,
+    "plinth_area_floors": 2,
+    "condition_of_building": 2,
+    "external_condition": 2,
+    "internal_condition": 2
+  },
+  "inconsistencies": {
+    "name_variations": [
+      {
+        "fieldId": "coordinates",
+        "collections": 5,
+        "variations": [
+          "Coorditnates of the Site",
+          "Coordinates of the Site"
+        ]
+      }
+    ],
+    "type_variations": [
+      {
+        "fieldId": "construction_type",
+        "collections": 7,
+        "variations": [
+          "text",
+          "select"
+        ]
+      },
+      {
+        "fieldId": "construction_year",
+        "collections": 7,
+        "variations": [
+          "text",
+          "number"
+        ]
+      }
+    ],
+    "requirement_variations": []
+  }
+}

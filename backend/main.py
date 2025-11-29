@@ -1147,6 +1147,26 @@ async def get_aggregated_template_fields(bank_code: str, template_id: str, reque
             
             logger.info(f"🎯 Created {len(bank_specific_tabs)} bank-specific tabs")
             
+            # Step 4.5: Process fields to enhance calculation metadata
+            processed_common_fields = process_template_fields(common_fields)
+            processed_bank_tabs = []
+            for tab in bank_specific_tabs:
+                processed_tab = dict(tab)
+                processed_tab["fields"] = process_template_fields(tab.get("fields", []))
+                
+                # Also process section fields if they exist
+                if tab.get("sections"):
+                    processed_sections = []
+                    for section in tab["sections"]:
+                        processed_section = dict(section)
+                        processed_section["fields"] = process_template_fields(section.get("fields", []))
+                        processed_sections.append(processed_section)
+                    processed_tab["sections"] = processed_sections
+                
+                processed_bank_tabs.append(processed_tab)
+            
+            logger.info(f"✅ Processed calculation metadata for all fields")
+            
             # Step 5: Build comprehensive response (matching expected frontend format)
             response_data = {
                 "templateInfo": {
@@ -1160,8 +1180,8 @@ async def get_aggregated_template_fields(bank_code: str, template_id: str, reque
                     "bankCode": bank_doc.get("bankCode", ""),
                     "bankName": bank_doc.get("bankName", "")
                 },
-                "commonFields": common_fields,
-                "bankSpecificTabs": bank_specific_tabs,
+                "commonFields": processed_common_fields,
+                "bankSpecificTabs": processed_bank_tabs,
                 "aggregatedAt": datetime.now(timezone.utc).isoformat(),
                 "metadata": {
                     "architecture": "multi_collection",
@@ -1202,6 +1222,161 @@ async def get_aggregated_template_fields(bank_code: str, template_id: str, reque
         )
         api_logger.log_response(error_response, request_data)
         raise HTTPException(status_code=500, detail=f"Failed to aggregate template fields: {str(e)}")
+
+# ================================
+# FIELD PROCESSING UTILITIES
+# ================================
+
+def process_template_fields(fields_list: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Process template fields to enhance calculation metadata and ensure proper structure"""
+    processed_fields = []
+    
+    for field in fields_list:
+        processed_field = dict(field)  # Create a copy
+        
+        # Check if field has calculation metadata
+        calc_metadata = field.get('calculationMetadata', {})
+        
+        if calc_metadata:
+            logger.debug(f"Processing calculation field: {field.get('fieldId', 'unknown')}")
+            
+            # Ensure calculation metadata is properly structured
+            if calc_metadata.get('isCalculatedField'):
+                # This is a calculated field (result field)
+                processed_field['isReadonly'] = True  # Calculated fields are always readonly
+                processed_field['isCalculated'] = True
+                
+                # Ensure formula exists
+                if not processed_field.get('formula') and calc_metadata.get('formula'):
+                    processed_field['formula'] = calc_metadata['formula']
+                
+                # Ensure formatting is applied
+                if calc_metadata.get('formatting', {}).get('currency'):
+                    if processed_field.get('fieldType') != 'currency':
+                        processed_field['fieldType'] = 'currency'
+                        processed_field['displayFormat'] = 'currency'
+                
+            elif calc_metadata.get('isCalculationInput'):
+                # This is an input field for calculations
+                processed_field['isCalculationInput'] = True
+                
+        # Process subFields if they exist (for group fields)
+        if 'subFields' in field:
+            processed_field['subFields'] = process_template_fields(field['subFields'])
+        
+        processed_fields.append(processed_field)
+    
+    return processed_fields
+
+# ================================
+# CALCULATION ENGINE APIs
+# ================================
+
+from pydantic import BaseModel
+from typing import Dict, Any, List, Union
+
+class CalculationRequest(BaseModel):
+    formula: str
+    dependencies: Dict[str, Union[float, int, str]]
+    fieldId: str
+    templateId: str
+    formatting: Dict[str, Any] = {}
+
+@app.post("/api/calculate")
+async def calculate_field_value(calc_request: CalculationRequest, request: Request) -> JSONResponse:
+    """Calculate field value based on formula and dependencies"""
+    request_data = await api_logger.log_request(request)
+    
+    try:
+        logger.info(f"🧮 Processing calculation for field: {calc_request.fieldId}")
+        logger.debug(f"Formula: {calc_request.formula}")
+        logger.debug(f"Dependencies: {calc_request.dependencies}")
+        
+        # Clean and validate input values
+        cleaned_deps = {}
+        for key, value in calc_request.dependencies.items():
+            if value is None or value == "":
+                cleaned_deps[key] = 0
+            elif isinstance(value, str):
+                # Remove currency symbols and commas, extract numeric value
+                cleaned_value = str(value).replace('₹', '').replace(',', '').replace(' ', '').strip()
+                try:
+                    cleaned_deps[key] = float(cleaned_value) if cleaned_value else 0
+                except ValueError:
+                    logger.warning(f"Could not convert '{value}' to number, using 0")
+                    cleaned_deps[key] = 0
+            else:
+                cleaned_deps[key] = float(value)
+        
+        logger.debug(f"Cleaned dependencies: {cleaned_deps}")
+        
+        # Simple formula evaluation for basic arithmetic
+        # Support: addition (+), subtraction (-), multiplication (*), division (/)
+        formula = calc_request.formula.strip()
+        
+        # Replace field names in formula with actual values
+        evaluation_formula = formula
+        for field_name, field_value in cleaned_deps.items():
+            evaluation_formula = evaluation_formula.replace(field_name, str(field_value))
+        
+        logger.debug(f"Evaluation formula: {evaluation_formula}")
+        
+        # Safely evaluate the formula (only allow basic arithmetic operations)
+        allowed_chars = set('0123456789+-*/.() ')
+        if not all(c in allowed_chars for c in evaluation_formula):
+            raise ValueError("Formula contains invalid characters")
+        
+        # Calculate result
+        try:
+            result = eval(evaluation_formula)
+            logger.info(f"✅ Calculation result: {result}")
+        except Exception as eval_error:
+            logger.error(f"❌ Formula evaluation error: {eval_error}")
+            result = 0
+        
+        # Apply simple numeric formatting
+        formatting = calc_request.formatting or {}
+        decimal_places = formatting.get('decimalPlaces', 2)
+        formatted_result = round(result, decimal_places)
+        
+        logger.info(f"Simple formatting - Field ID: {calc_request.fieldId}, Result: {result}, Formatted: {formatted_result}")
+        
+        response_data = {
+            "success": True,
+            "result": result,
+            "formattedResult": formatted_result,
+            "formula": calc_request.formula,
+            "evaluatedFormula": evaluation_formula,
+            "fieldId": calc_request.fieldId
+        }
+        
+        response = JSONResponse(
+            status_code=200,
+            content=response_data
+        )
+        
+        api_logger.log_response(response, request_data)
+        return response
+        
+    except Exception as e:
+        logger.error(f"❌ Calculation error: {str(e)}")
+        error_response = JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "error": f"Calculation failed: {str(e)}",
+                "result": 0,
+                "formattedResult": "0"
+            }
+        )
+        api_logger.log_response(error_response, request_data)
+        return error_response
+
+
+        
+    except Exception as e:
+        logger.error(f"Currency formatting error: {e}")
+        return f"₹{amount:,.2f}"
 
 # ================================
 # ORGANIZATION MANAGEMENT APIs
@@ -1368,11 +1543,11 @@ async def create_organization(org_request: CreateOrganizationRequest, request: R
 
 
 @app.get("/api/admin/organizations")
-async def list_organizations(request: Request):
+async def list_organizations(request: Request, include_system: bool = False):
     """List all organizations (System Admin only)"""
     request_data = await api_logger.log_request(request)
     
-    logger.info("📋 Fetching all organizations")
+    logger.info(f"📋 Fetching all organizations (include_system: {include_system})")
     
     try:
         from database.multi_db_manager import MultiDatabaseManager
@@ -1384,11 +1559,13 @@ async def list_organizations(request: Request):
         config_db = db_manager.client.val_app_config
         orgs_collection = config_db.organizations
         
-        # Get all active organizations (excluding system org)
-        orgs_cursor = orgs_collection.find({
-            "is_active": True,
-            "is_system_org": {"$ne": True}
-        })
+        # Build query filter
+        query_filter = {"is_active": True}
+        if not include_system:
+            query_filter["is_system_org"] = {"$ne": True}
+            
+        # Get organizations based on filter
+        orgs_cursor = orgs_collection.find(query_filter)
         organizations = await orgs_cursor.to_list(length=None)
         
         # Transform to match UI expectations (backward compatible format)
@@ -2224,9 +2401,11 @@ async def list_organization_users(org_id: str, request: Request):
                 "user_id": user.get("_id"),  # For compatibility
                 "name": user.get("full_name", ""),
                 "email": user.get("email", ""),
+                "phone": user.get("phone", ""),  # Include phone number
                 "role": user.get("role", "employee"),
                 "status": "active" if user.get("is_active", True) else "inactive",
-                "created_at": user.get("created_at").isoformat() if user.get("created_at") else None
+                "created_at": user.get("created_at").isoformat() if user.get("created_at") else None,
+                "current_version": user.get("current_version", 0)  # Include version for tracking
             }
             formatted_users.append(formatted_user)
         
@@ -2416,6 +2595,7 @@ async def toggle_user_status(org_id: str, user_id: str, status_data: dict, reque
     try:
         from database.multi_db_manager import MultiDatabaseManager
         from bson import ObjectId
+        from utils.user_change_tracker import create_status_change_record
         
         db_manager = MultiDatabaseManager()
         await db_manager.connect()
@@ -2445,16 +2625,45 @@ async def toggle_user_status(org_id: str, user_id: str, status_data: dict, reque
             await db_manager.disconnect()
             raise HTTPException(status_code=404, detail=f"User {user_id} not found")
         
+        current_version = user.get("current_version", 0)
+        old_status = user.get("is_active", True)
+        
+        # Check if status actually changed
+        if old_status == is_active:
+            await db_manager.disconnect()
+            return JSONResponse(
+                status_code=200,
+                content={
+                    "success": True,
+                    "message": f"User already {action}d",
+                    "data": {"user_id": user_id, "is_active": is_active}
+                }
+            )
+        
+        # Create status change record
+        user_changes_collection = org_db.user_changes
+        new_version = await create_status_change_record(
+            changes_collection=user_changes_collection,
+            user_id=user_id,
+            old_status=old_status,
+            new_status=is_active,
+            changed_by="system_admin",  # TODO: Get from JWT
+            current_version=current_version
+        )
+        
+        logger.info(f"📝 Created status change record version {new_version}")
+        
         # Update status
         result = await org_db.users.update_one(
             {"_id": user_id},
             {"$set": {
                 "is_active": is_active,
-                "updated_at": datetime.now(timezone.utc)
+                "updated_at": datetime.now(timezone.utc),
+                "current_version": new_version
             }}
         )
         
-        logger.info(f"✅ {action.capitalize()}d user {user_id}")
+        logger.info(f"✅ {action.capitalize()}d user {user_id} (version {new_version})")
         
         # Log activity
         activity_log = {
@@ -2464,7 +2673,8 @@ async def toggle_user_status(org_id: str, user_id: str, status_data: dict, reque
             "resource_id": user_id,
             "details": {
                 "email": user.get("email"),
-                "is_active": is_active
+                "is_active": is_active,
+                "version": new_version
             },
             "timestamp": datetime.now(timezone.utc)
         }
@@ -2477,7 +2687,11 @@ async def toggle_user_status(org_id: str, user_id: str, status_data: dict, reque
             content={
                 "success": True,
                 "message": f"User {user.get('email')} {action}d successfully",
-                "data": {"user_id": user_id, "is_active": is_active}
+                "data": {
+                    "user_id": user_id,
+                    "is_active": is_active,
+                    "version": new_version
+                }
             }
         )
         
@@ -2508,6 +2722,7 @@ async def delete_organization_user(org_id: str, user_id: str, request: Request):
     try:
         from database.multi_db_manager import MultiDatabaseManager
         from bson import ObjectId
+        from utils.user_change_tracker import create_deletion_record
         
         db_manager = MultiDatabaseManager()
         await db_manager.connect()
@@ -2538,6 +2753,19 @@ async def delete_organization_user(org_id: str, user_id: str, request: Request):
             raise HTTPException(status_code=404, detail=f"User {user_id} not found")
         
         user_email = user.get("email")
+        current_version = user.get("current_version", 0)
+        
+        # Create deletion record BEFORE deleting
+        user_changes_collection = org_db.user_changes
+        final_version = await create_deletion_record(
+            changes_collection=user_changes_collection,
+            user_id=user_id,
+            user_data=user,
+            deleted_by="system_admin",  # TODO: Get from JWT
+            current_version=current_version
+        )
+        
+        logger.info(f"📝 Created deletion record version {final_version}")
         
         # Delete user
         await org_db.users.delete_one({"_id": user_id})
@@ -2555,7 +2783,8 @@ async def delete_organization_user(org_id: str, user_id: str, request: Request):
             "resource_id": user_id,
             "details": {
                 "email": user_email,
-                "full_name": user.get("full_name")
+                "full_name": user.get("full_name"),
+                "final_version": final_version
             },
             "timestamp": datetime.now(timezone.utc)
         }
@@ -2568,7 +2797,10 @@ async def delete_organization_user(org_id: str, user_id: str, request: Request):
             content={
                 "success": True,
                 "message": f"User {user_email} deleted successfully",
-                "data": {"user_id": user_id}
+                "data": {
+                    "user_id": user_id,
+                    "final_version": final_version
+                }
             }
         )
         
