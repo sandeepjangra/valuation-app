@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, inject, computed } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject, computed, ViewChild } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -8,12 +8,14 @@ import { TemplateService } from '../../services/template.service';
 import { CustomTemplateService } from '../../services/custom-template.service';
 import { CalculationService } from '../../services/calculation.service';
 import { AuthService } from '../../services/auth.service';
+import { OrganizationService } from '../../services/organization.service';
 import { TemplateAutofillModalComponent, AutoFillChoice } from '../custom-templates/template-autofill-modal.component';
+import { SaveTemplateDialogComponent } from './save-template-dialog.component';
 import { DynamicTableComponent } from '../dynamic-table/dynamic-table.component';
 
 @Component({
   selector: 'app-report-form',
-  imports: [CommonModule, ReactiveFormsModule, DynamicTableComponent, TemplateAutofillModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, DynamicTableComponent, TemplateAutofillModalComponent, SaveTemplateDialogComponent],
   templateUrl: './report-form.html',
   styleUrl: './report-form.css',
 })
@@ -21,6 +23,9 @@ export class ReportForm implements OnInit {
   
   // Dependency Injection
   private readonly authService = inject(AuthService);
+  
+  // ViewChild references
+  @ViewChild('saveTemplateDialog') saveTemplateDialog!: SaveTemplateDialogComponent;
   
   // Query parameters from navigation
   selectedBankCode: string = '';
@@ -36,6 +41,11 @@ export class ReportForm implements OnInit {
   templateData: ProcessedTemplateData | null = null;
   availableBranches: Array<{value: string, label: string}> = [];
   isLoading = false;
+  
+  // Report reference number
+  reportReferenceNumber: string | null = null;
+  referenceNumberLoading = false;
+  referenceNumberError: string | null = null;
   
   // Custom template auto-fill
   showAutoFillModal = false;
@@ -68,6 +78,7 @@ export class ReportForm implements OnInit {
     private templateService: TemplateService,
     private customTemplateService: CustomTemplateService,
     private calculationService: CalculationService,
+    private organizationService: OrganizationService,
     private cdr: ChangeDetectorRef
   ) {
     this.reportForm = this.fb.group({});
@@ -194,6 +205,7 @@ export class ReportForm implements OnInit {
       if (this.selectedBankCode && this.selectedTemplateId) {
         console.log('🔥 Query params loaded, triggering template data load');
         this.loadTemplateData();
+        this.loadReferenceNumber();  // NEW: Load reference number
         
         // Load custom template if specified
         if (this.customTemplateId) {
@@ -201,6 +213,54 @@ export class ReportForm implements OnInit {
         }
       }
     });
+  }
+
+  /**
+   * Load the next report reference number for this organization
+   * Blocks form loading if organization doesn't have reference initials configured
+   */
+  loadReferenceNumber() {
+    // Get organization short name from route params
+    this.route.params.subscribe(params => {
+      const orgShortName = params['orgShortName'];
+      if (!orgShortName) {
+        console.warn('⚠️ No organization context found in route');
+        alert('Error: No organization context found. Please select an organization first.');
+        this.router.navigate(['/new-report']);
+        return;
+      }
+
+      this.referenceNumberLoading = true;
+      this.referenceNumberError = null;
+
+      this.organizationService.getNextReferenceNumber(orgShortName).subscribe({
+        next: (data) => {
+          this.reportReferenceNumber = data.reference_number;
+          console.log('📋 Report reference number loaded:', this.reportReferenceNumber);
+          this.referenceNumberLoading = false;
+          
+          // Set the reference number in form (if form is already built)
+          this.setReferenceNumberInForm();
+        },
+        error: (error) => {
+          console.error('❌ Failed to load reference number:', error);
+          this.referenceNumberError = 'Organization reference number not configured';
+          this.referenceNumberLoading = false;
+          
+          // Block the form - show error and redirect
+          alert(
+            '⚠️ Configuration Required\n\n' +
+            'This organization does not have Report Reference Initials configured.\n\n' +
+            'Please contact your administrator to:\n' +
+            '1. Go to Admin → Organizations\n' +
+            '2. Edit this organization\n' +
+            '3. Set the "Report Reference Initials" field (e.g., CEV/RVO)\n\n' +
+            'You will be redirected to the report selection page.'
+          );
+          this.router.navigate(['/new-report']);
+        }
+      });
+    }).unsubscribe();
   }
 
   buildFormControls() {
@@ -286,6 +346,7 @@ export class ReportForm implements OnInit {
         const control = this.reportForm.get(field.fieldId);
         if (control) {
           control.disable();
+          console.log(`🔒 Disabled readonly field: ${field.fieldId} (${field.uiDisplayName})`);
         }
       }
       
@@ -296,6 +357,7 @@ export class ReportForm implements OnInit {
             const subControl = this.reportForm.get(subField.fieldId);
             if (subControl) {
               subControl.disable();
+              console.log(`🔒 Disabled readonly sub-field: ${subField.fieldId}`);
             }
           }
         });
@@ -303,6 +365,34 @@ export class ReportForm implements OnInit {
     });
 
     console.log('✅ Form built with controls:', Object.keys(formControls));
+    
+    // Set reference number if it was already loaded
+    this.setReferenceNumberInForm();
+  }
+
+  /**
+   * Set the reference number in the form field (called after form is built)
+   */
+  setReferenceNumberInForm() {
+    if (this.reportReferenceNumber && this.reportForm) {
+      const refControl = this.reportForm.get('report_reference_number');
+      if (refControl) {
+        refControl.setValue(this.reportReferenceNumber);
+        refControl.disable();
+        console.log('📋 Reference number set in form and DISABLED:', {
+          value: this.reportReferenceNumber,
+          disabled: refControl.disabled,
+          status: refControl.status
+        });
+      } else {
+        console.log('⚠️ Reference number field not found in form yet');
+      }
+    } else {
+      console.log('⚠️ Cannot set reference number:', {
+        hasReferenceNumber: !!this.reportReferenceNumber,
+        hasForm: !!this.reportForm
+      });
+    }
   }
 
   /**
@@ -318,7 +408,12 @@ export class ReportForm implements OnInit {
   }
 
   buildFieldValidators(field: TemplateField | BankSpecificField): any[] {
-    const validators = [];
+    const validators: any[] = [];
+    
+    // Skip validation for readonly/auto-generated fields (they're disabled anyway)
+    if (field.isReadonly || (field as any).isAutoGenerated) {
+      return validators;
+    }
     
     // Required validation
     if (field.isRequired) {
@@ -968,6 +1063,125 @@ export class ReportForm implements OnInit {
       : 'All fields have been replaced with template values';
     
     alert(message);
+  }
+
+  /**
+   * Handle Save as Template button click
+   * Opens the save template dialog and handles the save operation
+   */
+  onSaveAsTemplate(): void {
+    if (!this.saveTemplateDialog) {
+      console.error('❌ Save template dialog not found');
+      alert('Error: Dialog component not available');
+      return;
+    }
+
+    // Get current form values
+    const formValues = this.reportForm.value;
+    
+    // Set dialog data with current report context
+    this.saveTemplateDialog.data = {
+      bankCode: this.selectedBankCode,
+      bankName: this.selectedBankName,
+      templateCode: this.selectedTemplateId,
+      propertyType: this.selectedPropertyType,
+      fieldValues: formValues
+    };
+
+    // Open the dialog
+    this.saveTemplateDialog.open();
+
+    // Subscribe to save event
+    const saveSubscription = this.saveTemplateDialog.save.subscribe((templateData: { templateName: string; description: string }) => {
+      this.saveTemplate(templateData.templateName, templateData.description, formValues);
+      saveSubscription.unsubscribe();
+    });
+
+    // Subscribe to cancel event
+    const cancelSubscription = this.saveTemplateDialog.cancel.subscribe(() => {
+      console.log('❌ Save template cancelled by user');
+      cancelSubscription.unsubscribe();
+    });
+  }
+
+  /**
+   * Save the current form as a custom template
+   */
+  private saveTemplate(templateName: string, description: string, formValues: any): void {
+    // Get target org from route params (where user is working)
+    let targetOrgShortName = '';
+    this.route.params.subscribe(params => {
+      targetOrgShortName = params['orgShortName'] || '';
+    }).unsubscribe();
+    
+    if (!targetOrgShortName) {
+      console.error('❌ No organization context found in route');
+      this.saveTemplateDialog.setError('No organization context found');
+      return;
+    }
+
+    if (!this.selectedBankCode || !this.selectedTemplateId) {
+      console.error('❌ Missing bank or template information');
+      this.saveTemplateDialog.setError('Missing bank or template information');
+      return;
+    }
+
+    console.log('💾 Saving template:', {
+      templateName,
+      targetOrg: targetOrgShortName,  // Organization from URL
+      bank: this.selectedBankCode,
+      template: this.selectedTemplateId
+    });
+
+    this.saveTemplateDialog.setSaving(true);
+
+    this.templateService.createTemplateFromReport(
+      targetOrgShortName,  // Use target org from route
+      templateName,
+      description,
+      this.selectedBankCode,
+      this.selectedTemplateId,
+      formValues
+    ).subscribe({
+      next: (response) => {
+        console.log('✅ Template saved successfully:', response);
+        this.saveTemplateDialog.setSaving(false);
+        this.saveTemplateDialog.close();
+        
+        // Show success message
+        alert(`✅ Template "${templateName}" saved successfully!\n\nYou can now use this template when creating new reports.`);
+      },
+      error: (error) => {
+        console.error('❌ Failed to save template:', error);
+        this.saveTemplateDialog.setSaving(false);
+        
+        // Log detailed error information for debugging
+        console.error('Error details:', {
+          status: error.status,
+          statusText: error.statusText,
+          error: error.error,
+          message: error.message
+        });
+        
+        let errorMessage = 'Failed to save template';
+        
+        if (error.status === 401) {
+          errorMessage = 'Not authenticated. Please log in again.';
+          // Optionally redirect to login after a delay
+          setTimeout(() => this.router.navigate(['/login']), 2000);
+        } else if (error.status === 400) {
+          errorMessage = error.error?.detail || error.error?.error || 'Invalid template data';
+        } else if (error.status === 403) {
+          errorMessage = error.error?.detail || error.error?.error || 'You do not have permission to create templates';
+        } else if (error.status === 409) {
+          errorMessage = 'Template name already exists or template limit reached (max 3 per bank/property type)';
+        } else if (error.status === 404) {
+          errorMessage = 'Bank or template not found';
+        }
+        
+        this.saveTemplateDialog.setError(errorMessage);
+      }
+    });
   }
 
   /**

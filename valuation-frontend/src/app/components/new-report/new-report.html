@@ -26,7 +26,7 @@
     <div class="step-connector" [class.completed]="step > 2"></div>
     <div class="step" [class.active]="step >= 3" [class.completed]="step > 3">
       <div class="step-number">3</div>
-      <div class="step-label">Custom Template</div>
+      <div class="step-label">PDF Upload</div>
     </div>
     <div class="step-connector" [class.completed]="step > 3"></div>
     <div class="step" [class.active]="step >= 4">
@@ -129,15 +129,15 @@
     </div>
   </div>
 
-  <!-- Step 3: Custom Template Selection (Optional) -->
+  <!-- Step 3: PDF Upload (Optional) -->
   <div class="step-content" *ngIf="!isLoading && step === 3">
     <div class="section-header">
       <button class="back-step-button" (click)="goBack()">
         ← Back to Template Selection
       </button>
-      <h2 class="section-title">Custom Template (Optional)</h2>
+      <h2 class="section-title">Upload PDF to Auto-Fill (Optional)</h2>
       <p class="section-subtitle">
-        Speed up data entry by using a saved custom template, or skip to continue with an empty form
+        Upload a property valuation PDF to automatically extract and fill form fields, or skip to start with an empty form
       </p>
     </div>
 
@@ -152,62 +152,85 @@
       </div>
     </div>
 
-    <!-- Loading Custom Templates -->
-    <div class="loading-container-small" *ngIf="isLoadingCustomTemplates">
-      <div class="loading-spinner-small"></div>
-      <p class="loading-text">Loading custom templates...</p>
-    </div>
-
-    <!-- Custom Templates Available -->
-    <div class="custom-templates-section" *ngIf="!isLoadingCustomTemplates && customTemplates.length > 0">
-      <div class="templates-grid">
-        <!-- No Template Option -->
-        <div class="template-card custom-template-card" 
-             (click)="skipCustomTemplate()"
-             [class.selected]="!selectedCustomTemplate">
-          <div class="template-icon-section">
-            <div class="template-icon">📝</div>
+    <!-- PDF Upload Options -->
+    <div class="pdf-upload-section">
+      <div class="upload-options">
+        <!-- Skip PDF Upload Option -->
+        <div class="upload-option-card" 
+             (click)="skipPdfUpload()"
+             [class.selected]="!uploadedPdf">
+          <div class="option-icon-section">
+            <div class="option-icon">📝</div>
           </div>
-          <div class="template-content">
-            <h3 class="template-name">Start with Empty Form</h3>
-            <div class="template-type">No pre-filled values</div>
-            <div class="template-description">Fill all fields manually</div>
+          <div class="option-content">
+            <h3 class="option-name">Start with Empty Form</h3>
+            <div class="option-type">No pre-filled values</div>
+            <div class="option-description">Fill all fields manually</div>
           </div>
         </div>
 
-        <!-- Custom Template Options -->
-        <div class="template-card custom-template-card" 
-             *ngFor="let customTemplate of customTemplates" 
-             (click)="selectCustomTemplate(customTemplate)"
-             [class.selected]="selectedCustomTemplate?._id === customTemplate._id">
-          <div class="template-icon-section">
-            <div class="template-icon">⚡</div>
+        <!-- PDF Upload Option -->
+        <div class="upload-option-card" 
+             [class.selected]="uploadedPdf"
+             [class.processing]="isProcessingPdf">
+          <div class="option-icon-section">
+            <div class="option-icon" *ngIf="!uploadedPdf && !isProcessingPdf">📄</div>
+            <div class="option-icon" *ngIf="uploadedPdf && !isProcessingPdf">✅</div>
+            <div class="loading-spinner-small" *ngIf="isProcessingPdf"></div>
           </div>
-          <div class="template-content">
-            <h3 class="template-name">{{ customTemplate.templateName }}</h3>
-            <div class="template-type">Pre-filled template</div>
-            <div class="template-description" *ngIf="customTemplate.description">
-              {{ customTemplate.description }}
+          <div class="option-content">
+            <h3 class="option-name">Upload PDF Document</h3>
+            <div class="option-type" *ngIf="!uploadedPdf">Auto-fill from PDF</div>
+            <div class="option-type" *ngIf="uploadedPdf">{{ uploadedPdf.name }}</div>
+            <div class="option-description" *ngIf="!uploadedPdf">Upload valuation report to extract data</div>
+            <div class="option-description" *ngIf="uploadedPdf && extractedFields">
+              Extracted {{ Object.keys(extractedFields).length }} fields
             </div>
-            <div class="template-meta">
-              <span class="created-by">By: {{ customTemplate.createdByName }}</span>
+          </div>
+          
+          <!-- PDF Upload Area -->
+          <div class="pdf-upload-area" 
+               *ngIf="!uploadedPdf && !isProcessingPdf"
+               (click)="$event.stopPropagation(); fileInput.click()"
+               (dragover)="onDragOver($event)"
+               (dragleave)="onDragLeave($event)"
+               (drop)="onDrop($event)">
+            <div class="upload-content">
+              <div class="upload-icon">📁</div>
+              <div class="upload-text">
+                <p class="upload-primary">Click to browse or drag & drop</p>
+                <p class="upload-secondary">PDF files only, max 10MB</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Processing Status -->
+          <div class="processing-status" *ngIf="isProcessingPdf">
+            <p class="processing-text">{{ processingStatus }}</p>
+          </div>
+
+          <!-- Extracted Fields Preview -->
+          <div class="extracted-fields-preview" *ngIf="uploadedPdf && extractedFields && !isProcessingPdf">
+            <h4 class="preview-title">Extracted Data Preview:</h4>
+            <div class="field-previews">
+              <div class="field-preview" *ngFor="let field of getExtractedFieldsArray() | slice:0:3">
+                <span class="field-label">{{ field.label }}:</span>
+                <span class="field-value">{{ field.value }}</span>
+              </div>
+              <div class="more-fields" *ngIf="Object.keys(extractedFields).length > 3">
+                +{{ Object.keys(extractedFields).length - 3 }} more fields
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- No Custom Templates -->
-    <div class="no-templates" *ngIf="!isLoadingCustomTemplates && customTemplates.length === 0">
-      <div class="no-templates-icon">📝</div>
-      <h3 class="no-templates-title">No Custom Templates Available</h3>
-      <p class="no-templates-text">
-        You don't have any saved custom templates for this bank and property type yet.
-        Managers can create custom templates to speed up future data entry.
-      </p>
-      <button class="proceed-button" (click)="skipCustomTemplate()">
-        Continue with Empty Form
-      </button>
+      <!-- Hidden file input -->
+      <input #fileInput
+             type="file"
+             accept=".pdf"
+             style="display: none"
+             (change)="onFileSelected($event)">
     </div>
   </div>
 
@@ -258,17 +281,24 @@
           <div class="selection-value">{{ selectedTemplate.propertyType | titlecase }}</div>
         </div>
 
-        <div class="selection-item" *ngIf="selectedCustomTemplate">
-          <div class="selection-label">Custom Template:</div>
+        <div class="selection-item" *ngIf="uploadedPdf">
+          <div class="selection-label">PDF Document:</div>
           <div class="selection-value">
-            <span class="custom-badge">⚡ {{ selectedCustomTemplate.templateName }}</span>
+            <span class="pdf-badge">📄 {{ uploadedPdf.name }}</span>
           </div>
         </div>
 
-        <div class="selection-item" *ngIf="!selectedCustomTemplate">
-          <div class="selection-label">Custom Template:</div>
+        <div class="selection-item" *ngIf="uploadedPdf && extractedFields">
+          <div class="selection-label">Extracted Fields:</div>
           <div class="selection-value">
-            <span class="no-template-badge">None (Empty form)</span>
+            <span class="fields-count-badge">{{ Object.keys(extractedFields).length }} fields extracted</span>
+          </div>
+        </div>
+
+        <div class="selection-item" *ngIf="!uploadedPdf">
+          <div class="selection-label">PDF Document:</div>
+          <div class="selection-value">
+            <span class="no-pdf-badge">None (Empty form)</span>
           </div>
         </div>
       </div>

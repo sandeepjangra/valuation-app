@@ -1,0 +1,495 @@
+/* Dynamic Form Container */
+.dynamic-form-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Form Header */
+.form-header {
+  border-bottom: 2px solid #e9ecef;
+  padding-bottom: 20px;
+  margin-bottom: 30px;
+}
+
+.template-title {
+  color: #2c3e50;
+  font-size: 28px;
+  font-weight: 600;
+  margin: 0 0 10px 0;
+}
+
+.template-info {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.template-info span {
+  padding: 4px 12px;
+  border-radius: 15px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.bank-code {
+  background: #3498db;
+  color: white;
+}
+
+.property-type {
+  background: #27ae60;
+  color: white;
+}
+
+.version {
+  background: #f39c12;
+  color: white;
+}
+
+/* Form Sections */
+.form-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.form-section {
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.section-header {
+  background: #f8f9fa;
+  padding: 20px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.section-title {
+  color: #2c3e50;
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
+
+.section-description {
+  color: #6c757d;
+  font-size: 14px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.section-fields {
+  padding: 20px;
+  display: grid;
+  gap: 20px;
+}
+
+/* Field Container */
+.field-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.field-label {
+  font-weight: 500;
+  color: #2c3e50;
+  font-size: 14px;
+  margin: 0;
+}
+
+.field-label.required {
+  font-weight: 600;
+}
+
+.required-indicator {
+  color: #e74c3c;
+  margin-left: 2px;
+}
+
+.field-help {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #6c757d;
+  font-size: 12px;
+}
+
+.help-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #17a2b8;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  cursor: help;
+}
+
+.help-text {
+  font-style: italic;
+}
+
+/* Form Controls */
+.form-control {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control:focus {
+  border-color: #80bdff;
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.form-control:readonly {
+  background-color: #f8f9fa;
+  opacity: 1;
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Number and Currency Inputs */
+.number-input-group,
+.currency-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.number-input,
+.currency-input {
+  flex: 1;
+}
+
+.unit-selector {
+  min-width: 80px;
+  padding: 10px 8px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.currency-symbol {
+  font-weight: bold;
+  color: #495057;
+  font-size: 16px;
+}
+
+/* Select Dropdown */
+.select {
+  background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'%3E%3Cpath fill='%23666' d='m2 0-2 2h4zm0 5 2-2h-4z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px;
+  padding-right: 40px;
+}
+
+/* Group Fields */
+.group-container {
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 20px;
+  background: #f8f9fa;
+}
+
+.group-fields {
+  display: grid;
+  gap: 15px;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.sub-field-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sub-field-label {
+  font-weight: 500;
+  color: #495057;
+  font-size: 13px;
+  margin: 0;
+}
+
+.sub-field-help {
+  font-size: 11px;
+  color: #6c757d;
+  font-style: italic;
+  margin-top: 4px;
+}
+
+/* Tables */
+.table-container,
+.dynamic-table-container {
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+.data-table th {
+  background: #f8f9fa;
+  padding: 12px 8px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 13px;
+  color: #495057;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.data-table td {
+  padding: 8px;
+  border-bottom: 1px solid #dee2e6;
+  vertical-align: middle;
+}
+
+.table-input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #ced4da;
+  border-radius: 3px;
+  font-size: 13px;
+}
+
+.table-input:focus {
+  border-color: #80bdff;
+  outline: none;
+  box-shadow: 0 0 0 0.1rem rgba(0, 123, 255, 0.25);
+}
+
+.actions-column {
+  width: 100px;
+  text-align: center;
+}
+
+.actions-cell {
+  text-align: center;
+}
+
+.table-actions {
+  padding: 15px 20px;
+  background: #f8f9fa;
+  border-top: 1px solid #dee2e6;
+}
+
+/* Calculated Fields */
+.calculated-field {
+  background: #e3f2fd;
+  border: 1px solid #bbdefb;
+  border-radius: 6px;
+  padding: 15px;
+}
+
+.calculated-value {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.calculated-value .value {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1976d2;
+}
+
+.calculation-details {
+  font-size: 12px;
+  color: #666;
+}
+
+.formula {
+  font-family: 'Courier New', monospace;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 4px 8px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+/* Field Errors */
+.field-error {
+  color: #e74c3c;
+  font-size: 12px;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.field-error::before {
+  content: "⚠";
+  font-weight: bold;
+}
+
+/* Form Actions */
+.form-actions {
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 2px solid #e9ecef;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* Buttons */
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: #007bff;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #0056b3;
+}
+
+.btn-success {
+  background: #28a745;
+  color: white;
+}
+
+.btn-success:hover:not(:disabled) {
+  background: #1e7e34;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #545b62;
+}
+
+.btn-danger {
+  background: #dc3545;
+  color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #c82333;
+}
+
+.btn-sm {
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .dynamic-form-container {
+    margin: 0;
+    border-radius: 0;
+    padding: 15px;
+  }
+  
+  .template-title {
+    font-size: 24px;
+  }
+  
+  .template-info {
+    flex-wrap: wrap;
+  }
+  
+  .section-fields {
+    padding: 15px;
+  }
+  
+  .group-fields {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-actions {
+    flex-direction: column-reverse;
+  }
+  
+  .form-actions .btn {
+    width: 100%;
+  }
+}
+
+/* Field Type Specific Styles */
+.field-type-group {
+  grid-column: 1 / -1;
+}
+
+.field-type-table,
+.field-type-dynamic_table {
+  grid-column: 1 / -1;
+}
+
+/* Animation for conditional fields */
+.field-container {
+  transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+.field-container[style*="display: none"] {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+/* Loading States */
+.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.loading::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

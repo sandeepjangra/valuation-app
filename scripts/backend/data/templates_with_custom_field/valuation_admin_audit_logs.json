@@ -1,0 +1,141 @@
+{
+  "database": "valuation_admin",
+  "collection_name": "audit_logs",
+  "is_common_fields": false,
+  "document_count": 6,
+  "field_count": 0,
+  "documents": [
+    {
+      "_id": "691a37fa519b166a7bcd8029",
+      "organization_id": "demo_org_001",
+      "user_id": "dev_user_manager",
+      "action": "read",
+      "resource_type": "users",
+      "resource_id": null,
+      "details": {
+        "count": 2,
+        "filter": "{'organization_id': 'demo_org_001', 'isActive': True}"
+      },
+      "request_info": {
+        "ip_address": null,
+        "user_agent": null,
+        "timestamp": "2025-11-16T20:45:46.281000",
+        "session_id": null
+      },
+      "created_at": "2025-11-16T20:45:46.281000",
+      "isActive": true,
+      "createdAt": "2025-11-16T20:45:46.453000",
+      "updatedAt": "2025-11-16T20:45:46.453000"
+    },
+    {
+      "_id": "691a37fb519b166a7bcd802a",
+      "organization_id": "demo_org_001",
+      "user_id": "dev_user_manager",
+      "action": "read",
+      "resource_type": "reports",
+      "resource_id": null,
+      "details": {
+        "count": 0,
+        "filter": "{'organization_id': 'demo_org_001', 'isActive': True}"
+      },
+      "request_info": {
+        "ip_address": null,
+        "user_agent": null,
+        "timestamp": "2025-11-16T20:45:47.044000",
+        "session_id": null
+      },
+      "created_at": "2025-11-16T20:45:47.044000",
+      "isActive": true,
+      "createdAt": "2025-11-16T20:45:47.384000",
+      "updatedAt": "2025-11-16T20:45:47.384000"
+    },
+    {
+      "_id": "691a37fb519b166a7bcd802b",
+      "organization_id": "other_org_999",
+      "user_id": "test_user",
+      "action": "read",
+      "resource_type": "reports",
+      "resource_id": null,
+      "details": {
+        "count": 0,
+        "filter": "{'organization_id': 'other_org_999', 'isActive': True}"
+      },
+      "request_info": {
+        "ip_address": null,
+        "user_agent": null,
+        "timestamp": "2025-11-16T20:45:47.702000",
+        "session_id": null
+      },
+      "created_at": "2025-11-16T20:45:47.702000",
+      "isActive": true,
+      "createdAt": "2025-11-16T20:45:47.853000",
+      "updatedAt": "2025-11-16T20:45:47.853000"
+    },
+    {
+      "_id": "691a37fe519b166a7bcd802d",
+      "organization_id": "demo_org_001",
+      "user_id": "dev_user_manager",
+      "action": "read",
+      "resource_type": "users",
+      "resource_id": null,
+      "details": {
+        "count": 2,
+        "filter": "{'organization_id': 'demo_org_001', 'isActive': True}"
+      },
+      "request_info": {
+        "ip_address": null,
+        "user_agent": null,
+        "timestamp": "2025-11-16T20:45:50.057000",
+        "session_id": null
+      },
+      "created_at": "2025-11-16T20:45:50.057000",
+      "isActive": true,
+      "createdAt": "2025-11-16T20:45:50.233000",
+      "updatedAt": "2025-11-16T20:45:50.233000"
+    },
+    {
+      "_id": "691a37fe519b166a7bcd802e",
+      "organization_id": "demo_org_001",
+      "user_id": "dev_user_manager",
+      "action": "read",
+      "resource_type": "reports",
+      "resource_id": null,
+      "details": {
+        "count": 0,
+        "filter": "{'organization_id': 'demo_org_001', 'isActive': True}"
+      },
+      "request_info": {
+        "ip_address": null,
+        "user_agent": null,
+        "timestamp": "2025-11-16T20:45:50.593000",
+        "session_id": null
+      },
+      "created_at": "2025-11-16T20:45:50.593000",
+      "isActive": true,
+      "createdAt": "2025-11-16T20:45:50.828000",
+      "updatedAt": "2025-11-16T20:45:50.828000"
+    },
+    {
+      "_id": "691a37ff519b166a7bcd802f",
+      "organization_id": "demo_org_001",
+      "user_id": "dev_user_manager",
+      "action": "read",
+      "resource_type": "audit_logs",
+      "resource_id": null,
+      "details": {
+        "count": 4,
+        "filter": "{'organization_id': 'demo_org_001', 'isActive': True}"
+      },
+      "request_info": {
+        "ip_address": null,
+        "user_agent": null,
+        "timestamp": "2025-11-16T20:45:51.161000",
+        "session_id": null
+      },
+      "created_at": "2025-11-16T20:45:51.161000",
+      "isActive": true,
+      "createdAt": "2025-11-16T20:45:51.329000",
+      "updatedAt": "2025-11-16T20:45:51.329000"
+    }
+  ]
+}

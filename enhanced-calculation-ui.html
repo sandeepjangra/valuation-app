@@ -1,0 +1,313 @@
+<!-- Enhanced Calculation Fields in Valuation Tab -->
+<div class="calculation-enhanced-section">
+  
+  <!-- Total Extent of Plot Field -->
+  <div class="field-container grid-col-md-6" [attr.data-field-id]="'total_extent_plot'">
+    <div class="form-field">
+      <label for="total_extent_plot" class="field-label">
+        Total Extent of the Plot *
+        <i class="calculation-icon" title="Used in calculations">📊</i>
+      </label>
+      <div class="input-with-unit">
+        <input
+          id="total_extent_plot"
+          type="number"
+          formControlName="total_extent_plot"
+          placeholder="Enter plot area"
+          class="form-input calculation-input"
+          (input)="onCalculationInputChange('total_extent_plot')"
+          [class.highlight-calculation]="isCalculationHighlighted('total_extent_plot')"
+        />
+        <select class="unit-selector" formControlName="total_extent_plot_unit">
+          <option value="sqft">Sq Ft</option>
+          <option value="sqyd">Sq Yd</option>
+          <option value="sqm">Sq M</option>
+          <option value="acres">Acres</option>
+        </select>
+      </div>
+      <div class="field-help">Enter the total area of the plot</div>
+    </div>
+  </div>
+
+  <!-- Valuation Rate Field -->
+  <div class="field-container grid-col-md-6" [attr.data-field-id]="'valuation_rate'">
+    <div class="form-field">
+      <label for="valuation_rate" class="field-label">
+        Valuation Rate (per unit) *
+        <i class="calculation-icon" title="Used in calculations">📊</i>
+      </label>
+      <div class="currency-input">
+        <span class="currency-symbol">₹</span>
+        <input
+          id="valuation_rate"
+          type="number"
+          formControlName="valuation_rate"
+          placeholder="Rate per sq unit"
+          class="form-input calculation-input"
+          (input)="onCalculationInputChange('valuation_rate')"
+          [class.highlight-calculation]="isCalculationHighlighted('valuation_rate')"
+        />
+      </div>
+      <div class="field-help">Enter rate per square unit</div>
+    </div>
+  </div>
+
+  <!-- Calculated Field: Estimated Value of Land -->
+  <div class="field-container grid-col-md-12" [attr.data-field-id]="'estimated_land_value'">
+    <div class="form-field calculated-field">
+      <label for="estimated_land_value" class="field-label">
+        Estimated Value of Land
+        <i class="calculated-icon" title="Auto-calculated">⚡</i>
+      </label>
+      
+      <!-- Calculation Display Box -->
+      <div class="calculation-display-box">
+        <div class="calculation-formula">
+          <span class="formula-label">Calculation:</span>
+          <span class="calculation-display" 
+                [class.calculation-updated]="isCalculationUpdated('estimated_land_value')">
+            {{ getCalculationDisplay('estimated_land_value') }}
+          </span>
+        </div>
+        
+        <div class="calculation-result">
+          <input
+            id="estimated_land_value"
+            type="text"
+            formControlName="estimated_land_value"
+            readonly
+            class="form-input calculated-result"
+            [value]="formatCurrency(getCalculatedValue('estimated_land_value'))"
+          />
+        </div>
+      </div>
+
+      <!-- Auto-Population Indicator -->
+      <div class="auto-populate-indicator" *ngIf="hasAutoPopulation('estimated_land_value')">
+        <i class="auto-populate-icon">🔄</i>
+        <span class="auto-populate-text">
+          This value will be automatically copied to "Land" field in Detailed Valuation tab
+        </span>
+      </div>
+      
+      <div class="field-help">
+        Automatically calculated when both Total Extent and Valuation Rate are entered
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- In Detailed Valuation Tab - Land Field with Auto-Population -->
+<div class="auto-populated-section">
+  <div class="field-container grid-col-md-4" [attr.data-field-id]="'land_total'">
+    <div class="form-field" [class.auto-populated]="isAutoPopulated('land_total')">
+      <label for="land_total" class="field-label">
+        Land
+        <i class="auto-populate-icon" 
+           *ngIf="isAutoPopulated('land_total')" 
+           title="Auto-populated from Valuation tab">🔄</i>
+      </label>
+      
+      <!-- Auto-Population Source Reference -->
+      <div class="auto-populate-reference" *ngIf="isAutoPopulated('land_total')">
+        <small class="source-reference">
+          <i class="source-icon">📊</i>
+          Auto-calculated from: Valuation → Estimated Value of Land
+          <button type="button" 
+                  class="clear-auto-value" 
+                  (click)="clearAutoPopulatedValue('land_total')"
+                  title="Clear and enter manually">
+            ✕
+          </button>
+        </small>
+      </div>
+
+      <div class="currency-input">
+        <span class="currency-symbol">₹</span>
+        <input
+          id="land_total"
+          type="number"
+          formControlName="land_total"
+          placeholder="Amount in Rs"
+          class="form-input"
+          [class.auto-filled]="isAutoPopulated('land_total')"
+          (input)="onManualOverride('land_total')"
+        />
+      </div>
+      
+      <!-- Manual Override Warning -->
+      <div class="manual-override-warning" *ngIf="hasManualOverride('land_total')">
+        <i class="warning-icon">⚠️</i>
+        <span>You've manually modified this auto-calculated value</span>
+      </div>
+      
+      <div class="field-help">Enter land valuation amount</div>
+    </div>
+  </div>
+</div>
+
+<!-- CSS Styles for Enhanced Calculation UI -->
+<style>
+.calculation-enhanced-section {
+  border: 2px dashed #e3f2fd;
+  border-radius: 8px;
+  padding: 16px;
+  background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+  margin: 16px 0;
+}
+
+.calculation-input {
+  border: 2px solid #2196f3 !important;
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+}
+
+.calculation-input:focus {
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.2);
+}
+
+.highlight-calculation {
+  animation: highlightPulse 1s ease-in-out;
+}
+
+@keyframes highlightPulse {
+  0%, 100% { background-color: transparent; }
+  50% { background-color: rgba(33, 150, 243, 0.1); }
+}
+
+.calculated-field {
+  background: linear-gradient(135deg, #e8f5e8 0%, #f0f8f0 100%);
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #4caf50;
+}
+
+.calculation-display-box {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 12px;
+  margin: 8px 0;
+}
+
+.calculation-formula {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.formula-label {
+  font-weight: 600;
+  color: #666;
+}
+
+.calculation-display {
+  background: #f5f5f5;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+.calculation-updated {
+  animation: resultUpdate 0.8s ease-in-out;
+}
+
+@keyframes resultUpdate {
+  0% { background-color: #fff9c4; }
+  50% { background-color: #fff176; }
+  100% { background-color: #f5f5f5; }
+}
+
+.calculated-result {
+  background: #e8f5e8 !important;
+  font-weight: 600;
+  font-size: 16px;
+  color: #2e7d32;
+  text-align: right;
+}
+
+.auto-populate-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #e3f2fd;
+  padding: 8px;
+  border-radius: 4px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: #1976d2;
+}
+
+.auto-populated {
+  border: 2px solid #4caf50;
+  border-radius: 6px;
+  background: rgba(76, 175, 80, 0.05);
+}
+
+.auto-populate-reference {
+  margin: 4px 0 8px 0;
+}
+
+.source-reference {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #4caf50;
+  font-size: 11px;
+  background: rgba(76, 175, 80, 0.1);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.clear-auto-value {
+  background: none;
+  border: none;
+  color: #f44336;
+  cursor: pointer;
+  margin-left: auto;
+  padding: 0 4px;
+}
+
+.auto-filled {
+  background: rgba(76, 175, 80, 0.1) !important;
+  border: 1px solid #4caf50 !important;
+}
+
+.manual-override-warning {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #ff9800;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.calculation-icon, .calculated-icon, .auto-populate-icon {
+  font-size: 12px;
+  margin-left: 4px;
+}
+
+.currency-input, .input-with-unit {
+  display: flex;
+  align-items: center;
+}
+
+.currency-symbol {
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-right: none;
+  padding: 8px 12px;
+  border-radius: 4px 0 0 4px;
+  font-weight: 600;
+}
+
+.unit-selector {
+  border-left: none;
+  border-radius: 0 4px 4px 0;
+  padding: 8px;
+  min-width: 80px;
+}
+</style>

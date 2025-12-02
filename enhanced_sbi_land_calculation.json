@@ -1,0 +1,135 @@
+{
+  "templateId": "SBI_LAND_ENHANCED_CALCULATION_V1",
+  "templateName": "SBI Land Enhanced Calculation Template",
+  "bankCode": "SBI",
+  "propertyType": "Land",
+  "calculationRules": {
+    "version": "1.0",
+    "enableRealTimeCalculation": true,
+    "autoPopulateFields": true
+  },
+  "sections": [
+    {
+      "sectionId": "valuation_part_a",
+      "sectionName": "Part A - Land Valuation",
+      "sortOrder": 1,
+      "fields": [
+        {
+          "fieldId": "total_extent_plot",
+          "technicalName": "total_extent_plot",
+          "uiDisplayName": "Total Extent of the Plot",
+          "fieldType": "number_with_unit",
+          "units": ["sqyd", "sqm", "sqft", "acres"],
+          "isRequired": true,
+          "sortOrder": 1,
+          "validation": {
+            "min": 1,
+            "max": 999999,
+            "step": 0.01
+          },
+          "calculationTrigger": true,
+          "dependentFields": ["estimated_land_value"]
+        },
+        {
+          "fieldId": "valuation_rate",
+          "technicalName": "valuation_rate",
+          "uiDisplayName": "Valuation Rate (per unit)",
+          "fieldType": "currency",
+          "isRequired": true,
+          "placeholder": "Rate per sq unit",
+          "sortOrder": 2,
+          "validation": {
+            "min": 1,
+            "max": 999999999
+          },
+          "calculationTrigger": true,
+          "dependentFields": ["estimated_land_value"]
+        },
+        {
+          "fieldId": "estimated_land_value",
+          "technicalName": "estimated_land_value",
+          "uiDisplayName": "Estimated Value of Land",
+          "fieldType": "calculated",
+          "isReadonly": true,
+          "sortOrder": 3,
+          "calculation": {
+            "formula": "total_extent_plot * valuation_rate",
+            "dependencies": ["total_extent_plot", "valuation_rate"],
+            "displayFormat": "currency",
+            "precision": 2,
+            "showCalculationSteps": true,
+            "calculationDisplay": {
+              "showFormula": true,
+              "formulaTemplate": "{total_extent_plot} × {valuation_rate} = {result}",
+              "showInRealTime": true
+            }
+          },
+          "autoPopulate": {
+            "targetField": "land_total",
+            "targetTab": "detailed_valuation",
+            "enabled": true,
+            "triggerOnChange": true
+          },
+          "uiHints": {
+            "showCalculationBox": true,
+            "highlightOnUpdate": true,
+            "animateChanges": true
+          }
+        }
+      ]
+    },
+    {
+      "sectionId": "detailed_valuation_totals",
+      "sectionName": "Total Valuation",
+      "tabId": "detailed_valuation",
+      "sortOrder": 5,
+      "fields": [
+        {
+          "fieldId": "land_total",
+          "technicalName": "land_total",
+          "uiDisplayName": "Land",
+          "fieldType": "currency",
+          "placeholder": "Amount in Rs",
+          "sortOrder": 1,
+          "autoPopulated": {
+            "sourceField": "estimated_land_value",
+            "sourceTab": "valuation",
+            "enabled": true,
+            "readonly": false,
+            "allowManualOverride": true
+          },
+          "uiHints": {
+            "showSourceReference": true,
+            "sourceReferenceText": "Auto-calculated from Valuation tab",
+            "highlightIfAutoFilled": true
+          }
+        }
+      ]
+    }
+  ],
+  "calculationEngine": {
+    "version": "1.0",
+    "supportedOperations": ["multiply", "add", "subtract", "divide"],
+    "realTimeUpdates": true,
+    "validationOnCalculation": true,
+    "errorHandling": {
+      "showErrorMessages": true,
+      "fallbackValue": 0,
+      "requireAllInputs": true
+    }
+  },
+  "uiConfiguration": {
+    "calculationDisplay": {
+      "showFormulaBar": true,
+      "showStepByStep": true,
+      "highlightActiveFields": true,
+      "showCurrencyFormatting": true
+    },
+    "autoPopulationIndicators": {
+      "showSourceFieldName": true,
+      "showCalculationIcon": true,
+      "allowUserOverride": true,
+      "confirmBeforeOverride": false
+    }
+  }
+}

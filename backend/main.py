@@ -136,8 +136,11 @@ activity_logger: Optional[ActivityLogger] = None
 # Import and include routers
 from organization_api import router as organization_router
 from admin_api import admin_router
+from api.pdf_endpoints import pdf_router
+
 app.include_router(organization_router)
 app.include_router(admin_router)
+app.include_router(pdf_router)
 
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -215,6 +218,13 @@ class UpdateCustomTemplateRequest(BaseModel):
 
 class CloneCustomTemplateRequest(BaseModel):
     newTemplateName: str
+
+class CreateTemplateFromReportRequest(BaseModel):
+    templateName: str
+    description: Optional[str] = None
+    bankCode: str
+    templateCode: str  # e.g., "land-property"
+    fieldValues: Dict[str, Any]  # All field values from the report form
 
 # Add CORS middleware
 app.add_middleware(
@@ -1729,6 +1739,76 @@ async def get_organization(org_id: str, request: Request):
         return error_response
 
 
+@app.get("/api/organizations/{org_short_name}/next-reference-number")
+async def get_next_reference_number(org_short_name: str, request: Request):
+    """
+    Get preview of next report reference number WITHOUT incrementing counter
+    Used when loading report form to show what the reference number will be
+    
+    Returns:
+        {
+            "reference_number": "CEV/RVO/0001/02122025",
+            "initials": "CEV/RVO",
+            "sequence": 1,
+            "formatted_sequence": "0001",
+            "date": "02122025",
+            "preview": true
+        }
+    """
+    request_data = await api_logger.log_request(request)
+    
+    logger.info(f"📋 Fetching next reference number preview for: {org_short_name}")
+    
+    try:
+        from database.multi_db_manager import MultiDatabaseManager
+        from services.reference_number_service import ReferenceNumberService
+        
+        db_manager = MultiDatabaseManager()
+        await db_manager.connect()
+        
+        # Initialize reference number service
+        ref_service = ReferenceNumberService(db_manager)
+        
+        # Get preview (does not increment counter)
+        preview_data = await ref_service.get_next_reference_number_preview(org_short_name)
+        
+        logger.info(f"✅ Preview reference number: {preview_data['reference_number']}")
+        
+        await db_manager.disconnect()
+        
+        response = JSONResponse(
+            status_code=200,
+            content={"success": True, "data": preview_data}
+        )
+        
+        api_logger.log_response(response, request_data)
+        return response
+        
+    except ValueError as ve:
+        # Organization not found or missing initials configuration
+        logger.error(f"❌ Configuration error: {str(ve)}")
+        error_response = JSONResponse(
+            status_code=400,
+            content={
+                "success": False, 
+                "error": str(ve),
+                "message": "Please configure report reference initials in organization settings"
+            }
+        )
+        api_logger.log_response(error_response, request_data)
+        return error_response
+    except Exception as e:
+        logger.error(f"❌ Error getting reference number preview: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        error_response = JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+        api_logger.log_response(error_response, request_data)
+        return error_response
+
+
 @app.delete("/api/admin/organizations/{org_id}")
 async def delete_organization(org_id: str, hard_delete: bool = False, request: Request = None):
     """
@@ -2936,10 +3016,29 @@ async def create_report(
             raise HTTPException(status_code=403, detail="Insufficient permissions to create reports")
         
         from database.multi_db_manager import MultiDatabaseManager
+        from services.reference_number_service import ReferenceNumberService
         import uuid
         
         db_manager = MultiDatabaseManager()
         await db_manager.connect()
+        
+        # Initialize reference number service
+        ref_service = ReferenceNumberService(db_manager)
+        
+        # Generate unique reference number with retry logic for race conditions
+        try:
+            reference_number = await ref_service.generate_with_retry(
+                org_context.org_short_name,
+                max_retries=3
+            )
+            logger.info(f"📋 Generated reference number: {reference_number}")
+        except Exception as ref_error:
+            logger.error(f"❌ Failed to generate reference number: {ref_error}")
+            await db_manager.disconnect()
+            raise HTTPException(
+                status_code=400,
+                detail=f"Failed to generate reference number. Please ensure organization has configured report reference initials. Error: {str(ref_error)}"
+            )
         
         # Use org_short_name for database lookup
         org_db = db_manager.get_org_database(org_context.org_short_name)
@@ -2950,6 +3049,7 @@ async def create_report(
         # Create report document
         report = {
             "report_id": report_id,
+            "reference_number": reference_number,  # NEW: Unique reference number
             "bank_code": report_request.bank_code,
             "template_id": report_request.template_id,
             "property_address": report_request.property_address,
@@ -2978,6 +3078,7 @@ async def create_report(
             resource_type="report",
             resource_id=report_id,
             details={
+                "reference_number": reference_number,  # NEW: Include reference number in activity log
                 "bank_code": report_request.bank_code,
                 "template_id": report_request.template_id,
                 "property_address": report_request.property_address,
@@ -3371,13 +3472,15 @@ async def get_template_fields(
         common_fields_cursor = common_fields_collection.find({"isActive": True}).sort("sortOrder", 1)
         common_fields_docs = await common_fields_cursor.to_list(length=None)
         
-        # Extract fields array from documents (flatten structure)
+        # Extract fields array from documents (flatten structure) and filter for custom templates
         common_fields = []
         for doc in common_fields_docs:
             doc_fields = doc.get("fields", [])
-            common_fields.extend(doc_fields)
+            # Filter fields marked for custom templates
+            filtered_fields = [field for field in doc_fields if field.get("includeInCustomTemplate", False)]
+            common_fields.extend(filtered_fields)
         
-        logger.info(f"📄 Found {len(common_fields)} common fields")
+        logger.info(f"📄 Found {len(common_fields)} common fields (filtered for custom templates)")
         
         # Step 2: Fetch bank-specific template structure from the collection in admin database
         bank_template_collection = admin_db[collection_ref]
@@ -3390,6 +3493,23 @@ async def get_template_fields(
                 detail=f"No template structure found for {bank_code} - {property_type}"
             )
         
+        # Helper function to recursively filter fields for custom templates
+        def filter_fields_for_custom_template(fields):
+            """Filter fields to only include those marked for custom templates"""
+            filtered = []
+            for field in fields:
+                if field.get("includeInCustomTemplate", False):
+                    # If it's a group field with subFields, filter those too
+                    if field.get("fieldType") == "group" and "subFields" in field:
+                        field_copy = field.copy()
+                        field_copy["subFields"] = filter_fields_for_custom_template(field["subFields"])
+                        # Only include the group if it has at least one subfield
+                        if field_copy["subFields"]:
+                            filtered.append(field_copy)
+                    else:
+                        filtered.append(field)
+            return filtered
+
         # Process bank-specific fields from collection documents
         # Use the same logic as the aggregated template endpoint
         bank_specific_tabs = []
@@ -3404,15 +3524,18 @@ async def get_template_fields(
                 # Fallback: create a single tab from document fields
                 doc_fields = doc.get("fields", [])
                 if doc_fields:
-                    bank_specific_tabs.append({
-                        "tabId": "property_details",
-                        "tabName": "Property Details",
-                        "sortOrder": 1,
-                        "hasSections": False,
-                        "description": "Property valuation details",
-                        "fields": doc_fields,
-                        "sections": []
-                    })
+                    # Filter fields for custom templates
+                    filtered_doc_fields = filter_fields_for_custom_template(doc_fields)
+                    if filtered_doc_fields:  # Only add tab if there are fields to show
+                        bank_specific_tabs.append({
+                            "tabId": "property_details",
+                            "tabName": "Property Details",
+                            "sortOrder": 1,
+                            "hasSections": False,
+                            "description": "Property valuation details",
+                            "fields": filtered_doc_fields,
+                            "sections": []
+                        })
                 continue
             
             # Process each tab from metadata
@@ -3448,16 +3571,22 @@ async def get_template_fields(
                                 break
                         
                         if document_section:
-                            section = {
-                                "sectionId": section_config.get("sectionId"),
-                                "sectionName": section_config.get("sectionName"),
-                                "sortOrder": section_config.get("sortOrder"),
-                                "description": section_config.get("description", ""),
-                                "fields": document_section.get("fields", [])
-                            }
-                            tab["sections"].append(section)
-                            # Also add fields to tab level for backward compatibility
-                            tab["fields"].extend(document_section.get("fields", []))
+                            # Filter fields for custom templates
+                            section_fields = document_section.get("fields", [])
+                            filtered_section_fields = filter_fields_for_custom_template(section_fields)
+                            
+                            # Only add section if it has fields to show
+                            if filtered_section_fields:
+                                section = {
+                                    "sectionId": section_config.get("sectionId"),
+                                    "sectionName": section_config.get("sectionName"),
+                                    "sortOrder": section_config.get("sortOrder"),
+                                    "description": section_config.get("description", ""),
+                                    "fields": filtered_section_fields
+                                }
+                                tab["sections"].append(section)
+                                # Also add fields to tab level for backward compatibility
+                                tab["fields"].extend(filtered_section_fields)
                 
                 # Handle tabs without sections (normal field structure)
                 else:
@@ -3467,7 +3596,8 @@ async def get_template_fields(
                         # Find the document with matching templateId
                         for document in doc.get("documents", []):
                             if document.get("templateId") == document_source:
-                                tab["fields"] = document.get("fields", [])
+                                doc_fields = document.get("fields", [])
+                                tab["fields"] = filter_fields_for_custom_template(doc_fields)
                                 break
                     else:
                         # Fallback: get all fields if no documentSource specified
@@ -3475,9 +3605,16 @@ async def get_template_fields(
                         for document in doc.get("documents", []):
                             doc_fields = document.get("fields", [])
                             all_doc_fields.extend(doc_fields)
-                        tab["fields"] = all_doc_fields
+                        tab["fields"] = filter_fields_for_custom_template(all_doc_fields)
                 
-                bank_specific_tabs.append(tab)
+                # Only add tab if it has fields after filtering
+                if tab["fields"] or tab["sections"]:
+                    bank_specific_tabs.append(tab)
+                    logger.info(f"✅ Added tab '{tab['tabName']}' with {len(tab['fields'])} fields and {len(tab['sections'])} sections")
+                else:
+                    logger.info(f"⚠️ Skipped tab '{tab['tabName']}' - no fields after custom template filtering")
+        
+        logger.info(f"🏦 Total bank-specific tabs after filtering: {len(bank_specific_tabs)}")
         
         await db_manager.disconnect()
         
@@ -4117,6 +4254,612 @@ async def clone_custom_template(
         )
         api_logger.log_response(error_response, request_data)
         return error_response
+
+
+@app.post("/api/organizations/{org_short_name}/templates/from-report")
+async def create_template_from_report(
+    org_short_name: str,
+    template_data: CreateTemplateFromReportRequest,
+    request: Request,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """
+    Create a custom template from a filled report form.
+    Only saves bank-specific fields with non-empty values.
+    
+    Business Rules:
+    - Max 3 templates per organization + bank + property type
+    - Only Manager and Admin can create templates
+    - Only bank-specific fields are saved (common fields excluded)
+    - Only non-empty field values are saved
+    - Template name must be unique for the org + bank + property type combination
+    """
+    request_data = await api_logger.log_request(request)
+    
+    try:
+        # Verify authentication and role
+        from utils.auth_middleware import get_organization_context
+        org_context = await get_organization_context(credentials)
+        
+        # Debug logging
+        logger.info(f"🔍 Template creation attempt - User: {org_context.email}, Org: {org_context.org_short_name}")
+        logger.info(f"🔍 Roles: {org_context.roles}, is_manager: {org_context.is_manager}, is_system_admin: {org_context.is_system_admin}")
+        logger.info(f"🔍 Target org from URL: {org_short_name}")
+        
+        # Check if user is Manager or System Admin
+        if not org_context.is_manager and not org_context.is_system_admin:
+            logger.error(f"❌ Permission denied - User {org_context.email} is neither manager nor system_admin")
+            raise HTTPException(
+                status_code=403,
+                detail="Only Manager or Admin can create custom templates"
+            )
+        
+        # Verify organization context matches URL parameter (except for system admins who can manage any org)
+        if not org_context.is_system_admin and org_context.organization_short_name != org_short_name:
+            logger.error(f"❌ Organization mismatch - User org: {org_context.organization_short_name}, URL org: {org_short_name}")
+            raise HTTPException(
+                status_code=403,
+                detail="Organization mismatch"
+            )
+        
+        from database.multi_db_manager import MultiDatabaseManager
+        
+        db_manager = MultiDatabaseManager()
+        await db_manager.connect()
+        
+        # For system admin, get the target organization's database
+        # For regular managers, use their own organization's database
+        if org_context.is_system_admin:
+            # System admin can create templates for any organization
+            # Need to get the organization ID from the org_short_name
+            admin_db = db_manager.get_database("admin")
+            org_doc = await admin_db.organizations.find_one({"orgShortName": org_short_name})
+            if not org_doc:
+                raise HTTPException(status_code=404, detail=f"Organization {org_short_name} not found")
+            target_org_id = str(org_doc["_id"])
+            org_db = db_manager.get_org_database(target_org_id)
+        else:
+            # Regular manager/user - use their own organization
+            org_db = db_manager.get_org_database(org_context.organization_id)
+            target_org_id = org_context.organization_id
+        
+        admin_db = db_manager.get_database("admin")
+        
+        # Parse property type from template code (e.g., "land-property" -> "land")
+        property_type = template_data.templateCode.split("-")[0] if "-" in template_data.templateCode else template_data.templateCode
+        
+        # Check template count limit (max 3 per bank+propertyType)
+        existing_count = await org_db.custom_templates.count_documents({
+            "bankCode": template_data.bankCode,
+            "propertyType": property_type,
+            "isActive": True
+        })
+        
+        if existing_count >= 3:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Maximum 3 templates allowed for {template_data.bankCode} - {property_type}. Please delete an existing template first."
+            )
+        
+        # Check for duplicate template name
+        duplicate = await org_db.custom_templates.find_one({
+            "bankCode": template_data.bankCode,
+            "propertyType": property_type,
+            "templateName": template_data.templateName,
+            "isActive": True
+        })
+        
+        if duplicate:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Template name '{template_data.templateName}' already exists for {template_data.bankCode} - {property_type}"
+            )
+        
+        # Get bank information
+        banks_doc = await admin_db.banks.find_one({"_id": {"$regex": "all_banks_unified"}})
+        if not banks_doc:
+            raise HTTPException(status_code=404, detail="Banks configuration not found")
+        
+        bank_doc = None
+        for bank in banks_doc.get("banks", []):
+            if bank.get("bankCode", "").upper() == template_data.bankCode.upper():
+                bank_doc = bank
+                break
+        
+        if not bank_doc:
+            raise HTTPException(status_code=404, detail=f"Bank {template_data.bankCode} not found")
+        
+        bank_name = bank_doc.get("bankName", "")
+        
+        # Get template configuration to identify bank-specific fields
+        template_config = None
+        for tmpl in bank_doc.get("templates", []):
+            if tmpl.get("templateCode", "").upper() == template_data.templateCode.upper():
+                template_config = tmpl
+                break
+        
+        if not template_config:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Template {template_data.templateCode} not found for bank {template_data.bankCode}"
+            )
+        
+        collection_ref = template_config.get("collectionRef")
+        if not collection_ref:
+            raise HTTPException(
+                status_code=500,
+                detail="Template collection reference not configured"
+            )
+        
+        # Get common fields to filter them out
+        common_fields_docs = await admin_db.common_form_fields.find({"isActive": True}).to_list(length=None)
+        common_field_ids = set()
+        
+        for doc in common_fields_docs:
+            for field in doc.get("fields", []):
+                common_field_ids.add(field.get("fieldId"))
+                # Also add subfield IDs if it's a group field
+                if field.get("fieldType") == "group" and "subFields" in field:
+                    for subfield in field["subFields"]:
+                        common_field_ids.add(subfield.get("fieldId"))
+        
+        logger.info(f"🔍 Found {len(common_field_ids)} common field IDs to exclude")
+        
+        # Filter field values:
+        # 1. Exclude common fields (only save bank-specific fields)
+        # 2. Exclude empty values (null, "", [], {})
+        filtered_field_values = {}
+        
+        logger.info(f"🔍 Processing {len(template_data.fieldValues)} total field values from request")
+        
+        for field_id, value in template_data.fieldValues.items():
+            # Skip common fields
+            if field_id in common_field_ids:
+                logger.debug(f"  ⏭️  Skipping common field: {field_id}")
+                continue
+            
+            # Skip empty values
+            if value is None or value == "" or value == [] or value == {}:
+                logger.debug(f"  ⏭️  Skipping empty field: {field_id}")
+                continue
+            
+            # Skip empty strings after stripping whitespace
+            if isinstance(value, str) and not value.strip():
+                logger.debug(f"  ⏭️  Skipping whitespace-only field: {field_id}")
+                continue
+            
+            logger.info(f"  ✅ Including bank-specific field: {field_id} = {str(value)[:50]}...")
+            filtered_field_values[field_id] = value
+        
+        logger.info(f"📊 Filtered from {len(template_data.fieldValues)} to {len(filtered_field_values)} bank-specific non-empty fields")
+        
+        if not filtered_field_values:
+            raise HTTPException(
+                status_code=400,
+                detail="No bank-specific field values to save. Please fill in at least one bank-specific field."
+            )
+        
+        # Create template document
+        template_doc = {
+            "templateName": template_data.templateName,
+            "description": template_data.description or "",
+            "bankCode": template_data.bankCode,
+            "bankName": bank_name,
+            "propertyType": property_type,
+            "templateCode": template_data.templateCode,
+            "fieldValues": filtered_field_values,
+            "createdBy": org_context.user_id,
+            "createdByName": org_context.email,  # Use email as name (no user_name in org_context)
+            "modifiedBy": org_context.user_id,
+            "modifiedByName": org_context.email,  # Use email as name (no user_name in org_context)
+            "organizationId": target_org_id,  # Use target org ID (supports system admin)
+            "isActive": True,
+            "version": 1,
+            "createdFrom": "report_form",  # Track that this was created from report
+            "createdAt": datetime.now(timezone.utc),
+            "modifiedAt": datetime.now(timezone.utc)
+        }
+        
+        # Insert template
+        result = await org_db.custom_templates.insert_one(template_doc)
+        template_id = str(result.inserted_id)
+        
+        # Log activity (log to the target organization's activity log)
+        await log_activity(
+            organization_id=target_org_id,  # Use target org ID for activity log
+            user_id=org_context.user_id,
+            user_email=org_context.email,  # Use email property
+            action="custom_template_created_from_report",
+            resource_type="custom_template",
+            resource_id=template_id,
+            details={
+                "templateName": template_data.templateName,
+                "bankCode": template_data.bankCode,
+                "propertyType": property_type,
+                "templateCode": template_data.templateCode,
+                "fieldCount": len(filtered_field_values),
+                "createdBySystemAdmin": org_context.is_system_admin  # Track if created by system admin
+            },
+            ip_address=request.client.host if request.client else None
+        )
+        
+        await db_manager.disconnect()
+        
+        logger.info(f"✅ Custom template created from report: {template_data.templateName} with {len(filtered_field_values)} fields")
+        
+        response = JSONResponse(
+            status_code=201,
+            content={
+                "success": True,
+                "data": {
+                    "_id": template_id,
+                    "templateName": template_data.templateName,
+                    "bankCode": template_data.bankCode,
+                    "propertyType": property_type,
+                    "fieldCount": len(filtered_field_values)
+                },
+                "message": f"Custom template created successfully with {len(filtered_field_values)} field values"
+            }
+        )
+        
+        api_logger.log_response(response, request_data)
+        return response
+        
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        logger.error(f"❌ Error creating custom template from report: {str(e)}")
+        logger.exception(e)  # Log full traceback
+        error_response = JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+        api_logger.log_response(error_response, request_data)
+        return error_response
+
+
+# ================================
+# DASHBOARD COMPONENT APIs
+# ================================
+
+@app.get("/api/dashboard/pending-reports")
+async def get_pending_reports(
+    request: Request,
+    limit: int = 5,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Get pending reports for dashboard component"""
+    request_data = await api_logger.log_request(request)
+    
+    try:
+        from utils.auth_middleware import get_organization_context
+        org_context = await get_organization_context(credentials)
+        
+        from database.multi_db_manager import MultiDatabaseManager
+        
+        db_manager = MultiDatabaseManager()
+        await db_manager.connect()
+        
+        org_db = db_manager.get_org_database(org_context.organization_id)
+        
+        # Get reports with status 'draft' or 'in_progress' (pending completion)
+        pending_reports_cursor = org_db.reports.find({
+            "status": {"$in": ["draft", "in_progress"]}
+        }).sort("updated_at", -1).limit(limit)
+        
+        pending_reports = await pending_reports_cursor.to_list(length=None)
+        
+        # Format reports for dashboard display
+        formatted_reports = []
+        for report in pending_reports:
+            formatted_report = {
+                "_id": str(report["_id"]),
+                "report_id": report.get("report_id"),
+                "property_address": report.get("property_address", "N/A"),
+                "bank_code": report.get("bank_code", ""),
+                "template_id": report.get("template_id", ""),
+                "status": report.get("status", "draft"),
+                "created_by_email": report.get("created_by_email", ""),
+                "created_at": report.get("created_at").isoformat() if report.get("created_at") else None,
+                "updated_at": report.get("updated_at").isoformat() if report.get("updated_at") else None
+            }
+            formatted_reports.append(formatted_report)
+        
+        await db_manager.disconnect()
+        
+        response = JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "data": formatted_reports,
+                "total": len(formatted_reports)
+            }
+        )
+        
+        api_logger.log_response(response, request_data)
+        return response
+        
+    except Exception as e:
+        logger.error(f"❌ Error fetching pending reports: {str(e)}")
+        error_response = JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+        api_logger.log_response(error_response, request_data)
+        return error_response
+
+
+@app.get("/api/dashboard/created-reports")
+async def get_created_reports(
+    request: Request,
+    limit: int = 5,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Get recently created reports for dashboard component"""
+    request_data = await api_logger.log_request(request)
+    
+    try:
+        from utils.auth_middleware import get_organization_context
+        org_context = await get_organization_context(credentials)
+        
+        from database.multi_db_manager import MultiDatabaseManager
+        
+        db_manager = MultiDatabaseManager()
+        await db_manager.connect()
+        
+        org_db = db_manager.get_org_database(org_context.organization_id)
+        
+        # Get recently created reports (all statuses)
+        created_reports_cursor = org_db.reports.find({}).sort("created_at", -1).limit(limit)
+        
+        created_reports = await created_reports_cursor.to_list(length=None)
+        
+        # Format reports for dashboard display
+        formatted_reports = []
+        for report in created_reports:
+            formatted_report = {
+                "_id": str(report["_id"]),
+                "report_id": report.get("report_id"),
+                "property_address": report.get("property_address", "N/A"),
+                "bank_code": report.get("bank_code", ""),
+                "template_id": report.get("template_id", ""),
+                "status": report.get("status", "draft"),
+                "created_by_email": report.get("created_by_email", ""),
+                "created_at": report.get("created_at").isoformat() if report.get("created_at") else None,
+                "updated_at": report.get("updated_at").isoformat() if report.get("updated_at") else None
+            }
+            formatted_reports.append(formatted_report)
+        
+        await db_manager.disconnect()
+        
+        response = JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "data": formatted_reports,
+                "total": len(formatted_reports)
+            }
+        )
+        
+        api_logger.log_response(response, request_data)
+        return response
+        
+    except Exception as e:
+        logger.error(f"❌ Error fetching created reports: {str(e)}")
+        error_response = JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+        api_logger.log_response(error_response, request_data)
+        return error_response
+
+
+@app.get("/api/dashboard/banks")
+async def get_dashboard_banks(
+    request: Request,
+    limit: int = 8,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Get banks summary for dashboard component"""
+    request_data = await api_logger.log_request(request)
+    
+    try:
+        from utils.auth_middleware import get_organization_context
+        org_context = await get_organization_context(credentials)
+        
+        from database.multi_db_manager import MultiDatabaseManager
+        
+        db_manager = MultiDatabaseManager()
+        await db_manager.connect()
+        
+        # Get banks from shared resources
+        shared_db = db_manager.get_database("shared")
+        
+        # Fetch active banks with template counts
+        banks_cursor = shared_db.banks.find({"isActive": True}).limit(limit)
+        banks = await banks_cursor.to_list(length=None)
+        
+        # Format banks for dashboard display
+        formatted_banks = []
+        for bank in banks:
+            bank_code = bank.get("bankCode")
+            
+            # Count templates for this bank
+            template_count = await shared_db.bank_templates.count_documents({
+                "bankCode": bank_code,
+                "isActive": True
+            })
+            
+            formatted_bank = {
+                "_id": str(bank["_id"]),
+                "bankCode": bank_code,
+                "bankName": bank.get("bankName", ""),
+                "description": bank.get("description", ""),
+                "template_count": template_count,
+                "isActive": bank.get("isActive", True)
+            }
+            formatted_banks.append(formatted_bank)
+        
+        await db_manager.disconnect()
+        
+        response = JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "data": formatted_banks,
+                "total": len(formatted_banks)
+            }
+        )
+        
+        api_logger.log_response(response, request_data)
+        return response
+        
+    except Exception as e:
+        logger.error(f"❌ Error fetching dashboard banks: {str(e)}")
+        error_response = JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+        api_logger.log_response(error_response, request_data)
+        return error_response
+
+
+@app.get("/api/dashboard/recent-activities")
+async def get_recent_activities(
+    request: Request,
+    limit: int = 10,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Get recent activities for dashboard component"""
+    request_data = await api_logger.log_request(request)
+    
+    try:
+        from utils.auth_middleware import get_organization_context
+        org_context = await get_organization_context(credentials)
+        
+        from database.multi_db_manager import MultiDatabaseManager
+        
+        db_manager = MultiDatabaseManager()
+        await db_manager.connect()
+        
+        org_db = db_manager.get_org_database(org_context.organization_id)
+        
+        # Get recent activities from activity logs
+        activities_cursor = org_db.activity_logs.find({}).sort("timestamp", -1).limit(limit)
+        
+        activities = await activities_cursor.to_list(length=None)
+        
+        # Format activities for dashboard display
+        formatted_activities = []
+        for activity in activities:
+            formatted_activity = {
+                "_id": str(activity["_id"]),
+                "user_email": activity.get("user_email", ""),
+                "action": activity.get("action", ""),
+                "resource_type": activity.get("resource_type", ""),
+                "resource_id": activity.get("resource_id", ""),
+                "details": activity.get("details", {}),
+                "timestamp": activity.get("timestamp").isoformat() if activity.get("timestamp") else None,
+                "ip_address": activity.get("ip_address", "")
+            }
+            formatted_activities.append(formatted_activity)
+        
+        await db_manager.disconnect()
+        
+        response = JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "data": formatted_activities,
+                "total": len(formatted_activities)
+            }
+        )
+        
+        api_logger.log_response(response, request_data)
+        return response
+        
+    except Exception as e:
+        logger.error(f"❌ Error fetching recent activities: {str(e)}")
+        error_response = JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+        api_logger.log_response(error_response, request_data)
+        return error_response
+
+
+@app.get("/api/dashboard/stats")
+async def get_dashboard_stats(
+    request: Request,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Get dashboard statistics summary"""
+    request_data = await api_logger.log_request(request)
+    
+    try:
+        from utils.auth_middleware import get_organization_context
+        org_context = await get_organization_context(credentials)
+        
+        from database.multi_db_manager import MultiDatabaseManager
+        
+        db_manager = MultiDatabaseManager()
+        await db_manager.connect()
+        
+        org_db = db_manager.get_org_database(org_context.organization_id)
+        
+        # Get various counts for dashboard stats
+        stats = {}
+        
+        # Reports statistics
+        stats["total_reports"] = await org_db.reports.count_documents({})
+        stats["pending_reports"] = await org_db.reports.count_documents({
+            "status": {"$in": ["draft", "in_progress"]}
+        })
+        stats["submitted_reports"] = await org_db.reports.count_documents({
+            "status": "submitted"
+        })
+        
+        # Custom templates count
+        stats["custom_templates"] = await org_db.custom_templates.count_documents({
+            "isActive": True
+        })
+        
+        # Recent activity count (last 7 days)
+        from datetime import timedelta
+        week_ago = datetime.now(timezone.utc) - timedelta(days=7)
+        stats["recent_activities"] = await org_db.activity_logs.count_documents({
+            "timestamp": {"$gte": week_ago}
+        })
+        
+        # User count (if users collection exists)
+        try:
+            stats["total_users"] = await org_db.users.count_documents({"is_active": True})
+        except:
+            stats["total_users"] = 0
+        
+        await db_manager.disconnect()
+        
+        response = JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "data": stats
+            }
+        )
+        
+        api_logger.log_response(response, request_data)
+        return response
+        
+    except Exception as e:
+        logger.error(f"❌ Error fetching dashboard stats: {str(e)}")
+        error_response = JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+        api_logger.log_response(error_response, request_data)
+        return error_response
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -1,0 +1,334 @@
+<div class="dynamic-form-container" [formGroup]="form">
+  <!-- Form Header -->
+  <div class="form-header">
+    <h2 class="template-title">{{ templateSnapshot.template.templateName }}</h2>
+    <div class="template-info">
+      <span class="bank-code">{{ templateSnapshot.bankCode }}</span>
+      <span class="property-type">{{ templateSnapshot.propertyType | titlecase }}</span>
+      <span class="version">v{{ templateSnapshot.version }}</span>
+    </div>
+  </div>
+
+  <!-- Form Sections -->
+  <div class="form-sections">
+    <div 
+      *ngFor="let section of templateSnapshot.template.sections" 
+      class="form-section"
+      [attr.data-section-id]="section.sectionId">
+      
+      <!-- Section Header -->
+      <div class="section-header">
+        <h3 class="section-title">{{ section.sectionName }}</h3>
+        <p *ngIf="section.description" class="section-description">{{ section.description }}</p>
+      </div>
+
+      <!-- Section Fields -->
+      <div class="section-fields">
+        <ng-container *ngFor="let field of section.fields">
+          <div 
+            *ngIf="isFieldVisible(field)" 
+            class="field-container"
+            [attr.data-field-id]="field.fieldId"
+            [ngClass]="'field-type-' + field.fieldType">
+            
+            <!-- Field Label and Help -->
+            <div class="field-header">
+              <label 
+                [for]="field.fieldId" 
+                class="field-label"
+                [ngClass]="{ 'required': field.isRequired }">
+                {{ field.uiDisplayName }}
+                <span *ngIf="field.isRequired" class="required-indicator">*</span>
+              </label>
+              <div *ngIf="field.helpText" class="field-help">
+                <i class="help-icon">?</i>
+                <span class="help-text">{{ field.helpText }}</span>
+              </div>
+            </div>
+
+            <!-- Field Input Based on Type -->
+            <div class="field-input">
+              
+              <!-- Text Input -->
+              <input 
+                *ngIf="field.fieldType === 'text'"
+                type="text"
+                [id]="field.fieldId"
+                [formControlName]="field.fieldId"
+                [placeholder]="field.placeholder || ''"
+                [readonly]="field.isReadonly || mode === 'view'"
+                class="form-control">
+
+              <!-- Textarea -->
+              <textarea 
+                *ngIf="field.fieldType === 'textarea'"
+                [id]="field.fieldId"
+                [formControlName]="field.fieldId"
+                [placeholder]="field.placeholder || ''"
+                [readonly]="field.isReadonly || mode === 'view'"
+                rows="3"
+                class="form-control textarea"></textarea>
+
+              <!-- Number Input -->
+              <div *ngIf="field.fieldType === 'number'" class="number-input-group">
+                <input 
+                  type="number"
+                  [id]="field.fieldId"
+                  [formControlName]="field.fieldId"
+                  [placeholder]="field.placeholder || ''"
+                  [readonly]="field.isReadonly || mode === 'view'"
+                  [min]="field.validation?.min || null"
+                  [max]="field.validation?.max || null"
+                  class="form-control number-input">
+                <select 
+                  *ngIf="field.units && field.units.length > 0" 
+                  class="unit-selector">
+                  <option *ngFor="let unit of field.units" [value]="unit">{{ unit }}</option>
+                </select>
+              </div>
+
+              <!-- Currency Input -->
+              <div *ngIf="field.fieldType === 'currency'" class="currency-input-group">
+                <span class="currency-symbol">₹</span>
+                <input 
+                  type="number"
+                  [id]="field.fieldId"
+                  [formControlName]="field.fieldId"
+                  [placeholder]="field.placeholder || ''"
+                  [readonly]="field.isReadonly || mode === 'view'"
+                  class="form-control currency-input">
+              </div>
+
+              <!-- Select Dropdown -->
+              <select 
+                *ngIf="field.fieldType === 'select'"
+                [id]="field.fieldId"
+                [formControlName]="field.fieldId"
+                [disabled]="field.isReadonly || mode === 'view'"
+                class="form-control select">
+                <option value="">{{ field.placeholder || 'Select an option' }}</option>
+                <option 
+                  *ngFor="let option of field.options" 
+                  [value]="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+
+              <!-- Date Input -->
+              <input 
+                *ngIf="field.fieldType === 'date'"
+                type="date"
+                [id]="field.fieldId"
+                [formControlName]="field.fieldId"
+                [readonly]="field.isReadonly || mode === 'view'"
+                class="form-control date-input">
+
+              <!-- Group Fields -->
+              <div *ngIf="field.fieldType === 'group'" class="group-container" [formGroupName]="field.fieldId">
+                <div class="group-fields">
+                  <ng-container *ngFor="let subField of field.subFields">
+                    <div 
+                      *ngIf="isFieldVisible(subField)" 
+                      class="sub-field-container"
+                      [attr.data-field-id]="subField.fieldId"
+                      [ngClass]="'sub-field-type-' + subField.fieldType">
+                      
+                      <!-- Sub Field Label -->
+                      <label 
+                        [for]="field.fieldId + '.' + subField.fieldId" 
+                        class="sub-field-label"
+                        [ngClass]="{ 'required': subField.isRequired }">
+                        {{ subField.uiDisplayName }}
+                        <span *ngIf="subField.isRequired" class="required-indicator">*</span>
+                      </label>
+
+                      <!-- Sub Field Input -->
+                      <div class="sub-field-input">
+                        
+                        <!-- Text -->
+                        <input 
+                          *ngIf="subField.fieldType === 'text'"
+                          type="text"
+                          [id]="field.fieldId + '.' + subField.fieldId"
+                          [formControlName]="subField.fieldId"
+                          [placeholder]="subField.placeholder || ''"
+                          [readonly]="subField.isReadonly || mode === 'view'"
+                          class="form-control">
+
+                        <!-- Number -->
+                        <input 
+                          *ngIf="subField.fieldType === 'number'"
+                          type="number"
+                          [id]="field.fieldId + '.' + subField.fieldId"
+                          [formControlName]="subField.fieldId"
+                          [placeholder]="subField.placeholder || ''"
+                          [readonly]="subField.isReadonly || mode === 'view'"
+                          class="form-control">
+
+                        <!-- Select -->
+                        <select 
+                          *ngIf="subField.fieldType === 'select'"
+                          [id]="field.fieldId + '.' + subField.fieldId"
+                          [formControlName]="subField.fieldId"
+                          [disabled]="subField.isReadonly || mode === 'view'"
+                          class="form-control">
+                          <option value="">Select...</option>
+                          <option 
+                            *ngFor="let option of subField.options" 
+                            [value]="option.value">
+                            {{ option.label }}
+                          </option>
+                        </select>
+
+                        <!-- Textarea -->
+                        <textarea 
+                          *ngIf="subField.fieldType === 'textarea'"
+                          [id]="field.fieldId + '.' + subField.fieldId"
+                          [formControlName]="subField.fieldId"
+                          [placeholder]="subField.placeholder || ''"
+                          [readonly]="subField.isReadonly || mode === 'view'"
+                          rows="2"
+                          class="form-control"></textarea>
+
+                        <!-- Help Text -->
+                        <div *ngIf="subField.helpText" class="sub-field-help">
+                          {{ subField.helpText }}
+                        </div>
+                      </div>
+                    </div>
+                  </ng-container>
+                </div>
+              </div>
+
+              <!-- Static Table -->
+              <div *ngIf="field.fieldType === 'table'" class="table-container">
+                <div class="table-wrapper">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th *ngFor="let column of field.columns">{{ column.columnName }}</th>
+                      </tr>
+                    </thead>
+                    <tbody formArrayName="{{ field.fieldId }}">
+                      <tr *ngFor="let rowGroup of getTableFormArray(field.fieldId).controls; let i = index" [formGroupName]="i">
+                        <td *ngFor="let column of field.columns">
+                          <input 
+                            *ngIf="column.fieldType === 'text' || column.fieldType === 'number'"
+                            [type]="column.fieldType === 'number' ? 'number' : 'text'"
+                            [formControlName]="column.columnId"
+                            [readonly]="column.isReadonly || mode === 'view'"
+                            class="table-input">
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Dynamic Table -->
+              <div *ngIf="field.fieldType === 'dynamic_table'" class="dynamic-table-container">
+                <div class="table-wrapper">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th *ngFor="let column of field.tableConfig?.fixedColumns">{{ column.columnName }}</th>
+                        <th *ngIf="mode !== 'view'" class="actions-column">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody formArrayName="{{ field.fieldId }}">
+                      <tr *ngFor="let rowGroup of getTableFormArray(field.fieldId).controls; let i = index" [formGroupName]="i">
+                        <td *ngFor="let column of field.tableConfig?.fixedColumns">
+                          <input 
+                            *ngIf="column.fieldType === 'text' || column.fieldType === 'number'"
+                            [type]="column.fieldType === 'number' ? 'number' : 'text'"
+                            [formControlName]="column.columnId"
+                            [readonly]="column.isReadonly || mode === 'view'"
+                            class="table-input">
+                        </td>
+                        <td *ngIf="mode !== 'view'" class="actions-cell">
+                          <button 
+                            type="button" 
+                            class="btn btn-sm btn-danger"
+                            (click)="removeTableRow(field, i)">
+                            Remove
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                
+                <!-- Add Row Button -->
+                <div *ngIf="mode !== 'view'" class="table-actions">
+                  <button 
+                    type="button" 
+                    class="btn btn-secondary"
+                    (click)="addTableRow(field)">
+                    {{ field.tableConfig?.addRowConfig?.buttonText || 'Add Row' }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- Calculated Field Display -->
+              <div 
+                *ngIf="field.calculationMetadata?.isCalculatedField" 
+                class="calculated-field">
+                <div class="calculated-value">
+                  <span class="value">{{ getCalculatedValue(field.fieldId) | number:'1.2-2' }}</span>
+                  <div 
+                    *ngIf="field.calculationMetadata?.showCalculation" 
+                    class="calculation-details">
+                    <div class="formula">{{ field.calculationMetadata?.calculationDisplay?.formulaText }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Field Error Message -->
+            <div 
+              *ngIf="form.get(field.fieldId)?.errors && form.get(field.fieldId)?.touched" 
+              class="field-error">
+              {{ getFieldErrorMessage(field) }}
+            </div>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form Actions -->
+  <div class="form-actions" *ngIf="mode !== 'view'">
+    <button 
+      type="button" 
+      class="btn btn-secondary" 
+      (click)="onCancel()">
+      Cancel
+    </button>
+    
+    <button 
+      type="button" 
+      class="btn btn-primary" 
+      (click)="onSave()"
+      [disabled]="!form.valid">
+      Save Draft
+    </button>
+    
+    <button 
+      type="button" 
+      class="btn btn-success" 
+      (click)="onSubmit()"
+      [disabled]="!form.valid">
+      Submit for Review
+    </button>
+  </div>
+
+  <!-- View Mode Actions -->
+  <div class="form-actions" *ngIf="mode === 'view'">
+    <button 
+      type="button" 
+      class="btn btn-secondary" 
+      (click)="onCancel()">
+      Close
+    </button>
+  </div>
+</div>

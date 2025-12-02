@@ -86,11 +86,11 @@ export class OrganizationService {
    */
   getAllOrganizations(includeInactive = false, includeSystem = false): Observable<Organization[]> {
     const params = new HttpParams()
-      .set('active_only', (!includeInactive).toString())
       .set('include_system', includeSystem.toString());
       
-    return this.http.get<Organization[]>(`${this.API_BASE}/organizations/`, { params })
+    return this.http.get<ApiResponse<Organization[]>>(`${this.API_BASE}/admin/organizations`, { params })
       .pipe(
+        map((response: ApiResponse<Organization[]>) => response.data || []),
         catchError(this.handleError.bind(this))
       );
   }
@@ -149,6 +149,22 @@ export class OrganizationService {
     return this.http.delete<ApiResponse>(`${this.API_BASE}/system/organizations/${organizationId}`)
       .pipe(
         map(response => response.success),
+        catchError(this.handleError.bind(this))
+      );
+  }
+
+  /**
+   * Get next reference number for reports (preview without incrementing)
+   */
+  getNextReferenceNumber(orgShortName: string): Observable<any> {
+    return this.http.get<ApiResponse<any>>(`${this.API_BASE}/organizations/${orgShortName}/next-reference-number`)
+      .pipe(
+        map(response => {
+          if (!response.success || !response.data) {
+            throw new Error(response.message || 'Failed to get reference number');
+          }
+          return response.data;
+        }),
         catchError(this.handleError.bind(this))
       );
   }

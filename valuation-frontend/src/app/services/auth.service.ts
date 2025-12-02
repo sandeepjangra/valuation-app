@@ -152,64 +152,33 @@ export class AuthService {
 
   /**
    * Login with development token (for testing)
+   * Now calls the backend dev-login endpoint for proper token generation
    */
   loginWithDevToken(email: string, orgShortName: string, role: UserRole): Observable<boolean> {
     this._isLoading.set(true);
     
-    // Create development token (matching backend format)
-    // Backend expects: dev_username_domain_org-short-name_role
-    // Convert hyphens in org_short_name to underscores for token
-    const [username, domain] = email.split('@');
-    const orgForToken = orgShortName.replace(/-/g, '_');
-    const devToken = `dev_${username}_${domain}_${orgForToken}_${role}`;
+    console.log('🔐 Development login attempt:', { email, orgShortName, role });
     
-    try {
-      // Create mock JWT payload for development
-      const mockPayload: JwtPayload = {
-        sub: `dev_user_${username}`,
-        email: email,
-        'custom:org_short_name': orgShortName,
-        'custom:organization_id': orgShortName, // Backward compatibility
-        'cognito:groups': [role],
-        iat: Math.floor(Date.now() / 1000),
-        exp: Math.floor(Date.now() / 1000) + 3600, // 1 hour
-        dev_mode: true
-      };
-
-      // Create mock user data
-      const mockUser: User = {
-        _id: mockPayload.sub,
-        organization_id: orgShortName,
-        email: email,
-        first_name: username,
-        roles: [role],
-        is_active: true,
-        created_at: new Date(),
-        updated_at: new Date()
-      };
-
-      const loginData = {
-        access_token: devToken,
-        expires_in: 3600,
-        user: mockUser,
-        organization: {
-          id: orgShortName,
-          name: orgShortName === 'system_admin' ? 'System Administration' : 'Demo Organization',
-          type: orgShortName === 'system_admin' ? 'system' : 'valuation_company'
+    // Call backend dev-login endpoint
+    return this.http.post<LoginResponse>(`${this.API_BASE}/auth/dev-login`, {
+      email,
+      organizationId: orgShortName,
+      role
+    }).pipe(
+      tap(response => {
+        if (response.success && response.data) {
+          this.handleLoginSuccess(response.data);
+          console.log('✅ Development login successful');
         }
-      };
-
-      this.handleLoginSuccess(loginData);
-      this._isLoading.set(false);
-      
-      console.log('✅ Development login successful');
-      return of(true);
-      
-    } catch (error) {
-      console.error('❌ Development login failed:', error);
-      this._isLoading.set(false);
-      return throwError(() => error);
-    }
+      }),
+      map(() => true),
+      catchError(error => {
+        console.error('❌ Development login failed:', error);
+        this._isLoading.set(false);
+        return throwError(() => error);
+      }),
+      tap(() => this._isLoading.set(false))
+    );
   }
 
   /**

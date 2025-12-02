@@ -11,6 +11,9 @@
         <h1 class="page-title">Property Valuation for {{ selectedBankName }}</h1>
       </div>
       <div class="right-section">
+        <button class="test-calculation-button" (click)="triggerCalculation()" title="Test Calculations">
+          🧮 Test Calc
+        </button>
         <button class="back-button" (click)="goBackToSelection()">
           ← Back to Selection
         </button>
@@ -590,18 +593,54 @@
                                  [class.disabled-field]="isFieldDisabled(field)">
                               <label [for]="field.fieldId" class="field-label">
                                 {{ field.uiDisplayName }}
-                                <span class="calculated-indicator">🧮</span>
+                                <span class="calculated-indicator" title="Auto-calculated field">🧮</span>
                               </label>
+                              
+                              <!-- Calculation Display -->
+                              <div class="calculation-display" *ngIf="field.formula">
+                                <div class="formula-display">
+                                  <strong>Formula: {{ field.formula }}</strong>
+                                </div>
+                                <div class="calculation-breakdown" *ngIf="field.fieldId === 'estimated_land_value'">
+                                  <div class="debug-info">
+                                    <small>Debug: Total Extent = {{ reportForm.get('total_extent_plot')?.value || 'not set' }}, 
+                                    Valuation Rate = {{ reportForm.get('valuation_rate')?.value || 'not set' }}</small>
+                                  </div>
+                                  <div class="calculation-steps">
+                                    <span class="calculation-step">
+                                      {{ reportForm.get('total_extent_plot')?.value || 0 }} × {{ reportForm.get('valuation_rate')?.value || 0 }}
+                                    </span>
+                                    <span class="equals">=</span>
+                                    <span class="result">{{ getCalculatedValue(field) || 'Calculating...' }}</span>
+                                  </div>
+                                </div>
+                              </div>
+                              
                               <input
                                 [id]="field.fieldId"
                                 type="text"
                                 [formControlName]="field.fieldId"
-                                [value]="getCalculatedValue(field)"
                                 readonly
                                 class="form-input calculated-input"
+                                [value]="getCalculatedValue(field)"
+                                [placeholder]="field.placeholder || 'Calculation result will appear here'"
                               />
+                              
+                              <!-- Enhanced Debug Info -->
+                              <div class="calculation-debug" *ngIf="field.fieldId === 'estimated_land_value'">
+                                <small>
+                                  <strong>Calculation Status:</strong> 
+                                  <span [class]="getCalculatedValue(field) ? 'success' : 'pending'">
+                                    {{ getCalculatedValue(field) ? 'Completed' : 'Waiting for values...' }}
+                                  </span>
+                                </small>
+                              </div>
+                              
                               <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
-                              <div class="field-help" *ngIf="field.formula">Formula: {{ field.formula }}</div>
+                              <div class="field-help formula-help" *ngIf="field.formula">
+                                <i class="material-icons">info</i>
+                                Formula: {{ field.formula }}
+                              </div>
                             </div>
 
                             <!-- Table Field -->
@@ -1135,9 +1174,25 @@
         <button type="button" class="save-draft-button" (click)="onSaveDraft()">
           Save Draft
         </button>
-        <button type="submit" class="submit-button" [disabled]="reportForm.invalid">
-          Save & Continue
+        
+        <!-- Submit/Save button with role-based text -->
+        <button 
+          type="submit" 
+          class="submit-button" 
+          [disabled]="reportForm.invalid"
+          [title]="getSubmitButtonTitle()">
+          {{ getSubmitButtonText() }}
         </button>
+      </div>
+      
+      <!-- Info message for current functionality -->
+      <div class="form-info-message">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        <span>Report will be saved. Role-based submission controls will be added in next phase.</span>
       </div>
     </div>
 

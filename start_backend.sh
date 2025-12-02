@@ -5,7 +5,8 @@
 
 cd /Users/sandeepjangra/Downloads/development/ValuationAppV1/backend
 
-export MONGODB_URI="mongodb+srv://sandeepjangra:Sandeep123@cluster0.kghgh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+# Use the correct MongoDB connection string
+export MONGODB_URI="mongodb+srv://app_user:KOtsC5qeCc78icks@valuationreportcluster.5ixm1s7.mongodb.net/?retryWrites=true&w=majority&appName=ValuationReportCluster"
 
 echo "🚀 Starting backend server..."
 echo "📂 Directory: $(pwd)"

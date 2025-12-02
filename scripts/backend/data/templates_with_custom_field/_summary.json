@@ -1,0 +1,120 @@
+{
+  "processed_at": "2025-11-30T14:17:26.104650",
+  "collections": [
+    {
+      "name": "audit_logs",
+      "is_common": false,
+      "documents": 6,
+      "fields": 0
+    },
+    {
+      "name": "banks",
+      "is_common": false,
+      "documents": 2,
+      "fields": 0
+    },
+    {
+      "name": "banks_backup_before_move_20251109_185537",
+      "is_common": false,
+      "documents": 9,
+      "fields": 0
+    },
+    {
+      "name": "bob_land_property_details",
+      "is_common": false,
+      "documents": 1,
+      "fields": 0
+    },
+    {
+      "name": "boi_apartment_property_details",
+      "is_common": false,
+      "documents": 1,
+      "fields": 0
+    },
+    {
+      "name": "boi_land_property_details",
+      "is_common": false,
+      "documents": 1,
+      "fields": 0
+    },
+    {
+      "name": "cbi_all_property_details",
+      "is_common": false,
+      "documents": 1,
+      "fields": 0
+    },
+    {
+      "name": "common_form_fields",
+      "is_common": true,
+      "documents": 1,
+      "fields": 6
+    },
+    {
+      "name": "hdfc_all_property_details",
+      "is_common": false,
+      "documents": 1,
+      "fields": 0
+    },
+    {
+      "name": "organizations",
+      "is_common": false,
+      "documents": 1,
+      "fields": 0
+    },
+    {
+      "name": "pnb_land_property_details",
+      "is_common": false,
+      "documents": 1,
+      "fields": 0
+    },
+    {
+      "name": "sbi_apartment_property_details",
+      "is_common": false,
+      "documents": 1,
+      "fields": 0
+    },
+    {
+      "name": "sbi_land_property_details",
+      "is_common": false,
+      "documents": 1,
+      "fields": 0
+    },
+    {
+      "name": "ubi_apartment_property_details",
+      "is_common": false,
+      "documents": 1,
+      "fields": 0
+    },
+    {
+      "name": "ubi_land_property_details",
+      "is_common": false,
+      "documents": 1,
+      "fields": 0
+    },
+    {
+      "name": "uco_apartment_property_details",
+      "is_common": false,
+      "documents": 1,
+      "fields": 0
+    },
+    {
+      "name": "uco_land_property_details",
+      "is_common": false,
+      "documents": 1,
+      "fields": 0
+    },
+    {
+      "name": "users",
+      "is_common": false,
+      "documents": 1,
+      "fields": 0
+    }
+  ],
+  "summary": {
+    "total_collections": 18,
+    "total_documents": 32,
+    "total_fields_processed": 6,
+    "common_fields_count": 6,
+    "bank_specific_fields_count": 0
+  }
+}

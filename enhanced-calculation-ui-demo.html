@@ -1,0 +1,422 @@
+<!-- Enhanced SBI Land Valuation Form with Real-time Calculations -->
+<div class="sbi-land-valuation-form">
+  
+  <!-- Part A: Land Valuation Section -->
+  <div class="valuation-section">
+    <h3>Part A - Land Valuation</h3>
+    
+    <!-- Plot Size Group -->
+    <div class="field-group">
+      <label>Plot Size</label>
+      
+      <!-- Total Extent of Plot (Enhanced with calculation metadata) -->
+      <div class="calculation-input-field">
+        <label for="total_extent_plot">Total Extent of the Plot *</label>
+        <div class="input-with-calculation">
+          <input 
+            type="number" 
+            id="total_extent_plot"
+            [(ngModel)]="formData.total_extent_plot"
+            (ngModelChange)="onFieldChange('total_extent_plot', $event)"
+            placeholder="Enter area of the land"
+            class="form-control"
+            [class.calculation-input]="true"
+            required>
+          <select [(ngModel)]="formData.total_extent_plot_unit" class="unit-selector">
+            <option value="sqyd">Sq Yard</option>
+            <option value="sqft">Sq Feet</option>
+            <option value="sqm">Sq Meter</option>
+            <option value="acres">Acres</option>
+          </select>
+          
+          <!-- Calculation Input Indicator -->
+          <span class="calculation-indicator" title="Used in calculations">
+            <i class="material-icons">calculate</i>
+          </span>
+        </div>
+        <div class="field-hint">This value is used to calculate Estimated Land Value</div>
+      </div>
+    </div>
+
+    <!-- Market & Registrar Rate -->
+    <div class="field-group">
+      <!-- Market rates and registrar rate fields... -->
+    </div>
+
+    <!-- Estimated Valuation Group (Enhanced with real-time calculation) -->
+    <div class="field-group estimated-valuation">
+      <label>Estimated Valuation</label>
+      
+      <!-- Valuation Rate (Enhanced with calculation metadata) -->
+      <div class="calculation-input-field">
+        <label for="valuation_rate">Valuation Rate *</label>
+        <div class="input-with-calculation">
+          <span class="currency-symbol">₹</span>
+          <input 
+            type="number" 
+            id="valuation_rate"
+            [(ngModel)]="formData.valuation_rate"
+            (ngModelChange)="onFieldChange('valuation_rate', $event)"
+            placeholder="Enter amount in Rs"
+            class="form-control currency-input"
+            [class.calculation-input]="true"
+            required>
+          
+          <!-- Calculation Input Indicator -->
+          <span class="calculation-indicator" title="Used in calculations">
+            <i class="material-icons">calculate</i>
+          </span>
+        </div>
+        <div class="field-hint">This rate will be multiplied by total extent</div>
+      </div>
+
+      <!-- Estimated Land Value (Enhanced calculated field with real-time display) -->
+      <div class="calculated-field-container">
+        <label for="estimated_land_value">Estimated Value of Land</label>
+        
+        <!-- Calculation Display -->
+        <div class="calculation-display" *ngIf="calculationDisplay.estimated_land_value">
+          <div class="calculation-formula">
+            <strong>Formula:</strong> {{ calculationDisplay.estimated_land_value.formula }}
+          </div>
+          
+          <div class="calculation-breakdown">
+            <div class="calculation-inputs">
+              <div class="input-item" *ngFor="let input of calculationDisplay.estimated_land_value.inputs">
+                <span class="input-label">{{ input.label }}:</span>
+                <span class="input-value">{{ input.value }}</span>
+              </div>
+            </div>
+            
+            <div class="calculation-operation">
+              <i class="material-icons">close</i>
+            </div>
+            
+            <div class="calculation-result">
+              <strong>= {{ calculationDisplay.estimated_land_value.result }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Result Field -->
+        <div class="result-field">
+          <input 
+            type="text" 
+            id="estimated_land_value"
+            [value]="calculationResult.estimated_land_value?.formattedValue || '₹0'"
+            class="form-control calculated-result"
+            readonly>
+          
+          <!-- Calculation Status Indicator -->
+          <span class="calculation-status" 
+                [class.valid]="calculationResult.estimated_land_value?.isValid"
+                [class.invalid]="!calculationResult.estimated_land_value?.isValid">
+            <i class="material-icons">
+              {{ calculationResult.estimated_land_value?.isValid ? 'check_circle' : 'error' }}
+            </i>
+          </span>
+          
+          <!-- Auto-populate Indicator -->
+          <span class="auto-populate-indicator" title="Auto-populates to Detailed Valuation">
+            <i class="material-icons">sync</i>
+            <span class="tooltip">Auto-populates to Land field in Detailed Valuation</span>
+          </span>
+        </div>
+
+        <!-- Validation Message -->
+        <div class="validation-message error" 
+             *ngIf="calculationResult.estimated_land_value && !calculationResult.estimated_land_value.isValid">
+          {{ calculationResult.estimated_land_value.validationMessage }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detailed Valuation Tab (Enhanced with auto-population) -->
+  <div class="detailed-valuation-section" *ngIf="activeTab === 'detailed_valuation'">
+    <h3>Detailed Valuation</h3>
+    
+    <!-- Land Total (Enhanced with auto-population) -->
+    <div class="auto-populated-field-container">
+      <label for="land_total">Land</label>
+      
+      <!-- Auto-populate Status -->
+      <div class="auto-populate-status" *ngIf="calculationDisplay.land_total?.isAutoPopulated">
+        <div class="auto-populate-info">
+          <i class="material-icons">sync</i>
+          <span>Auto-populated from: Estimated Land Value</span>
+          <button class="manual-edit-btn" (click)="enableManualEdit('land_total')" type="button">
+            <i class="material-icons">edit</i> Manual Edit
+          </button>
+        </div>
+      </div>
+
+      <!-- Field Input -->
+      <div class="input-with-auto-populate">
+        <span class="currency-symbol">₹</span>
+        <input 
+          type="number" 
+          id="land_total"
+          [(ngModel)]="formData.land_total"
+          [readonly]="!manualEditEnabled.land_total"
+          [class.auto-populated]="calculationResult.land_total && !manualEditEnabled.land_total"
+          [class.manually-edited]="manualEditEnabled.land_total"
+          class="form-control currency-input"
+          placeholder="Valuation of land">
+        
+        <!-- Auto-populate Indicator -->
+        <span class="field-status-indicator">
+          <i class="material-icons" 
+             [class.auto-populated]="!manualEditEnabled.land_total"
+             [class.manual]="manualEditEnabled.land_total">
+            {{ manualEditEnabled.land_total ? 'edit' : 'sync' }}
+          </i>
+        </span>
+      </div>
+
+      <!-- Override Confirmation -->
+      <div class="override-warning" *ngIf="manualEditEnabled.land_total">
+        <i class="material-icons warning">warning</i>
+        <span>Manual changes will override the auto-calculated value</span>
+        <button class="revert-btn" (click)="revertToAutoPopulated('land_total')" type="button">
+          Revert to Auto-calculated
+        </button>
+      </div>
+
+      <!-- Auto-populate Source Display -->
+      <div class="field-hint auto-populate-hint" *ngIf="!manualEditEnabled.land_total">
+        Source: Total Extent ({{ formData.total_extent_plot }}) × Valuation Rate (₹{{ formData.valuation_rate | number }})
+      </div>
+    </div>
+
+    <!-- Other fields... -->
+    <div class="field-group">
+      <label>Building</label>
+      <input type="number" [(ngModel)]="formData.building_total" class="form-control currency-input">
+    </div>
+
+    <!-- Continue with other detailed valuation fields... -->
+  </div>
+</div>
+
+<style>
+/* Enhanced Calculation UI Styles */
+.calculation-input-field .input-with-calculation {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.calculation-indicator {
+  color: #2196F3;
+  font-size: 16px;
+  cursor: help;
+}
+
+.calculation-display {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 8px;
+}
+
+.calculation-formula {
+  font-size: 14px;
+  color: #495057;
+  margin-bottom: 8px;
+}
+
+.calculation-breakdown {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.calculation-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.input-item {
+  display: flex;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.input-label {
+  color: #6c757d;
+  min-width: 100px;
+}
+
+.input-value {
+  font-weight: 500;
+  color: #495057;
+}
+
+.calculation-operation {
+  color: #6c757d;
+  font-size: 18px;
+}
+
+.calculation-result {
+  color: #28a745;
+  font-size: 16px;
+}
+
+.result-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.calculated-result {
+  background: #e9f7ef !important;
+  border-color: #28a745;
+  font-weight: 600;
+}
+
+.calculation-status.valid {
+  color: #28a745;
+}
+
+.calculation-status.invalid {
+  color: #dc3545;
+}
+
+.auto-populate-indicator {
+  position: relative;
+  color: #17a2b8;
+  cursor: help;
+}
+
+.auto-populate-indicator .tooltip {
+  position: absolute;
+  background: #333;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s;
+}
+
+.auto-populate-indicator:hover .tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Auto-populated Field Styles */
+.auto-populated-field-container {
+  border-left: 3px solid #17a2b8;
+  padding-left: 12px;
+}
+
+.auto-populate-status {
+  background: #d1ecf1;
+  border: 1px solid #bee5eb;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+}
+
+.auto-populate-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #0c5460;
+}
+
+.manual-edit-btn {
+  background: none;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.input-with-auto-populate {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.field-status-indicator {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.field-status-indicator .auto-populated {
+  color: #17a2b8;
+}
+
+.field-status-indicator .manual {
+  color: #ffc107;
+}
+
+.override-warning {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 4px;
+  padding: 6px 10px;
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #856404;
+}
+
+.revert-btn {
+  background: none;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+  font-size: 11px;
+  margin-left: auto;
+  text-decoration: underline;
+}
+
+.auto-populate-hint {
+  color: #6c757d;
+  font-size: 11px;
+  font-style: italic;
+  margin-top: 4px;
+}
+
+.validation-message.error {
+  color: #dc3545;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+/* Field enhancement styles */
+.calculation-input {
+  border-color: #2196F3 !important;
+}
+
+.auto-populated {
+  background-color: #e8f5e8 !important;
+}
+
+.manually-edited {
+  background-color: #fff9e6 !important;
+  border-color: #ffc107 !important;
+}
+</style>

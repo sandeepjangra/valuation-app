@@ -7,7 +7,7 @@ import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { CustomTemplateService } from '../../services/custom-template.service';
 import { AuthService } from '../../services/auth.service';
 import { CustomTemplateListItem, CustomTemplate } from '../../models/custom-template.model';
@@ -25,7 +25,11 @@ export class CustomTemplatesManagementComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
+  
+  // Organization context
+  private readonly currentOrgShortName = signal<string>('');
 
   private readonly API_BASE_URL = 'http://localhost:8000/api';
 
@@ -85,6 +89,15 @@ export class CustomTemplatesManagementComponent implements OnInit {
   );
 
   ngOnInit(): void {
+    // Get organization context from route
+    this.route.parent?.params.subscribe(params => {
+      const orgShortName = params['orgShortName'];
+      if (orgShortName) {
+        this.currentOrgShortName.set(orgShortName);
+        console.log('📍 Templates component - Current organization:', orgShortName);
+      }
+    });
+
     // Check permissions
     if (!this.isManagerOrAdmin()) {
       this.error.set('You do not have permission to manage custom templates.');
@@ -158,14 +171,29 @@ export class CustomTemplatesManagementComponent implements OnInit {
       return;
     }
 
-    // Navigate to template creation form
-    this.router.navigate(['/custom-templates/create'], {
-      queryParams: { bankCode, propertyType }
-    });
+    // Navigate to organization-specific template creation form
+    const orgShortName = this.currentOrgShortName();
+    if (orgShortName) {
+      this.router.navigate(['/org', orgShortName, 'custom-templates', 'create'], {
+        queryParams: { bankCode, propertyType }
+      });
+    } else {
+      console.error('❌ No organization context available for navigation');
+      // Fallback to non-org route (should not happen in normal flow)
+      this.router.navigate(['/custom-templates/create'], {
+        queryParams: { bankCode, propertyType }
+      });
+    }
   }
 
   editTemplate(templateId: string): void {
-    this.router.navigate(['/custom-templates/edit', templateId]);
+    const orgShortName = this.currentOrgShortName();
+    if (orgShortName) {
+      this.router.navigate(['/org', orgShortName, 'custom-templates', 'edit', templateId]);
+    } else {
+      console.error('❌ No organization context available for edit navigation');
+      this.router.navigate(['/custom-templates/edit', templateId]);
+    }
   }
 
   cloneTemplate(template: CustomTemplateListItem): void {

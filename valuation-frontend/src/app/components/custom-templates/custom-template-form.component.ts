@@ -44,16 +44,19 @@ export class CustomTemplateFormComponent implements OnInit {
   existingTemplate = signal<CustomTemplate | null>(null);
 
   // Forms
+  mainForm!: FormGroup; // For template metadata
   metadataForm!: FormGroup;
   fieldsForm!: FormGroup;
 
-  // Active tab state
-  activeSection = signal<'metadata' | 'fields'>('metadata');
+  // Active tab state (same as New Report)
+  activeTab = signal<string>('template'); // 'template' or 'preview' (matches New Report)
   activeBankSpecificTab = signal<string | null>(null);
 
   // Computed
   canSave = computed(() => {
-    return this.metadataForm?.valid && !this.isSaving();
+    // Only check if not currently saving
+    // Authentication and form validation will be checked in onSubmit
+    return !this.isSaving();
   });
 
   ngOnInit(): void {
@@ -62,9 +65,16 @@ export class CustomTemplateFormComponent implements OnInit {
   }
 
   private initializeForms(): void {
+    // Main form for template metadata (matches HTML)
+    // Make only templateName required, remove strict validators
+    this.mainForm = this.fb.group({
+      templateName: ['', [Validators.required, Validators.minLength(3)]],
+      description: ['']
+    });
+    
     this.metadataForm = this.fb.group({
-      templateName: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
-      description: ['', Validators.maxLength(500)]
+      templateName: ['', [Validators.required, Validators.minLength(3)]],
+      description: ['']
     });
 
     this.fieldsForm = this.fb.group({});
@@ -132,19 +142,78 @@ export class CustomTemplateFormComponent implements OnInit {
 
     this.isLoading.set(true);
     
-    this.customTemplateService.getTemplateFields(bankCode, propertyType).subscribe({
+    // Use the exact same template mapping as the Report Form component
+    // The Report Form uses templateCode = this.selectedTemplateId.toLowerCase()
+    // where selectedTemplateId comes from the New Report page's template selection
+    const templateCode = `${propertyType}-property`; // This matches what New Report passes
+    
+    console.log(`🔄 Loading template fields for: ${bankCode}/${templateCode} (same as Report Form)`);
+    
+    this.templateService.getAggregatedTemplateFields(bankCode, templateCode).subscribe({
       next: (response) => {
-        // Process template data using TemplateService
-        // Cast response to AggregatedTemplateResponse type for processing
-        const processedData = this.templateService.processTemplateData(response as any);
+        console.log('✅ Raw aggregated API Response (Custom Template):', response);
+        console.log('✅ API Response type:', typeof response);
+        console.log('✅ API Response keys:', Object.keys(response));
+        
+        // Process template data using TemplateService (same as New Report)
+        const processedData = this.templateService.processTemplateData(response);
+        
+        console.log('🔍 Processed template data (Custom Template vs Report Form comparison):', {
+          commonFieldGroups: processedData.commonFieldGroups?.length || 0,
+          bankSpecificTabs: processedData.bankSpecificTabs?.length || 0,
+          totalFieldCount: processedData.totalFieldCount || 0,
+          bankSpecificTabDetails: processedData.bankSpecificTabs?.map(tab => ({
+            tabId: tab.tabId,
+            tabName: tab.tabName,
+            fieldsCount: tab.fields?.length || 0,
+            sectionsCount: tab.sections?.length || 0,
+            sectionsDetails: tab.sections?.map(section => ({
+              sectionName: section.sectionName,
+              fieldsCount: section.fields?.length || 0,
+              fieldIds: section.fields?.map(f => f.fieldId) || []
+            }))
+          }))
+        });
+        
+        // Log specific Property Details tab data
+        const propertyDetailsTab = processedData.bankSpecificTabs?.find(tab => tab.tabId === 'property_details');
+        if (propertyDetailsTab) {
+          console.log('🏠 Property Details Tab Analysis:', {
+            tabName: propertyDetailsTab.tabName,
+            directFields: propertyDetailsTab.fields?.length || 0,
+            sectionsCount: propertyDetailsTab.sections?.length || 0,
+            totalSectionFields: propertyDetailsTab.sections?.reduce((total, section) => total + (section.fields?.length || 0), 0) || 0,
+            sections: propertyDetailsTab.sections?.map(section => ({
+              sectionName: section.sectionName,
+              fieldsCount: section.fields?.length || 0,
+              fieldsList: section.fields?.map(f => ({
+                fieldId: f.fieldId,
+                displayName: f.uiDisplayName,
+                fieldType: f.fieldType,
+                includeInCustomTemplate: (f as any).includeInCustomTemplate
+              })) || []
+            }))
+          });
+        }
+        
         this.templateData.set(processedData);
         
-        // Build form controls for all fields
+        // Build form controls for ALL fields (but make only includeInCustomTemplate=true editable)
         this.buildFieldControls(processedData);
+        
+        // Initialize first bank-specific tab if available (same as New Report)
+        if (processedData.bankSpecificTabs.length > 0) {
+          this.activeBankSpecificTab.set(processedData.bankSpecificTabs[0].tabId);
+        }
         
         // If editing, populate with existing values
         if (this.existingTemplate()) {
           this.populateFieldValues(this.existingTemplate()!.fieldValues);
+          // Also populate mainForm metadata
+          this.mainForm.patchValue({
+            templateName: this.existingTemplate()!.templateName,
+            description: this.existingTemplate()!.description
+          });
         }
 
         // Initialize first tab if available
@@ -165,39 +234,87 @@ export class CustomTemplateFormComponent implements OnInit {
 
   private buildFieldControls(data: ProcessedTemplateData): void {
     const formGroup: any = {};
+    const fieldIdsProcessed = new Set<string>(); // Track processed field IDs to avoid duplicates
 
-    // Skip common fields - they are entered by user, not saved in templates
-    // Only add bank-specific fields
-    data.bankSpecificTabs.forEach(tab => {
-      // Tab-level fields
-      tab.fields.forEach(field => {
-        if (field.fieldType !== 'group') {
-          formGroup[field.fieldId] = [''];
-        } else if (field.subFields) {
-          // Add sub-fields from group fields
-          field.subFields.forEach(subField => {
-            formGroup[subField.fieldId] = [''];
-          });
+    console.log('🔨 Building field controls...');
+
+    // Helper function to add field controls with editable/readonly logic
+    const addFieldControl = (field: any, source: string) => {
+      if (field.fieldType !== 'group') {
+        // Skip if already processed (handles duplicate fields in tab.fields and sections[].fields)
+        if (fieldIdsProcessed.has(field.fieldId)) {
+          console.log(`⏭️  Skipping duplicate field: ${field.fieldId} from ${source}`);
+          return;
         }
+
+        const includeInCustom = (field as any).includeInCustomTemplate;
+        // Create form control - disabled if not marked for custom template
+        const control = this.fb.control('');
+        if (!includeInCustom) {
+          control.disable();
+        }
+        formGroup[field.fieldId] = control;
+        fieldIdsProcessed.add(field.fieldId);
+        console.log(`✅ Added control for field: ${field.fieldId} (includeInCustom: ${includeInCustom}, disabled: ${!includeInCustom}) from ${source}`);
+      } else if (field.subFields) {
+        // Add sub-fields from group fields
+        field.subFields.forEach((subField: any) => {
+          if (fieldIdsProcessed.has(subField.fieldId)) {
+            console.log(`⏭️  Skipping duplicate subfield: ${subField.fieldId} from ${source}`);
+            return;
+          }
+
+          const includeInCustom = (subField as any).includeInCustomTemplate;
+          const control = this.fb.control('');
+          if (!includeInCustom) {
+            control.disable();
+          }
+          formGroup[subField.fieldId] = control;
+          fieldIdsProcessed.add(subField.fieldId);
+          console.log(`✅ Added control for subfield: ${subField.fieldId} (includeInCustom: ${includeInCustom}) from ${source}`);
+        });
+      }
+    };
+
+    // Add common field groups (show all, but make non-editable since includeInCustomTemplate=false)
+    console.log('📋 Processing common field groups:', data.commonFieldGroups.length);
+    data.commonFieldGroups.forEach((group, idx) => {
+      console.log(`  Group ${idx + 1}: ${group.groupName} - ${group.fields.length} fields`);
+      group.fields.forEach(field => {
+        addFieldControl(field, `common-group-${group.groupName}`);
       });
+    });
+
+    // Add bank-specific fields (show all, editable based on includeInCustomTemplate flag)
+    console.log('🏦 Processing bank-specific tabs:', data.bankSpecificTabs.length);
+    data.bankSpecificTabs.forEach((tab, tabIdx) => {
+      console.log(`  Tab ${tabIdx + 1}: ${tab.tabName} - ${tab.fields.length} tab-level fields, ${tab.sections?.length || 0} sections`);
+      
+      // Tab-level fields (only if no sections - to avoid duplicates)
+      if (!tab.sections || tab.sections.length === 0) {
+        tab.fields.forEach(field => {
+          addFieldControl(field, `tab-${tab.tabName}`);
+        });
+      } else {
+        console.log(`  ⏭️  Skipping tab-level fields for ${tab.tabName} because it has sections`);
+      }
 
       // Section-level fields
       if (tab.sections) {
-        tab.sections.forEach(section => {
+        tab.sections.forEach((section, secIdx) => {
+          console.log(`    Section ${secIdx + 1}: ${section.sectionName} - ${section.fields.length} fields`);
           section.fields.forEach(field => {
-            if (field.fieldType !== 'group') {
-              formGroup[field.fieldId] = [''];
-            } else if (field.subFields) {
-              field.subFields.forEach(subField => {
-                formGroup[subField.fieldId] = [''];
-              });
-            }
+            addFieldControl(field, `tab-${tab.tabName}-section-${section.sectionName}`);
           });
         });
       }
     });
 
     this.fieldsForm = this.fb.group(formGroup);
+    console.log('✅ Form controls built successfully!');
+    console.log(`📊 Total form controls created: ${Object.keys(formGroup).length}`);
+    console.log(`📊 Unique fields processed: ${fieldIdsProcessed.size}`);
+    console.log('📋 Form has these controls:', Object.keys(formGroup));
   }
 
   private populateFieldValues(fieldValues: Record<string, any>): void {
@@ -210,9 +327,7 @@ export class CustomTemplateFormComponent implements OnInit {
     });
   }
 
-  onSectionChange(section: 'metadata' | 'fields'): void {
-    this.activeSection.set(section);
-  }
+  // Method removed - not needed for new structure
 
   onBankTabChange(tabId: string): void {
     this.activeBankSpecificTab.set(tabId);
@@ -223,15 +338,34 @@ export class CustomTemplateFormComponent implements OnInit {
   }
 
   onSubmit(): void {
-    if (!this.canSave()) {
+    // Check if template name is provided (minimum requirement)
+    const metadata = this.mainForm.value;
+    if (!metadata.templateName || metadata.templateName.trim().length < 3) {
+      this.error.set('❌ Template name is required (minimum 3 characters)');
+      return;
+    }
+
+    // Check for token (more reliable than isAuthenticated signal)
+    const token = this.authService.getToken();
+    const orgContext = this.authService.getOrganizationContext();
+    
+    console.log('🔍 onSubmit - Authentication check:', {
+      hasToken: !!token,
+      tokenPreview: token?.substring(0, 30) + '...',
+      orgContext: orgContext,
+      orgShortName: orgContext?.orgShortName
+    });
+    
+    if (!token) {
+      this.error.set('❌ Not authenticated. Please log in again.');
+      console.error('❌ No authentication token found');
+      // Redirect to login after 2 seconds
+      setTimeout(() => this.router.navigate(['/login']), 2000);
       return;
     }
 
     this.isSaving.set(true);
     this.error.set(null);
-
-    // Get metadata
-    const metadata = this.metadataForm.value;
 
     // Get all field values (only non-empty values to save storage)
     const fieldValues: Record<string, any> = {};
@@ -297,6 +431,81 @@ export class CustomTemplateFormComponent implements OnInit {
     });
   }
 
+  /**
+   * Filter template fields to only include those marked for custom templates
+   */
+  private filterFieldsForCustomTemplate(data: ProcessedTemplateData): ProcessedTemplateData {
+    console.log('🔍 Filtering template fields for custom templates...');
+    
+    const filteredData = { ...data };
+    
+    // Filter bank-specific tabs
+    filteredData.bankSpecificTabs = data.bankSpecificTabs.map(tab => {
+      const filteredTab = { ...tab };
+      
+      // Filter tab-level fields
+      filteredTab.fields = tab.fields.filter(field => {
+        const includeInCustom = (field as any).includeInCustomTemplate;
+        console.log(`Field ${field.fieldId}: includeInCustomTemplate = ${includeInCustom}`);
+        return includeInCustom === true;
+      }).map(field => {
+        // If it's a group field, filter sub-fields too
+        if (field.fieldType === 'group' && field.subFields) {
+          return {
+            ...field,
+            subFields: field.subFields.filter(subField => 
+              (subField as any).includeInCustomTemplate === true
+            )
+          };
+        }
+        return field;
+      });
+      
+      // Filter section-level fields if sections exist
+      if (tab.sections) {
+        filteredTab.sections = tab.sections.map(section => ({
+          ...section,
+          fields: section.fields.filter(field => {
+            const includeInCustom = (field as any).includeInCustomTemplate;
+            console.log(`Section field ${field.fieldId}: includeInCustomTemplate = ${includeInCustom}`);
+            return includeInCustom === true;
+          }).map(field => {
+            // If it's a group field, filter sub-fields too
+            if (field.fieldType === 'group' && field.subFields) {
+              return {
+                ...field,
+                subFields: field.subFields.filter(subField => 
+                  (subField as any).includeInCustomTemplate === true
+                )
+              };
+            }
+            return field;
+          })
+        }));
+      }
+      
+      return filteredTab;
+    });
+    
+    // Also filter common field groups (though they might not be saved, we might show them)
+    filteredData.commonFieldGroups = data.commonFieldGroups.map(group => ({
+      ...group,
+      fields: group.fields.filter(field => {
+        const includeInCustom = (field as any).includeInCustomTemplate;
+        return includeInCustom === true;
+      })
+    }));
+    
+    console.log('✅ Field filtering completed');
+    console.log('Filtered tabs:', filteredData.bankSpecificTabs.map(tab => ({
+      tabId: tab.tabId,
+      fieldsCount: tab.fields.length,
+      sectionsCount: tab.sections?.length || 0
+    })));
+    
+    return filteredData;
+  }
+
   // Helper methods for templates
 
   getFieldValue(fieldId: string): any {
@@ -332,5 +541,95 @@ export class CustomTemplateFormComponent implements OnInit {
 
   getTotalFieldsCount(): number {
     return Object.keys(this.fieldsForm.controls).length;
+  }
+
+  // Tab navigation methods (same as New Report)
+  switchTab(tab: string): void {
+    this.activeTab.set(tab);
+  }
+
+  // Helper methods for template structure (same as New Report)
+  hasCommonFields(): boolean {
+    const data = this.templateData();
+    return data ? data.commonFieldGroups?.length > 0 : false;
+  }
+
+  getCommonFieldGroups(): any[] {
+    return this.templateData()?.commonFieldGroups || [];
+  }
+
+  getBankSpecificTabs(): any[] {
+    return this.templateData()?.bankSpecificTabs || [];
+  }
+
+  // Field editability check (for custom template - disabled if NOT marked for custom template)
+  isFieldEditable(field: any): boolean {
+    return (field as any).includeInCustomTemplate === true;
+  }
+
+  // Field disabled check (matching New Report pattern - disabled if NOT editable)
+  isFieldDisabled(field: any): boolean {
+    return !this.isFieldEditable(field);
+  }
+
+  // Check if field is empty (for placeholder styling)
+  isFieldEmpty(fieldId: string): boolean {
+    const value = this.fieldsForm.get(fieldId)?.value;
+    return value === null || value === undefined || value === '';
+  }
+
+  // Get field error message (matching New Report pattern)
+  getFieldError(fieldId: string): string | null {
+    const control = this.fieldsForm.get(fieldId);
+    if (!control || !control.errors || !control.touched) return null;
+
+    if (control.errors['required']) return 'This field is required';
+    if (control.errors['minlength']) return `Minimum length is ${control.errors['minlength'].requiredLength}`;
+    if (control.errors['maxlength']) return `Maximum length is ${control.errors['maxlength'].requiredLength}`;
+    if (control.errors['pattern']) return 'Invalid format';
+    if (control.errors['min']) return `Minimum value is ${control.errors['min'].min}`;
+    if (control.errors['max']) return `Maximum value is ${control.errors['max'].max}`;
+
+    return 'Invalid value';
+  }
+
+  // Switch bank-specific tab
+  switchBankSpecificTab(tabId: string): void {
+    this.activeBankSpecificTab.set(tabId);
+  }
+
+  // Check if tab has sections
+  tabHasSections(tab: any): boolean {
+    return tab.sections && tab.sections.length > 0;
+  }
+
+  // Get tab sections
+  getTabSections(tab: any): any[] {
+    return tab.sections || [];
+  }
+
+  // Field validation helper
+  isFieldInvalid(fieldId: string): boolean {
+    const control = this.fieldsForm.get(fieldId);
+    return control ? control.invalid && (control.dirty || control.touched) : false;
+  }
+
+  // Methods matching New Report page structure
+  hasBankSpecificFields(): boolean {
+    const data = this.templateData();
+    return data ? data.bankSpecificTabs?.length > 0 : false;
+  }
+
+  isFormReady(): boolean {
+    return !this.isLoading() && this.templateData() !== null;
+  }
+
+  getTabTotalFields(tab: any): number {
+    let totalFields = tab.fields?.length || 0;
+    if (tab.sections) {
+      totalFields += tab.sections.reduce((sum: number, section: any) => 
+        sum + (section.fields?.length || 0), 0);
+    }
+    return totalFields;
   }
 }

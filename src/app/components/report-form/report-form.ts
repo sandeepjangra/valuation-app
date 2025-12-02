@@ -1,10 +1,11 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, FormControl, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { CommonField, BankBranch, ProcessedTemplateData, FieldGroup, TemplateField, BankSpecificField, BankSpecificTab, BankSpecificSection } from '../../models';
 import { TemplateService } from '../../services/template.service';
+import { ReportService, ReportRequest } from '../../services/report.service';
 import { DynamicTableComponent } from '../dynamic-table/dynamic-table.component';
 
 @Component({
@@ -43,6 +44,7 @@ export class ReportForm implements OnInit {
     private fb: FormBuilder,
     private http: HttpClient,
     private templateService: TemplateService,
+    private reportService: ReportService,
     private cdr: ChangeDetectorRef
   ) {
     this.reportForm = this.fb.group({});
@@ -237,6 +239,9 @@ export class ReportForm implements OnInit {
     this.reportForm.valueChanges.subscribe(values => {
       this.handleFormValueChanges(values);
     });
+
+    // Setup calculation listeners for fields with calculationMetadata
+    this.setupCalculationListeners();
     
     // Disable readonly fields
     this.templateData.allFields.forEach(field => {
@@ -261,6 +266,87 @@ export class ReportForm implements OnInit {
     });
 
     console.log('✅ Form built with controls:', Object.keys(formControls));
+  }
+
+  /**
+   * Setup calculation listeners for fields with calculationMetadata
+   */
+  setupCalculationListeners() {
+    if (!this.templateData) return;
+
+    console.log('🧮 Setting up calculation listeners...');
+    console.log('📋 Total fields available:', this.templateData.allFields.length);
+
+    // Find all fields with calculation metadata
+    this.templateData.allFields.forEach(field => {
+      if (field.calculationMetadata?.isCalculatedField && field.formula) {
+        console.log(`🧮 Found calculated field: ${field.fieldId} with formula: ${field.formula}`);
+        
+        // Get dependency fields from the formula or metadata
+        const dependencies = field.calculationMetadata.dependencies || this.extractFormulaFields(field.formula);
+        console.log(`🔗 Dependencies for ${field.fieldId}:`, dependencies);
+
+        // Set up listeners for each dependency field
+        dependencies.forEach(depFieldId => {
+          const depControl = this.reportForm.get(depFieldId);
+          if (depControl) {
+            console.log(`👂 Setting up listener for dependency: ${depFieldId} -> ${field.fieldId}`);
+            depControl.valueChanges.subscribe(() => {
+              setTimeout(() => {
+                const currentValues = this.reportForm.value;
+                this.updateCalculatedField(field, currentValues);
+              }, 0);
+            });
+          } else {
+            console.warn(`⚠️ Dependency control not found: ${depFieldId}`);
+          }
+        });
+
+        // Calculate initial value
+        const currentValues = this.reportForm.value;
+        this.updateCalculatedField(field, currentValues);
+      }
+
+      // Handle subfields in groups
+      if (field.fieldType === 'group' && field.subFields) {
+        field.subFields.forEach(subField => {
+          if (subField.calculationMetadata?.isCalculatedField && subField.formula) {
+            console.log(`🧮 Found calculated sub-field: ${subField.fieldId} with formula: ${subField.formula}`);
+            
+            const dependencies = subField.calculationMetadata.dependencies || this.extractFormulaFields(subField.formula);
+            console.log(`🔗 Dependencies for ${subField.fieldId}:`, dependencies);
+
+            dependencies.forEach(depFieldId => {
+              const depControl = this.reportForm.get(depFieldId);
+              if (depControl) {
+                console.log(`👂 Setting up listener for dependency: ${depFieldId} -> ${subField.fieldId}`);
+                depControl.valueChanges.subscribe(() => {
+                  setTimeout(() => {
+                    const currentValues = this.reportForm.value;
+                    this.updateCalculatedField(subField, currentValues);
+                  }, 0);
+                });
+              }
+            });
+
+            // Calculate initial value
+            const currentValues = this.reportForm.value;
+            this.updateCalculatedField(subField, currentValues);
+          }
+        });
+      }
+    });
+  }
+
+  /**
+   * Extract field names from a formula string
+   */
+  extractFormulaFields(formula: string): string[] {
+    const fieldPattern = /\b[a-zA-Z_][a-zA-Z0-9_]*\b/g;
+    const matches = formula.match(fieldPattern) || [];
+    // Filter out mathematical operators and functions
+    const operators = ['sin', 'cos', 'tan', 'abs', 'sqrt', 'pow', 'min', 'max', 'Math'];
+    return matches.filter(match => !operators.includes(match) && isNaN(Number(match)));
   }
 
   /**
@@ -604,30 +690,215 @@ export class ReportForm implements OnInit {
 
   // Actions
   onSaveDraft() {
-    console.log('Save Draft - Form Values:', this.reportForm.value);
-    console.log('Form Valid:', this.reportForm.valid);
-    // TODO: Implement save draft functionality
+    console.log('💾 Saving draft - Form Values:', this.reportForm.value);
+    
+    // Prepare report data for draft save (no validation required)
+    const reportData: ReportRequest = {
+      bank_code: this.selectedBankCode,
+      template_id: this.selectedTemplateId,
+      template_name: this.selectedTemplateName,
+      property_type: this.selectedPropertyType,
+      form_data: {
+        common_fields: this.reportForm.value,
+        bank_specific_fields: this.extractBankSpecificData(),
+        dynamic_tables: this.dynamicTablesData,
+        template_metadata: {
+          bank_code: this.selectedBankCode,
+          bank_name: this.selectedBankName,
+          template_id: this.selectedTemplateId,
+          template_name: this.selectedTemplateName,
+          property_type: this.selectedPropertyType
+        }
+      },
+      status: 'draft',
+      metadata: {
+        saved_at: new Date().toISOString(),
+        form_completion_percentage: this.calculateFormCompletionPercentage()
+      }
+    };
+
+    this.reportService.saveDraft(reportData).subscribe({
+      next: (response) => {
+        if (response.success) {
+          console.log('✅ Draft saved successfully:', response.data?.report_id);
+          // TODO: Show success toast/notification
+          alert('Draft saved successfully!');
+        }
+      },
+      error: (error) => {
+        console.error('❌ Failed to save draft:', error);
+        alert(`Failed to save draft: ${error.message}`);
+      }
+    });
   }
 
   onSubmit() {
     if (this.reportForm.valid) {
-      console.log('Submit - Form Values:', this.reportForm.value);
-      // TODO: Implement submit functionality
-    } else {
-      console.log('Form is invalid');
-      // Mark all fields as touched to show validation errors
-      Object.keys(this.reportForm.controls).forEach(key => {
-        this.reportForm.get(key)?.markAsTouched();
+      console.log('🚀 Submit - Form Values:', this.reportForm.value);
+      
+      // Prepare report data
+      const reportData: ReportRequest = {
+        bank_code: this.selectedBankCode,
+        template_id: this.selectedTemplateId,
+        template_name: this.selectedTemplateName,
+        property_type: this.selectedPropertyType,
+        form_data: {
+          common_fields: this.reportForm.value,
+          bank_specific_fields: this.extractBankSpecificData(),
+          dynamic_tables: this.dynamicTablesData,
+          template_metadata: {
+            bank_code: this.selectedBankCode,
+            bank_name: this.selectedBankName,
+            template_id: this.selectedTemplateId,
+            template_name: this.selectedTemplateName,
+            property_type: this.selectedPropertyType
+          }
+        },
+        metadata: {
+          submitted_at: new Date().toISOString(),
+          form_completion_percentage: this.calculateFormCompletionPercentage()
+        }
+      };
+
+      // Check user permission and call appropriate service method
+      // For now, we'll use a simple save operation
+      // TODO: Add role-based logic once auth service is available
+      
+      this.reportService.saveReport(reportData).subscribe({
+        next: (response) => {
+          if (response.success) {
+            console.log('✅ Report saved successfully:', response.data?.report_id);
+            alert('Report saved successfully!');
+            // TODO: Navigate to reports list or dashboard
+            this.router.navigate(['/dashboard']);
+          }
+        },
+        error: (error) => {
+          console.error('❌ Failed to save report:', error);
+          alert(`Failed to save report: ${error.message}`);
+        }
       });
+      
+    } else {
+      console.log('❌ Form is invalid');
+      // Mark all fields as touched to show validation errors
+      this.markAllFieldsAsTouched();
+      alert('Please fill in all required fields before submitting.');
     }
   }
 
+  /**
+   * Mark all form fields as touched to show validation errors
+   */
+  private markAllFieldsAsTouched() {
+    Object.keys(this.reportForm.controls).forEach(key => {
+      const control = this.reportForm.get(key);
+      if (control) {
+        control.markAsTouched();
+        
+        // If it's a group (for nested fields), mark all nested controls as touched
+        if (control instanceof FormGroup) {
+          this.markFormGroupAsTouched(control);
+        }
+      }
+    });
+  }
+
+  /**
+   * Recursively mark all controls in a FormGroup as touched
+   */
+  private markFormGroupAsTouched(formGroup: FormGroup) {
+    Object.keys(formGroup.controls).forEach(key => {
+      const control = formGroup.get(key);
+      if (control) {
+        control.markAsTouched();
+        if (control instanceof FormGroup) {
+          this.markFormGroupAsTouched(control);
+        }
+      }
+    });
+  }
+
+  /**
+   * Extract bank-specific form data from the form
+   */
+  private extractBankSpecificData(): any {
+    const bankSpecificData: any = {};
+    
+    if (this.templateData?.bankSpecificTabs) {
+      this.templateData.bankSpecificTabs.forEach(tab => {
+        tab.sections?.forEach(section => {
+          section.fields?.forEach(field => {
+            const formValue = this.reportForm.get(field.technicalName || field.fieldId)?.value;
+            if (formValue !== null && formValue !== undefined) {
+              bankSpecificData[field.technicalName || field.fieldId] = formValue;
+            }
+          });
+        });
+      });
+    }
+    
+    return bankSpecificData;
+  }
+
+  /**
+   * Calculate form completion percentage for progress tracking
+   */
+  private calculateFormCompletionPercentage(): number {
+    const totalFields = this.getTotalFieldCount();
+    const filledFields = this.getFilledFieldCount();
+    
+    if (totalFields === 0) return 0;
+    return Math.round((filledFields / totalFields) * 100);
+  }
+
+  /**
+   * Get number of filled fields in the form
+   */
+  private getFilledFieldCount(): number {
+    let count = 0;
+    const formValue = this.reportForm.value;
+    
+    Object.keys(formValue).forEach(key => {
+      const value = formValue[key];
+      if (value !== null && value !== undefined && value !== '') {
+        count++;
+      }
+    });
+    
+    return count;
+  }
+
   onCancel() {
+    // Check if form has unsaved changes
+    if (this.reportForm.dirty) {
+      const confirmLeave = confirm('You have unsaved changes. Are you sure you want to leave without saving?');
+      if (!confirmLeave) {
+        return;
+      }
+    }
+    
     this.router.navigate(['/dashboard']);
   }
 
   goBackToSelection() {
     this.router.navigate(['/new-report']);
+  }
+
+  /**
+   * Get button text based on current implementation
+   * TODO: Make this role-based when auth service is integrated
+   */
+  getSubmitButtonText(): string {
+    return 'Save Report';
+  }
+
+  /**
+   * Get button title/tooltip based on current implementation
+   * TODO: Make this role-based when auth service is integrated
+   */
+  getSubmitButtonTitle(): string {
+    return 'Save report (Role-based submission coming soon)';
   }
 
   /**
@@ -694,7 +965,7 @@ export class ReportForm implements OnInit {
   }
 
   /**
-   * Handles form value changes to apply conditional logic
+   * Handles form value changes to apply conditional logic and calculations
    */
   handleFormValueChanges(formValues: any): void {
     if (!this.templateData || !this.reportForm) {
@@ -705,10 +976,32 @@ export class ReportForm implements OnInit {
     this.templateData.allFields.forEach(field => {
       this.updateFieldConditionalState(field, formValues);
       
+      // Handle calculations for calculated fields (both calculated type and fields with calculationMetadata)
+      if ((field.fieldType === 'calculated' && field.formula) || 
+          (field.calculationMetadata?.isCalculatedField && field.formula)) {
+        this.updateCalculatedField(field, formValues);
+      }
+
+      // Handle auto-population for fields with calculationMetadata
+      if (field.calculationMetadata?.autoPopulate?.enabled) {
+        this.handleAutoPopulation(field, formValues);
+      }
+      
       // Handle sub-fields for group fields
       if (field.fieldType === 'group' && field.subFields) {
         field.subFields.forEach(subField => {
           this.updateFieldConditionalState(subField, formValues);
+          
+          // Handle calculations for calculated sub-fields (both calculated type and fields with calculationMetadata)
+          if ((subField.fieldType === 'calculated' && subField.formula) || 
+              (subField.calculationMetadata?.isCalculatedField && subField.formula)) {
+            this.updateCalculatedField(subField, formValues);
+          }
+
+          // Handle auto-population for sub-fields
+          if (subField.calculationMetadata?.autoPopulate?.enabled) {
+            this.handleAutoPopulation(subField, formValues);
+          }
         });
       }
     });
@@ -749,27 +1042,238 @@ export class ReportForm implements OnInit {
    * Get calculated value for calculated fields
    */
   getCalculatedValue(field: any): string {
-    if (!field.formula) return '';
+    if (!field.formula) {
+      console.log('⚠️ No formula found for field:', field.fieldId);
+      return '';
+    }
     
     try {
       // Simple formula evaluation - can be enhanced with a proper expression parser
       let formula = field.formula;
       const formControls = this.reportForm.controls;
+      const formValues = this.reportForm.value;
       
-      // Replace field references with actual values
+      console.log('🧮 Calculating field:', field.fieldId);
+      console.log('📋 Original formula:', field.formula);
+      console.log('📊 Raw form values:', formValues);
+      
+      // Replace field references with actual numeric values using word boundaries
       Object.keys(formControls).forEach(fieldId => {
-        const value = formControls[fieldId].value || 0;
-        formula = formula.replace(new RegExp(fieldId, 'g'), value.toString());
+        let value = formControls[fieldId].value || 0;
+        
+        // Clean currency values - remove currency symbols and commas
+        if (typeof value === 'string') {
+          value = value.replace(/[₹$£€,\s]/g, '');
+          value = parseFloat(value) || 0;
+        }
+        
+        console.log(`🔢 Field ${fieldId}: raw="${formControls[fieldId].value}" cleaned="${value}"`);
+        
+        // Use word boundaries to prevent partial matches
+        formula = formula.replace(new RegExp('\\b' + fieldId + '\\b', 'g'), value.toString());
       });
+      
+      console.log('🔄 Processed formula:', formula);
       
       // Evaluate simple mathematical expressions
       // Note: In production, use a proper expression parser for security
       const result = Function('"use strict"; return (' + formula + ')')();
-      return isNaN(result) ? '' : result.toString();
+      const finalResult = isNaN(result) ? 0 : result;
+      
+      console.log('✅ Calculation result:', finalResult);
+      
+      // Format as currency if it's a currency field
+      if (field.displayFormat === 'currency' || field.fieldType === 'currency' || field.fieldType === 'calculated' || field.calculationMetadata?.formatting?.currency) {
+        const formatted = new Intl.NumberFormat('en-IN', {
+          style: 'currency',
+          currency: 'INR',
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0
+        }).format(finalResult);
+        console.log('💰 Formatted result:', formatted);
+        return formatted;
+      }
+      
+      return finalResult.toString();
     } catch (error) {
-      console.warn('Error calculating formula:', field.formula, error);
+      console.warn('❌ Error calculating formula:', field.formula, error);
+      console.warn('❌ Error details:', error instanceof Error ? error.message : 'Unknown error');
       return '';
     }
+  }
+
+  /**
+   * Update calculated field value in real-time
+   */
+  private updateCalculatedField(field: any, formValues: any): void {
+    console.log(`🔢 updateCalculatedField called for: ${field.fieldId}`, {
+      hasFormula: !!field.formula,
+      formula: field.formula,
+      fieldType: field.fieldType,
+      calculationMetadata: field.calculationMetadata
+    });
+    
+    const control = this.reportForm?.get(field.fieldId);
+    if (!control || !field.formula) {
+      console.warn(`❌ Cannot update calculated field ${field.fieldId}:`, {
+        hasControl: !!control,
+        hasFormula: !!field.formula
+      });
+      return;
+    }
+
+    try {
+      let formula = field.formula;
+      
+      // Replace field references with actual values from form
+      Object.keys(formValues).forEach(fieldId => {
+        let value = formValues[fieldId] || 0;
+        
+        // Clean currency values - remove currency symbols and commas
+        if (typeof value === 'string') {
+          value = value.replace(/[₹$£€,\s]/g, '');
+          value = parseFloat(value) || 0;
+        }
+        
+        console.log(`🔢 Field ${fieldId}: raw="${formValues[fieldId]}" cleaned="${value}"`);
+        
+        // Use word boundaries to prevent partial matches
+        formula = formula.replace(new RegExp('\\b' + fieldId + '\\b', 'g'), value.toString());
+      });
+      
+      console.log('📊 Calculating field:', field.fieldId, 'Formula:', field.formula, 'Processed:', formula);
+      
+      // Evaluate the mathematical expression
+      const result = Function('"use strict"; return (' + formula + ')')();
+      const calculatedValue = isNaN(result) ? 0 : result;
+      
+      // Apply simple numeric formatting (no currency formatting)
+      let formattedValue = calculatedValue;
+      if (field.calculationMetadata?.formatting) {
+        const decimalPlaces = field.calculationMetadata.formatting.decimalPlaces || 2;
+        formattedValue = Number(calculatedValue.toFixed(decimalPlaces));
+      }
+      
+      console.log('💰 Calculated result:', calculatedValue, 'Formatted:', formattedValue);
+      
+      // Temporarily enable the control if it's disabled (for readonly calculated fields)
+      const wasDisabled = control.disabled;
+      if (wasDisabled) {
+        control.enable({ emitEvent: false });
+      }
+      
+      // Update the form control without triggering another value change event
+      control.setValue(formattedValue, { emitEvent: false });
+      
+      // Re-disable the control if it was previously disabled
+      if (wasDisabled) {
+        control.disable({ emitEvent: false });
+      }
+      
+      // Store the numeric value for further calculations
+      (control as any).numericValue = calculatedValue;
+      
+    } catch (error) {
+      console.warn('Error calculating field:', field.fieldId, field.formula, error);
+      control.setValue('', { emitEvent: false });
+    }
+  }
+
+  /**
+   * Handle auto-population of fields based on calculation results
+   */
+  private handleAutoPopulation(field: any, formValues: any): void {
+    const metadata = (field as any).calculationMetadata;
+    if (!metadata?.autoPopulate?.enabled || !metadata.autoPopulate.targetFields) {
+      return;
+    }
+
+    const sourceControl = this.reportForm?.get(field.fieldId);
+    if (!sourceControl) {
+      return;
+    }
+
+    const sourceValue = (sourceControl as any).numericValue || sourceControl.value || 0;
+    
+    // Auto-populate target fields
+    metadata.autoPopulate.targetFields.forEach((target: any) => {
+      const targetControl = this.reportForm?.get(target.fieldId);
+      if (targetControl && (target.condition === 'always' || this.evaluateAutoPopulateCondition(target.condition, formValues))) {
+        
+        console.log('🔄 Auto-populating field:', target.fieldId, 'with value:', sourceValue);
+        
+        if (target.mode === 'overwrite' || !targetControl.value) {
+          // Format the value if it's a currency field
+          let formattedValue = sourceValue;
+          if (target.fieldType === 'currency') {
+            formattedValue = new Intl.NumberFormat('en-IN', {
+              style: 'currency',
+              currency: 'INR',
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            }).format(sourceValue);
+          }
+          
+          targetControl.setValue(formattedValue, { emitEvent: false });
+          (targetControl as any).isAutoPopulated = true;
+        }
+      }
+    });
+  }
+
+  /**
+   * Evaluate auto-populate condition
+   */
+  private evaluateAutoPopulateCondition(condition: string, formValues: any): boolean {
+    if (condition === 'always') return true;
+    
+    // Add more condition evaluation logic here as needed
+    try {
+      // Simple condition evaluation - enhance as needed
+      return Function('"use strict"; return (' + condition + ')')();
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Manually trigger calculation for testing
+   */
+  triggerCalculation(): void {
+    if (!this.templateData) return;
+
+    const formValues = this.reportForm.value;
+    console.log('🔄 Manually triggering calculations with form values:', formValues);
+    console.log('📊 Form controls status:', {
+      total_extent_plot: this.reportForm.get('total_extent_plot')?.value,
+      valuation_rate: this.reportForm.get('valuation_rate')?.value,
+      estimated_land_value: this.reportForm.get('estimated_land_value')?.value
+    });
+    
+    // Trigger all calculated fields
+    this.templateData.allFields.forEach(field => {
+      if (field.calculationMetadata?.isCalculatedField && field.formula) {
+        console.log(`🧮 Triggering calculation for: ${field.fieldId}`);
+        this.updateCalculatedField(field, formValues);
+        
+        // Also check for getCalculatedValue method
+        const result = this.getCalculatedValue(field);
+        console.log(`✅ ${field.fieldId} calculated result:`, result);
+      }
+
+      // Handle subfields
+      if (field.fieldType === 'group' && field.subFields) {
+        field.subFields.forEach(subField => {
+          if (subField.calculationMetadata?.isCalculatedField && subField.formula) {
+            console.log(`🧮 Triggering calculation for sub-field: ${subField.fieldId}`);
+            this.updateCalculatedField(subField, formValues);
+          }
+        });
+      }
+    });
+    
+    this.handleFormValueChanges(formValues);
+    this.cdr.detectChanges();
   }
 
   /**

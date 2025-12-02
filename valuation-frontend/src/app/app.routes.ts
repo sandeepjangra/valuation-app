@@ -3,48 +3,11 @@ import { Routes } from '@angular/router';
 import { authGuard, managerGuard, systemAdminGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
-  // Main valuation app routes
-  { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
+  // Main valuation app routes - redirect to system admin by default
+  { path: '', redirectTo: '/org/system-administration/dashboard', pathMatch: 'full' },
   { 
     path: 'login', 
     loadComponent: () => import('./components/login/login.component').then(m => m.LoginComponent)
-  },
-  
-  // Legacy routes (redirect to org-based routes)
-  { 
-    path: 'dashboard', 
-    loadComponent: () => import('./components/dashboard/dashboard').then(m => m.Dashboard),
-    canActivate: [authGuard()]
-  },
-  { 
-    path: 'new-report', 
-    loadComponent: () => import('./components/new-report/new-report').then(m => m.NewReport),
-    canActivate: [authGuard()]
-  },
-  { 
-    path: 'report-form', 
-    loadComponent: () => import('./components/report-form/report-form').then(m => m.ReportForm),
-    canActivate: [authGuard()]
-  },
-  { 
-    path: 'reports', 
-    loadComponent: () => import('./components/reports/reports').then(m => m.Reports),
-    canActivate: [authGuard()]
-  },
-  { 
-    path: 'banks', 
-    loadComponent: () => import('./components/banks/banks').then(m => m.Banks),
-    canActivate: [authGuard()]
-  },
-  { 
-    path: 'bank-details/:id', 
-    loadComponent: () => import('./components/bank-details/bank-details').then(m => m.BankDetails),
-    canActivate: [authGuard()]
-  },
-  { 
-    path: 'logs', 
-    loadComponent: () => import('./components/log-viewer.component').then(m => m.LogViewerComponent),
-    canActivate: [authGuard()]
   },
   
   // User profile route
@@ -82,6 +45,11 @@ export const routes: Routes = [
             path: 'new',
             loadComponent: () => import('./components/new-report/new-report').then(m => m.NewReport),
             title: 'New Report'
+          },
+          {
+            path: 'create',
+            loadComponent: () => import('./components/report-form/report-form').then(m => m.ReportForm),
+            title: 'Create Report'
           },
           {
             path: ':id',

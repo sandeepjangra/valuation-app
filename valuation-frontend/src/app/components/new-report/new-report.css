@@ -820,3 +820,228 @@
   color: #cbd5e0;
   margin: 0 8px;
 }
+
+/* PDF Upload Styles */
+.pdf-upload-section {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+}
+
+.upload-option-card {
+  background: white;
+  border: 2px dashed #cbd5e0;
+  border-radius: 12px;
+  padding: 30px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.upload-option-card:hover {
+  border-color: #667eea;
+  background: #f7fafc;
+  transform: translateY(-2px);
+}
+
+.upload-option-card.dragover {
+  border-color: #667eea;
+  background: #edf2f7;
+  border-style: solid;
+}
+
+.pdf-upload-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.upload-icon {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.upload-icon i {
+  font-size: 28px;
+  color: white;
+}
+
+.upload-text h4 {
+  margin: 0 0 8px 0;
+  color: #2d3748;
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.upload-text p {
+  margin: 0;
+  color: #718096;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.file-input {
+  display: none;
+}
+
+.browse-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.browse-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.skip-button {
+  background: transparent;
+  color: #718096;
+  border: 1px solid #e2e8f0;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.skip-button:hover {
+  background: #f7fafc;
+  border-color: #cbd5e0;
+}
+
+.processing-status {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+}
+
+.processing-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e2e8f0;
+  border-top: 3px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 15px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.processing-text {
+  color: #4a5568;
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+.processing-subtext {
+  color: #718096;
+  font-size: 14px;
+}
+
+.extracted-fields-preview {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.extracted-fields-preview h4 {
+  margin: 0 0 15px 0;
+  color: #2d3748;
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.success-icon {
+  color: #48bb78;
+  font-size: 18px;
+}
+
+.fields-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 12px;
+}
+
+.field-item {
+  background: #f7fafc;
+  padding: 12px;
+  border-radius: 8px;
+  border-left: 3px solid #667eea;
+}
+
+.field-label {
+  font-size: 12px;
+  color: #718096;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.field-value {
+  color: #2d3748;
+  font-size: 14px;
+  font-weight: 500;
+  word-break: break-word;
+}
+
+.field-value.empty {
+  color: #a0aec0;
+  font-style: italic;
+}
+
+.pdf-info {
+  background: #edf2f7;
+  padding: 12px 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 15px;
+}
+
+.pdf-info i {
+  font-size: 20px;
+  color: #e53e3e;
+}
+
+.pdf-details h5 {
+  margin: 0 0 2px 0;
+  color: #2d3748;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.pdf-details p {
+  margin: 0;
+  color: #718096;
+  font-size: 12px;
+}

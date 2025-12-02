@@ -1,9 +1,10 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, NgZone } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Bank, Template } from '../../models';
 import { CustomTemplateService } from '../../services/custom-template.service';
 import { CustomTemplateListItem } from '../../models/custom-template.model';
+import { PdfProcessorService } from '../../services/pdf-processor.service';
 
 @Component({
   selector: 'app-new-report',
@@ -21,18 +22,38 @@ export class NewReport implements OnInit, OnDestroy {
   selectedCustomTemplate: CustomTemplateListItem | null = null;
   isLoading = true; // Start with loading state
   isLoadingCustomTemplates = false;
-  step = 1; // 1: Select Bank, 2: Select Template, 3: Optional Custom Template, 4: Ready to proceed
+  step = 1; // 1: Select Bank, 2: Select Template, 3: PDF Upload, 4: Ready to proceed
+  
+  // PDF Upload properties
+  uploadedPdf: File | null = null;
+  isProcessingPdf = false;
+  processingStatus = '';
+  extractedFields: { [key: string]: any } | null = null;
+  
+  currentOrgShortName = '';
+  
+  // Expose Object for template
+  Object = Object;
 
   constructor(
     private router: Router,
+    private route: ActivatedRoute,
     private cdr: ChangeDetectorRef,
     private ngZone: NgZone,
-    private customTemplateService: CustomTemplateService
+    private customTemplateService: CustomTemplateService,
+    private pdfProcessorService: PdfProcessorService
   ) {}
 
   ngOnInit() {
     // Ensure we start fresh
     console.log('🚀 NewReport component initialized');
+    
+    // Get organization context from route
+    this.route.parent?.params.subscribe(params => {
+      this.currentOrgShortName = params['orgShortName'] || '';
+      console.log('📍 Current organization:', this.currentOrgShortName);
+    });
+    
     this.loadBanksData();
   }
 
@@ -237,10 +258,11 @@ export class NewReport implements OnInit, OnDestroy {
   }
 
   proceedToForm() {
-    if (this.selectedBank) {
+    if (this.selectedBank && this.currentOrgShortName) {
       console.log('🚀 Proceeding to form with bank:', this.selectedBank.bankCode);
+      console.log('📍 Organization:', this.currentOrgShortName);
       
-      // Navigate to report form with bank and template info
+      // Navigate to organization-aware report creation form
       const queryParams: any = {
         bankCode: this.selectedBank.bankCode,
         bankName: this.selectedBank.bankName
@@ -260,10 +282,16 @@ export class NewReport implements OnInit, OnDestroy {
         queryParams.customTemplateName = this.selectedCustomTemplate.templateName;
       }
       
-      console.log('🔗 Navigating to report-form with params:', queryParams);
-      this.router.navigate(['/report-form'], { queryParams });
+      // Navigate to organization-aware create route
+      const createRoute = `/org/${this.currentOrgShortName}/reports/create`;
+      console.log('🔗 Navigating to organization-aware route:', createRoute);
+      console.log('📋 Query params:', queryParams);
+      
+      this.router.navigate([createRoute], { queryParams });
     } else {
-      console.error('❌ No bank selected - cannot proceed');
+      console.error('❌ No bank selected or organization context missing - cannot proceed');
+      console.error('Bank:', this.selectedBank);
+      console.error('Organization:', this.currentOrgShortName);
     }
   }
 
@@ -297,5 +325,121 @@ export class NewReport implements OnInit, OnDestroy {
       'standard': '📋'
     };
     return icons[propertyType] || '🏘️';
+  }
+
+  // PDF Upload Methods
+
+  skipPdfUpload() {
+    console.log('📝 Skipping PDF upload - proceeding with empty form');
+    this.uploadedPdf = null;
+    this.extractedFields = null;
+    this.step = 4; // Go to final step
+  }
+
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      this.handlePdfFile(input.files[0]);
+    }
+  }
+
+  onDragOver(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  onDragLeave(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  onDrop(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const files = event.dataTransfer?.files;
+    if (files && files[0]) {
+      this.handlePdfFile(files[0]);
+    }
+  }
+
+  private handlePdfFile(file: File) {
+    // Validate file type
+    if (file.type !== 'application/pdf') {
+      alert('Please upload a PDF file only.');
+      return;
+    }
+
+    // Validate file size (10MB max)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File size must be less than 10MB.');
+      return;
+    }
+
+    console.log('📄 PDF file selected:', file.name);
+    this.uploadedPdf = file;
+    this.processPdf(file);
+  }
+
+  private processPdf(file: File) {
+    // Validate file first
+    const validation = this.pdfProcessorService.validatePdfFile(file);
+    if (!validation.valid) {
+      alert('File validation failed:\n' + validation.errors.join('\n'));
+      this.uploadedPdf = null;
+      return;
+    }
+
+    this.isProcessingPdf = true;
+    this.processingStatus = 'Uploading and processing PDF...';
+    
+    console.log('📤 Processing PDF:', file.name);
+    
+    // Process with real API
+    this.pdfProcessorService.extractFieldsFromPdf(file).subscribe({
+      next: (result) => {
+        if (result.success) {
+          // Map extracted fields to our form format
+          this.extractedFields = this.pdfProcessorService.mapExtractedFieldsToForm(result.fields);
+          this.processingStatus = `Successfully extracted ${result.metadata.fields_extracted} fields`;
+          
+          console.log('✅ PDF processed successfully:', result);
+          console.log('📋 Extracted fields:', this.extractedFields);
+          
+          this.step = 4; // Go to final step
+        } else {
+          throw new Error(result.error || 'PDF processing failed');
+        }
+      },
+      error: (error) => {
+        console.error('❌ Error processing PDF:', error);
+        const errorMessage = error.error?.detail || error.message || 'Unknown error';
+        alert('Error processing PDF: ' + errorMessage);
+        this.uploadedPdf = null;
+        this.isProcessingPdf = false;
+      },
+      complete: () => {
+        this.isProcessingPdf = false;
+      }
+    });
+  }
+
+
+
+  getExtractedFieldsArray(): Array<{ label: string, value: string }> {
+    if (!this.extractedFields) return [];
+    
+    const fieldLabels: { [key: string]: string } = {
+      'applicant_name': 'Applicant Name',
+      'inspection_date': 'Inspection Date',
+      'valuation_date': 'Valuation Date',
+      'valuation_purpose': 'Valuation Purpose',
+      'property_address': 'Property Address'
+    };
+
+    return Object.entries(this.extractedFields).map(([key, value]) => ({
+      label: fieldLabels[key] || key,
+      value: String(value)
+    }));
   }
 }

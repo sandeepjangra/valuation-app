@@ -11,6 +11,14 @@
         <h1 class="page-title">Property Valuation for {{ selectedBankName }}</h1>
       </div>
       <div class="right-section">
+        <button 
+          type="button"
+          class="save-template-button" 
+          (click)="onSaveAsTemplate()"
+          [disabled]="isLoading || !isFormReady()"
+          title="Save this report as a reusable template">
+          💾 Save as Template
+        </button>
         <button class="back-button" (click)="goBackToSelection()">
           ← Back to Selection
         </button>
@@ -1178,3 +1186,7 @@
   [template]="customTemplateName"
   (choice)="onAutoFillChoice($event)">
 </app-template-autofill-modal>
+
+<!-- Save Template Dialog -->
+<app-save-template-dialog #saveTemplateDialog></app-save-template-dialog>
+

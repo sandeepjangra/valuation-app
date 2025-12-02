@@ -3,8 +3,9 @@ Organization Management API Endpoints
 Handles CRUD operations for organizations and org-based access control
 """
 
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Header, Request
 from fastapi.responses import JSONResponse
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel, Field, validator
 from datetime import datetime, timezone
@@ -13,6 +14,9 @@ import re
 import logging
 
 logger = logging.getLogger(__name__)
+
+# Security scheme
+security = HTTPBearer()
 
 # Create API router
 router = APIRouter(prefix="/api/organizations", tags=["organizations"])
@@ -28,6 +32,7 @@ class OrganizationCreate(BaseModel):
     contact_email: str = Field(..., description="Contact email")
     contact_phone: Optional[str] = None
     contact_address: Optional[str] = None
+    report_reference_initials: Optional[str] = Field(None, min_length=1, max_length=50, description="Report reference initials (e.g., 'CEV/RVO')")
     
     @validator('org_short_name')
     def validate_short_name(cls, v):
@@ -54,6 +59,7 @@ class OrganizationUpdate(BaseModel):
     contact_phone: Optional[str] = None
     contact_address: Optional[str] = None
     is_active: Optional[bool] = None
+    report_reference_initials: Optional[str] = Field(None, min_length=1, max_length=50, description="Report reference initials (e.g., 'CEV/RVO')")
     
     @validator('contact_email')
     def validate_email(cls, v):
@@ -245,7 +251,9 @@ async def create_organization(org_data: OrganizationCreate):
                 "max_users": 50,
                 "features_enabled": ["reports", "templates", "file_upload"],
                 "timezone": "UTC",
-                "date_format": "DD/MM/YYYY"
+                "date_format": "DD/MM/YYYY",
+                "report_reference_initials": org_data.report_reference_initials,  # NEW: Report reference initials
+                "report_sequence_counter": 0  # NEW: Auto-increment counter (starts at 0, first report will be 0001)
             },
             "subscription": {
                 "plan": "basic",
@@ -342,6 +350,8 @@ async def update_organization(org_identifier: str, org_data: OrganizationUpdate)
             update_doc["$set"]["contact_info.address"] = org_data.contact_address
         if org_data.is_active is not None:
             update_doc["$set"]["is_active"] = org_data.is_active
+        if org_data.report_reference_initials is not None:
+            update_doc["$set"]["settings.report_reference_initials"] = org_data.report_reference_initials
         
         # Update organization
         await orgs_collection.update_one(query, update_doc)
@@ -429,4 +439,267 @@ async def delete_organization(org_identifier: str):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete organization: {str(e)}"
+        )
+
+
+# ================================
+# Template Management for Organizations
+# ================================
+
+class CreateTemplateFromReportRequest(BaseModel):
+    """Request model for creating a template from a filled report"""
+    templateName: str = Field(..., min_length=3, max_length=100)
+    description: Optional[str] = None
+    bankCode: str
+    templateCode: str
+    fieldValues: Dict[str, Any]
+
+
+@router.post("/{org_short_name}/templates/from-report")
+async def create_template_from_report(
+    org_short_name: str,
+    template_data: CreateTemplateFromReportRequest,
+    request: Request,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """
+    Create a custom template from a filled report form.
+    Only saves bank-specific fields with non-empty values.
+    
+    Business Rules:
+    - Max 3 templates per organization + bank + property type
+    - Only Manager and Admin can create templates
+    - Only bank-specific fields are saved (common fields excluded)
+    - Only non-empty field values are saved
+    - Template name must be unique for the org + bank + property type combination
+    """
+    from database.multi_db_manager import MultiDatabaseManager
+    from utils.auth_middleware import get_organization_context
+    from utils.activity_logger import log_activity
+    
+    try:
+        # Verify authentication and role
+        org_context = await get_organization_context(credentials)
+        
+        # Debug logging
+        logger.info(f"🔍 Template creation attempt - User: {org_context.email}, Org: {org_context.org_short_name}")
+        logger.info(f"🔍 Roles: {org_context.roles}, is_manager: {org_context.is_manager}, is_system_admin: {org_context.is_system_admin}")
+        logger.info(f"🔍 Target org from URL: {org_short_name}")
+        
+        # Check if user is Manager or System Admin
+        if not org_context.is_manager and not org_context.is_system_admin:
+            logger.error(f"❌ Permission denied - User {org_context.email} is neither manager nor system_admin")
+            raise HTTPException(
+                status_code=403,
+                detail="Only Manager or Admin can create custom templates"
+            )
+        
+        # Verify organization context matches URL parameter (except for system admins who can manage any org)
+        if not org_context.is_system_admin and org_context.organization_short_name != org_short_name:
+            logger.error(f"❌ Organization mismatch - User org: {org_context.organization_short_name}, URL org: {org_short_name}")
+            raise HTTPException(
+                status_code=403,
+                detail="Organization mismatch"
+            )
+        
+        db_manager = MultiDatabaseManager()
+        await db_manager.connect()
+        
+        # For system admin, get the target organization's database
+        # For regular managers, use their own organization's database
+        if org_context.is_system_admin:
+            # System admin can create templates for any organization
+            # Need to get the organization ID from the org_short_name
+            admin_db = db_manager.get_database("admin")
+            org_doc = await admin_db.organizations.find_one({"orgShortName": org_short_name})
+            if not org_doc:
+                raise HTTPException(status_code=404, detail=f"Organization {org_short_name} not found")
+            target_org_id = str(org_doc["_id"])
+            org_db = db_manager.get_org_database(target_org_id)
+        else:
+            # Regular manager/user - use their own organization
+            org_db = db_manager.get_org_database(org_context.organization_id)
+            target_org_id = org_context.organization_id
+        
+        admin_db = db_manager.get_database("admin")
+        
+        # Parse property type from template code (e.g., "land-property" -> "land")
+        property_type = template_data.templateCode.split("-")[0] if "-" in template_data.templateCode else template_data.templateCode
+        
+        # Check template count limit (max 3 per bank+propertyType)
+        existing_count = await org_db.custom_templates.count_documents({
+            "bankCode": template_data.bankCode,
+            "propertyType": property_type,
+            "isActive": True
+        })
+        
+        if existing_count >= 3:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Maximum 3 templates allowed for {template_data.bankCode} - {property_type}. Please delete an existing template first."
+            )
+        
+        # Check for duplicate template name
+        duplicate = await org_db.custom_templates.find_one({
+            "bankCode": template_data.bankCode,
+            "propertyType": property_type,
+            "templateName": template_data.templateName,
+            "isActive": True
+        })
+        
+        if duplicate:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Template name '{template_data.templateName}' already exists for {template_data.bankCode} - {property_type}"
+            )
+        
+        # Get bank information
+        banks_doc = await admin_db.banks.find_one({"_id": {"$regex": "all_banks_unified"}})
+        if not banks_doc:
+            raise HTTPException(status_code=404, detail="Banks configuration not found")
+        
+        bank_doc = None
+        for bank in banks_doc.get("banks", []):
+            if bank.get("bankCode", "").upper() == template_data.bankCode.upper():
+                bank_doc = bank
+                break
+        
+        if not bank_doc:
+            raise HTTPException(status_code=404, detail=f"Bank {template_data.bankCode} not found")
+        
+        bank_name = bank_doc.get("bankName", "")
+        
+        # Get template configuration to identify bank-specific fields
+        template_config = None
+        for tmpl in bank_doc.get("templates", []):
+            if tmpl.get("templateCode", "").upper() == template_data.templateCode.upper():
+                template_config = tmpl
+                break
+        
+        if not template_config:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Template {template_data.templateCode} not found for bank {template_data.bankCode}"
+            )
+        
+        collection_ref = template_config.get("collectionRef")
+        if not collection_ref:
+            raise HTTPException(
+                status_code=500,
+                detail="Template collection reference not configured"
+            )
+        
+        # Get common fields to filter them out
+        common_fields_docs = await admin_db.common_form_fields.find({"isActive": True}).to_list(length=None)
+        common_field_ids = set()
+        
+        for doc in common_fields_docs:
+            for field in doc.get("fields", []):
+                common_field_ids.add(field.get("fieldId"))
+                # Also add subfield IDs if it's a group field
+                if field.get("fieldType") == "group" and "subFields" in field:
+                    for subfield in field["subFields"]:
+                        common_field_ids.add(subfield.get("fieldId"))
+        
+        logger.info(f"🔍 Found {len(common_field_ids)} common field IDs to exclude")
+        
+        # Filter field values:
+        # 1. Exclude common fields (only save bank-specific fields)
+        # 2. Exclude empty values (null, "", [], {})
+        filtered_field_values = {}
+        
+        for field_id, value in template_data.fieldValues.items():
+            # Skip common fields
+            if field_id in common_field_ids:
+                continue
+            
+            # Skip empty values
+            if value is None or value == "" or value == [] or value == {}:
+                continue
+            
+            # Skip empty strings after stripping whitespace
+            if isinstance(value, str) and not value.strip():
+                continue
+            
+            filtered_field_values[field_id] = value
+        
+        logger.info(f"📊 Filtered from {len(template_data.fieldValues)} to {len(filtered_field_values)} bank-specific non-empty fields")
+        
+        if not filtered_field_values:
+            raise HTTPException(
+                status_code=400,
+                detail="No bank-specific field values to save. Please fill in at least one bank-specific field."
+            )
+        
+        # Create template document
+        template_doc = {
+            "templateName": template_data.templateName,
+            "description": template_data.description or "",
+            "bankCode": template_data.bankCode,
+            "bankName": bank_name,
+            "propertyType": property_type,
+            "templateCode": template_data.templateCode,
+            "fieldValues": filtered_field_values,
+            "createdBy": org_context.user_id,
+            "createdByName": org_context.email,
+            "modifiedBy": org_context.user_id,
+            "modifiedByName": org_context.email,
+            "organizationId": target_org_id,
+            "isActive": True,
+            "version": 1,
+            "createdFrom": "report_form",
+            "createdAt": datetime.now(timezone.utc),
+            "modifiedAt": datetime.now(timezone.utc)
+        }
+        
+        # Insert template
+        result = await org_db.custom_templates.insert_one(template_doc)
+        template_id = str(result.inserted_id)
+        
+        # Log activity (log to the target organization's activity log)
+        await log_activity(
+            organization_id=target_org_id,
+            user_id=org_context.user_id,
+            user_email=org_context.email,
+            action="custom_template_created_from_report",
+            resource_type="custom_template",
+            resource_id=template_id,
+            details={
+                "templateName": template_data.templateName,
+                "bankCode": template_data.bankCode,
+                "propertyType": property_type,
+                "templateCode": template_data.templateCode,
+                "fieldCount": len(filtered_field_values),
+                "createdBySystemAdmin": org_context.is_system_admin
+            },
+            ip_address=None
+        )
+        
+        await db_manager.disconnect()
+        
+        logger.info(f"✅ Custom template created from report: {template_data.templateName} with {len(filtered_field_values)} fields")
+        
+        return JSONResponse(
+            status_code=201,
+            content={
+                "success": True,
+                "data": {
+                    "_id": template_id,
+                    "templateName": template_data.templateName,
+                    "bankCode": template_data.bankCode,
+                    "propertyType": property_type,
+                    "fieldCount": len(filtered_field_values)
+                },
+                "message": f"Custom template created successfully with {len(filtered_field_values)} field values"
+            }
+        )
+        
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        logger.error(f"❌ Error creating custom template from report: {str(e)}")
+        logger.exception(e)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to create template: {str(e)}"
         )

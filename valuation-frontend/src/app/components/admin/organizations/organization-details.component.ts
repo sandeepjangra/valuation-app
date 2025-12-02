@@ -36,6 +36,7 @@ interface Organization {
     max_users: number;
     max_reports_per_month: number;
     max_storage_gb: number;
+    report_reference_initials?: string;  // NEW: Report reference initials
   };
   subscription: {
     plan: string;
@@ -138,6 +139,25 @@ interface Organization {
                 <span class="label">Address:</span>
                 <span class="value">{{ organization()!.contact_info?.address || 'N/A' }}</span>
               </div>
+            </div>
+          </div>
+
+          <!-- Report Reference Configuration -->
+          <div class="card">
+            <div class="card-header">
+              <h2>📋 Report Reference</h2>
+            </div>
+            <div class="card-content">
+              <div class="detail-row">
+                <span class="label">Reference Initials:</span>
+                <span class="value">{{ organization()!.settings?.report_reference_initials || 'Not configured' }}</span>
+              </div>
+              @if (organization()!.settings?.report_reference_initials) {
+                <div class="detail-row">
+                  <span class="label">Next Report Number:</span>
+                  <span class="value">{{ organization()!.settings.report_reference_initials }}/0001/{{ getCurrentDate() }}</span>
+                </div>
+              }
             </div>
           </div>
 
@@ -268,6 +288,19 @@ interface Organization {
               <label>Address</label>
               <textarea [(ngModel)]="editForm.contact_info.address" name="address" rows="3"
                         placeholder="Street, City, State, ZIP"></textarea>
+            </div>
+
+            <h3 class="section-title">Report Reference Configuration</h3>
+
+            <div class="form-group">
+              <label>Report Reference Initials</label>
+              <input type="text" [(ngModel)]="editForm.settings.report_reference_initials" 
+                     name="report_reference_initials"
+                     placeholder="e.g., CEV/RVO"
+                     maxlength="50">
+              <small class="field-note">
+                Prefix for report reference numbers. Example: "CEV/RVO" will generate reports like "CEV/RVO/0001/02122025"
+              </small>
             </div>
 
             <h3 class="section-title">Subscription Settings</h3>
@@ -903,7 +936,8 @@ export class OrganizationDetailsComponent implements OnInit {
       subscription_plan: 'basic',
       max_users: 10,
       max_reports_per_month: 100,
-      max_storage_gb: 10
+      max_storage_gb: 10,
+      report_reference_initials: ''  // NEW: Report reference initials
     }
   };
 
@@ -1018,7 +1052,8 @@ export class OrganizationDetailsComponent implements OnInit {
         subscription_plan: org.settings?.subscription_plan || 'basic',
         max_users: org.settings?.max_users || 10,
         max_reports_per_month: org.settings?.max_reports_per_month || 100,
-        max_storage_gb: org.settings?.max_storage_gb || 10
+        max_storage_gb: org.settings?.max_storage_gb || 10,
+        report_reference_initials: org.settings?.report_reference_initials || ''  // NEW
       }
     };
 
@@ -1154,6 +1189,15 @@ export class OrganizationDetailsComponent implements OnInit {
 
   formatDate(dateString: string): string {
     return new Date(dateString).toLocaleDateString();
+  }
+
+  getCurrentDate(): string {
+    // Format: DDMMYYYY for report reference number preview
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = now.getFullYear();
+    return `${day}${month}${year}`;
   }
 
   formatPlan(plan: string | undefined): string {

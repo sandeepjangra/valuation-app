@@ -4,19 +4,41 @@
     <div class="header-content">
       <div class="welcome-section">
         <h1 class="dashboard-title">Dashboard</h1>
-        <p class="company-info">{{ currentCompany }}</p>
+        <p class="company-info">{{ getCurrentOrgName() }}</p>
+        <span *ngIf="isUserSystemAdmin" class="admin-badge">System Admin</span>
       </div>
       
-      <!-- Admin Toggle -->
-      <div class="admin-controls" *ngIf="isAdmin">
-        <div class="toggle-container">
-          <label class="toggle-label">
-            <span [class.active]="!showCollectiveView">Company View</span>
-            <button (click)="toggleAdminView()" class="toggle-btn">
-              {{ showCollectiveView ? 'Switch to Company' : 'Switch to Collective' }}
+      <!-- Organization Switcher for Admins -->
+      <div class="org-switcher-container" *ngIf="isUserSystemAdmin">
+        <button (click)="toggleOrgSwitcher()" class="org-switcher-btn">
+          <span class="switch-icon">🔄</span>
+          Switch Organization
+        </button>
+        
+        <!-- Dropdown for org selection -->
+        <div class="org-dropdown" *ngIf="showOrgSwitcher">
+          <div class="dropdown-header">
+            <h4>Switch to Organization:</h4>
+            <button (click)="toggleOrgSwitcher()" class="close-btn">×</button>
+          </div>
+          <div class="org-list">
+            <div 
+              *ngFor="let org of availableOrgs" 
+              class="org-item"
+              [class.selected]="selectedOrgForSwitch === org.org_short_name"
+              (click)="selectedOrgForSwitch = org.org_short_name">
+              <span class="org-name">{{ getOrgDisplayName(org) }}</span>
+              <span class="org-type">{{ getOrgSubscriptionPlan(org) }}</span>
+            </div>
+          </div>
+          <div class="dropdown-actions">
+            <button 
+              (click)="switchToOrganization()" 
+              [disabled]="!selectedOrgForSwitch"
+              class="switch-btn">
+              Switch Now
             </button>
-            <span [class.active]="showCollectiveView">Collective View</span>
-          </label>
+          </div>
         </div>
       </div>
     </div>
@@ -42,7 +64,7 @@
       <div class="card-content">
         <div class="card-number">{{ getDisplayStats().pendingReports }}</div>
         <div class="card-subtitle">
-          {{ showCollectiveView ? 'Across all companies' : 'Your company' }}
+          {{ getCurrentOrgName() }}
         </div>
       </div>
       <div class="card-footer">
@@ -61,7 +83,7 @@
       <div class="card-content">
         <div class="card-number">{{ getDisplayStats().createdReports }}</div>
         <div class="card-subtitle">
-          {{ showCollectiveView ? 'Total reports' : 'Your reports' }}
+          Organization Reports
         </div>
       </div>
       <div class="card-footer">
@@ -80,7 +102,7 @@
       <div class="card-content">
         <div class="card-number">{{ getDisplayStats().totalBanks }}</div>
         <div class="card-subtitle">
-          {{ showCollectiveView ? 'All available banks' : 'Available banks' }}
+          Available Banks
         </div>
       </div>
       <div class="card-footer">
@@ -89,7 +111,7 @@
     </div>
 
     <!-- Templates Card (Manager/Admin Only) -->
-    <div class="stats-card templates-card" *ngIf="isAdmin" (click)="navigateToTemplates()">
+    <div class="stats-card templates-card" *ngIf="isSystemAdmin" (click)="navigateToTemplates()">
       <div class="card-header">
         <div class="card-icon templates-icon">
           📋
@@ -108,7 +130,7 @@
     </div>
 
     <!-- Companies Card (Admin Only) -->
-    <div class="stats-card companies-card" *ngIf="isAdmin && showCollectiveView">
+    <div class="stats-card companies-card" *ngIf="isSystemAdmin">
       <div class="card-header">
         <div class="card-icon companies-icon">
           🏢
@@ -139,7 +161,7 @@
           <div class="activity-type" [class]="activity.type">
             {{ activity.count }} {{ activity.type === 'created' ? 'reports created' : 'reports pending' }}
           </div>
-          <div class="activity-company" *ngIf="isAdmin && showCollectiveView">
+          <div class="activity-company" *ngIf="isSystemAdmin">
             {{ activity.company }}
           </div>
         </div>

@@ -13,6 +13,7 @@ import { environment } from '../../../../environments/environment';
 interface Organization {
   _id: string;
   organization_id: string;
+  org_short_name: string;
   name: string;
   status: string;
   contact_info?: {
@@ -95,6 +96,9 @@ interface Organization {
               </div>
 
               <div class="org-actions">
+                <button class="btn btn-success" (click)="switchToOrganization(org)">
+                  🔄 Switch to Organization
+                </button>
                 <button class="btn btn-primary" (click)="viewOrganization(org.organization_id)">
                   👁️ View Details
                 </button>
@@ -151,6 +155,13 @@ interface Organization {
               <label>Address</label>
               <textarea [(ngModel)]="newOrg.address" name="address" rows="3"
                         placeholder="Street, City, State, ZIP"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label>Report Reference Initials</label>
+              <input type="text" [(ngModel)]="newOrg.report_reference_initials" name="report_reference_initials"
+                     placeholder="e.g., CEV/RVO" maxlength="50">
+              <small class="field-note">Prefix for report reference numbers (e.g., "CEV/RVO" → "CEV/RVO/0001/02122025")</small>
             </div>
 
             <div class="form-row">
@@ -310,6 +321,15 @@ interface Organization {
 
     .btn-secondary:hover {
       background: #e5e7eb;
+    }
+
+    .btn-success {
+      background: #10b981;
+      color: white;
+    }
+
+    .btn-success:hover:not(:disabled) {
+      background: #059669;
     }
 
     .btn:disabled {
@@ -476,7 +496,8 @@ export class OrganizationsListComponent implements OnInit {
     contact_phone: '',
     address: '',
     max_users: 25,
-    plan: 'basic'
+    plan: 'basic',
+    report_reference_initials: ''  // NEW: Report reference initials
   };
 
   ngOnInit() {
@@ -487,7 +508,7 @@ export class OrganizationsListComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
 
-    this.http.get<any>(`${this.API_BASE}/admin/organizations`).subscribe({
+    this.http.get<any>(`${this.API_BASE}/admin/organizations?include_system=true`).subscribe({
       next: (response) => {
         if (response.success) {
           this.organizations.set(response.data);
@@ -582,6 +603,11 @@ export class OrganizationsListComponent implements OnInit {
     });
   }
 
+  switchToOrganization(org: Organization) {
+    // Navigate to the organization's dashboard
+    this.router.navigate(['/org', org.org_short_name, 'dashboard']);
+  }
+
   viewOrganization(orgId: string) {
     this.router.navigate(['/admin/organizations', orgId]);
   }
@@ -614,7 +640,8 @@ export class OrganizationsListComponent implements OnInit {
       contact_phone: '',
       address: '',
       max_users: 25,
-      plan: 'basic'
+      plan: 'basic',
+      report_reference_initials: ''  // NEW
     };
   }
 }

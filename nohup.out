@@ -1,0 +1,17 @@
+🚀 Starting backend server...
+📂 Directory: /Users/sandeepjangra/Downloads/development/ValuationAppV1/backend
+🐍 Python: Python 3.11.14
+
+INFO:     Will watch for changes in these directories: ['/Users/sandeepjangra/Downloads/development/ValuationAppV1/backend']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [34363] using WatchFiles
+⚠️ Cognito configuration not found in environment variables
+⚠️ Missing environment variables (development mode): ['AWS_REGION', 'COGNITO_USER_POOL_ID', 'COGNITO_CLIENT_ID']
+INFO:     Started server process [34365]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [34365]
+INFO:     Stopping reloader process [34363]

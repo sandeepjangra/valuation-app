@@ -2,6 +2,47 @@
 
 import { FieldType, FieldOption, FieldValidation, DataSourceConfig } from './common-field.model';
 
+// Calculation metadata interfaces
+export interface CalculationTarget {
+  fieldId: string;
+  templateId?: string;
+  condition: string;
+  mode: string;
+}
+
+export interface CalculationMetadata {
+  isCalculatedField?: boolean;
+  isCalculationInput?: boolean;
+  formula?: string;
+  dependencies?: string[];
+  usedInFormulas?: string[];
+  calculationTriggers?: string[];
+  realTimeUpdate?: boolean;
+  showCalculation?: boolean;
+  calculationDisplay?: {
+    showFormula?: boolean;
+    formulaText?: string;
+    showSteps?: boolean;
+    showResult?: boolean;
+  };
+  formatting?: {
+    currency?: boolean;
+    decimalPlaces?: number;
+    thousandSeparator?: boolean;
+  };
+  autoPopulate?: {
+    enabled?: boolean;
+    targetFields?: CalculationTarget[];
+  };
+  validationRules?: {
+    required?: boolean;
+    type?: string;
+    min?: number;
+    max?: number;
+    message?: string;
+  };
+}
+
 // Table field interfaces
 export interface TableColumn {
   columnId: string;
@@ -96,6 +137,7 @@ export interface TemplateField {
   columns?: TableColumn[]; // For table fields
   rows?: TableRow[]; // For table fields
   tableConfig?: DynamicTableConfig; // For dynamic_table fields
+  calculationMetadata?: CalculationMetadata; // For calculated fields
 }
 
 export interface BankSpecificField {
@@ -129,6 +171,7 @@ export interface BankSpecificField {
   columns?: TableColumn[]; // For table fields
   rows?: TableRow[]; // For table fields
   tableConfig?: DynamicTableConfig; // For dynamic_table fields
+  calculationMetadata?: CalculationMetadata; // For calculated fields
 }
 
 export interface BankSpecificSection {

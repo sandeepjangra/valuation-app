@@ -1,0 +1,50 @@
+<div class="org-header" *ngIf="currentOrgShortName">
+  <div class="org-info">
+    <h2 class="org-title">{{ currentOrgName }}</h2>
+    <span class="org-badge admin" *ngIf="isSystemAdmin">System Admin</span>
+    <span class="org-badge user" *ngIf="!isSystemAdmin">Organization User</span>
+  </div>
+
+  <!-- Admin Organization Switcher - Show if organizations are available for switching -->
+  <div class="admin-switcher" *ngIf="availableOrgs && availableOrgs.length > 0">
+    <button class="switcher-toggle" (click)="toggleOrgDropdown()">
+      🔄 Switch Organization
+      <span class="dropdown-arrow" [class.open]="showOrgDropdown">▼</span>
+    </button>
+
+    <div class="org-dropdown" *ngIf="showOrgDropdown">
+      <div class="dropdown-header">
+        <h4>Switch to Organization:</h4>
+        <button class="close-btn" (click)="toggleOrgDropdown()">×</button>
+      </div>
+      
+      <div class="org-list">
+        <div 
+          class="org-item"
+          *ngFor="let org of availableOrgs"
+          [class.selected]="selectedOrgForSwitch === org.org_short_name"
+          (click)="selectOrgForSwitch(org.org_short_name)">
+          
+          <div class="org-details">
+            <span class="org-name">{{ org.org_display_name }}</span>
+            <span class="org-plan">{{ org.settings?.subscription_plan || 'Standard' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="dropdown-actions">
+        <button 
+          class="admin-home-btn" 
+          (click)="navigateToAdminDashboard()">
+          🏠 Admin Home
+        </button>
+        <button 
+          class="switch-btn" 
+          [disabled]="!selectedOrgForSwitch"
+          (click)="switchToOrganization()">
+          Switch Now
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

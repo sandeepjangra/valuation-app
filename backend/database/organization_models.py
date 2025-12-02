@@ -49,6 +49,8 @@ class OrganizationSchema:
                 "s3_prefix": organization_id,  # For S3 folder structure
                 "timezone": "UTC",
                 "date_format": "YYYY-MM-DD",
+                "report_reference_initials": None,  # Organization-specific report reference initials (e.g., "CEV/RVO")
+                "report_sequence_counter": 0,  # Auto-increment counter for report reference numbers (starts at 0, first report will be 0001)
                 **(settings or {})
             },
             "subscription": {
@@ -176,6 +178,7 @@ class ReportSchema:
         template_used: str,
         created_by: str,
         report_data: Dict[str, Any],
+        reference_number: str,  # NEW: Unique report reference number
         property_details: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """Create a new report document"""
@@ -183,6 +186,7 @@ class ReportSchema:
         
         return {
             "organization_id": organization_id,  # 🔒 Security filter field
+            "reference_number": reference_number,  # 🔑 Unique report reference (e.g., "CEV/RVO/0001/02122025")
             "report_name": report_name,
             "report_id": f"RPT_{organization_id}_{int(now.timestamp())}",  # Unique report ID
             "template_used": template_used,  # Reference to template collection
@@ -212,11 +216,13 @@ class ReportSchema:
         return [
             {"keys": [("organization_id", 1)], "name": "idx_organization_id"},
             {"keys": [("report_id", 1)], "unique": True, "name": "idx_report_id"},
+            {"keys": [("reference_number", 1)], "unique": True, "name": "idx_reference_number"},  # NEW: Unique reference number
             {"keys": [("created_by", 1)], "name": "idx_created_by"},
             {"keys": [("template_used", 1)], "name": "idx_template_used"},
             {"keys": [("workflow.status", 1)], "name": "idx_workflow_status"},
             {"keys": [("organization_id", 1), ("created_by", 1)], "name": "idx_org_user"},
             {"keys": [("organization_id", 1), ("workflow.status", 1)], "name": "idx_org_status"},
+            {"keys": [("organization_id", 1), ("reference_number", 1)], "name": "idx_org_ref_number"},  # NEW: Compound index
             {"keys": [("created_at", -1)], "name": "idx_created_at_desc"},
             {"keys": [("isActive", 1)], "name": "idx_active"}
         ]

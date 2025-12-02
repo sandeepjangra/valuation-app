@@ -1,0 +1,42 @@
+{
+  "database": "valuation_admin",
+  "collection_name": "organizations",
+  "is_common_fields": false,
+  "document_count": 1,
+  "field_count": 0,
+  "documents": [
+    {
+      "_id": "691a35e9718482a6b0b5d51c",
+      "organization_id": "system_admin",
+      "name": "System Administration",
+      "status": "active",
+      "contact_info": {
+        "email": "admin@valuationapp.com",
+        "phone": null,
+        "address": null
+      },
+      "settings": {
+        "max_users": 10,
+        "features_enabled": [
+          "all"
+        ],
+        "s3_prefix": "system_admin",
+        "timezone": "UTC",
+        "date_format": "YYYY-MM-DD"
+      },
+      "subscription": {
+        "plan": "basic",
+        "max_reports_per_month": 100,
+        "storage_limit_gb": 10,
+        "expires_at": null
+      },
+      "created_by": "system",
+      "created_at": "2025-11-16T20:36:57.003000",
+      "updated_at": "2025-11-16T20:36:57.003000",
+      "isActive": true,
+      "version": 1,
+      "createdAt": "2025-11-16T20:36:57.155000",
+      "updatedAt": "2025-11-16T20:36:57.155000"
+    }
+  ]
+}

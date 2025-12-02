@@ -192,20 +192,16 @@ export class Banks implements OnInit, OnDestroy {
   }
 
   getTemplateCount(bankCode: string): number {
-    // This would normally come from API data
-    const templateCounts: { [key: string]: number } = {
-      'SBI': 8,
-      'HDFC': 6,
-      'ICICI': 7,
-      'AXIS': 5,
-      'PNB': 9,
-      'BOB': 4,
-      'CANARA': 6,
-      'UBI': 7,
-      'IOB': 5,
-      'UNION': 3
-    };
-    return templateCounts[bankCode] || 0;
+    // Use actual template data from API
+    const bank = this.banks.find(b => b.bankCode === bankCode);
+    if (bank && (bank as any).templates) {
+      const count = (bank as any).templates.length;
+      console.log(`📊 ${bankCode} template count: ${count}`);
+      return count;
+    }
+    // Fallback to 0 if no templates found
+    console.log(`⚠️ No templates found for bank: ${bankCode}`);
+    return 0;
   }
 
   getBankType(bankCode: string): string {

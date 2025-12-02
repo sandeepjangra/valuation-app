@@ -1,0 +1,73 @@
+{
+  "database": "valuation_admin",
+  "collection_name": "users",
+  "is_common_fields": false,
+  "document_count": 1,
+  "field_count": 0,
+  "documents": [
+    {
+      "_id": "691a35ea718482a6b0b5d51e",
+      "cognito_user_id": "system_admin_user_001",
+      "email": "admin@valuationapp.com",
+      "organization_id": "system_admin",
+      "role": "system_admin",
+      "status": "active",
+      "profile": {
+        "first_name": "System",
+        "last_name": "Administrator",
+        "display_name": "System Admin",
+        "avatar_url": null,
+        "department": null,
+        "phone": null
+      },
+      "permissions": {
+        "organizations": [
+          "create",
+          "read",
+          "update",
+          "delete"
+        ],
+        "users": [
+          "create",
+          "read",
+          "update",
+          "delete"
+        ],
+        "reports": [
+          "create",
+          "read",
+          "update",
+          "delete"
+        ],
+        "templates": [
+          "create",
+          "read",
+          "update",
+          "delete"
+        ],
+        "audit_logs": [
+          "read"
+        ],
+        "system_settings": [
+          "create",
+          "read",
+          "update",
+          "delete"
+        ]
+      },
+      "session_info": {
+        "last_login": null,
+        "last_activity": null,
+        "active_sessions": [],
+        "login_count": 0
+      },
+      "created_by": "system",
+      "created_at": "2025-11-16T20:36:58.336000",
+      "updated_at": "2025-11-16T20:36:58.336000",
+      "isActive": true,
+      "version": 1,
+      "createdAt": "2025-11-16T20:36:58.480000",
+      "updatedAt": "2025-11-16T20:36:58.480000"
+    }
+  ]
+}

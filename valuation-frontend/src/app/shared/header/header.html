@@ -22,18 +22,18 @@
     <div class="right-section" [class.mobile-menu-open]="isMobileMenuOpen()">
       <!-- Navigation Links -->
       <nav class="nav-section">
-        <a routerLink="/dashboard" routerLinkActive="active" (click)="closeMobileMenu()">Dashboard</a>
-        <a routerLink="/new-report" routerLinkActive="active" (click)="closeMobileMenu()">New Report</a>
-        <a routerLink="/reports" routerLinkActive="active" (click)="closeMobileMenu()">Reports</a>
-        <a routerLink="/banks" routerLinkActive="active" (click)="closeMobileMenu()">Banks</a>
+        <a [routerLink]="getNavLinks().dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="closeMobileMenu()">Dashboard</a>
+        <a [routerLink]="getNavLinks().newReport" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="closeMobileMenu()">New Report</a>
+        <a [routerLink]="getNavLinks().reports" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="closeMobileMenu()">Reports</a>
+        <a [routerLink]="getNavLinks().banks" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="closeMobileMenu()">Banks</a>
         <!-- Admin link only for system admin users -->
         @if (isSystemAdmin()) {
           <a routerLink="/admin" routerLinkActive="active" (click)="closeMobileMenu()">Admin</a>
         }
         <!-- Manager-only links -->
         @if (hasManagerPermissions()) {
-          <a routerLink="/custom-templates" routerLinkActive="active" (click)="closeMobileMenu()">Templates</a>
-          <a routerLink="/organization/users" routerLinkActive="active" (click)="closeMobileMenu()">Employee Activities</a>
+          <a [routerLink]="getNavLinks().templates" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="closeMobileMenu()">Templates</a>
+          <a [routerLink]="getNavLinks().employeeActivities" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="closeMobileMenu()">Employee Activities</a>
         }
       </nav>
       

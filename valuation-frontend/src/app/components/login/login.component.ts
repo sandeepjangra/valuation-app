@@ -558,8 +558,25 @@ export class LoginComponent {
       sessionStorage.removeItem('attempted_url');
       this.router.navigateByUrl(attemptedUrl);
     } else {
-      // Default redirect to dashboard
-      this.router.navigate(['/dashboard']);
+      // Get user's organization context for proper redirect
+      const orgContext = this.authService.getOrganizationContext();
+      
+      if (orgContext) {
+        // For system admin, redirect to admin dashboard
+        if (orgContext.isSystemAdmin) {
+          console.log('🔄 Redirecting System Admin to /admin');
+          this.router.navigate(['/admin']);
+        } else {
+          // For regular users, redirect to org dashboard
+          const orgShortName = orgContext.orgShortName;
+          console.log(`🔄 Redirecting to /org/${orgShortName}/dashboard`);
+          this.router.navigate(['/org', orgShortName, 'dashboard']);
+        }
+      } else {
+        // Fallback to login if no context
+        console.error('❌ No organization context found after login');
+        this.router.navigate(['/login']);
+      }
     }
   }
 

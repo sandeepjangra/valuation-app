@@ -1,0 +1,175 @@
+{
+  "database": "valuation_admin",
+  "collection_name": "common_form_fields",
+  "is_common_fields": true,
+  "document_count": 1,
+  "field_count": 6,
+  "documents": [
+    {
+      "_id": "common_fields",
+      "collectionName": "common_form_fields",
+      "description": "Common form fields used across all bank templates",
+      "version": "1.0",
+      "createdAt": "2025-11-09T21:03:05.179000",
+      "updatedAt": "2025-11-28T21:54:13.817000",
+      "isActive": true,
+      "fields": [
+        {
+          "fieldId": "report_reference_number",
+          "technicalName": "report_reference_number",
+          "uiDisplayName": "Report Reference Number",
+          "fieldType": "text",
+          "isRequired": true,
+          "placeholder": "Enter report reference number",
+          "helpText": "Unique reference number for this valuation report",
+          "validation": {
+            "pattern": "^[A-Z]{2,4}[0-9]{4,8}$",
+            "maxLength": 20
+          },
+          "gridSize": 3,
+          "sortOrder": 1,
+          "isActive": true,
+          "createdAt": "2025-11-09T21:03:05.021894+00:00",
+          "updatedAt": "2025-11-09T21:03:05.021897+00:00",
+          "includeInCustomTemplate": false
+        },
+        {
+          "fieldId": "valuation_date",
+          "technicalName": "valuation_date",
+          "uiDisplayName": "Valuation Date",
+          "fieldType": "date",
+          "isRequired": true,
+          "defaultValue": "today",
+          "placeholder": "Select valuation date",
+          "helpText": "Date when the property valuation was conducted",
+          "validation": {
+            "maxDate": "today",
+            "minDate": "2020-01-01"
+          },
+          "gridSize": 3,
+          "sortOrder": 2,
+          "isActive": true,
+          "createdAt": "2025-11-09T21:03:05.021902+00:00",
+          "updatedAt": "2025-11-09T21:03:05.021904+00:00",
+          "includeInCustomTemplate": false
+        },
+        {
+          "fieldId": "inspection_date",
+          "technicalName": "inspection_date",
+          "uiDisplayName": "Inspection Date",
+          "fieldType": "date",
+          "isRequired": true,
+          "placeholder": "Select inspection date",
+          "helpText": "Date when the property was physically inspected",
+          "validation": {
+            "maxDate": "today",
+            "minDate": "2020-01-01"
+          },
+          "gridSize": 3,
+          "sortOrder": 3,
+          "isActive": true,
+          "createdAt": "2025-11-09T21:03:05.021908+00:00",
+          "updatedAt": "2025-11-09T21:03:05.021938+00:00",
+          "includeInCustomTemplate": false
+        },
+        {
+          "fieldId": "applicant_name",
+          "technicalName": "applicant_name",
+          "uiDisplayName": "Applicant Name",
+          "fieldType": "text",
+          "isRequired": true,
+          "placeholder": "Enter applicant's full name",
+          "helpText": "Full name of the loan applicant/property owner",
+          "validation": {
+            "minLength": 3,
+            "maxLength": 100,
+            "pattern": "^[a-zA-Z\\s\\.]+$"
+          },
+          "gridSize": 3,
+          "sortOrder": 4,
+          "isActive": true,
+          "createdAt": "2025-11-09T21:03:05.021956+00:00",
+          "updatedAt": "2025-11-09T21:03:05.021960+00:00",
+          "includeInCustomTemplate": false
+        },
+        {
+          "fieldId": "valuation_purpose",
+          "technicalName": "valuation_purpose",
+          "uiDisplayName": "Valuation Purpose",
+          "fieldType": "select",
+          "isRequired": true,
+          "options": [
+            {
+              "value": "home_loan",
+              "label": "Home Loan"
+            },
+            {
+              "value": "mortgage_loan",
+              "label": "Mortgage Loan"
+            },
+            {
+              "value": "insurance",
+              "label": "Insurance Purpose"
+            },
+            {
+              "value": "legal_settlement",
+              "label": "Legal Settlement"
+            },
+            {
+              "value": "sale_purchase",
+              "label": "Sale/Purchase"
+            },
+            {
+              "value": "stamp_duty",
+              "label": "Stamp Duty Assessment"
+            },
+            {
+              "value": "bank_purpose",
+              "label": "Bank Purpose"
+            },
+            {
+              "value": "other",
+              "label": "Other"
+            }
+          ],
+          "placeholder": "Select valuation purpose",
+          "helpText": "Reason for conducting this property valuation",
+          "gridSize": 3,
+          "sortOrder": 5,
+          "isActive": true,
+          "createdAt": "2025-11-09T21:03:05.021973+00:00",
+          "updatedAt": "2025-11-09T21:03:05.021976+00:00",
+          "includeInCustomTemplate": false
+        },
+        {
+          "fieldId": "bank_branch",
+          "technicalName": "bank_branch",
+          "uiDisplayName": "Bank Branch",
+          "fieldType": "select_dynamic",
+          "dataSource": "banks_collection",
+          "dataSourceConfig": {
+            "collection": "banks",
+            "nestedPath": "branches",
+            "valueField": "branchId",
+            "labelField": "branchName",
+            "filter": {
+              "bankCode": "{selected_bank_code}",
+              "branches.isActive": true
+            },
+            "sortBy": "branches.branchName",
+            "dependsOn": "selected_bank"
+          },
+          "isRequired": true,
+          "placeholder": "Select branch",
+          "helpText": "Choose the specific bank branch for this application",
+          "gridSize": 3,
+          "sortOrder": 6,
+          "isActive": true,
+          "createdAt": "2025-11-09T21:03:05.021981+00:00",
+          "updatedAt": "2025-11-09T21:03:05.021984+00:00",
+          "includeInCustomTemplate": false
+        }
+      ]
+    }
+  ]
+}

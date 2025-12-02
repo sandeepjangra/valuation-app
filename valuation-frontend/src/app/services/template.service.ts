@@ -262,4 +262,72 @@ export class TemplateService {
         return '';
     }
   }
+
+  /**
+   * Create a custom template from a filled report form
+   * 
+   * @param orgShortName Organization short name
+   * @param templateName Name for the new custom template
+   * @param description Optional description for the template
+   * @param bankCode Bank code (e.g., 'SBI', 'HDFC')
+   * @param templateCode Template code (e.g., 'land-property')
+   * @param fieldValues All field values from the report form
+   * @returns Observable with the created template response
+   */
+  createTemplateFromReport(
+    orgShortName: string,
+    templateName: string,
+    description: string | null,
+    bankCode: string,
+    templateCode: string,
+    fieldValues: Record<string, any>
+  ): Observable<any> {
+    const url = `${this.API_BASE_URL}/organizations/${orgShortName}/templates/from-report`;
+    
+    const payload = {
+      templateName,
+      description: description || undefined,
+      bankCode,
+      templateCode,
+      fieldValues
+    };
+
+    // Get token from localStorage and add to headers manually
+    const token = localStorage.getItem('valuation_app_token');
+    
+    const options = token ? {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    } : {};
+
+    console.log('🌐 TemplateService.createTemplateFromReport:', {
+      url,
+      templateName,
+      bankCode,
+      templateCode,
+      fieldCount: Object.keys(fieldValues).length,
+      hasToken: !!token,
+      tokenPreview: token?.substring(0, 30)
+    });
+
+    return this.http.post<any>(url, payload, options).pipe(
+      catchError(error => {
+        console.error('❌ TemplateService.createTemplateFromReport failed:', error);
+        
+        // Enhanced error logging
+        if (error.status === 400) {
+          console.error('❌ Validation error:', error.error?.error || error.message);
+        } else if (error.status === 403) {
+          console.error('❌ Permission denied:', error.error?.error || error.message);
+        } else if (error.status === 404) {
+          console.error('❌ Resource not found:', error.error?.error || error.message);
+        } else if (error.status === 0) {
+          console.error('❌ Network error - check if backend is running');
+        }
+        
+        return throwError(() => error);
+      })
+    );
+  }
 }

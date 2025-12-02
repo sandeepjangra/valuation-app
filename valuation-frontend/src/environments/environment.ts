@@ -1,6 +1,7 @@
 export const environment = {
   production: false,
   apiUrl: 'http://localhost:8000/api',
+  templateVersioningApiUrl: 'http://localhost:8000',
   developmentMode: true,
   amplify: {
     Auth: {

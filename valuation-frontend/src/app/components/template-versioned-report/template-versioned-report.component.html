@@ -1,0 +1,190 @@
+<!-- Template Versioned Report Creation Component -->
+<div class="template-report-container">
+  <!-- Header -->
+  <div class="header">
+    <h2>Template Versioned Report Creation</h2>
+    <p class="subtitle">Create valuation reports using dynamic form templates</p>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Loading...</p>
+  </div>
+
+  <!-- Error Display -->
+  <div *ngIf="error" class="error-container">
+    <div class="error-message">
+      <i class="error-icon">⚠️</i>
+      <span>{{ error }}</span>
+    </div>
+    <button class="btn btn-primary" (click)="loadAvailableTemplates()">
+      Retry
+    </button>
+  </div>
+
+  <!-- Main Content (when not loading and no error) -->
+  <div *ngIf="!isLoading && !error" class="main-content">
+
+    <!-- Step 1: Template Selection -->
+    <div *ngIf="step === 'select'" class="template-selection">
+      <div class="step-header">
+        <h3>Step 1: Select Template</h3>
+        <p>Choose a template to create your valuation report</p>
+      </div>
+
+      <div *ngIf="availableTemplates.length === 0" class="no-templates">
+        <p>No templates available. Please check your backend connection.</p>
+        <button class="btn btn-secondary" (click)="loadAvailableTemplates()">
+          Refresh Templates
+        </button>
+      </div>
+
+      <div *ngIf="availableTemplates.length > 0" class="template-grid">
+        <div 
+          *ngFor="let template of availableTemplates" 
+          class="template-card"
+          (click)="selectTemplate(template.templateId)"
+        >
+          <div class="template-card-header">
+            <h4>{{ template.templateId }}</h4>
+            <span class="version-badge">v{{ template.version }}</span>
+          </div>
+          
+          <div class="template-card-body">
+            <div class="template-info">
+              <div class="info-item">
+                <strong>Bank:</strong> {{ template.bankCode }}
+              </div>
+              <div class="info-item">
+                <strong>Property Type:</strong> {{ template.propertyType }}
+              </div>
+              <div class="info-item">
+                <strong>Category:</strong> {{ template.templateCategory }}
+              </div>
+            </div>
+            
+            <div class="template-stats">
+              <span class="stat">{{ template.fieldCount }} fields</span>
+              <span class="stat">{{ template.sectionCount }} sections</span>
+            </div>
+          </div>
+          
+          <div class="template-card-footer">
+            <span class="created-date">
+              Created: {{ template.createdAt | date:'short' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: Report Creation -->
+    <div *ngIf="step === 'create'" class="report-creation">
+      <div class="step-header">
+        <button class="btn btn-link back-button" (click)="goBackToSelection()">
+          ← Back to Templates
+        </button>
+        <h3>Step 2: Create Report</h3>
+        <p *ngIf="templateSnapshot">
+          Using template: <strong>{{ templateSnapshot.templateId }}</strong> 
+          ({{ templateSnapshot.bankCode }} - {{ templateSnapshot.propertyType }})
+        </p>
+      </div>
+
+      <!-- Report Info -->
+      <div *ngIf="currentReport" class="report-info">
+        <div class="info-card">
+          <h4>Report Information</h4>
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Report ID:</label>
+              <span>{{ currentReport.reportId }}</span>
+            </div>
+            <div class="info-item">
+              <label>Status:</label>
+              <span class="status-badge" [class]="'status-' + currentReport.status.toLowerCase()">
+                {{ currentReport.status }}
+              </span>
+            </div>
+            <div class="info-item">
+              <label>Last Modified:</label>
+              <span>{{ currentReport.updatedAt | date:'short' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dynamic Form -->
+      <div class="form-container">
+        <app-dynamic-form
+          *ngIf="templateSnapshot"
+          [templateSnapshot]="templateSnapshot"
+          [initialData]="reportData"
+          (dataChange)="onFormDataChange($event)"
+          (formValid)="onFormValidChange($event)"
+          (save)="onSaveReport($event)"
+          (submit)="onSubmitReport($event)"
+          (cancel)="onCancelForm()"
+        ></app-dynamic-form>
+      </div>
+    </div>
+
+    <!-- Step 3: Review -->
+    <div *ngIf="step === 'review'" class="report-review">
+      <div class="step-header">
+        <h3>Step 3: Report Submitted</h3>
+        <p>Your report has been successfully submitted for review</p>
+      </div>
+
+      <div *ngIf="currentReport" class="review-card">
+        <div class="success-message">
+          <i class="success-icon">✅</i>
+          <h4>Report Submitted Successfully!</h4>
+        </div>
+
+        <div class="report-summary">
+          <h5>Report Summary</h5>
+          <div class="summary-grid">
+            <div class="summary-item">
+              <label>Report ID:</label>
+              <span>{{ currentReport.reportId }}</span>
+            </div>
+            <div class="summary-item">
+              <label>Template:</label>
+              <span>{{ currentReport.templateSnapshot.templateId }}</span>
+            </div>
+            <div class="summary-item">
+              <label>Bank:</label>
+              <span>{{ currentReport.bankCode }}</span>
+            </div>
+            <div class="summary-item">
+              <label>Property Type:</label>
+              <span>{{ currentReport.propertyType }}</span>
+            </div>
+            <div class="summary-item">
+              <label>Status:</label>
+              <span class="status-badge" [class]="'status-' + currentReport.status.toLowerCase()">
+                {{ currentReport.status }}
+              </span>
+            </div>
+            <div class="summary-item">
+              <label>Submitted:</label>
+              <span>{{ currentReport.submittedAt | date:'full' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="review-actions">
+          <button class="btn btn-primary" (click)="step = 'select'">
+            Create Another Report
+          </button>
+          <button class="btn btn-secondary" (click)="router.navigate(['/reports'])">
+            View All Reports
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

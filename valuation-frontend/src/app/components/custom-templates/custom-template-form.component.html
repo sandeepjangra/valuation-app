@@ -1,241 +1,478 @@
-<div class="template-form-container">
-  <!-- Header -->
-  <div class="form-header">
-    <button type="button" class="back-button" (click)="goBack()">
-      <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-      </svg>
-      Back to Templates
-    </button>
-    
+<div class="report-form-container">
+  <!-- Header Section (same as New Report) -->
+  <div class="page-header">
     <div class="header-content">
-      <h1>{{ isEditMode() ? 'Edit' : 'Create' }} Custom Template</h1>
-      <p class="header-subtitle">
-        {{ bankCode() }} - {{ propertyType() === 'land' ? 'Land' : 'Apartment' }}
-      </p>
-    </div>
-  </div>
-
-  <!-- Error Alert -->
-  @if (error()) {
-    <div class="alert alert-error">
-      <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-      </svg>
-      <span>{{ error() }}</span>
-    </div>
-  }
-
-  <!-- Loading State -->
-  @if (isLoading()) {
-    <div class="loading-container">
-      <div class="spinner"></div>
-      <p>Loading template structure...</p>
-    </div>
-  }
-
-  <!-- Form Content -->
-  @if (!isLoading() && templateData()) {
-    <div class="form-content">
-      <!-- Section Tabs -->
-      <div class="section-tabs-container">
-        <div class="section-tabs">
-          <button 
-            type="button"
-            class="section-tab"
-            [class.active]="activeSection() === 'metadata'"
-            (click)="onSectionChange('metadata')">
-            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-            Template Info
-          </button>
-          
-          <button 
-            type="button"
-            class="section-tab"
-            [class.active]="activeSection() === 'fields'"
-            (click)="onSectionChange('fields')">
-            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-            </svg>
-            Field Values
-            @if (getFilledFieldsCount() > 0) {
-              <span class="badge">{{ getFilledFieldsCount() }} / {{ getTotalFieldsCount() }}</span>
-            }
-          </button>
+      <div class="left-section">
+        <div class="template-name">
+          <span class="template-label">{{ isEditMode() ? 'Edit' : 'Create' }} Custom Template</span>
         </div>
       </div>
-
-      <!-- Metadata Section -->
-      @if (activeSection() === 'metadata') {
-        <div class="section-content">
-          <form [formGroup]="metadataForm" class="metadata-form">
-            <div class="form-group">
-              <label for="templateName" class="required">Template Name</label>
-              <input 
-                id="templateName"
-                type="text"
-                class="form-control"
-                formControlName="templateName"
-                placeholder="e.g., Standard Urban Land Template"
-                maxlength="100">
-              @if (metadataForm.get('templateName')?.errors?.['required'] && metadataForm.get('templateName')?.touched) {
-                <span class="error-text">Template name is required</span>
-              }
-              @if (metadataForm.get('templateName')?.errors?.['minlength']) {
-                <span class="error-text">Template name must be at least 3 characters</span>
-              }
-            </div>
-
-            <div class="form-group">
-              <label for="description">Description (Optional)</label>
-              <textarea 
-                id="description"
-                class="form-control textarea"
-                formControlName="description"
-                placeholder="Describe when to use this template..."
-                rows="4"
-                maxlength="500"></textarea>
-              <span class="help-text">{{ metadataForm.get('description')?.value?.length || 0 }} / 500 characters</span>
-            </div>
-
-            <div class="form-actions">
-              <button type="button" class="btn btn-primary" (click)="onSectionChange('fields')">
-                Next: Fill Field Values
-                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
-                </svg>
-              </button>
-            </div>
-          </form>
-        </div>
-      }
-
-      <!-- Fields Section -->
-      @if (activeSection() === 'fields' && templateData()) {
-        <div class="section-content">
-          <div class="fields-header">
-            <h3>Fill Default Values</h3>
-            <div class="fields-stats">
-              <span class="stat-item">
-                <strong>{{ getFilledFieldsCount() }}</strong> of <strong>{{ getTotalFieldsCount() }}</strong> fields filled
-              </span>
-              <button type="button" class="btn btn-text" (click)="clearAllFields()">
-                Clear All
-              </button>
-            </div>
-          </div>
-
-          <form [formGroup]="fieldsForm">
-            <!-- Bank Specific Fields -->
-            @if (templateData()!.bankSpecificTabs.length > 0) {
-              <div class="fields-group">
-                <h4 class="group-title">Field Values</h4>
-                
-                <!-- Bank Tabs -->
-                <div class="bank-tabs-container">
-                  <div class="bank-tabs">
-                    @for (tab of templateData()!.bankSpecificTabs; track tab.tabId) {
-                      <button 
-                        type="button"
-                        class="bank-tab"
-                        [class.active]="activeBankSpecificTab() === tab.tabId"
-                        (click)="onBankTabChange(tab.tabId)">
-                        {{ tab.tabName }}
-                      </button>
-                    }
-                  </div>
-                </div>
-
-                <!-- Active Tab Content -->
-                @for (tab of templateData()!.bankSpecificTabs; track tab.tabId) {
-                  @if (activeBankSpecificTab() === tab.tabId) {
-                    <div class="tab-content">
-                      <!-- Tab Fields -->
-                      @if (tab.fields.length > 0) {
-                        <div class="fields-grid">
-                          @for (field of tab.fields; track field.fieldId) {
-                            @if (field.fieldType !== 'group') {
-                              <div class="field-item" [class.filled]="isFieldFilled(field.fieldId)">
-                                <label [for]="field.fieldId">{{ field.uiDisplayName }}</label>
-                                <input 
-                                  [id]="field.fieldId"
-                                  [type]="field.fieldType || 'text'"
-                                  class="form-control"
-                                  [formControlName]="field.fieldId"
-                                  [placeholder]="field.placeholder || ''">
-                              </div>
-                            }
-                          }
-                        </div>
-                      }
-
-                      <!-- Sections -->
-                      @if (tab.sections && tab.sections.length > 0) {
-                        @for (section of tab.sections; track section.sectionId) {
-                          <div class="field-section">
-                            <h5 class="section-title">{{ section.sectionName }}</h5>
-                            <div class="fields-grid">
-                              @for (field of section.fields; track field.fieldId) {
-                                @if (field.fieldType !== 'group') {
-                                  <div class="field-item" [class.filled]="isFieldFilled(field.fieldId)">
-                                    <label [for]="field.fieldId">{{ field.uiDisplayName }}</label>
-                                    <input 
-                                      [id]="field.fieldId"
-                                      [type]="field.fieldType || 'text'"
-                                      class="form-control"
-                                      [formControlName]="field.fieldId"
-                                      [placeholder]="field.placeholder || ''">
-                                  </div>
-                                }
-                              }
-                            </div>
-                          </div>
-                        }
-                      }
-                    </div>
-                  }
-                }
-              </div>
-            }
-          </form>
-        </div>
-      }
-    </div>
-
-    <!-- Bottom Action Bar -->
-    <div class="action-bar">
-      <button type="button" class="btn btn-secondary" (click)="goBack()" [disabled]="isSaving()">
-        Cancel
-      </button>
-      
-      <div class="action-bar-right">
-        @if (activeSection() === 'fields') {
-          <button type="button" class="btn btn-outline" (click)="onSectionChange('metadata')">
-            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m7-7h18"></path>
-            </svg>
-            Back to Info
-          </button>
-        }
-        
-        <button 
-          type="button" 
-          class="btn btn-primary"
-          (click)="onSubmit()"
-          [disabled]="!canSave()">
-          @if (isSaving()) {
-            <span class="spinner-sm"></span>
-            Saving...
-          } @else {
-            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-            </svg>
-            {{ isEditMode() ? 'Update' : 'Create' }} Template
-          }
+      <div class="header-info">
+        <h1 class="page-title">Custom Template for {{ bankCode() }} - {{ propertyType() }}</h1>
+      </div>
+      <div class="right-section">
+        <button class="back-button" (click)="goBack()">
+          ← Back
         </button>
       </div>
     </div>
-  }
+  </div>
+
+  <!-- Error Display -->
+  <div *ngIf="error()" class="alert alert-error">
+    {{ error() }}
+  </div>
+
+  <!-- Form Content -->
+  <div class="report-form">
+    
+    <!-- Template Metadata Section (replaces Common Fields for custom template) -->
+    <form [formGroup]="mainForm" class="metadata-form">
+      <div class="form-section" *ngIf="!isLoading()">
+        <div class="section-header">
+          <h2 class="section-title">Template Information</h2>
+          <p class="section-subtitle">Basic details for your custom template</p>
+        </div>
+        
+        <div class="field-groups">
+          <div class="field-group">
+            <div class="fields-grid">
+              <div class="field-container grid-4">
+                <div class="form-field">
+                  <label for="templateName" class="field-label">
+                    Template Name
+                    <span class="required-indicator">*</span>
+                  </label>
+                  <input
+                    id="templateName"
+                    type="text"
+                    formControlName="templateName"
+                    placeholder="Enter template name"
+                    class="form-input"
+                  />
+                </div>
+              </div>
+              <div class="field-container grid-8">
+                <div class="form-field">
+                  <label for="description" class="field-label">Description</label>
+                  <textarea
+                    id="description"
+                    formControlName="description"
+                    placeholder="Enter template description"
+                    class="form-textarea"
+                    rows="3"
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+
+    <!-- Common Fields Section (same as New Report) -->
+    <form [formGroup]="fieldsForm" class="fields-form">
+      <div class="form-section" *ngIf="!isLoading() && hasCommonFields() && isFormReady()">
+        <div class="section-header">
+          <h2 class="section-title">Common Information</h2>
+          <p class="section-subtitle">Basic details required for all valuation reports</p>
+        </div>
+        
+        <!-- Loading indicator -->
+        <div *ngIf="isLoading()" class="loading-indicator">
+          <div class="loading-spinner"></div>
+          <p>Loading template fields: {{ bankCode() }}/{{ propertyType() }}-property...</p>
+          <small>Fetching common fields + bank-specific fields from server</small>
+        </div>
+        
+        <!-- Common Field Groups -->
+        <div *ngIf="!isLoading() && hasCommonFields() && isFormReady()" class="field-groups">
+          <div *ngFor="let fieldGroup of getCommonFieldGroups()" class="field-group">
+            <h3 class="field-group-title" *ngIf="fieldGroup.displayName !== 'Common Fields'">{{ fieldGroup.displayName }}</h3>
+            
+            <div class="fields-grid">
+              <div *ngFor="let field of fieldGroup.fields" 
+                   [class]="'field-container grid-' + field.gridSize"
+                   [class.field-error]="isFieldInvalid(field.fieldId)">
+                
+                <!-- Text Input -->
+                <div *ngIf="field.fieldType === 'text'" class="form-field">
+                  <label [for]="field.fieldId" class="field-label">
+                    {{ field.uiDisplayName }}
+                    <span class="required-indicator" *ngIf="field.isRequired">*</span>
+                    <span *ngIf="isFieldEditable(field)" class="editable-indicator">✏️</span>
+                    <span *ngIf="!isFieldEditable(field)" class="readonly-indicator">📖</span>
+                  </label>
+                  <input
+                    [id]="field.fieldId"
+                    type="text"
+                    [formControlName]="field.fieldId"
+                    [placeholder]="field.placeholder"
+                    [readonly]="!isFieldEditable(field)"
+                    [class.readonly-field]="!isFieldEditable(field)"
+                    class="form-input"
+                  />
+                  <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
+                </div>
+
+                <!-- Date Input -->
+                <div *ngIf="field.fieldType === 'date'" class="form-field">
+                  <label [for]="field.fieldId" class="field-label">
+                    {{ field.uiDisplayName }}
+                    <span class="required-indicator" *ngIf="field.isRequired">*</span>
+                    <span *ngIf="isFieldEditable(field)" class="editable-indicator">✏️</span>
+                    <span *ngIf="!isFieldEditable(field)" class="readonly-indicator">📖</span>
+                  </label>
+                  <input
+                    [id]="field.fieldId"
+                    type="date"
+                    [formControlName]="field.fieldId"
+                    [readonly]="!isFieldEditable(field)"
+                    [class.readonly-field]="!isFieldEditable(field)"
+                    class="form-input"
+                  />
+                  <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
+                </div>
+
+                <!-- Number/Currency Input -->
+                <div *ngIf="field.fieldType === 'number' || field.fieldType === 'currency'" class="form-field">
+                  <label [for]="field.fieldId" class="field-label">
+                    {{ field.uiDisplayName }}
+                    <span class="required-indicator" *ngIf="field.isRequired">*</span>
+                    <span *ngIf="isFieldEditable(field)" class="editable-indicator">✏️</span>
+                    <span *ngIf="!isFieldEditable(field)" class="readonly-indicator">📖</span>
+                  </label>
+                  <input
+                    [id]="field.fieldId"
+                    type="number"
+                    [formControlName]="field.fieldId"
+                    [placeholder]="field.placeholder"
+                    [min]="field.validation?.min || null"
+                    [max]="field.validation?.max || null"
+                    [readonly]="!isFieldEditable(field)"
+                    [class.readonly-field]="!isFieldEditable(field)"
+                    class="form-input"
+                  />
+                  <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
+                </div>
+
+                <!-- Textarea Input -->
+                <div *ngIf="field.fieldType === 'textarea'" class="form-field">
+                  <label [for]="field.fieldId" class="field-label">
+                    {{ field.uiDisplayName }}
+                    <span class="required-indicator" *ngIf="field.isRequired">*</span>
+                    <span *ngIf="isFieldEditable(field)" class="editable-indicator">✏️</span>
+                    <span *ngIf="!isFieldEditable(field)" class="readonly-indicator">📖</span>
+                  </label>
+                  <textarea
+                    [id]="field.fieldId"
+                    [formControlName]="field.fieldId"
+                    [placeholder]="field.placeholder"
+                    [readonly]="!isFieldEditable(field)"
+                    [class.readonly-field]="!isFieldEditable(field)"
+                    class="form-textarea"
+                    rows="3"
+                  ></textarea>
+                  <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
+                </div>
+
+                <!-- Select Input -->
+                <div *ngIf="field.fieldType === 'select'" class="form-field">
+                  <label [for]="field.fieldId" class="field-label">
+                    {{ field.uiDisplayName }}
+                    <span class="required-indicator" *ngIf="field.isRequired">*</span>
+                    <span *ngIf="isFieldEditable(field)" class="editable-indicator">✏️</span>
+                    <span *ngIf="!isFieldEditable(field)" class="readonly-indicator">📖</span>
+                  </label>
+                  <select 
+                    [id]="field.fieldId"
+                    [formControlName]="field.fieldId"
+                    [disabled]="!isFieldEditable(field)"
+                    class="form-select">
+                    <option value="" hidden>{{ field.placeholder || 'Select option' }}</option>
+                    <option *ngFor="let option of field.options" [value]="option.value">
+                      {{ option.label }}
+                    </option>
+                  </select>
+                  <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
+                </div>
+                
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+
+    <!-- Tabs Section (same as New Report) -->
+    <div class="tabs-section" *ngIf="!isLoading() && templateData()">
+      <div class="tabs-header">
+        <button type="button" 
+                class="tab-button" 
+                [class.active]="activeTab() === 'template'"
+                (click)="switchTab('template')"
+                [disabled]="isLoading() || !hasBankSpecificFields()">
+          Bank-Specific Fields
+        </button>
+        <button type="button" 
+                class="tab-button" 
+                [class.active]="activeTab() === 'preview'"
+                (click)="switchTab('preview')">
+          Template Preview
+        </button>
+      </div>
+      
+      <div class="tab-content">
+        <!-- Bank-Specific Fields Tab (same structure as New Report) -->
+        <div *ngIf="activeTab() === 'template'" class="tab-panel">
+          <div *ngIf="!isLoading() && hasBankSpecificFields() && isFormReady()" class="bank-specific-content">
+            <!-- Compact Header with Inline Sub-tabs -->
+            <div class="compact-section-header">
+              <div class="header-left">
+                <h3 class="section-title">{{ bankCode() }} - {{ propertyType() | titlecase }} Property Template</h3>
+                <p class="section-subtitle">Bank-specific fields for {{ propertyType() }} property valuation</p>
+              </div>
+              
+              <!-- Bank-Specific Tabs (Inline Sub-tabs like New Report) -->
+              <div *ngIf="getBankSpecificTabs().length > 1">
+                <div class="inline-sub-tabs">
+                  <button type="button" 
+                          *ngFor="let tab of getBankSpecificTabs()" 
+                          class="inline-sub-tab-button" 
+                          [class.active]="activeBankSpecificTab() === tab.tabId"
+                          (click)="switchBankSpecificTab(tab.tabId)">
+                    {{ tab.tabName }}
+                    <span class="tab-field-count">({{ getTabTotalFields(tab) }})</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Field Groups Content (same as New Report) -->
+            <div class="compact-field-groups">
+              <!-- If multiple tabs, show only active tab content -->
+              <div *ngIf="getBankSpecificTabs().length > 1">
+                <div *ngFor="let tab of getBankSpecificTabs()" 
+                     [hidden]="activeBankSpecificTab() !== tab.tabId"
+                     class="field-group">
+                  
+                  <!-- Check if this tab has sections -->
+                  <div *ngIf="tabHasSections(tab)">
+                    <div *ngFor="let section of getTabSections(tab)" class="valuation-section">
+                      <h4 class="section-title">{{ section.sectionName }}</h4>
+                      <div class="fields-grid">
+                        <div *ngFor="let field of section.fields" 
+                             [class]="'field-container grid-' + field.gridSize"
+                             [class.field-error]="isFieldInvalid(field.fieldId)">
+                          
+                          <!-- Field rendering with same structure as New Report -->
+                          <ng-container [ngSwitch]="field.fieldType">
+                            <!-- Text Input -->
+                            <div *ngSwitchCase="'text'" class="form-field">
+                              <label [for]="field.fieldId" class="field-label">
+                                {{ field.uiDisplayName }}
+                                <span class="required-indicator" *ngIf="field.isRequired">*</span>
+                                <span *ngIf="isFieldEditable(field)" class="editable-indicator">✏️</span>
+                                <span *ngIf="!isFieldEditable(field)" class="readonly-indicator">📖</span>
+                              </label>
+                              <input
+                                [id]="field.fieldId"
+                                type="text"
+                                [formControlName]="field.fieldId"
+                                [placeholder]="field.placeholder"
+                                [readonly]="!isFieldEditable(field)"
+                                [class.readonly-field]="!isFieldEditable(field)"
+                                class="form-input"
+                              />
+                              <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
+                            </div>
+
+                            <!-- Textarea Input -->
+                            <div *ngSwitchCase="'textarea'" class="form-field">
+                              <label [for]="field.fieldId" class="field-label">
+                                {{ field.uiDisplayName }}
+                                <span class="required-indicator" *ngIf="field.isRequired">*</span>
+                                <span *ngIf="isFieldEditable(field)" class="editable-indicator">✏️</span>
+                                <span *ngIf="!isFieldEditable(field)" class="readonly-indicator">📖</span>
+                              </label>
+                              <textarea
+                                [id]="field.fieldId"
+                                [formControlName]="field.fieldId"
+                                [placeholder]="field.placeholder"
+                                [readonly]="!isFieldEditable(field)"
+                                [class.readonly-field]="!isFieldEditable(field)"
+                                class="form-textarea"
+                                rows="3"
+                              ></textarea>
+                              <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
+                            </div>
+
+                            <!-- Number/Currency Input -->
+                            <div *ngSwitchCase="'number'" class="form-field">
+                              <label [for]="field.fieldId" class="field-label">
+                                {{ field.uiDisplayName }}
+                                <span class="required-indicator" *ngIf="field.isRequired">*</span>
+                                <span *ngIf="isFieldEditable(field)" class="editable-indicator">✏️</span>
+                                <span *ngIf="!isFieldEditable(field)" class="readonly-indicator">📖</span>
+                              </label>
+                              <input
+                                [id]="field.fieldId"
+                                type="number"
+                                [formControlName]="field.fieldId"
+                                [placeholder]="field.placeholder"
+                                [min]="field.validation?.min || null"
+                                [max]="field.validation?.max || null"
+                                [readonly]="!isFieldEditable(field)"
+                                [class.readonly-field]="!isFieldEditable(field)"
+                                class="form-input"
+                              />
+                              <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
+                            </div>
+
+                            <!-- Select Input -->
+                            <div *ngSwitchCase="'select'" class="form-field">
+                              <label [for]="field.fieldId" class="field-label">
+                                {{ field.uiDisplayName }}
+                                <span class="required-indicator" *ngIf="field.isRequired">*</span>
+                                <span *ngIf="isFieldEditable(field)" class="editable-indicator">✏️</span>
+                                <span *ngIf="!isFieldEditable(field)" class="readonly-indicator">📖</span>
+                              </label>
+                              <select 
+                                [id]="field.fieldId"
+                                [formControlName]="field.fieldId"
+                                [disabled]="!isFieldEditable(field)"
+                                class="form-select">
+                                <option value="" hidden>{{ field.placeholder || 'Select option' }}</option>
+                                <option *ngFor="let option of field.options" [value]="option.value">
+                                  {{ option.label }}
+                                </option>
+                              </select>
+                              <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
+                            </div>
+
+                            <!-- Default case for other field types -->
+                            <div *ngSwitchDefault class="form-field">
+                              <label [for]="field.fieldId" class="field-label">
+                                {{ field.uiDisplayName }}
+                                <span class="required-indicator" *ngIf="field.isRequired">*</span>
+                                <span *ngIf="isFieldEditable(field)" class="editable-indicator">✏️</span>
+                                <span *ngIf="!isFieldEditable(field)" class="readonly-indicator">📖</span>
+                              </label>
+                              <input
+                                [id]="field.fieldId"
+                                type="text"
+                                [formControlName]="field.fieldId"
+                                [placeholder]="field.placeholder"
+                                [readonly]="!isFieldEditable(field)"
+                                [class.readonly-field]="!isFieldEditable(field)"
+                                class="form-input"
+                              />
+                              <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
+                            </div>
+                          </ng-container>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Tab Direct Fields (when no sections) -->
+                  <div *ngIf="!tabHasSections(tab)" class="fields-grid">
+                    <div *ngFor="let field of tab.fields" 
+                         [class]="'field-container grid-' + field.gridSize"
+                         [class.field-error]="isFieldInvalid(field.fieldId)">
+                      
+                      <!-- Same field rendering structure -->
+                      <ng-container [ngSwitch]="field.fieldType">
+                        <div *ngSwitchCase="'text'" class="form-field">
+                          <label [for]="field.fieldId" class="field-label">
+                            {{ field.uiDisplayName }}
+                            <span class="required-indicator" *ngIf="field.isRequired">*</span>
+                            <span *ngIf="isFieldEditable(field)" class="editable-indicator">✏️</span>
+                            <span *ngIf="!isFieldEditable(field)" class="readonly-indicator">📖</span>
+                          </label>
+                          <input
+                            [id]="field.fieldId"
+                            type="text"
+                            [formControlName]="field.fieldId"
+                            [placeholder]="field.placeholder"
+                            [readonly]="!isFieldEditable(field)"
+                            [class.readonly-field]="!isFieldEditable(field)"
+                            class="form-input"
+                          />
+                          <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
+                        </div>
+
+                        <div *ngSwitchCase="'textarea'" class="form-field">
+                          <label [for]="field.fieldId" class="field-label">
+                            {{ field.uiDisplayName }}
+                            <span class="required-indicator" *ngIf="field.isRequired">*</span>
+                            <span *ngIf="isFieldEditable(field)" class="editable-indicator">✏️</span>
+                            <span *ngIf="!isFieldEditable(field)" class="readonly-indicator">📖</span>
+                          </label>
+                          <textarea
+                            [id]="field.fieldId"
+                            [formControlName]="field.fieldId"
+                            [placeholder]="field.placeholder"
+                            [readonly]="!isFieldEditable(field)"
+                            [class.readonly-field]="!isFieldEditable(field)"
+                            class="form-textarea"
+                            rows="3"
+                          ></textarea>
+                          <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
+                        </div>
+
+                        <div *ngSwitchDefault class="form-field">
+                          <label [for]="field.fieldId" class="field-label">
+                            {{ field.uiDisplayName }}
+                            <span class="required-indicator" *ngIf="field.isRequired">*</span>
+                            <span *ngIf="isFieldEditable(field)" class="editable-indicator">✏️</span>
+                            <span *ngIf="!isFieldEditable(field)" class="readonly-indicator">📖</span>
+                          </label>
+                          <input
+                            [id]="field.fieldId"
+                            type="text"
+                            [formControlName]="field.fieldId"
+                            [placeholder]="field.placeholder"
+                            [readonly]="!isFieldEditable(field)"
+                            [class.readonly-field]="!isFieldEditable(field)"
+                            class="form-input"
+                          />
+                          <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
+                        </div>
+                      </ng-container>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Single tab case -->
+              <div *ngIf="getBankSpecificTabs().length === 1">
+                <div *ngFor="let tab of getBankSpecificTabs()" class="field-group">
+                  <!-- Same content as above for single tab -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Template Preview Tab -->
+        <div *ngIf="activeTab() === 'preview'" class="tab-panel">
+          <div class="preview-content">
+            <h3>Template Preview</h3>
+            <p>Preview your custom template configuration</p>
+            <!-- Add preview content here -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="form-actions">
+      <button type="button" class="btn btn-secondary" (click)="goBack()">Cancel</button>
+      <button type="button" class="btn btn-primary" (click)="onSubmit()" [disabled]="isSaving() || !mainForm.get('templateName')?.value || mainForm.get('templateName')?.value.trim().length < 3">
+        <span *ngIf="isSaving()">Saving...</span>
+        <span *ngIf="!isSaving()">{{ isEditMode() ? 'Update' : 'Create' }} Template</span>
+      </button>
+    </div>
+  </div>
 </div>

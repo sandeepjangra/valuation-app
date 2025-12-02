@@ -1,7 +1,8 @@
-import { Component, inject, computed, signal } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { Component, inject, computed, signal, OnInit } from '@angular/core';
+import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
+import { filter, map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-header',
@@ -9,11 +10,35 @@ import { AuthService } from '../../services/auth.service';
   templateUrl: './header.html',
   styleUrl: './header.css',
 })
-export class Header {
+export class Header implements OnInit {
   private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
 
   // Mobile menu state
   private mobileMenuOpen = signal(false);
+  
+  // Current organization from route
+  private currentOrgShortName = signal<string>('system-administration');
+
+  ngOnInit() {
+    // Listen to route changes to extract organization context
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd),
+      map(event => event as NavigationEnd)
+    ).subscribe(event => {
+      const urlSegments = event.url.split('/');
+      if (urlSegments[1] === 'org' && urlSegments[2]) {
+        this.currentOrgShortName.set(urlSegments[2]);
+      }
+    });
+
+    // Set initial organization from current URL
+    const currentUrl = this.router.url;
+    const urlSegments = currentUrl.split('/');
+    if (urlSegments[1] === 'org' && urlSegments[2]) {
+      this.currentOrgShortName.set(urlSegments[2]);
+    }
+  }
 
   // Computed properties for reactive updates
   readonly isAuthenticated = computed(() => this.authService.isAuthenticated());
@@ -56,5 +81,27 @@ export class Header {
   isSystemAdmin(): boolean {
     const orgContext = this.orgContext();
     return orgContext?.isSystemAdmin || false;
+  }
+
+  /**
+   * Get current organization short name for routing
+   */
+  getCurrentOrgShortName(): string {
+    return this.currentOrgShortName();
+  }
+
+  /**
+   * Get organization-aware navigation links
+   */
+  getNavLinks() {
+    const orgShortName = this.getCurrentOrgShortName();
+    return {
+      dashboard: `/org/${orgShortName}/dashboard`,
+      newReport: `/org/${orgShortName}/reports/new`,
+      reports: `/org/${orgShortName}/reports`,
+      banks: `/org/${orgShortName}/banks`,
+      templates: `/org/${orgShortName}/custom-templates`,
+      employeeActivities: `/org/${orgShortName}/organization/users`
+    };
   }
 }
