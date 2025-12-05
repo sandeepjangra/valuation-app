@@ -191,7 +191,7 @@
           <!-- PDF Upload Area -->
           <div class="pdf-upload-area" 
                *ngIf="!uploadedPdf && !isProcessingPdf"
-               (click)="$event.stopPropagation(); fileInput.click()"
+               (click)="$event.stopPropagation(); onUploadAreaClick(); fileInput.click()"
                (dragover)="onDragOver($event)"
                (dragleave)="onDragLeave($event)"
                (drop)="onDrop($event)">

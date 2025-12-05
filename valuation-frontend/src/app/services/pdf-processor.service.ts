@@ -72,9 +72,13 @@ export class PdfProcessorService {
    * Extract only form fields from PDF for direct integration
    */
   extractFieldsFromPdf(file: File): Observable<PDFFieldExtractionResult> {
+    console.log('🔗 PDF Service: Starting extraction for file:', file.name);
+    console.log('🔗 PDF Service: API URL:', `${this.apiUrl}/extract-fields`);
+    
     const formData = new FormData();
     formData.append('file', file);
 
+    console.log('🔗 PDF Service: Making HTTP request...');
     return this.http.post<PDFFieldExtractionResult>(`${this.apiUrl}/extract-fields`, formData);
   }
 
@@ -138,39 +142,32 @@ export class PdfProcessorService {
    * Get field mapping for form pre-fill
    */
   mapExtractedFieldsToForm(extractedFields: {[key: string]: string}): {[key: string]: any} {
+    console.log('🔄 mapExtractedFieldsToForm input:', extractedFields);
     const formData: {[key: string]: any} = {};
     
-    // Common field mappings
-    const fieldMappings: {[key: string]: string} = {
-      'reportReferenceNumber': 'reference_number',
-      'applicantName': 'applicant_name',
-      'propertyAddress': 'property_address',
-      'inspectionDate': 'inspection_date',
-      'valuationDate': 'valuation_date',
-      'propertyType': 'property_type',
-      'marketValue': 'market_value'
-    };
-
-    // Map extracted fields to form fields
-    Object.entries(fieldMappings).forEach(([formField, extractedField]) => {
-      const value = extractedFields[extractedField];
-      if (value && value.trim()) {
+    // The API already returns the correct field names, so we can use them directly
+    // Just need to process dates and handle special formatting
+    Object.entries(extractedFields).forEach(([fieldName, value]) => {
+      if (value && typeof value === 'string' && value.trim()) {
         // Convert dates to proper format if needed
-        if (formField.includes('Date') && value.includes('.')) {
+        if (fieldName.includes('Date') && value.includes('.')) {
           // Convert DD.MM.YYYY to YYYY-MM-DD for date inputs
           const parts = value.split('.');
           if (parts.length === 3) {
             const [day, month, year] = parts;
-            formData[formField] = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            formData[fieldName] = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            console.log(`📅 Converted date ${fieldName}: ${value} → ${formData[fieldName]}`);
           } else {
-            formData[formField] = value;
+            formData[fieldName] = value;
           }
         } else {
-          formData[formField] = value;
+          formData[fieldName] = value;
+          console.log(`📝 Mapped field ${fieldName}: ${value}`);
         }
       }
     });
 
+    console.log('✅ Final mapped form data:', formData);
     return formData;
   }
 

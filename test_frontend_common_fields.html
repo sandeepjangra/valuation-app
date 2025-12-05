@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Frontend Common Fields Processing</title>
+</head>
+<body>
+    <h1>Frontend Common Fields Test</h1>
+    <div id="results"></div>
+
+    <script>
+        async function testCommonFields() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<p>🔄 Testing frontend processing...</p>';
+            
+            try {
+                // Fetch from backend API
+                const response = await fetch('http://localhost:8000/api/templates/SBI/land-property/aggregated-fields');
+                const data = await response.json();
+                
+                results.innerHTML = `
+                    <h2>✅ Backend Response:</h2>
+                    <p><strong>Total common fields:</strong> ${data.commonFields?.length || 0}</p>
+                    
+                    <h3>📋 Common Fields Details:</h3>
+                    <table border="1" style="border-collapse: collapse; margin: 10px 0;">
+                        <tr>
+                            <th style="padding: 8px; background: #f0f0f0;">ID</th>
+                            <th style="padding: 8px; background: #f0f0f0;">Label</th>
+                            <th style="padding: 8px; background: #f0f0f0;">Type</th>
+                            <th style="padding: 8px; background: #f0f0f0;">FieldGroup</th>
+                        </tr>
+                        ${(data.commonFields || []).map(field => `
+                            <tr>
+                                <td style="padding: 8px;">${field.id}</td>
+                                <td style="padding: 8px;">${field.label}</td>
+                                <td style="padding: 8px;">${field.type}</td>
+                                <td style="padding: 8px; ${!field.fieldGroup ? 'color: red; font-weight: bold;' : 'color: green;'}">${field.fieldGroup || 'MISSING!'}</td>
+                            </tr>
+                        `).join('')}
+                    </table>
+                    
+                    <h3>🧪 Frontend Processing Simulation:</h3>
+                    <div id="frontend-test"></div>
+                `;
+                
+                // Simulate frontend grouping logic
+                const commonFields = data.commonFields || [];
+                const groupedFields = {};
+                
+                commonFields.forEach(field => {
+                    const group = field.fieldGroup || 'default';
+                    if (!groupedFields[group]) {
+                        groupedFields[group] = [];
+                    }
+                    groupedFields[group].push(field);
+                });
+                
+                const commonFieldGroups = Object.keys(groupedFields).map(groupName => ({
+                    groupName,
+                    fields: groupedFields[groupName]
+                }));
+                
+                const hasCommonFields = commonFieldGroups.length > 0;
+                
+                document.getElementById('frontend-test').innerHTML = `
+                    <p><strong>Grouped Fields:</strong> ${JSON.stringify(groupedFields, null, 2).replace(/\\n/g, '<br>').replace(/ /g, '&nbsp;')}</p>
+                    <p><strong>Common Field Groups Length:</strong> ${commonFieldGroups.length}</p>
+                    <p><strong>hasCommonFields():</strong> <span style="color: ${hasCommonFields ? 'green' : 'red'}; font-weight: bold;">${hasCommonFields}</span></p>
+                    ${hasCommonFields ? '<p style="color: green;">✅ Common Information section should be visible!</p>' : '<p style="color: red;">❌ Common Information section would be hidden</p>'}
+                `;
+                
+            } catch (error) {
+                results.innerHTML = `<p style="color: red;">❌ Error: ${error.message}</p>`;
+            }
+        }
+        
+        // Run test when page loads
+        testCommonFields();
+    </script>
+</body>
+</html>

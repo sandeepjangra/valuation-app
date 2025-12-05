@@ -40,9 +40,22 @@ export class TemplateService {
       templateInfo: response.templateInfo
     });
 
+    // Debug common fields structure before grouping
+    console.log('🔍 Raw common fields structure:', response.commonFields);
+    if (response.commonFields && response.commonFields.length > 0) {
+      console.log('🔍 First common field:', response.commonFields[0]);
+    }
+
     // Process common fields into groups
     const commonFieldGroups = this.groupFieldsByGroup(response.commonFields, 'Common');
-    console.log('🔥 Common field groups created:', commonFieldGroups.length);
+    console.log('🔥 Common field groups created:', {
+      groupCount: commonFieldGroups.length,
+      groups: commonFieldGroups.map(g => ({
+        name: g.groupName,
+        displayName: g.displayName,
+        fieldsCount: g.fields.length
+      }))
+    });
 
     // Bank-specific tabs are already structured properly from the backend
     const bankSpecificTabs = response.bankSpecificTabs || [];
@@ -104,10 +117,22 @@ export class TemplateService {
    * Group fields by their fieldGroup property (used for common fields only)
    */
   private groupFieldsByGroup(fields: (TemplateField | BankSpecificField)[], defaultPrefix: string): FieldGroup[] {
+    console.log('🔍 groupFieldsByGroup called with:', {
+      fieldsLength: fields?.length || 0,
+      defaultPrefix,
+      firstField: fields?.[0]
+    });
+
+    if (!fields || fields.length === 0) {
+      console.log('⚠️ No fields provided to groupFieldsByGroup');
+      return [];
+    }
+
     const groupMap = new Map<string, (TemplateField | BankSpecificField)[]>();
 
-    fields.forEach(field => {
+    fields.forEach((field, index) => {
       const groupName = field.fieldGroup || 'default';
+      console.log(`🔍 Field ${index}: ${field.fieldId} -> group: ${groupName}`, field);
       if (!groupMap.has(groupName)) {
         groupMap.set(groupName, []);
       }

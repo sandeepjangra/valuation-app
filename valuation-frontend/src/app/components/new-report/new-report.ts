@@ -48,6 +48,9 @@ export class NewReport implements OnInit, OnDestroy {
     // Ensure we start fresh
     console.log('🚀 NewReport component initialized');
     
+    // Test PDF API connectivity
+    this.testPdfApi();
+    
     // Get organization context from route
     this.route.parent?.params.subscribe(params => {
       this.currentOrgShortName = params['orgShortName'] || '';
@@ -193,11 +196,11 @@ export class NewReport implements OnInit, OnDestroy {
     this.selectedTemplate = template;
     this.selectedCustomTemplate = null; // Reset custom template selection
     
-    // Load custom templates for this bank and property type
-    this.loadCustomTemplates(this.selectedBank!.bankCode, template.propertyType);
+    // Skip loading custom templates since Step 3 is now PDF upload
+    // this.loadCustomTemplates(this.selectedBank!.bankCode, template.propertyType);
     
     this.step = 3;
-    console.log('➡️ Moving to step 3: Optional custom template selection');
+    console.log('➡️ Moving to step 3: PDF Upload');
     
     // Force change detection
     this.cdr.detectChanges();
@@ -281,6 +284,12 @@ export class NewReport implements OnInit, OnDestroy {
         queryParams.customTemplateId = this.selectedCustomTemplate._id;
         queryParams.customTemplateName = this.selectedCustomTemplate.templateName;
       }
+
+      // Add extracted PDF fields if available
+      if (this.extractedFields && Object.keys(this.extractedFields).length > 0) {
+        console.log('📄 Including extracted PDF fields:', this.extractedFields);
+        queryParams.pdfFields = JSON.stringify(this.extractedFields);
+      }
       
       // Navigate to organization-aware create route
       const createRoute = `/org/${this.currentOrgShortName}/reports/create`;
@@ -336,10 +345,34 @@ export class NewReport implements OnInit, OnDestroy {
     this.step = 4; // Go to final step
   }
 
+  onUploadAreaClick() {
+    console.log('🖱️ Upload area clicked - triggering file input');
+  }
+
+  // Debug method to test API connectivity
+  testPdfApi() {
+    console.log('🧪 Testing PDF API connectivity...');
+    
+    this.pdfProcessorService.checkHealth().subscribe({
+      next: (result) => {
+        console.log('✅ PDF API Health Check Success:', result);
+      },
+      error: (error) => {
+        console.error('❌ PDF API Health Check Failed:', error);
+      }
+    });
+  }
+
   onFileSelected(event: Event) {
+    console.log('🎯 File selection event triggered:', event);
     const input = event.target as HTMLInputElement;
+    console.log('🎯 Input element:', input);
+    console.log('🎯 Files found:', input.files?.length || 0);
     if (input.files && input.files[0]) {
+      console.log('📄 PDF file selected:', input.files[0].name, 'Size:', input.files[0].size);
       this.handlePdfFile(input.files[0]);
+    } else {
+      console.log('❌ No file selected');
     }
   }
 
@@ -364,57 +397,87 @@ export class NewReport implements OnInit, OnDestroy {
   }
 
   private handlePdfFile(file: File) {
+    console.log('🚀 handlePdfFile called with:', { name: file.name, size: file.size, type: file.type });
+    
     // Validate file type
     if (file.type !== 'application/pdf') {
-      alert('Please upload a PDF file only.');
+      console.error('❌ Invalid file type:', file.type);
       return;
     }
 
-    // Validate file size (10MB max)
-    if (file.size > 10 * 1024 * 1024) {
-      alert('File size must be less than 10MB.');
+    // Validate file size (15MB max - updated to match backend)
+    if (file.size > 15 * 1024 * 1024) {
+      console.error('❌ File too large:', file.size);
       return;
     }
 
+    console.log('✅ File validation passed');
     console.log('📄 PDF file selected:', file.name);
     this.uploadedPdf = file;
     this.processPdf(file);
   }
 
   private processPdf(file: File) {
+    console.log('🚀 processPdf called with file:', file.name);
+    
     // Validate file first
     const validation = this.pdfProcessorService.validatePdfFile(file);
+    
     if (!validation.valid) {
-      alert('File validation failed:\n' + validation.errors.join('\n'));
+      console.error('File validation failed:', validation.errors);
       this.uploadedPdf = null;
       return;
     }
 
+    console.log('✅ File validation passed, starting processing...');
     this.isProcessingPdf = true;
     this.processingStatus = 'Uploading and processing PDF...';
     
     console.log('📤 Processing PDF:', file.name);
+    console.log('🔍 PDF file details:', { name: file.name, size: file.size, type: file.type });
     
     // Process with real API
+    console.log('🌐 Calling PDF service...');
+    
     this.pdfProcessorService.extractFieldsFromPdf(file).subscribe({
       next: (result) => {
         if (result.success) {
+          console.log('✅ PDF processed successfully:', result);
+          console.log('🔍 Raw result.fields:', result.fields);
+          console.log('🔍 Result metadata:', result.metadata);
+          
           // Map extracted fields to our form format
           this.extractedFields = this.pdfProcessorService.mapExtractedFieldsToForm(result.fields);
+          console.log('📋 Mapped extracted fields:', this.extractedFields);
+          
           this.processingStatus = `Successfully extracted ${result.metadata.fields_extracted} fields`;
           
-          console.log('✅ PDF processed successfully:', result);
-          console.log('📋 Extracted fields:', this.extractedFields);
+          console.log('🔄 Current step before change:', this.step);
           
+          // Reset processing flags first
+          this.isProcessingPdf = false;
+          
+          // Then change step
           this.step = 4; // Go to final step
+          console.log('🔄 Step changed to:', this.step);
+          
+          // Check step 4 display conditions
+          console.log('🔍 Step 4 conditions check:');
+          console.log('  - isLoading:', this.isLoading);
+          console.log('  - step === 4:', this.step === 4);
+          console.log('  - selectedTemplate:', this.selectedTemplate);
+          console.log('  - isProcessingPdf:', this.isProcessingPdf);
+          
+          // Force change detection
+          this.cdr.detectChanges();
+          console.log('🔄 Change detection triggered');
         } else {
           throw new Error(result.error || 'PDF processing failed');
         }
       },
       error: (error) => {
         console.error('❌ Error processing PDF:', error);
-        const errorMessage = error.error?.detail || error.message || 'Unknown error';
-        alert('Error processing PDF: ' + errorMessage);
+        console.error('❌ Full error object:', JSON.stringify(error, null, 2));
         this.uploadedPdf = null;
         this.isProcessingPdf = false;
       },

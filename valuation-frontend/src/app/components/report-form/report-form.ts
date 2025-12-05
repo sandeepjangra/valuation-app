@@ -35,6 +35,8 @@ export class ReportForm implements OnInit {
   selectedPropertyType: string = '';
   customTemplateId: string = '';
   customTemplateName: string = '';
+  currentOrgShortName: string = ''; // Track current organization context
+  extractedPdfFields: Record<string, any> | null = null; // PDF extracted fields
   
   // Form data - Updated for new structure
   reportForm: FormGroup;
@@ -181,6 +183,14 @@ export class ReportForm implements OnInit {
 
   loadQueryParams() {
     console.log('🔥 Loading query params...');
+    
+    // Load route parameters (for organization context)
+    this.route.params.subscribe(params => {
+      this.currentOrgShortName = params['orgShortName'] || '';
+      console.log('🏢 Organization context:', this.currentOrgShortName);
+    });
+    
+    // Load query parameters (for report data)
     this.route.queryParams.subscribe(params => {
       console.log('🔥 Raw query params received:', params);
       this.selectedBankCode = params['bankCode'] || '';
@@ -191,14 +201,27 @@ export class ReportForm implements OnInit {
       this.customTemplateId = params['customTemplateId'] || '';
       this.customTemplateName = params['customTemplateName'] || '';
       
-      console.log('🔥 Processed Report Form Params:', {
+      // Process PDF fields if available
+      if (params['pdfFields']) {
+        try {
+          this.extractedPdfFields = JSON.parse(params['pdfFields']);
+          console.log('� PDF fields loaded from query params:', this.extractedPdfFields);
+        } catch (error) {
+          console.error('❌ Error parsing PDF fields:', error);
+          this.extractedPdfFields = null;
+        }
+      }
+      
+      console.log('�🔥 Processed Report Form Params:', {
         bankCode: this.selectedBankCode,
         bankName: this.selectedBankName,
         templateId: this.selectedTemplateId,
         templateName: this.selectedTemplateName,
         propertyType: this.selectedPropertyType,
         customTemplateId: this.customTemplateId,
-        customTemplateName: this.customTemplateName
+        customTemplateName: this.customTemplateName,
+        orgShortName: this.currentOrgShortName,
+        hasPdfFields: !!this.extractedPdfFields
       });
 
       // Load template data when query params are available
@@ -226,7 +249,7 @@ export class ReportForm implements OnInit {
       if (!orgShortName) {
         console.warn('⚠️ No organization context found in route');
         alert('Error: No organization context found. Please select an organization first.');
-        this.router.navigate(['/new-report']);
+        this.navigateToReportSelection();
         return;
       }
 
@@ -257,7 +280,7 @@ export class ReportForm implements OnInit {
             '3. Set the "Report Reference Initials" field (e.g., CEV/RVO)\n\n' +
             'You will be redirected to the report selection page.'
           );
-          this.router.navigate(['/new-report']);
+          this.navigateToReportSelection();
         }
       });
     }).unsubscribe();
@@ -368,6 +391,9 @@ export class ReportForm implements OnInit {
     
     // Set reference number if it was already loaded
     this.setReferenceNumberInForm();
+    
+    // Apply PDF extracted fields if available
+    this.applyExtractedPdfFields();
   }
 
   /**
@@ -391,6 +417,75 @@ export class ReportForm implements OnInit {
       console.log('⚠️ Cannot set reference number:', {
         hasReferenceNumber: !!this.reportReferenceNumber,
         hasForm: !!this.reportForm
+      });
+    }
+  }
+
+  /**
+   * Apply extracted PDF fields to the form (called after form is built)
+   */
+  applyExtractedPdfFields() {
+    if (this.extractedPdfFields && this.reportForm && Object.keys(this.extractedPdfFields).length > 0) {
+      console.log('📄 Applying PDF extracted fields to form:', this.extractedPdfFields);
+      
+      let appliedCount = 0;
+      const availableControls = Object.keys(this.reportForm.controls);
+      
+      // Match PDF fields to form controls and apply values
+      Object.keys(this.extractedPdfFields).forEach(pdfFieldKey => {
+        const pdfValue = this.extractedPdfFields![pdfFieldKey];
+        let matchingControl: string | undefined;
+        
+        // Strategy 1: Direct case-insensitive match
+        matchingControl = availableControls.find(controlKey => 
+          controlKey.toLowerCase() === pdfFieldKey.toLowerCase()
+        );
+        
+        // Strategy 2: Convert camelCase to snake_case and match
+        if (!matchingControl) {
+          const snakeCaseKey = pdfFieldKey.replace(/([A-Z])/g, '_$1').toLowerCase();
+          matchingControl = availableControls.find(controlKey => 
+            controlKey.toLowerCase() === snakeCaseKey
+          );
+          if (matchingControl) {
+            console.log(`🔄 Mapped camelCase to snake_case: ${pdfFieldKey} -> ${snakeCaseKey} -> ${matchingControl}`);
+          }
+        }
+        
+        // Strategy 3: Remove underscores and match
+        if (!matchingControl) {
+          const noUnderscoreKey = pdfFieldKey.replace(/_/g, '');
+          matchingControl = availableControls.find(controlKey => 
+            controlKey.replace(/_/g, '').toLowerCase() === noUnderscoreKey.toLowerCase()
+          );
+          if (matchingControl) {
+            console.log(`🔄 Mapped by removing underscores: ${pdfFieldKey} -> ${matchingControl}`);
+          }
+        }
+        
+        if (matchingControl && pdfValue !== null && pdfValue !== undefined && pdfValue !== '') {
+          const control = this.reportForm.get(matchingControl);
+          if (control && !control.disabled) {
+            control.setValue(pdfValue);
+            appliedCount++;
+            console.log(`📄 Applied PDF field: ${pdfFieldKey} -> ${matchingControl} = "${pdfValue}"`);
+          } else {
+            console.log(`⚠️ Control ${matchingControl} is disabled, skipping PDF field: ${pdfFieldKey}`);
+          }
+        } else {
+          console.log(`⚠️ No matching form control found for PDF field: ${pdfFieldKey}`);
+        }
+      });
+      
+      console.log(`✅ Applied ${appliedCount} of ${Object.keys(this.extractedPdfFields).length} PDF fields to form`);
+      
+      // Trigger change detection to update UI
+      this.cdr.detectChanges();
+    } else {
+      console.log('ℹ️ No PDF fields to apply:', {
+        hasPdfFields: !!this.extractedPdfFields,
+        hasForm: !!this.reportForm,
+        pdfFieldsCount: this.extractedPdfFields ? Object.keys(this.extractedPdfFields).length : 0
       });
     }
   }
@@ -655,10 +750,21 @@ export class ReportForm implements OnInit {
       return false;
     }
     const hasFields = this.getCommonFieldGroups().length > 0;
+    const commonGroups = this.getCommonFieldGroups();
     console.log('🔍 hasCommonFields():', {
       hasFields,
-      commonFieldGroups: this.getCommonFieldGroups().length,
-      templateData: !!this.templateData
+      commonFieldGroups: commonGroups.length,
+      templateData: !!this.templateData,
+      firstGroup: commonGroups.length > 0 ? {
+        name: commonGroups[0].groupName,
+        displayName: commonGroups[0].displayName,
+        fieldsCount: commonGroups[0].fields.length,
+        firstField: commonGroups[0].fields[0] ? {
+          fieldId: commonGroups[0].fields[0].fieldId,
+          fieldType: commonGroups[0].fields[0].fieldType,
+          uiDisplayName: commonGroups[0].fields[0].uiDisplayName
+        } : null
+      } : null
     });
     return hasFields;
   }
@@ -763,11 +869,47 @@ export class ReportForm implements OnInit {
   }
 
   onCancel() {
-    this.router.navigate(['/dashboard']);
+    // Navigate back to the dashboard within the current organization context
+    if (this.currentOrgShortName) {
+      this.router.navigate(['/org', this.currentOrgShortName, 'dashboard']);
+    } else {
+      // Fallback: try to extract from current URL or use system-administration as default
+      const urlSegments = this.router.url.split('/');
+      const orgIndex = urlSegments.findIndex(segment => segment === 'org');
+      const orgShortName = orgIndex >= 0 && orgIndex + 1 < urlSegments.length 
+        ? urlSegments[orgIndex + 1] 
+        : 'system-administration';
+      
+      this.router.navigate(['/org', orgShortName, 'dashboard']);
+    }
+  }
+
+  /**
+   * Helper method to get current organization context for navigation
+   */
+  private getCurrentOrgContext(): string {
+    if (this.currentOrgShortName) {
+      return this.currentOrgShortName;
+    }
+    
+    // Fallback: try to extract from current URL or use system-administration as default
+    const urlSegments = this.router.url.split('/');
+    const orgIndex = urlSegments.findIndex(segment => segment === 'org');
+    return orgIndex >= 0 && orgIndex + 1 < urlSegments.length 
+      ? urlSegments[orgIndex + 1] 
+      : 'system-administration';
+  }
+
+  /**
+   * Navigate to the new report selection page within current organization context
+   */
+  private navigateToReportSelection() {
+    const orgShortName = this.getCurrentOrgContext();
+    this.router.navigate(['/org', orgShortName, 'reports', 'new']);
   }
 
   goBackToSelection() {
-    this.router.navigate(['/new-report']);
+    this.navigateToReportSelection();
   }
 
   /**

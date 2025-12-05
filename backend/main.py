@@ -478,6 +478,7 @@ async def health_check():
     return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
 
 
+
 # ================================
 # ADMIN DASHBOARD - HEALTH CHECK
 # ================================
@@ -986,15 +987,40 @@ async def get_aggregated_template_fields(bank_code: str, template_id: str, reque
         if not os.getenv('MONGODB_URI'):
             raise HTTPException(status_code=500, detail="MongoDB connection not configured")
         
-        from database.multi_db_manager import MultiDatabaseSession
+        from database.multi_db_manager import MultiDatabaseManager
         
-        async with MultiDatabaseSession() as db:
-            # Step 1: Find the bank and template configuration from unified document
-            unified_doc = await db.find_one("admin", "banks", {"_id": {"$regex": "all_banks_unified"}})
+        logger.info(f"🔄 Starting Multi-Collection Aggregation API call for template: {bank_code}/{template_id}")
+        
+        # Use MultiDatabaseManager directly (same as working debug endpoints)
+        db_manager = MultiDatabaseManager()
+        await db_manager.connect()
+        
+        try:
+            admin_db = db_manager.get_database("admin")
             
+            # Debug: Check what documents exist in the admin.banks collection
+            admin_banks_count = await admin_db.banks.count_documents({})
+            logger.info(f"🔍 Found {admin_banks_count} documents in admin.banks collection")
+            
+            # Find the comprehensive document
+            unified_doc = await admin_db.banks.find_one({"_id": "all_banks_comprehensive_v4"})
+            
+            if unified_doc:
+                logger.info(f"✅ Found comprehensive document: {unified_doc.get('_id')}")
+            else:
+                logger.error(f"❌ Comprehensive document not found!")
+                # Try to find any document
+                any_doc = await admin_db.banks.find_one({})
+                if any_doc:
+                    logger.info(f"   But found other document: {any_doc.get('_id')}")
+                    # Use it if it seems to be banks data
+                    if "banks" in any_doc:
+                        unified_doc = any_doc
+                        logger.info(f"✅ Using found document as it contains banks data")
+                
             if not unified_doc:
-                logger.warning(f"❌ Unified banks document not found")
                 raise HTTPException(status_code=404, detail="Banks configuration not found")
+
             
             # Find the specific bank in the banks array
             bank_doc = None
@@ -1041,22 +1067,22 @@ async def get_aggregated_template_fields(bank_code: str, template_id: str, reque
             logger.info(f"📋 Using collection: {collection_ref}")
             
             # Step 3: Get common form fields (all active fields)
-            common_fields_docs = await db.find_many(
-                "admin",
-                "common_form_fields",
-                {"isActive": True}
-            )
+            common_fields_collection = admin_db["common_form_fields"]
+            common_fields_docs = await common_fields_collection.find({"isActive": True}).to_list(length=None)
             
-            # Process common fields
+            # Get common fields (already in correct format)
             common_fields = []
             for doc in common_fields_docs:
                 doc_fields = doc.get("fields", [])
-                common_fields.extend(doc_fields)
-                
-            logger.info(f"📄 Found {len(common_fields)} common fields")
+                for field in doc_fields:
+                    # Fields are already in correct frontend format
+                    common_fields.append(field)
+            
+            logger.info(f"📄 Fetched {len(common_fields)} common fields")
             
             # Step 4: Get bank-specific template fields from the collection
-            template_collection_docs = await db.find_many("admin", collection_ref, {})
+            template_collection = admin_db[collection_ref]
+            template_collection_docs = await template_collection.find({}).to_list(length=None)
             
             if not template_collection_docs:
                 logger.warning(f"❌ No template data found in collection: {collection_ref}")
@@ -1109,6 +1135,7 @@ async def get_aggregated_template_fields(bank_code: str, template_id: str, reque
                     # Handle tabs with sections
                     if tab_config.get("hasSections"):
                         sections_config = tab_config.get("sections", [])
+                        print(f"DEBUG: Tab {tab_config.get('tabName')} has {len(sections_config)} sections")
                         
                         for section_config in sorted(sections_config, key=lambda x: x.get("sortOrder", 0)):
                             section_id = section_config.get("sectionId")
@@ -1124,16 +1151,44 @@ async def get_aggregated_template_fields(bank_code: str, template_id: str, reque
                                     break
                             
                             if document_section:
+                                section_fields = document_section.get("fields", [])
+                                
+                                # Check if this is a documents section - integrate document types
+                                section_name = section_config.get("sectionName", "").lower()
+                                print(f"DEBUG: Processing section: '{section_name}' - checking for document keyword")
+                                logger.info(f"🔍 Processing section: '{section_name}' - checking for document keyword")
+                                if "document" in section_name:
+                                    logger.info(f"📄 Found documents section: {section_name}")
+                                    try:
+                                        from services.document_types_integrator import DocumentTypesIntegrator
+                                        
+                                        logger.info(f"📄 Calling DocumentTypesIntegrator with bank_code='{bank_code}', property_type='{template_id}'")
+                                        # Get document types for this bank and property type (template_id = property type)
+                                        doc_type_fields = await DocumentTypesIntegrator.get_document_fields(
+                                            db_manager, property_type=template_id, bank_code=bank_code
+                                        )
+                                        if doc_type_fields:
+                                            logger.info(f"📄 Adding {len(doc_type_fields)} document type fields to section")
+                                            section_fields.extend(doc_type_fields)
+                                        else:
+                                            logger.warning(f"📄 No document type fields found for {bank_code}/{template_id}")
+                                    except Exception as e:
+                                        logger.error(f"❌ Error integrating document types: {e}")
+                                        import traceback
+                                        traceback.print_exc()
+                                else:
+                                    logger.info(f"🔍 Section '{section_name}' does not contain 'document' keyword")
+                                
                                 section = {
                                     "sectionId": section_config.get("sectionId"),
                                     "sectionName": section_config.get("sectionName"),
                                     "sortOrder": section_config.get("sortOrder"),
                                     "description": section_config.get("description", ""),
-                                    "fields": document_section.get("fields", [])
+                                    "fields": section_fields
                                 }
                                 tab["sections"].append(section)
                                 # Also add fields to tab level for backward compatibility
-                                tab["fields"].extend(document_section.get("fields", []))
+                                tab["fields"].extend(section_fields)
                     
                     # Handle tabs without sections (normal field structure)
                     else:
@@ -1158,7 +1213,8 @@ async def get_aggregated_template_fields(bank_code: str, template_id: str, reque
             logger.info(f"🎯 Created {len(bank_specific_tabs)} bank-specific tabs")
             
             # Step 4.5: Process fields to enhance calculation metadata
-            processed_common_fields = process_template_fields(common_fields)
+            # Common fields are already transformed, no need for additional processing
+            processed_common_fields = common_fields
             processed_bank_tabs = []
             for tab in bank_specific_tabs:
                 processed_tab = dict(tab)
@@ -1215,6 +1271,14 @@ async def get_aggregated_template_fields(bank_code: str, template_id: str, reque
             
             return response
             
+        except HTTPException as http_exc:
+            raise http_exc
+        except Exception as e:
+            logger.error(f"❌ Unexpected error in aggregated fields: {str(e)}")
+            raise HTTPException(status_code=500, detail="Internal server error")
+        finally:
+            await db_manager.disconnect()
+            
     except HTTPException as http_exc:
         error_response = JSONResponse(
             status_code=http_exc.status_code,
@@ -1236,6 +1300,72 @@ async def get_aggregated_template_fields(bank_code: str, template_id: str, reque
 # ================================
 # FIELD PROCESSING UTILITIES
 # ================================
+
+def transform_common_field_to_frontend_format(field: Dict[str, Any]) -> Dict[str, Any]:
+    """Transform MongoDB common field structure to frontend expected format"""
+    # Map MongoDB field structure to frontend format - NEW INTERFACE
+    transformed = {
+        # NEW: Use frontend interface field names
+        "fieldId": field.get("fieldId", field.get("id", "")),
+        "uiDisplayName": field.get("uiDisplayName", field.get("label", "")),
+        "fieldType": field.get("fieldType", field.get("type", "text")),
+        "isRequired": field.get("isRequired", field.get("required", False)),
+        "placeholder": field.get("placeholder", ""),
+        "helpText": field.get("helpText", ""),
+        "validation": field.get("validation", {}),
+        "sortOrder": field.get("sortOrder", 0),
+        "gridSize": field.get("gridSize", 6),
+        "fieldGroup": field.get("fieldGroup", "Common"),  # Use existing or default to "Common"
+        
+        # Add missing required fields for frontend interface
+        "_id": field.get("_id", field.get("id", "")),
+        "technicalName": field.get("technicalName", field.get("fieldId", field.get("id", ""))),
+        "isActive": field.get("isActive", True),
+        "isReadonly": field.get("isReadonly", False)
+    }
+    
+    # Handle special field types
+    if transformed["type"] == "select" and "options" in field:
+        transformed["options"] = field["options"]
+    elif transformed["type"] == "select_dynamic":
+        transformed["type"] = "select"
+        if "dataSourceConfig" in field:
+            transformed["dataSourceConfig"] = field["dataSourceConfig"]
+    
+    # Add other MongoDB properties if they exist
+    for key in ["defaultValue", "dynamic", "dataSource", "dataSourceConfig", "technicalName"]:
+        if key in field:
+            transformed[key] = field[key]
+    
+    # Add technical name for backend compatibility
+    transformed["technicalName"] = field.get("technicalName", field.get("fieldId", transformed["id"]))
+    
+    return transformed
+
+async def get_transformed_common_fields(db) -> List[Dict[str, Any]]:
+    """Get and transform common fields for frontend consumption"""
+    try:
+        # Get common form fields (all active fields)
+        common_fields_docs = await db.find_many(
+            "admin",
+            "common_form_fields", 
+            {"isActive": True}
+        )
+        
+        # Process common fields and transform them
+        common_fields = []
+        for doc in common_fields_docs:
+            doc_fields = doc.get("fields", [])
+            for field in doc_fields:
+                transformed_field = transform_common_field_to_frontend_format(field)
+                common_fields.append(transformed_field)
+        
+        logger.info(f"📄 Fetched and transformed {len(common_fields)} common fields")
+        return common_fields
+    
+    except Exception as e:
+        logger.error(f"❌ Error fetching common fields: {e}")
+        return []
 
 def process_template_fields(fields_list: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """Process template fields to enhance calculation metadata and ensure proper structure"""

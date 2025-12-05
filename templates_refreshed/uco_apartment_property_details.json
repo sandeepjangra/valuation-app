@@ -1,0 +1,1717 @@
+{
+  "metadata": {
+    "generated_at": "2025-10-25T12:00:00.000000+00:00",
+    "collection_name": "uco_apartment_property_details",
+    "total_documents": 5,
+    "version": 1,
+    "database": "valuation_admin",
+    "description": "Dynamic tab structure for UCO Apartment Property Details template",
+    "refreshedFrom": "MongoDB",
+    "refreshDate": "2025-12-05T20:03:37.896919",
+    "bankCode": "UCO",
+    "branchCount": 1
+  },
+  "templateMetadata": {
+    "templateId": "UCO_APARTMENT_TEMPLATE_V1",
+    "templateName": "UCO Apartment Property Valuation",
+    "bankCode": "UCO",
+    "propertyType": "Apartment",
+    "version": "2.0",
+    "tabs": [
+      {
+        "tabId": "property_details",
+        "tabName": "Property Details",
+        "documentSource": "UCO_APARTMENT_PROPERTY_DETAILS_V1",
+        "sortOrder": 1,
+        "hasSections": true,
+        "sections": [
+          {
+            "sectionId": "property_part_a",
+            "sectionName": "Part A - Basic Information",
+            "sortOrder": 1,
+            "description": "Property description and ownership details"
+          },
+          {
+            "sectionId": "property_part_b",
+            "sectionName": "Part B - Location Details",
+            "sortOrder": 2,
+            "description": "Address, boundaries and geographical information"
+          },
+          {
+            "sectionId": "property_part_c",
+            "sectionName": "Part C - Property Characteristics",
+            "sortOrder": 3,
+            "description": "Apartment type, restrictions and acquisition details"
+          }
+        ],
+        "description": "Basic property information and location details"
+      },
+      {
+        "tabId": "site_characteristics",
+        "tabName": "Site Characteristics",
+        "documentSource": "UCO_APARTMENT_SITE_CHARACTERISTICS_V1",
+        "sortOrder": 2,
+        "hasSections": false,
+        "description": "Site conditions, amenities, and infrastructure details"
+      },
+      {
+        "tabId": "valuer_mandate",
+        "tabName": "Valuer Mandate",
+        "documentSource": "UCO_APARTMENT_VALUER_MANDATE_V1",
+        "sortOrder": 3,
+        "hasSections": false,
+        "description": "Valuer mandate and property assessment details"
+      },
+      {
+        "tabId": "valuation",
+        "tabName": "Valuation",
+        "documentSource": "UCO_APARTMENT_VALUATION_V1",
+        "sortOrder": 4,
+        "hasSections": true,
+        "sections": [
+          {
+            "sectionId": "valuation_part_a",
+            "sectionName": "Part A - Apartment Valuation",
+            "sortOrder": 1,
+            "description": "Apartment area calculations and market rates"
+          },
+          {
+            "sectionId": "valuation_part_b",
+            "sectionName": "Part B - Building Details",
+            "sortOrder": 2,
+            "description": "Building specifications and construction details"
+          }
+        ],
+        "description": "Apartment and building valuation calculations"
+      },
+      {
+        "tabId": "construction_specifications",
+        "tabName": "Construction Specifications",
+        "documentSource": "UCO_APARTMENT_CONSTRUCTION_SPECS_V1",
+        "sortOrder": 5,
+        "hasSections": false,
+        "description": "Construction materials and specifications"
+      },
+      {
+        "tabId": "detailed_valuation",
+        "tabName": "Detailed Valuation",
+        "documentSource": "UCO_APARTMENT_DETAILED_VALUATION_V1",
+        "sortOrder": 6,
+        "hasSections": false,
+        "description": "Detailed valuation components and final calculations"
+      }
+    ]
+  },
+  "documents": [
+    {
+      "_id": "68fa78b4e25b49fc725d349a",
+      "templateId": "UCO_APARTMENT_PROPERTY_DETAILS_V1",
+      "templateName": "UCO Apartment Property Details",
+      "bankCode": "UCO",
+      "propertyType": "Apartment",
+      "templateCategory": "property_details",
+      "createdAt": "2025-10-23T18:49:24.051693+00:00",
+      "updatedAt": "2025-10-23T18:49:24.051693+00:00",
+      "isActive": true,
+      "uiName": "Property Details",
+      "sections": [
+        {
+          "sectionId": "property_part_a",
+          "sectionName": "Part A - Documents",
+          "sortOrder": 1,
+          "fields": [],
+          "documentFilter": {
+            "applicablePropertyTypes": "Apartment",
+            "applicableBanks": {
+              "$in": [
+                "UCO",
+                "*"
+              ]
+            }
+          },
+          "originalFields": [
+            "list_of_documents_produced",
+            "agreement_to_sell",
+            "allotment_letter",
+            "layout_plan",
+            "sales_deed",
+            "building_plan_sanction"
+          ],
+          "useDocumentCollection": true
+        },
+        {
+          "sectionId": "property_part_b",
+          "sectionName": "Part B - Location Details",
+          "sortOrder": 2,
+          "fields": [
+            {
+              "fieldId": "owner_details",
+              "uiDisplayName": "Owner Details",
+              "fieldType": "textarea",
+              "isRequired": false,
+              "placeholder": "Name of the owner(s) and his/their address (es) with Phone no. (details of share of each owner in case of joint ownership)",
+              "sortOrder": 1,
+              "includeInCustomTemplate": true
+            },
+            {
+              "fieldId": "borrower_name",
+              "uiDisplayName": "Borrower/Client Name",
+              "fieldType": "textarea",
+              "isRequired": false,
+              "placeholder": "Enter name of borrower/client",
+              "sortOrder": 2,
+              "includeInCustomTemplate": true
+            },
+            {
+              "fieldId": "dimensions_table",
+              "uiDisplayName": "Dimensions Table",
+              "fieldType": "table",
+              "isRequired": false,
+              "sortOrder": 3,
+              "columns": [
+                {
+                  "columnId": "direction",
+                  "columnName": "Direction",
+                  "fieldType": "text",
+                  "isReadonly": true
+                },
+                {
+                  "columnId": "boundaries_per_documents",
+                  "columnName": "Boundaries As Per Documents",
+                  "fieldType": "text",
+                  "isRequired": false,
+                  "isEditable": true
+                },
+                {
+                  "columnId": "boundaries_actual",
+                  "columnName": "Boundaries Actual",
+                  "fieldType": "text",
+                  "isRequired": false,
+                  "isEditable": true
+                },
+                {
+                  "columnId": "dimensions_per_documents",
+                  "columnName": "Dimensions As Per Documents",
+                  "fieldType": "text",
+                  "isRequired": false,
+                  "isEditable": true
+                },
+                {
+                  "columnId": "dimensions_actual",
+                  "columnName": "Dimensions Actual",
+                  "fieldType": "text",
+                  "isRequired": false,
+                  "isEditable": true
+                }
+              ],
+              "rows": [
+                {
+                  "direction": "North",
+                  "boundaries_per_documents": "",
+                  "boundaries_actual": "",
+                  "dimensions_per_documents": "",
+                  "dimensions_actual": ""
+                },
+                {
+                  "direction": "South",
+                  "boundaries_per_documents": "",
+                  "boundaries_actual": "",
+                  "dimensions_per_documents": "",
+                  "dimensions_actual": ""
+                },
+                {
+                  "direction": "East",
+                  "boundaries_per_documents": "",
+                  "boundaries_actual": "",
+                  "dimensions_per_documents": "",
+                  "dimensions_actual": ""
+                },
+                {
+                  "direction": "West",
+                  "boundaries_per_documents": "",
+                  "boundaries_actual": "",
+                  "dimensions_per_documents": "",
+                  "dimensions_actual": ""
+                }
+              ],
+              "placeholder": "",
+              "includeInCustomTemplate": true
+            },
+            {
+              "fieldId": "route_map",
+              "uiDisplayName": "Route Map",
+              "fieldType": "textarea",
+              "isRequired": false,
+              "sortOrder": 4,
+              "placeholder": "e.g. Google location is attached with the report",
+              "includeInCustomTemplate": true
+            }
+          ]
+        },
+        {
+          "sectionId": "property_part_c",
+          "sectionName": "Part C - Property Characteristics",
+          "sortOrder": 3,
+          "fields": [
+            {
+              "fieldId": "covered_under_land_ceiling",
+              "uiDisplayName": "Whether Covered Under Any Land Ceiling of State/Central Govt.",
+              "fieldType": "textarea",
+              "isRequired": false,
+              "defaultValue": "NA",
+              "sortOrder": 1,
+              "placeholder": "Provide details whether Covered Under Any Land Ceiling of State/Central Govt.",
+              "includeInCustomTemplate": true
+            },
+            {
+              "fieldId": "specific_identification_mark",
+              "uiDisplayName": "Specific Identification Mark",
+              "fieldType": "textarea",
+              "isRequired": false,
+              "defaultValue": "NA",
+              "sortOrder": 2,
+              "placeholder": "e.g. Like a famous buildings, famous house, some landmark area etc.",
+              "includeInCustomTemplate": true
+            },
+            {
+              "fieldId": "freehold_leasehold",
+              "uiDisplayName": "Feehold/Leasehold",
+              "fieldType": "select",
+              "options": [
+                {
+                  "value": "freehold",
+                  "label": "Freehold"
+                },
+                {
+                  "value": "Leasehold",
+                  "label": "Leasehold"
+                }
+              ],
+              "isRequired": false,
+              "sortOrder": 3,
+              "placeholder": "",
+              "includeInCustomTemplate": true
+            },
+            {
+              "fieldId": "any_restriction_regards_to_use_of_land",
+              "uiDisplayName": "Any restriction Regards to Use of Land",
+              "fieldType": "textarea",
+              "isRequired": false,
+              "defaultValue": "NA",
+              "sortOrder": 4,
+              "placeholder": "Provide details whether any restriction Regards to Use of Land",
+              "includeInCustomTemplate": true
+            },
+            {
+              "fieldId": "agricultural_land",
+              "uiDisplayName": "Agricultural Land",
+              "fieldType": "textarea",
+              "isRequired": false,
+              "sortOrder": 5,
+              "placeholder": "e.g. NA or Its not an agricultural land",
+              "includeInCustomTemplate": true
+            },
+            {
+              "fieldId": "year_of_acquisition_purchase",
+              "uiDisplayName": "Year of Acquisition/Purchase",
+              "fieldType": "text",
+              "isRequired": false,
+              "sortOrder": 6,
+              "placeholder": "e.g. 2022 as per sale deed",
+              "includeInCustomTemplate": true
+            },
+            {
+              "fieldId": "value_of_purchase_price",
+              "uiDisplayName": "Value of Purchase Price",
+              "fieldType": "text",
+              "isRequired": false,
+              "sortOrder": 7,
+              "placeholder": "e.g. Rs. 450.00 lac as mentioned in sale deed",
+              "includeInCustomTemplate": true
+            },
+            {
+              "fieldId": "occupied_by_owner_tenant_duration",
+              "uiDisplayName": "Occupied by Owner/Tenant and How Long",
+              "fieldType": "textarea",
+              "isRequired": false,
+              "sortOrder": 8,
+              "placeholder": "e.g. Occupied by the Owner",
+              "includeInCustomTemplate": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_id": "68fa78b4e25b49fc725d349b",
+      "templateId": "UCO_APARTMENT_SITE_CHARACTERISTICS_V1",
+      "templateName": "UCO Apartment Site Characteristics",
+      "bankCode": "UCO",
+      "propertyType": "Apartment",
+      "templateCategory": "site_characteristics",
+      "createdAt": "2025-10-23T18:49:24.051768+00:00",
+      "updatedAt": "2025-10-23T18:49:24.051768+00:00",
+      "isActive": true,
+      "uiName": "Site Characteristics",
+      "fields": [
+        {
+          "fieldId": "locality_classification",
+          "technicalName": "locality_classification",
+          "uiDisplayName": "Classification of Locality",
+          "fieldType": "select",
+          "options": [
+            {
+              "value": "residential",
+              "label": "Residential"
+            },
+            {
+              "value": "non_residentials",
+              "label": "Non Residential"
+            }
+          ],
+          "isRequired": true,
+          "sortOrder": 1
+        },
+        {
+          "fieldId": "surrounding_area",
+          "technicalName": "surrounding_area",
+          "uiDisplayName": "Surrounding Area",
+          "fieldType": "select",
+          "options": [
+            {
+              "value": "developed",
+              "label": "Developed"
+            },
+            {
+              "value": "under_developed",
+              "label": "Under Developed"
+            }
+          ],
+          "isRequired": true,
+          "sortOrder": 2
+        },
+        {
+          "fieldId": "flooding_possibility",
+          "technicalName": "flooding_possibility",
+          "uiDisplayName": "Possibility of Frequent Flooding/Sub-merging",
+          "fieldType": "text",
+          "isRequired": false,
+          "placeholder": "Describe flooding/sub-merging possibilities",
+          "sortOrder": 3
+        },
+        {
+          "fieldId": "population_group",
+          "technicalName": "population_group",
+          "uiDisplayName": "Population Group",
+          "fieldType": "select",
+          "options": [
+            {
+              "value": "metro",
+              "label": "Metro"
+            },
+            {
+              "value": "urban",
+              "label": "Urban"
+            },
+            {
+              "value": "semi_urban",
+              "label": "Semi-Urban"
+            },
+            {
+              "value": "rural",
+              "label": "Rural"
+            }
+          ],
+          "isRequired": true,
+          "sortOrder": 4
+        },
+        {
+          "fieldId": "proximity_civic_amenities",
+          "technicalName": "proximity_civic_amenities",
+          "uiDisplayName": "Proximity of Civic Amenities ",
+          "fieldType": "text",
+          "isRequired": false,
+          "placeholder": "e.g. All amenities available in a radius of 1.0 to 2.0 Km",
+          "sortOrder": 5
+        },
+        {
+          "fieldId": "level_of_land",
+          "technicalName": "level_of_land",
+          "uiDisplayName": "Level of Land",
+          "fieldType": "text",
+          "isRequired": false,
+          "placeholder": "e.g. Plain or Rocky or Hilly etc.",
+          "sortOrder": 6
+        },
+        {
+          "fieldId": "terrain_of_land",
+          "technicalName": "terrain_of_land",
+          "uiDisplayName": "Terrain of Land",
+          "fieldType": "text",
+          "isRequired": false,
+          "placeholder": "e.g. Plain or Rocky or Hilly etc.",
+          "sortOrder": 7
+        },
+        {
+          "fieldId": "land_shape",
+          "technicalName": "land_shape",
+          "uiDisplayName": "Land Shape",
+          "fieldType": "text",
+          "isRequired": false,
+          "placeholder": "e.g. Square/Rectangular etc.",
+          "sortOrder": 8
+        },
+        {
+          "fieldId": "usage_type",
+          "technicalName": "usage_type",
+          "uiDisplayName": "Type of Use to Which it can be Put",
+          "fieldType": "select",
+          "options": [
+            {
+              "value": "residential",
+              "label": "Residential"
+            },
+            {
+              "value": "commercial",
+              "label": "Commercial"
+            },
+            {
+              "value": "industrial",
+              "label": "Industrial"
+            },
+            {
+              "value": "mixed_use",
+              "label": "Mixed Use"
+            }
+          ],
+          "isRequired": false,
+          "sortOrder": 9
+        },
+        {
+          "fieldId": "usage_restrictions",
+          "technicalName": "usage_restrictions",
+          "uiDisplayName": "Any Usage Restrictions",
+          "fieldType": "text",
+          "isRequired": false,
+          "placeholder": "e.g. For Residential purpose only",
+          "sortOrder": 10
+        },
+        {
+          "fieldId": "town_planning_approved",
+          "technicalName": "town_planning_approved",
+          "uiDisplayName": "Whether the Plot is Under Town Planning",
+          "fieldType": "text",
+          "isRequired": false,
+          "placeholder": "e.g. Already planned and developed by the HSVP/HUDA",
+          "sortOrder": 11
+        },
+        {
+          "fieldId": "corner_or_intermittent",
+          "technicalName": "corner_or_intermittent",
+          "uiDisplayName": "Whether the Plot is Intermittent or Corner",
+          "fieldType": "select",
+          "options": [
+            {
+              "value": "corner",
+              "label": "Corner"
+            },
+            {
+              "value": "intermittent",
+              "label": "Intermittent"
+            }
+          ],
+          "isRequired": false,
+          "sortOrder": 12
+        },
+        {
+          "fieldId": "road_facilities",
+          "technicalName": "road_facilities",
+          "uiDisplayName": "Whether any Road Facility is Available?",
+          "fieldType": "select",
+          "options": [
+            {
+              "value": "yes",
+              "label": "Yes"
+            },
+            {
+              "value": "no",
+              "label": "No"
+            }
+          ],
+          "isRequired": false,
+          "sortOrder": 13
+        },
+        {
+          "fieldId": "road_type_present",
+          "technicalName": "road_type_present",
+          "uiDisplayName": "Type of Road Available (B.T./Cement Road)",
+          "fieldType": "text",
+          "isRequired": false,
+          "placeholder": "e.g. B. T. Road or Cement Road etc.",
+          "sortOrder": 14
+        },
+        {
+          "fieldId": "road_width",
+          "technicalName": "road_width",
+          "uiDisplayName": "Front Width of the Road",
+          "fieldType": "text",
+          "isRequired": false,
+          "placeholder": "e.g. 30'-0 wide approx.",
+          "sortOrder": 15
+        },
+        {
+          "fieldId": "water_source",
+          "technicalName": "water_source",
+          "uiDisplayName": "Source of Water",
+          "fieldType": "text",
+          "isRequired": false,
+          "placeholder": "e.g. By the HSVP or Borewell etc.",
+          "sortOrder": 16
+        },
+        {
+          "fieldId": "sewerage_type",
+          "technicalName": "sewerage_type",
+          "uiDisplayName": "Type of Sewerage System",
+          "fieldType": "text",
+          "isRequired": false,
+          "placeholder": "e.g. Underground sewerage system etc.",
+          "sortOrder": 17
+        },
+        {
+          "fieldId": "water_supply_availability",
+          "technicalName": "water_supply_availability",
+          "uiDisplayName": "Availability of Water Supply",
+          "fieldType": "select",
+          "options": [
+            {
+              "value": "yes",
+              "label": "Yes"
+            },
+            {
+              "value": "no",
+              "label": "No"
+            }
+          ],
+          "isRequired": false,
+          "sortOrder": 18
+        },
+        {
+          "fieldId": "site_advantages",
+          "technicalName": "site_advantages",
+          "uiDisplayName": "Advantages of Site",
+          "fieldType": "text",
+          "isRequired": false,
+          "placeholder": "e.g. HUDA Developed sector",
+          "sortOrder": 19
+        },
+        {
+          "fieldId": "site_disadvantages",
+          "technicalName": "site_disadvantages",
+          "uiDisplayName": "Disadvantages of Site",
+          "fieldType": "text",
+          "isRequired": false,
+          "placeholder": "e.g. Not noticed as such",
+          "sortOrder": 20
+        },
+        {
+          "fieldId": "sale_instances",
+          "technicalName": "sale_instances",
+          "uiDisplayName": "Sale Instances of the Property in the Locality",
+          "fieldType": "textarea",
+          "isRequired": false,
+          "placeholder": "e.g. Fair",
+          "sortOrder": 21
+        },
+        {
+          "fieldId": "general_remarks",
+          "technicalName": "general_remarks",
+          "uiDisplayName": "General Remarks",
+          "fieldType": "textarea",
+          "isRequired": false,
+          "placeholder": "e.g. North facing property located in well developed sector of HUDA/HSVP",
+          "sortOrder": 22
+        }
+      ]
+    },
+    {
+      "_id": "68fa78b4e25b49fc725d349bb",
+      "templateId": "UCO_APARTMENT_VALUER_MANDATE_V1",
+      "templateName": "UCO Apartment Valuer Mandate",
+      "bankCode": "UCO",
+      "propertyType": "Apartment",
+      "templateCategory": "valuer_mandate",
+      "createdAt": "2025-10-23T18:49:24.051768+00:00",
+      "updatedAt": "2025-10-23T18:49:24.051768+00:00",
+      "isActive": true,
+      "uiName": "Valuer Mandate",
+      "fields": [
+        {
+          "fieldId": "type_of_property",
+          "technicalName": "type_of_property",
+          "uiDisplayName": "Type of Property",
+          "fieldType": "text",
+          "isRequired": false,
+          "placeholder": "Vacant Land (Agricultural/non-agricultural)",
+          "sortOrder": 1
+        },
+        {
+          "fieldId": "description_of_property",
+          "technicalName": "description_of_property",
+          "uiDisplayName": "Description of Property",
+          "fieldType": "text",
+          "isRequired": false,
+          "placeholder": "Land with building there on",
+          "sortOrder": 2
+        },
+        {
+          "fieldId": "area_considered_for_valuation",
+          "technicalName": "area_considered_for_valuation",
+          "uiDisplayName": "Area Considered for Valuation",
+          "fieldType": "text",
+          "isRequired": false,
+          "placeholder": "300sqm. as per sale deed",
+          "sortOrder": 3
+        },
+        {
+          "fieldId": "built_up_area",
+          "technicalName": "built_up_area",
+          "uiDisplayName": "In case of building, built up area.",
+          "fieldType": "text",
+          "isRequired": false,
+          "placeholder": "About 4695.87sft as per valuation report of Ace Architects valuers dt. 17.11.2023",
+          "sortOrder": 4
+        },
+        {
+          "fieldId": "construction_status",
+          "technicalName": "construction_status",
+          "uiDisplayName": "If Under Construction,Time for Completion",
+          "fieldType": "text",
+          "isRequired": false,
+          "defaultValue": "Already builtup",
+          "sortOrder": 5
+        },
+        {
+          "fieldId": "distance_from_branch",
+          "technicalName": "distance_from_branch",
+          "uiDisplayName": "Distance of the Site from the Branch",
+          "fieldType": "text",
+          "isRequired": false,
+          "placeholder": "1-2 Km approx.",
+          "sortOrder": 6
+        },
+        {
+          "fieldId": "location_with_boundary",
+          "technicalName": "location_with_boundary",
+          "uiDisplayName": "Location( with boundary)",
+          "fieldType": "textarea",
+          "isRequired": false,
+          "placeholder": "As mentioned above",
+          "sortOrder": 7
+        },
+        {
+          "fieldId": "fair_description_location",
+          "technicalName": "fair_description_location",
+          "uiDisplayName": "Fair Description or Comments with Reference to Legal Rights and Restriction, if any",
+          "fieldType": "textarea",
+          "isRequired": false,
+          "placeholder": "The Legal Counsel On The Panel Of UCO Bank may be consulted in this regard.",
+          "sortOrder": 8
+        },
+        {
+          "fieldId": "plot_dag_no",
+          "technicalName": "plot_dag_no",
+          "uiDisplayName": "Plot No./Dag No.",
+          "fieldType": "text",
+          "isRequired": false,
+          "placeholder": "H No. 651, Sec 8, Urban Estate, Panchkula, Hr. 134109",
+          "sortOrder": 9
+        },
+        {
+          "fieldId": "khatauni_no",
+          "technicalName": "khatauni_no",
+          "uiDisplayName": "Khatauni No.",
+          "fieldType": "textarea",
+          "isRequired": false,
+          "placeholder": "NA",
+          "sortOrder": 10
+        },
+        {
+          "fieldId": "ps",
+          "technicalName": "ps",
+          "uiDisplayName": "P.S.",
+          "fieldType": "text",
+          "isRequired": false,
+          "placeholder": "Within Sub-registrar's Office of Panchkula",
+          "sortOrder": 11
+        },
+        {
+          "fieldId": "present_owner_name",
+          "technicalName": "present_owner_name",
+          "uiDisplayName": "Present Owner Name",
+          "fieldType": "text",
+          "isRequired": false,
+          "placeholder": "Sangita Dua W/o Nitin Dua",
+          "sortOrder": 12
+        },
+        {
+          "fieldId": "present_owner_address",
+          "technicalName": "present_owner_address",
+          "uiDisplayName": "Present Owner Address",
+          "fieldType": "textarea",
+          "isRequired": false,
+          "placeholder": "H No. 651, Sec 8, Urban Estate, Panchkula, Hr. 134109",
+          "sortOrder": 13
+        },
+        {
+          "fieldId": "owner_occupation",
+          "technicalName": "owner_occupation",
+          "uiDisplayName": "Occupation of the Owner",
+          "fieldType": "text",
+          "isRequired": false,
+          "defaultValue": "--",
+          "sortOrder": 14
+        },
+        {
+          "fieldId": "relationship_with_applicant",
+          "technicalName": "relationship_with_applicant",
+          "uiDisplayName": "Relationship with the Applicant",
+          "fieldType": "text",
+          "isRequired": false,
+          "defaultValue": "Self",
+          "sortOrder": 15
+        },
+        {
+          "fieldId": "stories_age_building",
+          "technicalName": "stories_age_building",
+          "uiDisplayName": "No. of Stories and Age of the Building",
+          "fieldType": "text",
+          "isRequired": false,
+          "placeholder": "3rd floor & 8 years",
+          "sortOrder": 16
+        },
+        {
+          "fieldId": "property_acquisition_method",
+          "technicalName": "property_acquisition_method",
+          "uiDisplayName": "Property Purchased/Inherited/Received as a Gift by the Present Owner",
+          "fieldType": "text",
+          "isRequired": false,
+          "placeholder": "The property has been purchased by the owner",
+          "sortOrder": 17
+        },
+        {
+          "fieldId": "mortgage_consideration",
+          "technicalName": "mortgage_consideration",
+          "uiDisplayName": "Consideration/Reason for Offering the Property as Mortgage",
+          "fieldType": "textarea",
+          "isRequired": false,
+          "defaultValue": "For availing loan from UCO Bank",
+          "placeholder": "Three storeyed building on a plot of 300sqm offered for collateral security for availing loan",
+          "sortOrder": 18
+        },
+        {
+          "fieldId": "tenancy_status",
+          "technicalName": "tenancy_status",
+          "uiDisplayName": "Whether the property is free from tenancy? The valuer should make inquires with people residing in the property .He should also note the nature of tenancy (Commercial or Residential) and period of occupation. He should apply suitable reduction in the value.",
+          "fieldType": "textarea",
+          "isRequired": false,
+          "defaultValue": "NA",
+          "placeholder": "The property is free from tenancy and occupied by the client herself",
+          "sortOrder": 19
+        },
+        {
+          "fieldId": "current_occupant",
+          "technicalName": "current_occupant",
+          "uiDisplayName": "Who is occupying the property at present",
+          "fieldType": "text",
+          "isRequired": true,
+          "defaultValue": "Owner",
+          "sortOrder": 20
+        },
+        {
+          "fieldId": "property_condition",
+          "technicalName": "property_condition",
+          "uiDisplayName": "Condition of the Property",
+          "fieldType": "text",
+          "isRequired": true,
+          "defaultValue": "Good",
+          "sortOrder": 21
+        },
+        {
+          "fieldId": "local_enquiry",
+          "technicalName": "local_enquiry",
+          "uiDisplayName": "Local Enquiry Made to Satisfy about History of the Property.",
+          "fieldType": "select",
+          "options": [
+            {
+              "value": "yes",
+              "label": "Yes"
+            },
+            {
+              "value": "no",
+              "label": "No"
+            }
+          ],
+          "isRequired": true,
+          "sortOrder": 22
+        },
+        {
+          "fieldId": "preson_present_at_inspection",
+          "technicalName": "preson_present_at_inspection",
+          "uiDisplayName": "Name's of Persons Present at the Time of Inspection",
+          "fieldType": "textarea",
+          "isRequired": true,
+          "defaultValue": "Owner was present during site visit and photograph taken with family at the gate of house",
+          "sortOrder": 23
+        },
+        {
+          "fieldId": "locality_comments",
+          "technicalName": "locality_comments",
+          "uiDisplayName": "Comments on the locality (Posh/Middle class/ Lower middle class)",
+          "fieldType": "select",
+          "options": [
+            {
+              "value": "posh",
+              "label": "Posh"
+            },
+            {
+              "value": "middle_class",
+              "label": "Middle Class"
+            },
+            {
+              "value": "lower_middle_class",
+              "label": "Lower Middle Class"
+            }
+          ],
+          "isRequired": true,
+          "sortOrder": 24
+        },
+        {
+          "fieldId": "surroundings",
+          "technicalName": "surroundings",
+          "uiDisplayName": "Surroundings",
+          "fieldType": "text",
+          "isRequired": true,
+          "defaultValue": "Residential area",
+          "sortOrder": 25
+        },
+        {
+          "fieldId": "city_connection",
+          "technicalName": "city_connection",
+          "uiDisplayName": "Connection of the Locality with Main City",
+          "fieldType": "text",
+          "isRequired": true,
+          "defaultValue": "Well connected",
+          "sortOrder": 26
+        },
+        {
+          "fieldId": "construction_type_amenities",
+          "technicalName": "construction_type_amenities",
+          "uiDisplayName": "Type of construction of the building",
+          "fieldType": "textarea",
+          "isRequired": true,
+          "placeholder": "Enter construction type and amenities details",
+          "sortOrder": 27
+        },
+        {
+          "fieldId": "any_discouraging_report_about_property",
+          "technicalName": "any_discouraging_report_about_property",
+          "uiDisplayName": "Any Discouraging Report about Property",
+          "fieldType": "textarea",
+          "isRequired": true,
+          "defaultValue": "NA",
+          "sortOrder": 28
+        }
+      ]
+    },
+    {
+      "_id": "68fa78b4e25b49fc725d349c",
+      "templateId": "UCO_APARTMENT_VALUATION_V1",
+      "templateName": "UCO Apartment Valuation",
+      "bankCode": "UCO",
+      "propertyType": "Apartment",
+      "templateCategory": "valuation",
+      "createdAt": "2025-10-23T18:49:24.051829+00:00",
+      "updatedAt": "2025-10-23T18:49:24.051829+00:00",
+      "isActive": true,
+      "uiName": "Apartment Valuation",
+      "sections": [
+        {
+          "sectionId": "valuation_part_a",
+          "sectionName": "Part A - Apartment Valuation",
+          "sortOrder": 1,
+          "fields": [
+            {
+              "fieldId": "dimension_of_plot",
+              "technicalName": "dimension_of_plot",
+              "uiDisplayName": "Dimension of Plot",
+              "fieldType": "textarea",
+              "isRequired": true,
+              "placeholder": "21*48=112 sqyd. &  1/3 of  total area is considered for valuation",
+              "sortOrder": 1,
+              "includeInCustomTemplate": true
+            },
+            {
+              "fieldId": "total_area_of_plot",
+              "technicalName": "total_area_of_plot",
+              "uiDisplayName": "Total Area of Plot",
+              "fieldType": "textarea",
+              "isRequired": true,
+              "placeholder": "37.33  sqyd. ( Undivided Land Share)",
+              "sortOrder": 2,
+              "includeInCustomTemplate": true
+            },
+            {
+              "fieldId": "prevailing_market_rates",
+              "technicalName": "prevailing_market_rates",
+              "uiDisplayName": "Prevailing Market Rates",
+              "fieldType": "textarea",
+              "isRequired": false,
+              "placeholder": "Rs.32-  38  lac",
+              "sortOrder": 3,
+              "includeInCustomTemplate": true
+            },
+            {
+              "fieldId": "registrar_office_rate",
+              "technicalName": "registrar_office_rate",
+              "uiDisplayName": "Registrar Office Rate",
+              "fieldType": "textarea",
+              "isRequired": true,
+              "placeholder": "Value =5814*37.33+1360*1156=17.89lac approx.",
+              "sortOrder": 4,
+              "includeInCustomTemplate": true
+            },
+            {
+              "fieldId": "adopted_rate_for_valuation",
+              "technicalName": "adopted_rate_for_valuation",
+              "uiDisplayName": "Adopted Rate for Valuation",
+              "fieldType": "textarea",
+              "isRequired": true,
+              "placeholder": "Rs. 35.40 lac composite value for land & flat",
+              "sortOrder": 5,
+              "includeInCustomTemplate": true
+            },
+            {
+              "fieldId": "estimated_value_of_land",
+              "technicalName": "estimated_value_of_land",
+              "uiDisplayName": "Estimated Value of Land",
+              "fieldType": "textarea",
+              "isRequired": true,
+              "placeholder": "Rs.35.40 lac composite value for land & flat",
+              "sortOrder": 6,
+              "includeInCustomTemplate": true
+            }
+          ]
+        },
+        {
+          "sectionId": "valuation_part_b",
+          "sectionName": "Part B - Building Valuation",
+          "sortOrder": 2,
+          "fields": [
+            {
+              "fieldId": "building_type",
+              "technicalName": "building_type",
+              "uiDisplayName": "Type of Building",
+              "fieldType": "select",
+              "options": [
+                {
+                  "value": "residential",
+                  "label": "Residential"
+                },
+                {
+                  "value": "commercial",
+                  "label": "Commercial"
+                },
+                {
+                  "value": "industrial",
+                  "label": "Industrial"
+                }
+              ],
+              "isRequired": false,
+              "placeholder": "Residential",
+              "sortOrder": 1,
+              "includeInCustomTemplate": true
+            },
+            {
+              "fieldId": "construction_year",
+              "technicalName": "construction_year",
+              "uiDisplayName": "Year of Construction",
+              "fieldType": "text",
+              "isRequired": false,
+              "placeholder": "2021 age 2 yr.",
+              "sortOrder": 2,
+              "includeInCustomTemplate": true
+            },
+            {
+              "fieldId": "future_life_building",
+              "technicalName": "future_life_building",
+              "uiDisplayName": "Future Life of the Building",
+              "fieldType": "text",
+              "isRequired": false,
+              "placeholder": "58 years",
+              "sortOrder": 3,
+              "includeInCustomTemplate": true
+            },
+            {
+              "fieldId": "floors_height",
+              "technicalName": "floors_height",
+              "uiDisplayName": "No. of Floors and Height of Each Floor Including Basement",
+              "fieldType": "text",
+              "isRequired": false,
+              "placeholder": "3No., Height- 10'",
+              "sortOrder": 4,
+              "includeInCustomTemplate": true
+            },
+            {
+              "fieldId": "plinth_area_floors",
+              "technicalName": "plinth_area_floors",
+              "uiDisplayName": "Plinth Area of Each Floor",
+              "fieldType": "text",
+              "isRequired": false,
+              "placeholder": "Total covered area on all three floors = 4695.87sft",
+              "sortOrder": 5,
+              "includeInCustomTemplate": true
+            },
+            {
+              "fieldId": "construction_type",
+              "technicalName": "construction_type",
+              "uiDisplayName": "Type of Construction",
+              "fieldType": "select",
+              "options": [
+                {
+                  "value": "load_bearing",
+                  "label": "Load Bearing"
+                },
+                {
+                  "value": "rcc",
+                  "label": "RCC"
+                },
+                {
+                  "value": "steel_framed",
+                  "label": "Steel Framed"
+                }
+              ],
+              "isRequired": false,
+              "placeholder": "RCC framed",
+              "sortOrder": 6,
+              "includeInCustomTemplate": true
+            },
+            {
+              "fieldId": "condition_of_building",
+              "technicalName": "condition_of_building",
+              "uiDisplayName": "Condition of the Building",
+              "fieldType": "text",
+              "isRequired": false,
+              "placeholder": "Photograph attached",
+              "sortOrder": 7,
+              "includeInCustomTemplate": true
+            },
+            {
+              "fieldId": "external_condition",
+              "technicalName": "external_condition",
+              "uiDisplayName": "Condition of the Building External",
+              "fieldType": "select",
+              "options": [
+                {
+                  "value": "excellent",
+                  "label": "Excellent"
+                },
+                {
+                  "value": "good",
+                  "label": "Good"
+                },
+                {
+                  "value": "normal",
+                  "label": "Normal"
+                },
+                {
+                  "value": "poor",
+                  "label": "Poor"
+                }
+              ],
+              "isRequired": false,
+              "placeholder": "Excellent",
+              "sortOrder": 8,
+              "includeInCustomTemplate": true
+            },
+            {
+              "fieldId": "internal_condition",
+              "technicalName": "internal_condition",
+              "uiDisplayName": "Condition of the Building Internal",
+              "fieldType": "select",
+              "options": [
+                {
+                  "value": "excellent",
+                  "label": "Excellent"
+                },
+                {
+                  "value": "good",
+                  "label": "Good"
+                },
+                {
+                  "value": "normal",
+                  "label": "Normal"
+                },
+                {
+                  "value": "poor",
+                  "label": "Poor"
+                }
+              ],
+              "isRequired": false,
+              "placeholder": "Excellent",
+              "sortOrder": 9,
+              "includeInCustomTemplate": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_id": "68fa78b4e25b49fc725d349d",
+      "templateId": "UCO_APARTMENT_CONSTRUCTION_SPECS_V1",
+      "templateName": "UCO Apartment Construction Specifications",
+      "bankCode": "UCO",
+      "propertyType": "Apartment",
+      "templateCategory": "construction_specifications",
+      "createdAt": "2025-10-23T18:49:24.051881+00:00",
+      "updatedAt": "2025-10-23T18:49:24.051881+00:00",
+      "isActive": true,
+      "uiName": "Construction Specification",
+      "fields": [
+        {
+          "fieldId": "construction",
+          "technicalName": "construction",
+          "uiDisplayName": "Construction",
+          "fieldType": "group",
+          "sortOrder": 1,
+          "subFields": [
+            {
+              "fieldId": "foundation",
+              "technicalName": "foundation",
+              "uiDisplayName": "Foundation",
+              "fieldType": "text",
+              "isRequired": true,
+              "placeholder": "e.g. Not known to the client",
+              "sortOrder": 1
+            },
+            {
+              "fieldId": "basement",
+              "technicalName": "basement",
+              "uiDisplayName": "Basement",
+              "fieldType": "text",
+              "isRequired": true,
+              "placeholder": "e.g. NA",
+              "sortOrder": 2
+            },
+            {
+              "fieldId": "superstructure",
+              "technicalName": "superstructure",
+              "uiDisplayName": "Superstructure",
+              "fieldType": "text",
+              "isRequired": true,
+              "placeholder": "e.g. Brick masonry in cement sand mortar",
+              "sortOrder": 3
+            },
+            {
+              "fieldId": "joinery_door_windows",
+              "technicalName": "joinery_door_windows",
+              "uiDisplayName": "Joinery/Door and Windows",
+              "fieldType": "text",
+              "isRequired": true,
+              "placeholder": "e.g. Marandi  wood used in joinery work",
+              "sortOrder": 4
+            },
+            {
+              "fieldId": "rcc_works",
+              "technicalName": "rcc_works",
+              "uiDisplayName": "RCC Works",
+              "fieldType": "text",
+              "isRequired": true,
+              "placeholder": "e.g. RCC  Slab & beams  & columns etc.",
+              "sortOrder": 5
+            },
+            {
+              "fieldId": "plastering",
+              "technicalName": "plastering",
+              "uiDisplayName": "Plastering",
+              "fieldType": "text",
+              "isRequired": true,
+              "placeholder": "e.g. Cement sand plaster",
+              "sortOrder": 6
+            },
+            {
+              "fieldId": "flooring_skirting",
+              "technicalName": "flooring_skirting",
+              "uiDisplayName": "Flooring / Skirting",
+              "fieldType": "text",
+              "isRequired": true,
+              "placeholder": "e.g. Vitrified Tiles",
+              "sortOrder": 7
+            },
+            {
+              "fieldId": "special_finishing",
+              "technicalName": "special_finishing",
+              "uiDisplayName": "Any Special Finishing",
+              "fieldType": "text",
+              "isRequired": true,
+              "placeholder": "e.g. No",
+              "sortOrder": 8
+            },
+            {
+              "fieldId": "water_proof_course",
+              "technicalName": "water_proof_course",
+              "uiDisplayName": "Water Proof Course Provided?",
+              "fieldType": "text",
+              "isRequired": true,
+              "placeholder": "e.g. No",
+              "sortOrder": 9
+            },
+            {
+              "fieldId": "drainage",
+              "technicalName": "drainage",
+              "uiDisplayName": "Drainage",
+              "fieldType": "text",
+              "isRequired": true,
+              "placeholder": "e.g. By Concealed pipes",
+              "sortOrder": 10
+            },
+            {
+              "fieldId": "compound_wall",
+              "technicalName": "compound_wall",
+              "uiDisplayName": "Compound Wall (types of const.)",
+              "fieldType": "text",
+              "isRequired": true,
+              "placeholder": "e.g. NA",
+              "sortOrder": 11
+            },
+            {
+              "fieldId": "electrical_installation",
+              "technicalName": "electrical_installation",
+              "uiDisplayName": "Electrical Installation (type of wire, class or fittings)",
+              "fieldType": "text",
+              "isRequired": true,
+              "placeholder": "e.g. Concealed conduit",
+              "sortOrder": 12
+            },
+            {
+              "fieldId": "plumbing_installation",
+              "technicalName": "plumbing_installation",
+              "uiDisplayName": "Plumbing Installation",
+              "fieldType": "text",
+              "isRequired": true,
+              "placeholder": "e.g. Ordinary",
+              "sortOrder": 13
+            },
+            {
+              "fieldId": "bore_well",
+              "technicalName": "bore_well",
+              "uiDisplayName": "Bore Well",
+              "fieldType": "text",
+              "isRequired": true,
+              "placeholder": "e.g. Yes",
+              "sortOrder": 14
+            },
+            {
+              "fieldId": "wardrobes",
+              "technicalName": "wardrobes",
+              "uiDisplayName": "Wardrobes, if any",
+              "fieldType": "text",
+              "isRequired": true,
+              "placeholder": "e.g. Yes",
+              "sortOrder": 15
+            },
+            {
+              "fieldId": "development_open_areas",
+              "technicalName": "development_open_areas",
+              "uiDisplayName": "Development of Open Areas in the House.",
+              "fieldType": "text",
+              "isRequired": true,
+              "placeholder": "e.g. Yes",
+              "sortOrder": 16
+            }
+          ]
+        },
+        {
+          "fieldId": "extra_items",
+          "technicalName": "extra_items",
+          "uiDisplayName": "Extra Items",
+          "fieldType": "group",
+          "sortOrder": 2,
+          "subFields": [
+            {
+              "fieldId": "portico",
+              "technicalName": "portico",
+              "uiDisplayName": "Portico",
+              "fieldType": "currency",
+              "placeholder": "Amount in Rs",
+              "sortOrder": 1
+            },
+            {
+              "fieldId": "ornamental_front_door",
+              "technicalName": "ornamental_front_door",
+              "uiDisplayName": "Ornamental Front Door",
+              "fieldType": "currency",
+              "placeholder": "Amount in Rs",
+              "sortOrder": 2
+            },
+            {
+              "fieldId": "sitout_verandah_grills",
+              "technicalName": "sitout_verandah_grills",
+              "uiDisplayName": "Sit out/Verandah with Steel Grills",
+              "fieldType": "currency",
+              "placeholder": "Amount in Rs",
+              "sortOrder": 3
+            },
+            {
+              "fieldId": "overhead_water_tank",
+              "technicalName": "overhead_water_tank",
+              "uiDisplayName": "Overhead Water Tank",
+              "fieldType": "currency",
+              "placeholder": "Amount in Rs",
+              "sortOrder": 4
+            },
+            {
+              "fieldId": "extra_steel_gates",
+              "technicalName": "extra_steel_gates",
+              "uiDisplayName": "Extra Steel/Collapsible Gates",
+              "fieldType": "currency",
+              "placeholder": "Amount in Rs",
+              "sortOrder": 5
+            }
+          ]
+        },
+        {
+          "fieldId": "amenities",
+          "technicalName": "amenities",
+          "uiDisplayName": "Amenities",
+          "fieldType": "group",
+          "sortOrder": 3,
+          "subFields": [
+            {
+              "fieldId": "wardrobes",
+              "technicalName": "wardrobes",
+              "uiDisplayName": "Wardrobes",
+              "fieldType": "currency",
+              "placeholder": "Amount in Rs",
+              "sortOrder": 1
+            },
+            {
+              "fieldId": "glazed_tiles",
+              "technicalName": "glazed_tiles",
+              "uiDisplayName": "Glazed Tiles",
+              "fieldType": "currency",
+              "placeholder": "Amount in Rs",
+              "sortOrder": 2
+            },
+            {
+              "fieldId": "extra_sink_bathtub",
+              "technicalName": "extra_sink_bathtub",
+              "uiDisplayName": "Extra Sink & Bathtub",
+              "fieldType": "currency",
+              "placeholder": "Amount in Rs",
+              "sortOrder": 3
+            },
+            {
+              "fieldId": "marble_ceramic_tiles_flooring",
+              "technicalName": "marble_ceramic_tiles_flooring",
+              "uiDisplayName": "Marble/Ceramic Tiles Flooring",
+              "fieldType": "currency",
+              "placeholder": "Amount in Rs",
+              "sortOrder": 4
+            },
+            {
+              "fieldId": "interior_decorations",
+              "technicalName": "interior_decorations",
+              "uiDisplayName": "Interior Decorations",
+              "fieldType": "currency",
+              "placeholder": "Amount in Rs",
+              "sortOrder": 5
+            },
+            {
+              "fieldId": "architectural_elevation",
+              "technicalName": "architectural_elevation",
+              "uiDisplayName": "Architectural Elevation Works",
+              "fieldType": "currency",
+              "placeholder": "Amount in Rs",
+              "sortOrder": 6
+            },
+            {
+              "fieldId": "paneling_works",
+              "technicalName": "paneling_works",
+              "uiDisplayName": "Paneling Works",
+              "fieldType": "currency",
+              "placeholder": "Amount in Rs",
+              "sortOrder": 7
+            },
+            {
+              "fieldId": "aluminum_works",
+              "technicalName": "aluminum_works",
+              "uiDisplayName": "Aluminum Works",
+              "fieldType": "currency",
+              "placeholder": "Amount in Rs",
+              "sortOrder": 8
+            },
+            {
+              "fieldId": "aluminum_handrails",
+              "technicalName": "aluminum_handrails",
+              "uiDisplayName": "Aluminum Hand Rails",
+              "fieldType": "currency",
+              "placeholder": "Amount in Rs",
+              "sortOrder": 9
+            },
+            {
+              "fieldId": "false_ceiling",
+              "technicalName": "false_ceiling",
+              "uiDisplayName": "False Ceiling",
+              "fieldType": "currency",
+              "placeholder": "Amount in Rs",
+              "sortOrder": 10
+            }
+          ]
+        },
+        {
+          "fieldId": "services",
+          "technicalName": "services",
+          "uiDisplayName": "Services",
+          "fieldType": "group",
+          "sortOrder": 4,
+          "subFields": [
+            {
+              "fieldId": "water_supply_arrangements",
+              "technicalName": "water_supply_arrangements",
+              "uiDisplayName": "Water Supply Arrangements",
+              "fieldType": "currency",
+              "placeholder": "Amount in Rs",
+              "sortOrder": 1
+            },
+            {
+              "fieldId": "drainage_arrangements",
+              "technicalName": "drainage_arrangements",
+              "uiDisplayName": "Drainage Arrangements",
+              "fieldType": "currency",
+              "placeholder": "Amount in Rs",
+              "sortOrder": 2
+            },
+            {
+              "fieldId": "compound_wall",
+              "technicalName": "compound_wall",
+              "uiDisplayName": "Compound Wall",
+              "fieldType": "currency",
+              "placeholder": "Amount in Rs",
+              "sortOrder": 3
+            },
+            {
+              "fieldId": "cb_deposits_fittings",
+              "technicalName": "cb_deposits_fittings",
+              "uiDisplayName": "C.B. Deposits, Fittings etc.",
+              "fieldType": "currency",
+              "placeholder": "Amount in Rs",
+              "sortOrder": 4
+            },
+            {
+              "fieldId": "pavement",
+              "technicalName": "pavement",
+              "uiDisplayName": "Pavement",
+              "fieldType": "currency",
+              "placeholder": "Amount in Rs",
+              "sortOrder": 5
+            }
+          ]
+        },
+        {
+          "fieldId": "details_of_valuation",
+          "uiDisplayName": "Details of Valuation",
+          "fieldType": "table",
+          "isRequired": false,
+          "sortOrder": 5,
+          "columns": [
+            {
+              "columnId": "sr_no",
+              "columnName": "Sr. No.",
+              "fieldType": "number",
+              "isReadonly": false
+            },
+            {
+              "columnId": "floor_level",
+              "columnName": "Floor/Level",
+              "fieldType": "text",
+              "isRequired": true,
+              "isEditable": true
+            },
+            {
+              "columnId": "description_of_item",
+              "columnName": "Particulars/Description of the Items",
+              "fieldType": "text",
+              "isRequired": true,
+              "isEditable": true
+            },
+            {
+              "columnId": "plinth_covered_area",
+              "columnName": "Plinth/Covered Area (in Sq.ft.)",
+              "fieldType": "number",
+              "isRequired": true,
+              "isEditable": true
+            },
+            {
+              "columnId": "estimated_replacement_rate",
+              "columnName": "Estimated Replacement Rate per Sq.ft.(in Rs.)",
+              "fieldType": "number",
+              "isRequired": true,
+              "isEditable": true
+            },
+            {
+              "columnId": "estimated_replacement_cost",
+              "columnName": "Estimated Replacement Cost",
+              "fieldType": "number",
+              "isRequired": true,
+              "isEditable": true
+            },
+            {
+              "columnId": "depreciation_percent",
+              "columnName": "Depreciation @ %",
+              "fieldType": "number",
+              "isRequired": true,
+              "isEditable": true
+            },
+            {
+              "columnId": "net_value",
+              "columnName": "Net Value",
+              "fieldType": "number",
+              "isRequired": true,
+              "isEditable": false
+            }
+          ],
+          "rows": [
+            {
+              "sr_no": "1",
+              "floor_level": "",
+              "description_of_item": "",
+              "plinth_covered_area": "",
+              "estimated_replacement_rate": "",
+              "estimated_replacement_cost": "",
+              "depreciation_percent": "",
+              "net_value": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_id": "68fa78b4e25b49fc725d349e",
+      "templateId": "UCO_APARTMENT_DETAILED_VALUATION_V1",
+      "templateName": "UCO Apartment Detailed Valuation",
+      "bankCode": "UCO",
+      "propertyType": "Apartment",
+      "templateCategory": "detailed_valuation",
+      "createdAt": "2025-10-23T18:49:24.051909+00:00",
+      "updatedAt": "2025-10-23T18:49:24.051909+00:00",
+      "isActive": true,
+      "uiName": "Detailed Valuation",
+      "fields": [
+        {
+          "fieldId": "land_total",
+          "technicalName": "land_total",
+          "uiDisplayName": "Land",
+          "fieldType": "currency",
+          "placeholder": "Valuation of all",
+          "displayFormat": "currency",
+          "isReadonly": true,
+          "sortOrder": 1
+        },
+        {
+          "fieldId": "building_total",
+          "technicalName": "building_total",
+          "uiDisplayName": "Building",
+          "fieldType": "currency",
+          "placeholder": "Valuation of building",
+          "displayFormat": "currency",
+          "isReadonly": true,
+          "sortOrder": 2
+        },
+        {
+          "fieldId": "extra_items_total",
+          "technicalName": "extra_items_total",
+          "uiDisplayName": "Extra Items",
+          "fieldType": "currency",
+          "placeholder": "Total extra items",
+          "displayFormat": "currency",
+          "isReadonly": true,
+          "sortOrder": 3
+        },
+        {
+          "fieldId": "amenities_total",
+          "technicalName": "amenities_total",
+          "uiDisplayName": "Amenities",
+          "fieldType": "currency",
+          "placeholder": "Total amenities",
+          "displayFormat": "currency",
+          "isReadonly": true,
+          "sortOrder": 4
+        },
+        {
+          "fieldId": "services_total",
+          "technicalName": "services_total",
+          "uiDisplayName": "Services",
+          "fieldType": "currency",
+          "placeholder": "Total services",
+          "displayFormat": "currency",
+          "isReadonly": true,
+          "sortOrder": 5
+        },
+        {
+          "fieldId": "grand_total",
+          "technicalName": "grand_total",
+          "uiDisplayName": "Total",
+          "fieldType": "currency",
+          "placeholder": "Total valuation",
+          "displayFormat": "currency",
+          "isReadonly": true,
+          "sortOrder": 6
+        }
+      ]
+    }
+  ],
+  "isActive": true,
+  "createdAt": "2025-10-25T13:40:42.089000",
+  "updatedAt": "2025-11-28 21:54:20.720000",
+  "version": 1,
+  "fields": [
+    {
+      "id": "BankBranch",
+      "label": "Bank Branch - UCO Bank",
+      "type": "select",
+      "required": true,
+      "validation": {
+        "required": true,
+        "message": "Please select a UCO Bank branch"
+      },
+      "options": [
+        {
+          "value": "uco_kolkata_main",
+          "label": "Kolkata Main Branch (UCO001) - UCBA0000001",
+          "branchCode": "UCO001",
+          "branchName": "Kolkata Main Branch",
+          "ifscCode": "UCBA0000001",
+          "branchAddress": {
+            "street": "10, B.T.M. Sarani",
+            "city": "Kolkata",
+            "state": "West Bengal",
+            "pincode": "700001",
+            "country": "India"
+          },
+          "contactDetails": {
+            "phone": "+91-33-22309090",
+            "email": "kolkata.main@ucobank.com"
+          }
+        }
+      ],
+      "placeholder": "Select UCO Bank branch...",
+      "metadata": {
+        "bankCode": "UCO",
+        "bankName": "UCO Bank",
+        "totalBranches": 1,
+        "addedBy": "refresh_templates_from_mongodb.py",
+        "addedDate": "2025-12-05T20:03:37.896862"
+      }
+    }
+  ]
+}

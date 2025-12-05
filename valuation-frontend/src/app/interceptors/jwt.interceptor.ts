@@ -31,7 +31,10 @@ export class JwtInterceptor implements HttpInterceptor {
     '/auth/register',
     '/auth/forgot-password',
     '/auth/reset-password',
-    '/public/'
+    '/public/',
+    '/api/pdf/',
+    '/api/custom-templates',
+    '/api/banks'
   ];
 
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
