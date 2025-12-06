@@ -144,3 +144,12 @@ start_backend.sh
 backend/.env
 *.env
 
+# Documentation with templates and sensitive data
+docs/templates/
+docs/samples/
+docs/TEMPLATES_README.md
+docs/templates/INDEX.md
+*.docx
+*.doc
+*.pdf
+
