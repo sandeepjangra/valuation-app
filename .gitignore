@@ -96,3 +96,24 @@ amplifytools.xcconfig
 **.sample
 #amplify-do-not-edit-end
 backups/
+
+# Files with MongoDB credentials (security)
+scripts/test_direct_query.py
+scripts/investigate_db_structure.py
+scripts/check_banks_backup.py
+scripts/restore_sbi_bank.py
+start_backend.py
+dev-tools/debug/recreate_banks_with_templates.py
+dev-tools/debug/update_comprehensive_banks.py
+dev-tools/debug/update_bank_branch_field.py
+dev-tools/debug/safe_replace_banks.py
+dev-tools/test-scripts/test_bob_consolidated.py
+dev-tools/test-scripts/check_database_structure.py
+.env.container
+
+# Environment files with credentials
+.env
+.env.local
+.env.production
+*.env
+
