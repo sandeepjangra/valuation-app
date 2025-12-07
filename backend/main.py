@@ -295,6 +295,13 @@ async def login(login_request: LoginRequest, request: Request):
     
     logger.info(f"🔐 Login attempt for: {login_request.email}")
     
+    # Import login logger
+    from utils.login_logger import login_logger
+    
+    # Get client info
+    client_ip = request.client.host if request.client else None
+    user_agent = request.headers.get("user-agent")
+    
     try:
         from database.multi_db_manager import MultiDatabaseManager
         
@@ -303,16 +310,88 @@ async def login(login_request: LoginRequest, request: Request):
         
         admin_db = db_manager.get_database("admin")
         
-        # Find user by email
+        # Check if this is system admin (admin@system.com)
+        if login_request.email == "admin@system.com":
+            # Look for System Administration org in val_app_config
+            config_db = db_manager.client["val_app_config"]
+            sys_org = await config_db.organizations.find_one({
+                "org_name": "System Administration", 
+                "is_system_org": True
+            })
+            
+            if sys_org:
+                # Check system-administration database
+                sys_db = db_manager.client["system-administration"]
+                user = await sys_db.users.find_one({"email": login_request.email})
+                
+                if user and pwd_context.verify(login_request.password, user['password_hash']):
+                    # Create system admin token with proper organization context
+                    org_short_name = "system-administration"
+                    token_data = create_dev_token(login_request.email, org_short_name, "admin")
+                    
+                    # Add system admin user information
+                    token_data["user"] = {
+                        "user_id": str(user["_id"]),
+                        "email": user["email"],
+                        "full_name": f"{user.get('first_name', '')} {user.get('last_name', '')}".strip(),
+                        "org_short_name": org_short_name,
+                        "organization_id": str(sys_org["_id"]),
+                        "organization_name": sys_org["org_name"],
+                        "role": "admin",
+                        "is_system_admin": True
+                    }
+                    
+                    # Log successful login
+                    login_logger.log_login_attempt(
+                        email=login_request.email,
+                        success=True,
+                        ip_address=client_ip,
+                        user_agent=user_agent,
+                        jwt_token=token_data["access_token"],
+                        organization_id=org_short_name,
+                        role="admin",
+                        login_type="traditional"
+                    )
+                    
+                    logger.info(f"✅ System admin login successful for {login_request.email}")
+                    
+                    await db_manager.disconnect()
+                    return JSONResponse(
+                        status_code=200,
+                        content={
+                            "success": True,
+                            "data": token_data
+                        }
+                    )
+        
+        # Find user by email in admin database
         user = await admin_db.users.find_one({
             "email": login_request.email,
             "isActive": True
         })
         
+        # If not found in admin db, check valuation_admin for legacy users
+        if not user:
+            valuation_admin_db = db_manager.client["valuation_admin"]
+            user = await valuation_admin_db.users.find_one({
+                "email": login_request.email,
+                "isActive": True
+            })
+        
         if not user:
             logger.warning(f"❌ User not found: {login_request.email}")
             
             # Log failed login attempt
+            login_logger.log_login_attempt(
+                email=login_request.email,
+                success=False,
+                ip_address=client_ip,
+                user_agent=user_agent,
+                error_message="User not found",
+                login_type="traditional"
+            )
+            
+            # Log failed login attempt to activity logger
             if activity_logger is None:
                 activity_logger = ActivityLogger(db_manager)
                 await activity_logger.initialize()
@@ -332,26 +411,44 @@ async def login(login_request: LoginRequest, request: Request):
             await db_manager.disconnect()
             raise HTTPException(status_code=401, detail="Invalid email or password")
         
-        # In development, accept any password (in production, validate against Cognito or password hash)
-        logger.info(f"🧪 Development mode: accepting any password for {login_request.email}")
+        # Validate password if password_hash exists
+        if user.get("password_hash"):
+            if not pwd_context.verify(login_request.password, user["password_hash"]):
+                logger.warning(f"❌ Invalid password for: {login_request.email}")
+                
+                # Log failed login attempt
+                login_logger.log_login_attempt(
+                    email=login_request.email,
+                    success=False,
+                    ip_address=client_ip,
+                    user_agent=user_agent,
+                    error_message="Invalid password",
+                    login_type="traditional"
+                )
+                
+                await db_manager.disconnect()
+                raise HTTPException(status_code=401, detail="Invalid email or password")
+        else:
+            # In development, accept any password if no password_hash (legacy users)
+            logger.info(f"🧪 Development mode: accepting any password for {login_request.email}")
         
         # Get user details
-        user_id = user.get("user_id")
+        user_id = user.get("user_id") or user.get("cognito_user_id")
         email = user.get("email")
-        full_name = user.get("full_name")
+        full_name = user.get("full_name") or user.get("profile", {}).get("display_name", "")
         organization_id = user.get("organization_id")  # Legacy field
         role = user.get("role")  # Get actual role from database
         
         # Get organization details to fetch org_short_name
         # Try val_app_config first (new schema), fallback to admin database
-        config_db = db_manager.get_database("val_app_config")
+        config_db = db_manager.client["val_app_config"]
         org = await config_db.organizations.find_one({
             "metadata.original_organization_id": organization_id
         })
         
         # Fallback to admin database for legacy orgs
         if not org:
-            admin_db = db_manager.get_database("admin")
+            admin_db = db_manager.client["valuation_admin"]
             org = await admin_db.organizations.find_one({
                 "organization_id": organization_id,
                 "isActive": True
@@ -367,9 +464,9 @@ async def login(login_request: LoginRequest, request: Request):
         org_name = org.get("org_name") or org.get("name", "Unknown Organization")
         
         # Update last_login timestamp
-        admin_db = db_manager.get_database("admin")
-        await admin_db.users.update_one(
-            {"user_id": user_id},
+        val_admin_db = db_manager.client["valuation_admin"]
+        await val_admin_db.users.update_one(
+            {"email": email},
             {
                 "$set": {
                     "last_login": datetime.now(timezone.utc),
@@ -403,6 +500,18 @@ async def login(login_request: LoginRequest, request: Request):
         # Create development token with org_short_name
         token_data = create_dev_token(email, org_short_name, role)
         
+        # Log successful login attempt
+        login_logger.log_login_attempt(
+            email=email,
+            success=True,
+            ip_address=client_ip,
+            user_agent=user_agent,
+            jwt_token=token_data["access_token"],
+            organization_id=org_short_name,
+            role=role,
+            login_type="traditional"
+        )
+        
         # Add user information to response
         token_data["user"] = {
             "user_id": user_id,
@@ -428,14 +537,32 @@ async def login(login_request: LoginRequest, request: Request):
         raise http_exc
     except Exception as e:
         logger.error(f"❌ Login failed: {str(e)}")
+        
+        # Log system error
+        login_logger.log_login_attempt(
+            email=login_request.email,
+            success=False,
+            ip_address=client_ip,
+            user_agent=user_agent,
+            error_message=f"System error: {str(e)}",
+            login_type="traditional"
+        )
+        
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail="Login failed")
 
 @app.post("/api/auth/dev-login")
-async def dev_login(dev_request: DevLoginRequest):
+async def dev_login(dev_request: DevLoginRequest, request: Request = None):
     """Development login endpoint with predefined roles"""
     logger.info(f"🧪 Development login for: {dev_request.email} as {dev_request.role}")
+    
+    # Import login logger
+    from utils.login_logger import login_logger
+    
+    # Get client info
+    client_ip = request.client.host if request.client else None
+    user_agent = request.headers.get("user-agent")
     
     try:
         # organizationId in dev_request is now org_short_name
@@ -443,6 +570,18 @@ async def dev_login(dev_request: DevLoginRequest):
         
         # Create development token with org_short_name
         token_data = create_dev_token(dev_request.email, org_short_name, dev_request.role)
+        
+        # Log successful dev login
+        login_logger.log_login_attempt(
+            email=dev_request.email,
+            success=True,
+            ip_address=client_ip,
+            user_agent=user_agent,
+            jwt_token=token_data["access_token"],
+            organization_id=org_short_name,
+            role=dev_request.role,
+            login_type="dev_login"
+        )
         
         logger.info(f"✅ Development login successful for {dev_request.email} in org {org_short_name}")
         
@@ -456,15 +595,48 @@ async def dev_login(dev_request: DevLoginRequest):
         
     except Exception as e:
         logger.error(f"❌ Development login failed: {str(e)}")
+        
+        # Log dev login failure
+        login_logger.log_login_attempt(
+            email=dev_request.email,
+            success=False,
+            ip_address=client_ip,
+            user_agent=user_agent,
+            error_message=f"Dev login error: {str(e)}",
+            organization_id=dev_request.organizationId,
+            role=dev_request.role,
+            login_type="dev_login"
+        )
+        
         raise HTTPException(
             status_code=500,
             detail="Development login failed"
         )
 
 @app.post("/api/auth/logout")
-async def logout():
+async def logout(request: Request = None):
     """Logout endpoint"""
     logger.info("🔓 User logout")
+    
+    # Log logout activity
+    try:
+        from utils.login_logger import login_logger
+        
+        # Try to get user info from token if available
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            # Could extract user info from token, but for now just log generic logout
+            pass
+        
+        client_ip = request.client.host if request.client else None
+        user_agent = request.headers.get("user-agent")
+        
+        # Note: We don't have user email in logout, so we'll log it as a system event
+        # In a real implementation, you'd extract user info from the JWT token
+        
+    except Exception as e:
+        logger.warning(f"Failed to log logout activity: {e}")
+    
     return JSONResponse(
         status_code=200,
         content={
@@ -476,6 +648,41 @@ async def logout():
 @app.get("/api/health")
 async def health_check():
     return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
+
+@app.get("/api/admin/login-activities")
+async def get_login_activities(
+    request: Request,
+    limit: int = 50,
+    hours: int = 24
+):
+    """Get recent login activities (Admin only)"""
+    try:
+        from utils.login_logger import login_logger
+        
+        # Get recent activities
+        activities = login_logger.get_recent_login_activities(limit=limit)
+        
+        # Get statistics
+        stats = login_logger.get_login_stats(hours=hours)
+        
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "data": {
+                    "activities": activities,
+                    "statistics": stats,
+                    "total_returned": len(activities)
+                }
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"❌ Error fetching login activities: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
 
 
 
@@ -3526,6 +3733,64 @@ async def get_report_activity(report_id: str, request: Request):
 # CUSTOM TEMPLATES API ENDPOINTS
 # =============================================================================
 
+@app.get("/api/custom-templates/banks")
+async def get_custom_template_banks(request: Request):
+    """
+    Get list of banks available for custom templates
+    """
+    request_data = api_logger.log_request(request)
+    
+    try:
+        from database.multi_db_manager import MultiDatabaseManager
+        
+        db_manager = MultiDatabaseManager()
+        await db_manager.connect()
+        
+        admin_db = db_manager.client["valuation_admin"]
+        
+        # Get template config
+        template_config = await admin_db.bank_custom_template.find_one({"isActive": True})
+        
+        if not template_config:
+            raise HTTPException(status_code=404, detail="Custom template configuration not found")
+        
+        # Format response
+        bank_list = []
+        for bank in template_config.get("banks", []):
+            if bank.get("isActive", True):
+                property_types = []
+                for prop_type, config in bank.get("propertyTypes", {}).items():
+                    if config.get("isActive", True):
+                        property_types.append(prop_type)
+                
+                bank_list.append({
+                    "bankCode": bank["bankCode"],
+                    "bankName": bank.get("bankName", bank["bankCode"]),
+                    "propertyTypes": property_types
+                })
+        
+        await db_manager.disconnect()
+        
+        response = JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "data": bank_list
+            }
+        )
+        
+        api_logger.log_response(response, request_data)
+        return response
+        
+    except Exception as e:
+        logger.error(f"❌ Error fetching custom template banks: {str(e)}")
+        error_response = JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+        api_logger.log_response(error_response, request_data)
+        return error_response
+
 @app.get("/api/custom-templates/fields")
 async def get_template_fields(
     bank_code: str,
@@ -3545,239 +3810,60 @@ async def get_template_fields(
         db_manager = MultiDatabaseManager()
         await db_manager.connect()
         
-        # Get the shared database for bank templates
-        # Common fields and bank-specific templates are in "admin" database
-        admin_db = db_manager.get_database("admin")
+        admin_db = db_manager.client["valuation_admin"]
         
-        # Find bank from banks collection
-        banks_doc = await admin_db.banks.find_one({"_id": {"$regex": "all_banks_unified"}})
-        if not banks_doc:
-            raise HTTPException(status_code=404, detail="Banks configuration not found")
+        # Get bank custom template config
+        template_config = await admin_db.bank_custom_template.find_one({"isActive": True})
         
-        # Find the specific bank
-        bank = None
-        for b in banks_doc.get("banks", []):
-            if b.get("bankCode") == bank_code:
-                bank = b
+        if not template_config:
+            raise HTTPException(status_code=404, detail="Custom template configuration not found")
+        
+        # Find bank in banks array (case insensitive)
+        bank_config = None
+        for bank in template_config.get("banks", []):
+            if bank.get("bankCode", "").upper() == bank_code.upper() and bank.get("isActive", True):
+                bank_config = bank
                 break
         
-        if not bank:
-            raise HTTPException(status_code=404, detail=f"Bank {bank_code} not found")
+        if not bank_config:
+            raise HTTPException(status_code=404, detail=f"Bank {bank_code} not found or inactive")
         
-        # Find template for this property type
-        templates = bank.get("templates", [])
-        template = None
-        for t in templates:
-            if t.get("propertyType") == property_type:
-                template = t
-                break
-        
-        if not template:
-            raise HTTPException(
-                status_code=404, 
-                detail=f"Template for {bank_code} - {property_type} not found"
-            )
-        
-        template_code = template.get("templateCode")
-        if not template_code:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Template code not found for {bank_code} - {property_type}"
-            )
-        
-        # Use the aggregated template endpoint logic to get fields
-        # This returns the same structure that the report form uses
-        collection_ref = template.get("collectionRef")
-        if not collection_ref:
-            raise HTTPException(
-                status_code=404,
-                detail=f"No collection reference found for {bank_code} - {property_type}"
-            )
-        
-        logger.info(f"📋 Using collection: {collection_ref}")
-        
-        # Step 1: Fetch common fields from admin database
-        # NOTE: Extract individual fields from documents (like aggregated endpoint)
-        common_fields_collection = admin_db.common_form_fields
-        common_fields_cursor = common_fields_collection.find({"isActive": True}).sort("sortOrder", 1)
-        common_fields_docs = await common_fields_cursor.to_list(length=None)
-        
-        # Extract fields array from documents (flatten structure) and filter for custom templates
-        common_fields = []
-        for doc in common_fields_docs:
-            doc_fields = doc.get("fields", [])
-            # Filter fields marked for custom templates
-            filtered_fields = [field for field in doc_fields if field.get("includeInCustomTemplate", False)]
-            common_fields.extend(filtered_fields)
-        
-        logger.info(f"📄 Found {len(common_fields)} common fields (filtered for custom templates)")
-        
-        # Step 2: Fetch bank-specific template structure from the collection in admin database
-        bank_template_collection = admin_db[collection_ref]
-        template_collection_docs = await bank_template_collection.find({}).to_list(length=None)
-        
-        if not template_collection_docs:
-            logger.warning(f"❌ No template data found in collection: {collection_ref}")
-            raise HTTPException(
-                status_code=404,
-                detail=f"No template structure found for {bank_code} - {property_type}"
-            )
-        
-        # Helper function to recursively filter fields for custom templates
-        def filter_fields_for_custom_template(fields):
-            """Filter fields to only include those marked for custom templates"""
-            filtered = []
-            for field in fields:
-                if field.get("includeInCustomTemplate", False):
-                    # If it's a group field with subFields, filter those too
-                    if field.get("fieldType") == "group" and "subFields" in field:
-                        field_copy = field.copy()
-                        field_copy["subFields"] = filter_fields_for_custom_template(field["subFields"])
-                        # Only include the group if it has at least one subfield
-                        if field_copy["subFields"]:
-                            filtered.append(field_copy)
-                    else:
-                        filtered.append(field)
-            return filtered
-
-        # Process bank-specific fields from collection documents
-        # Use the same logic as the aggregated template endpoint
-        bank_specific_tabs = []
-        
-        for doc in template_collection_docs:
-            template_metadata = doc.get("templateMetadata", {})
-            
-            # Build tabs structure based on template metadata
-            tabs_config = template_metadata.get("tabs", [])
-            
-            if not tabs_config:
-                # Fallback: create a single tab from document fields
-                doc_fields = doc.get("fields", [])
-                if doc_fields:
-                    # Filter fields for custom templates
-                    filtered_doc_fields = filter_fields_for_custom_template(doc_fields)
-                    if filtered_doc_fields:  # Only add tab if there are fields to show
-                        bank_specific_tabs.append({
-                            "tabId": "property_details",
-                            "tabName": "Property Details",
-                            "sortOrder": 1,
-                            "hasSections": False,
-                            "description": "Property valuation details",
-                            "fields": filtered_doc_fields,
-                            "sections": []
-                        })
-                continue
-            
-            # Process each tab from metadata
-            for tab_config in sorted(tabs_config, key=lambda x: x.get("sortOrder", 0)):
-                tab_id = tab_config.get("tabId", "default_tab")
-                
-                # Build tab structure
-                tab = {
-                    "tabId": tab_id,
-                    "tabName": tab_config.get("tabName", tab_id).replace("_", " ").title(),
-                    "sortOrder": tab_config.get("sortOrder", 1),
-                    "hasSections": tab_config.get("hasSections", False),
-                    "description": tab_config.get("description", ""),
-                    "fields": [],
-                    "sections": []
-                }
-                
-                # Handle tabs with sections
-                if tab_config.get("hasSections"):
-                    sections_config = tab_config.get("sections", [])
-                    
-                    for section_config in sorted(sections_config, key=lambda x: x.get("sortOrder", 0)):
-                        section_id = section_config.get("sectionId")
-                        
-                        # Find the corresponding section in documents array
-                        document_section = None
-                        for document in doc.get("documents", []):
-                            for doc_section in document.get("sections", []):
-                                if doc_section.get("sectionId") == section_id:
-                                    document_section = doc_section
-                                    break
-                            if document_section:
-                                break
-                        
-                        if document_section:
-                            # Filter fields for custom templates
-                            section_fields = document_section.get("fields", [])
-                            filtered_section_fields = filter_fields_for_custom_template(section_fields)
-                            
-                            # Only add section if it has fields to show
-                            if filtered_section_fields:
-                                section = {
-                                    "sectionId": section_config.get("sectionId"),
-                                    "sectionName": section_config.get("sectionName"),
-                                    "sortOrder": section_config.get("sortOrder"),
-                                    "description": section_config.get("description", ""),
-                                    "fields": filtered_section_fields
-                                }
-                                tab["sections"].append(section)
-                                # Also add fields to tab level for backward compatibility
-                                tab["fields"].extend(filtered_section_fields)
-                
-                # Handle tabs without sections (normal field structure)
-                else:
-                    # Get fields from the specific document that matches this tab's documentSource
-                    document_source = tab_config.get("documentSource")
-                    if document_source:
-                        # Find the document with matching templateId
-                        for document in doc.get("documents", []):
-                            if document.get("templateId") == document_source:
-                                doc_fields = document.get("fields", [])
-                                tab["fields"] = filter_fields_for_custom_template(doc_fields)
-                                break
-                    else:
-                        # Fallback: get all fields if no documentSource specified
-                        all_doc_fields = []
-                        for document in doc.get("documents", []):
-                            doc_fields = document.get("fields", [])
-                            all_doc_fields.extend(doc_fields)
-                        tab["fields"] = filter_fields_for_custom_template(all_doc_fields)
-                
-                # Only add tab if it has fields after filtering
-                if tab["fields"] or tab["sections"]:
-                    bank_specific_tabs.append(tab)
-                    logger.info(f"✅ Added tab '{tab['tabName']}' with {len(tab['fields'])} fields and {len(tab['sections'])} sections")
-                else:
-                    logger.info(f"⚠️ Skipped tab '{tab['tabName']}' - no fields after custom template filtering")
-        
-        logger.info(f"🏦 Total bank-specific tabs after filtering: {len(bank_specific_tabs)}")
+        # Get fields for specific property type
+        property_config = bank_config.get("propertyTypes", {}).get(property_type)
+        if not property_config or not property_config.get("isActive", True):
+            raise HTTPException(status_code=404, detail=f"Property type {property_type} not configured for {bank_code}")
         
         await db_manager.disconnect()
         
-        # Serialize the response to handle datetime objects
+        # Filter only active fields
+        active_fields = [field for field in property_config["fields"] if field.get("isActive", True)]
+        
         response_content = {
             "success": True,
-            "bankCode": bank_code,
-            "bankName": bank.get("bankName", ""),
+            "bankCode": bank_config.get("bankCode"),
+            "bankName": bank_config.get("bankName", bank_code),
             "propertyType": property_type,
-            "templateInfo": {
-                "templateId": template.get("templateId", ""),
-                "templateCode": template_code,
-                "templateName": template.get("templateName", ""),
-                "bankCode": bank_code,
-                "bankName": bank.get("bankName", ""),
-                "propertyType": property_type
-            },
-            "commonFields": common_fields,
-            "bankSpecificTabs": bank_specific_tabs
+            "commonFields": [],
+            "bankSpecificTabs": [{
+                "tabId": "custom_fields",
+                "tabName": "Custom Template Fields",
+                "sortOrder": 1,
+                "hasSections": False,
+                "fields": active_fields,
+                "sections": []
+            }]
         }
         
         response = JSONResponse(
             status_code=200,
-            content=json.loads(json.dumps(response_content, default=json_serializer))
+            content=response_content
         )
         
         api_logger.log_response(response, request_data)
         return response
-        
-    except HTTPException as http_exc:
-        raise http_exc
+
     except Exception as e:
-        logger.error(f"❌ Error fetching template fields: {str(e)}")
+        logger.error(f"❌ Error fetching custom template banks: {str(e)}")
         error_response = JSONResponse(
             status_code=500,
             content={"success": False, "error": str(e)}
@@ -3960,8 +4046,14 @@ async def create_custom_template(
         from utils.auth_middleware import get_organization_context
         org_context = await get_organization_context(credentials)
         
-        # Check if user is Manager or Admin
-        if org_context.role not in ["Manager", "Admin"]:
+        # Debug logging
+        logger.info(f"🔍 Template creation attempt - User: {org_context.email}, Org: {org_context.org_short_name}")
+        logger.info(f"🔍 Roles: {org_context.roles}, is_manager: {org_context.is_manager}, is_system_admin: {org_context.is_system_admin}")
+        
+        # Check if user is Manager or Admin (case-insensitive)
+        user_roles = [role.lower() for role in org_context.roles]
+        if not any(role in ["manager", "admin", "system_admin"] for role in user_roles):
+            logger.error(f"❌ Permission denied - User roles: {org_context.roles}, Required: manager/admin/system_admin")
             raise HTTPException(
                 status_code=403,
                 detail="Only Manager or Admin can create custom templates"
@@ -4001,7 +4093,7 @@ async def create_custom_template(
             "propertyType": template_data.propertyType,
             "fieldValues": template_data.fieldValues,
             "createdBy": org_context.user_id,
-            "createdByName": org_context.user_name,
+            "createdByName": org_context.email,  # Use email since user_name may not exist
             "organizationId": org_context.organization_id,
             "isActive": True,
             "version": 1,
@@ -4017,7 +4109,7 @@ async def create_custom_template(
         await log_activity(
             organization_id=org_context.organization_id,
             user_id=org_context.user_id,
-            user_email=org_context.user_email,
+            user_email=org_context.email,  # Use email property
             action="custom_template_created",
             resource_type="custom_template",
             resource_id=str(result.inserted_id),
@@ -4080,8 +4172,10 @@ async def update_custom_template(
         from utils.auth_middleware import get_organization_context
         org_context = await get_organization_context(credentials)
         
-        # Check if user is Manager or Admin
-        if org_context.role not in ["Manager", "Admin"]:
+        # Check if user is Manager or Admin (case-insensitive)
+        user_roles = [role.lower() for role in org_context.roles]
+        if not any(role in ["manager", "admin", "system_admin"] for role in user_roles):
+            logger.error(f"❌ Permission denied - User roles: {org_context.roles}, Required: manager/admin/system_admin")
             raise HTTPException(
                 status_code=403,
                 detail="Only Manager or Admin can update custom templates"
@@ -4123,7 +4217,7 @@ async def update_custom_template(
         await log_activity(
             organization_id=org_context.organization_id,
             user_id=org_context.user_id,
-            user_email=org_context.user_email,
+            user_email=org_context.email,  # Use email property
             action="custom_template_updated",
             resource_type="custom_template",
             resource_id=template_id,
@@ -4179,8 +4273,10 @@ async def delete_custom_template(
         from utils.auth_middleware import get_organization_context
         org_context = await get_organization_context(credentials)
         
-        # Check if user is Manager or Admin
-        if org_context.role not in ["Manager", "Admin"]:
+        # Check if user is Manager or Admin (case-insensitive)
+        user_roles = [role.lower() for role in org_context.roles]
+        if not any(role in ["manager", "admin", "system_admin"] for role in user_roles):
+            logger.error(f"❌ Permission denied - User roles: {org_context.roles}, Required: manager/admin/system_admin")
             raise HTTPException(
                 status_code=403,
                 detail="Only Manager or Admin can delete custom templates"
@@ -4219,7 +4315,7 @@ async def delete_custom_template(
         await log_activity(
             organization_id=org_context.organization_id,
             user_id=org_context.user_id,
-            user_email=org_context.user_email,
+            user_email=org_context.email,  # Use email property
             action="custom_template_deleted",
             resource_type="custom_template",
             resource_id=template_id,
@@ -4277,8 +4373,10 @@ async def clone_custom_template(
         from utils.auth_middleware import get_organization_context
         org_context = await get_organization_context(credentials)
         
-        # Check if user is Manager or Admin
-        if org_context.role not in ["Manager", "Admin"]:
+        # Check if user is Manager or Admin (case-insensitive)
+        user_roles = [role.lower() for role in org_context.roles]
+        if not any(role in ["manager", "admin", "system_admin"] for role in user_roles):
+            logger.error(f"❌ Permission denied - User roles: {org_context.roles}, Required: manager/admin/system_admin")
             raise HTTPException(
                 status_code=403,
                 detail="Only Manager or Admin can clone custom templates"
@@ -4323,7 +4421,7 @@ async def clone_custom_template(
             "propertyType": original_template["propertyType"],
             "fieldValues": original_template["fieldValues"],  # Copy all field values
             "createdBy": org_context.user_id,
-            "createdByName": org_context.user_name,
+            "createdByName": org_context.email,  # Use email since user_name may not exist
             "organizationId": org_context.organization_id,
             "isActive": True,
             "version": 1,
@@ -4339,7 +4437,7 @@ async def clone_custom_template(
         await log_activity(
             organization_id=org_context.organization_id,
             user_id=org_context.user_id,
-            user_email=org_context.user_email,
+            user_email=org_context.email,  # Use email property
             action="custom_template_cloned",
             resource_type="custom_template",
             resource_id=str(result.inserted_id),

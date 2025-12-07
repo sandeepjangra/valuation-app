@@ -1,0 +1,163 @@
+{
+  "_id": {
+    "$oid": "68fcd35cb64840ecfa4ff7d2"
+  },
+  "templateId": "BANK_CUSTOM_TEMPLATE_V1",
+  "templateName": "Bank Custom Template Configuration",
+  "version": "1.0",
+  "createdAt": "2025-12-05T20:03:36.736728+00:00",
+  "updatedAt": "2025-12-05T20:03:36.736728+00:00",
+  "isActive": true,
+  "banks": [
+    {
+      "bankCode": "SBI",
+      "bankName": "State Bank of India",
+      "isActive": true,
+      "propertyTypes": {
+        "land": {
+          "templateCode": "land-property",
+          "isActive": true,
+          "fields": [
+            {
+              "fieldId": "owner_details",
+              "uiDisplayName": "Owner Details",
+              "fieldType": "textarea",
+              "placeholder": "Name of the owner(s) and his/their address (es) with Phone no.",
+              "sortOrder": 1,
+              "isActive": true
+            },
+            {
+              "fieldId": "borrower_name",
+              "uiDisplayName": "Borrower/Client Name",
+              "fieldType": "textarea",
+              "placeholder": "Enter name of borrower/client",
+              "sortOrder": 2,
+              "isActive": true
+            },
+            {
+              "fieldId": "postal_address",
+              "uiDisplayName": "Postal Address",
+              "fieldType": "textarea",
+              "placeholder": "Enter postal address",
+              "sortOrder": 3,
+              "isActive": true
+            },
+            {
+              "fieldId": "property_description",
+              "uiDisplayName": "Property Description",
+              "fieldType": "textarea",
+              "placeholder": "Describe the property",
+              "sortOrder": 4,
+              "isActive": false
+            },
+            {
+              "fieldId": "city_town_village",
+              "uiDisplayName": "City/Town/Village",
+              "fieldType": "select",
+              "options": [
+                {"value": "city", "label": "City"},
+                {"value": "town", "label": "Town"},
+                {"value": "village", "label": "Village"}
+              ],
+              "sortOrder": 5,
+              "isActive": true
+            },
+            {
+              "fieldId": "state_enactments",
+              "uiDisplayName": "State/Central Govt Enactments",
+              "fieldType": "text",
+              "placeholder": "Whether covered under any State/ Central Govt. enactments...",
+              "sortOrder": 6,
+              "isActive": true
+            },
+            {
+              "fieldId": "agriculture_conversion",
+              "uiDisplayName": "Agricultural Conversion",
+              "fieldType": "text",
+              "placeholder": "In case it is an agricultural land, any conversion to house site plots is contemplated",
+              "sortOrder": 7,
+              "isActive": true
+            }
+          ]
+        },
+        "apartment": {
+          "templateCode": "apartment-property",
+          "isActive": true,
+          "fields": [
+            {
+              "fieldId": "owner_details",
+              "uiDisplayName": "Owner Details",
+              "fieldType": "textarea",
+              "placeholder": "Name of the owner(s) and his/their address (es) with Phone no.",
+              "sortOrder": 1,
+              "isActive": true
+            },
+            {
+              "fieldId": "borrower_name",
+              "uiDisplayName": "Borrower/Client Name",
+              "fieldType": "textarea",
+              "placeholder": "Enter name of borrower/client",
+              "sortOrder": 2,
+              "isActive": true
+            },
+            {
+              "fieldId": "apartment_details",
+              "uiDisplayName": "Apartment Details",
+              "fieldType": "textarea",
+              "placeholder": "Floor, unit number, building details",
+              "sortOrder": 3,
+              "isActive": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "bankCode": "PNB",
+      "bankName": "Punjab National Bank",
+      "isActive": true,
+      "propertyTypes": {
+        "land": {
+          "templateCode": "land-property",
+          "isActive": true,
+          "fields": [
+            {
+              "fieldId": "owner_details",
+              "uiDisplayName": "Owner Details",
+              "fieldType": "textarea",
+              "placeholder": "Owner information",
+              "sortOrder": 1,
+              "isActive": true
+            },
+            {
+              "fieldId": "land_classification",
+              "uiDisplayName": "Land Classification",
+              "fieldType": "select",
+              "options": [
+                {"value": "agricultural", "label": "Agricultural"},
+                {"value": "residential", "label": "Residential"},
+                {"value": "commercial", "label": "Commercial"}
+              ],
+              "sortOrder": 2,
+              "isActive": true
+            }
+          ]
+        },
+        "apartment": {
+          "templateCode": "apartment-property",
+          "isActive": true,
+          "fields": [
+            {
+              "fieldId": "owner_details",
+              "uiDisplayName": "Owner Details",
+              "fieldType": "textarea",
+              "placeholder": "Owner information",
+              "sortOrder": 1,
+              "isActive": true
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

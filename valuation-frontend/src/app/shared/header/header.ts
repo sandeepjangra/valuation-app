@@ -41,9 +41,17 @@ export class Header implements OnInit {
   }
 
   // Computed properties for reactive updates
-  readonly isAuthenticated = computed(() => this.authService.isAuthenticated());
+  readonly isAuthenticated = computed(() => {
+    const auth = this.authService.isAuthenticated();
+    console.log('🔍 Header isAuthenticated:', auth);
+    return auth;
+  });
   readonly currentUser = computed(() => this.authService.currentUser());
-  readonly orgContext = computed(() => this.authService.getOrganizationContext());
+  readonly orgContext = computed(() => {
+    const context = this.authService.getOrganizationContext();
+    console.log('🔍 Header orgContext:', context);
+    return context;
+  });
   readonly isMobileMenuOpen = computed(() => this.mobileMenuOpen());
 
   /**
@@ -80,7 +88,14 @@ export class Header implements OnInit {
    */
   isSystemAdmin(): boolean {
     const orgContext = this.orgContext();
-    return orgContext?.isSystemAdmin || false;
+    const isSystemAdmin = orgContext?.isSystemAdmin || false;
+    console.log('🔍 Header isSystemAdmin:', {
+      orgContext,
+      isSystemAdmin,
+      orgShortName: orgContext?.orgShortName,
+      roles: orgContext?.roles
+    });
+    return isSystemAdmin;
   }
 
   /**

@@ -89,7 +89,6 @@ export const routes: Routes = [
       },
       {
         path: 'custom-templates',
-        canActivate: [managerGuard],
         children: [
           {
             path: '',
@@ -207,7 +206,7 @@ export const routes: Routes = [
   // Custom Templates Management (legacy)
   {
     path: 'custom-templates',
-    canActivate: [authGuard, managerGuard],
+    canActivate: [authGuard],
     children: [
       {
         path: '',

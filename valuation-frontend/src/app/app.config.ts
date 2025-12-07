@@ -13,7 +13,7 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
     provideRouter(routes), 
-    provideHttpClient(withFetch()),
+    provideHttpClient(),  // Remove withFetch() to ensure interceptors work
     {
       provide: HTTP_INTERCEPTORS,
       useClass: JwtInterceptor,

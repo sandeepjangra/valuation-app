@@ -173,16 +173,26 @@ export class CustomTemplatesManagementComponent implements OnInit {
 
     // Navigate to organization-specific template creation form
     const orgShortName = this.currentOrgShortName();
+    console.log('🔍 Creating template - orgShortName:', orgShortName);
+    
     if (orgShortName) {
+      console.log('✅ Navigating to org-specific route:', `/org/${orgShortName}/custom-templates/create`);
       this.router.navigate(['/org', orgShortName, 'custom-templates', 'create'], {
         queryParams: { bankCode, propertyType }
       });
     } else {
       console.error('❌ No organization context available for navigation');
-      // Fallback to non-org route (should not happen in normal flow)
-      this.router.navigate(['/custom-templates/create'], {
-        queryParams: { bankCode, propertyType }
-      });
+      // Get org from auth service as fallback
+      const authOrgContext = this.authService.getOrganizationContext();
+      if (authOrgContext?.orgShortName) {
+        console.log('✅ Using auth service org context:', authOrgContext.orgShortName);
+        this.router.navigate(['/org', authOrgContext.orgShortName, 'custom-templates', 'create'], {
+          queryParams: { bankCode, propertyType }
+        });
+      } else {
+        console.error('❌ No organization context available anywhere');
+        alert('Unable to determine organization context. Please refresh the page.');
+      }
     }
   }
 

@@ -283,7 +283,12 @@ export class AuthService {
    */
   getCurrentRole(): UserRole | null {
     const roles = this.userRoles();
+    const orgContext = this._organizationContext();
+    
+    // Check if system admin based on organization context
+    if (orgContext?.isSystemAdmin) return 'system_admin';
     if (roles.includes('system_admin')) return 'system_admin';
+
     if (roles.includes('manager')) return 'manager';
     if (roles.includes('employee')) return 'employee';
     return null;
@@ -415,6 +420,12 @@ export class AuthService {
       // Create organization context
       const orgContext = this.createOrganizationContext(payload, access_token);
       
+      // Override system admin status if backend provides it
+      if ((user as any).is_system_admin) {
+        orgContext.isSystemAdmin = true;
+        orgContext.isManager = true;
+      }
+      
       // Merge user data from loginData with parsed token data
       const enhancedUser: User = {
         ...user,
@@ -463,9 +474,12 @@ export class AuthService {
           const domain = parts[1];
           const email = `${username}@${domain}`;
           
-          // Handle special case: system_admin
+          // Handle special case: system-administration
           let orgShortName: string, role: string;
-          if (parts.length >= 6 && parts[2] === 'system' && parts[3] === 'admin') {
+          if (parts.length >= 6 && parts[2] === 'system' && parts[3] === 'administration') {
+            orgShortName = 'system-administration';
+            role = parts[parts.length - 1] === 'admin' ? 'system_admin' : parts[parts.length - 1]; // Convert admin to system_admin
+          } else if (parts.length >= 6 && parts[2] === 'system' && parts[3] === 'admin') {
             orgShortName = 'system_admin';
             role = 'system_admin';
           } else {
@@ -515,14 +529,18 @@ export class AuthService {
     // Use org_short_name if available, fallback to organization_id for backward compatibility
     const orgShortName = payload['custom:org_short_name'] || payload['custom:organization_id'] || 'unknown';
     
+    // Check for system admin status from multiple sources
+    const isSystemAdmin = roles.includes('system_admin') || 
+                         orgShortName === 'system-administration' || orgShortName === 'system_admin';
+    
     return {
       userId: payload.sub,
       email: payload.email,
       orgShortName: orgShortName,
       organizationId: orgShortName, // Backward compatibility alias
       roles: roles,
-      isSystemAdmin: roles.includes('system_admin'),
-      isManager: roles.includes('manager') || roles.includes('system_admin'),
+      isSystemAdmin: isSystemAdmin,
+      isManager: roles.includes('manager') || isSystemAdmin,
       isEmployee: roles.length > 0,
       token: token,
       expiresAt: new Date(payload.exp * 1000)

@@ -33,23 +33,47 @@ export class JwtInterceptor implements HttpInterceptor {
     '/auth/reset-password',
     '/public/',
     '/api/pdf/',
-    '/api/custom-templates',
+    '/api/custom-templates/fields',  // Only exclude the public fields endpoint
     '/api/banks'
   ];
 
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    const logEntry = {
+      timestamp: new Date().toISOString(),
+      url: request.url,
+      method: request.method,
+      headers: Object.fromEntries(request.headers.keys().map(key => [key, request.headers.get(key)]))
+    };
+    
+    console.log('🔄 JWT Interceptor called for:', request.url);
+    this.logToFile('INTERCEPTOR_CALLED', logEntry);
+    
     // Skip interceptor for excluded URLs
     if (this.shouldSkipInterceptor(request.url)) {
+      console.log('⏭️ Skipping JWT interceptor for excluded URL:', request.url);
+      this.logToFile('INTERCEPTOR_SKIPPED', { url: request.url, reason: 'excluded_url' });
       return next.handle(request);
     }
 
     // Add JWT token if user is authenticated
-    if (this.authService.isAuthenticated()) {
+    const isAuth = this.authService.isAuthenticated();
+    const token = this.authService.getToken();
+    
+    console.log('🔐 Auth status:', isAuth);
+    this.logToFile('AUTH_CHECK', { isAuthenticated: isAuth, hasToken: !!token, tokenPreview: token?.substring(0, 30) });
+    
+    if (isAuth) {
       request = this.addTokenToRequest(request);
+    } else {
+      console.log('⚠️ User not authenticated, skipping token');
+      this.logToFile('AUTH_SKIP', { reason: 'not_authenticated' });
     }
 
     return next.handle(request).pipe(
       catchError((error: HttpErrorResponse) => {
+        console.log('❌ HTTP Error in JWT interceptor:', error.status, error.url);
+        this.logToFile('HTTP_ERROR', { status: error.status, url: error.url, message: error.message });
+        
         // Handle 401 Unauthorized errors with token refresh
         if (error.status === HttpStatusCode.Unauthorized && this.authService.isAuthenticated()) {
           return this.handle401Error(request, next);
@@ -67,16 +91,53 @@ export class JwtInterceptor implements HttpInterceptor {
   private addTokenToRequest(request: HttpRequest<any>): HttpRequest<any> {
     const token = this.authService.getToken();
     
+    console.log('🔑 JWT Interceptor - Adding token:', {
+      url: request.url,
+      hasToken: !!token,
+      tokenPreview: token?.substring(0, 30) + '...'
+    });
+    
+    this.logToFile('TOKEN_ADD_ATTEMPT', {
+      url: request.url,
+      hasToken: !!token,
+      tokenPreview: token?.substring(0, 30)
+    });
+    
     if (token) {
-      return request.clone({
+      const modifiedRequest = request.clone({
         setHeaders: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
+      
+      console.log('✅ JWT token added to request');
+      this.logToFile('TOKEN_ADDED', {
+        url: request.url,
+        authHeader: `Bearer ${token.substring(0, 30)}...`,
+        allHeaders: Object.fromEntries(modifiedRequest.headers.keys().map(key => [key, modifiedRequest.headers.get(key)]))
+      });
+      
+      return modifiedRequest;
     }
 
+    console.log('⚠️ No JWT token available');
+    this.logToFile('TOKEN_MISSING', { url: request.url });
     return request;
+  }
+
+  private logToFile(event: string, data: any): void {
+    const logEntry = {
+      timestamp: new Date().toISOString(),
+      event,
+      data
+    };
+    
+    // In a real app, you'd send this to a logging service
+    // For now, we'll just store in sessionStorage for debugging
+    const logs = JSON.parse(sessionStorage.getItem('jwt-debug-logs') || '[]');
+    logs.push(logEntry);
+    sessionStorage.setItem('jwt-debug-logs', JSON.stringify(logs.slice(-50))); // Keep last 50 entries
   }
 
   /**
@@ -126,12 +187,6 @@ export class JwtInterceptor implements HttpInterceptor {
    * Check if interceptor should be skipped for this URL
    */
   private shouldSkipInterceptor(url: string): boolean {
-    // Skip if it's not an API call
-    const apiBase = environment.apiUrl || 'http://localhost:8000/api';
-    if (!url.startsWith(apiBase)) {
-      return true;
-    }
-
     // Skip for excluded URLs
     return this.excludedUrls.some(excludedUrl => url.includes(excludedUrl));
   }

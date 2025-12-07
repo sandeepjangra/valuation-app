@@ -8,8 +8,8 @@ import { Component, OnInit, signal, computed, inject, ChangeDetectorRef } from '
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { CustomTemplateService } from '../../services/custom-template.service';
-import { TemplateService } from '../../services/template.service';
 import { AuthService } from '../../services/auth.service';
 import { CustomTemplate } from '../../models/custom-template.model';
 import { ProcessedTemplateData, TemplateField, BankSpecificField } from '../../models';
@@ -23,12 +23,14 @@ import { ProcessedTemplateData, TemplateField, BankSpecificField } from '../../m
 })
 export class CustomTemplateFormComponent implements OnInit {
   private readonly customTemplateService = inject(CustomTemplateService);
-  private readonly templateService = inject(TemplateService);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
+  
+  // HTTP client for direct testing
+  private readonly http = inject(HttpClient);
 
   // Signals for reactive state
   isLoading = signal<boolean>(false);
@@ -48,9 +50,7 @@ export class CustomTemplateFormComponent implements OnInit {
   metadataForm!: FormGroup;
   fieldsForm!: FormGroup;
 
-  // Active tab state (same as New Report)
-  activeTab = signal<string>('template'); // 'template' or 'preview' (matches New Report)
-  activeBankSpecificTab = signal<string | null>(null);
+  // Removed tab state - no longer needed for simplified view
 
   // Computed
   canSave = computed(() => {
@@ -149,14 +149,37 @@ export class CustomTemplateFormComponent implements OnInit {
     
     console.log(`🔄 Loading template fields for: ${bankCode}/${templateCode} (same as Report Form)`);
     
-    this.templateService.getAggregatedTemplateFields(bankCode, templateCode).subscribe({
+    this.customTemplateService.getTemplateFields(bankCode, propertyType).subscribe({
       next: (response) => {
-        console.log('✅ Raw aggregated API Response (Custom Template):', response);
+        console.log('✅ Raw filtered API Response (Custom Template):', response);
         console.log('✅ API Response type:', typeof response);
         console.log('✅ API Response keys:', Object.keys(response));
         
-        // Process template data using TemplateService (same as New Report)
-        const processedData = this.templateService.processTemplateData(response);
+        // Process template data - the filtered endpoint returns a different structure
+        // Convert to ProcessedTemplateData format
+        const allFields = [
+          ...(response.commonFields || []),
+          ...(response.bankSpecificTabs?.flatMap(tab => tab.fields || []) || [])
+        ];
+
+        const processedData: ProcessedTemplateData = {
+          templateInfo: {
+            templateId: response.templateInfo?.templateId || '',
+            templateName: response.templateInfo?.templateName || '',
+            bankCode: response.bankCode || this.bankCode(),
+            bankName: response.templateInfo?.bankName || '',
+            propertyType: response.propertyType || this.propertyType(),
+            version: '1.0'
+          },
+          commonFieldGroups: response.commonFields ? [{
+            groupName: 'Common Fields',
+            displayName: 'Common Fields', 
+            fields: response.commonFields
+          }] : [],
+          bankSpecificTabs: response.bankSpecificTabs || [],
+          allFields: allFields,
+          totalFieldCount: allFields.length
+        };
         
         console.log('🔍 Processed template data (Custom Template vs Report Form comparison):', {
           commonFieldGroups: processedData.commonFieldGroups?.length || 0,
@@ -201,10 +224,7 @@ export class CustomTemplateFormComponent implements OnInit {
         // Build form controls for ALL fields (but make only includeInCustomTemplate=true editable)
         this.buildFieldControls(processedData);
         
-        // Initialize first bank-specific tab if available (same as New Report)
-        if (processedData.bankSpecificTabs.length > 0) {
-          this.activeBankSpecificTab.set(processedData.bankSpecificTabs[0].tabId);
-        }
+        // No tab initialization needed for simplified view
         
         // If editing, populate with existing values
         if (this.existingTemplate()) {
@@ -216,10 +236,7 @@ export class CustomTemplateFormComponent implements OnInit {
           });
         }
 
-        // Initialize first tab if available
-        if (processedData.bankSpecificTabs.length > 0) {
-          this.activeBankSpecificTab.set(processedData.bankSpecificTabs[0].tabId);
-        }
+        // No tab initialization needed for simplified view
 
         this.isLoading.set(false);
         this.cdr.detectChanges();
@@ -247,15 +264,13 @@ export class CustomTemplateFormComponent implements OnInit {
           return;
         }
 
-        const includeInCustom = (field as any).includeInCustomTemplate;
-        // Create form control - disabled if not marked for custom template
+        const isFieldActive = field.isActive !== false;
+        // Create form control - all active fields should be editable in custom templates
         const control = this.fb.control('');
-        if (!includeInCustom) {
-          control.disable();
-        }
+        // No need to disable controls - we handle editability in the template with readonly attribute
         formGroup[field.fieldId] = control;
         fieldIdsProcessed.add(field.fieldId);
-        console.log(`✅ Added control for field: ${field.fieldId} (includeInCustom: ${includeInCustom}, disabled: ${!includeInCustom}) from ${source}`);
+        console.log(`✅ Added control for field: ${field.fieldId} (isActive: ${isFieldActive}, editable: ${isFieldActive}) from ${source}`);
       } else if (field.subFields) {
         // Add sub-fields from group fields
         field.subFields.forEach((subField: any) => {
@@ -264,26 +279,18 @@ export class CustomTemplateFormComponent implements OnInit {
             return;
           }
 
-          const includeInCustom = (subField as any).includeInCustomTemplate;
+          const isSubFieldActive = subField.isActive !== false;
           const control = this.fb.control('');
-          if (!includeInCustom) {
-            control.disable();
-          }
+          // No need to disable controls - we handle editability in the template with readonly attribute
           formGroup[subField.fieldId] = control;
           fieldIdsProcessed.add(subField.fieldId);
-          console.log(`✅ Added control for subfield: ${subField.fieldId} (includeInCustom: ${includeInCustom}) from ${source}`);
+          console.log(`✅ Added control for subfield: ${subField.fieldId} (isActive: ${isSubFieldActive}, editable: ${isSubFieldActive}) from ${source}`);
         });
       }
     };
 
-    // Add common field groups (show all, but make non-editable since includeInCustomTemplate=false)
-    console.log('📋 Processing common field groups:', data.commonFieldGroups.length);
-    data.commonFieldGroups.forEach((group, idx) => {
-      console.log(`  Group ${idx + 1}: ${group.groupName} - ${group.fields.length} fields`);
-      group.fields.forEach(field => {
-        addFieldControl(field, `common-group-${group.groupName}`);
-      });
-    });
+    // Skip common fields entirely for custom templates
+    console.log('⏭️ Skipping common field groups for custom templates');
 
     // Add bank-specific fields (show all, editable based on includeInCustomTemplate flag)
     console.log('🏦 Processing bank-specific tabs:', data.bankSpecificTabs.length);
@@ -329,16 +336,22 @@ export class CustomTemplateFormComponent implements OnInit {
 
   // Method removed - not needed for new structure
 
-  onBankTabChange(tabId: string): void {
-    this.activeBankSpecificTab.set(tabId);
-  }
+  // Removed tab change method - no longer needed
 
   goBack(): void {
     this.router.navigate(['/custom-templates']);
   }
 
   onSubmit(): void {
+    // Mark form as touched to show validation errors
+    this.mainForm.markAllAsTouched();
+    
     // Check if template name is provided (minimum requirement)
+    if (this.mainForm.invalid) {
+      this.error.set('❌ Please fix the validation errors before saving');
+      return;
+    }
+    
     const metadata = this.mainForm.value;
     if (!metadata.templateName || metadata.templateName.trim().length < 3) {
       this.error.set('❌ Template name is required (minimum 3 characters)');
@@ -543,10 +556,81 @@ export class CustomTemplateFormComponent implements OnInit {
     return Object.keys(this.fieldsForm.controls).length;
   }
 
-  // Tab navigation methods (same as New Report)
-  switchTab(tab: string): void {
-    this.activeTab.set(tab);
+  // Quick dev login with different org admin
+  devLogin(): void {
+    console.log('🔐 Performing dev login as admin in different org...');
+    
+    this.authService.loginWithDevToken('admin@demo-org.com', 'demo-org-001', 'manager').subscribe({
+      next: (success) => {
+        console.log('✅ Dev login successful:', success);
+        alert('Dev login successful as admin in demo-org-001!');
+      },
+      error: (error) => {
+        console.error('❌ Dev login failed:', error);
+        alert('Dev login failed: ' + error.message);
+      }
+    });
   }
+
+  // Test authentication connectivity
+  testAuth(): void {
+    console.log('🧪 Testing authentication...');
+    
+    // Check auth service state
+    const isAuth = this.authService.isAuthenticated();
+    const token = this.authService.getToken();
+    const orgContext = this.authService.getOrganizationContext();
+    
+    console.log('🔍 Auth service state:', {
+      isAuthenticated: isAuth,
+      hasToken: !!token,
+      tokenLength: token?.length || 0,
+      tokenPreview: token?.substring(0, 30) + '...',
+      orgContext: orgContext
+    });
+    
+    if (!isAuth || !token) {
+      console.log('❌ Not authenticated - no token available');
+      alert('Not authenticated. Click "Dev Login" first.');
+      return;
+    }
+
+    // Clear previous logs
+    sessionStorage.removeItem('jwt-debug-logs');
+    
+    // Test basic auth endpoint
+    this.http.get('http://localhost:8000/api/auth/me').subscribe({
+      next: (response) => {
+        console.log('✅ Auth test successful:', response);
+        this.showDebugLogs();
+        alert('Authentication test successful! Check console for debug logs.');
+      },
+      error: (error) => {
+        console.error('❌ Auth test failed:', error);
+        this.showDebugLogs();
+        alert(`Auth test failed: ${error.status} ${error.statusText}. Check console for debug logs.`);
+      }
+    });
+  }
+
+  private showDebugLogs(): void {
+    const logs = JSON.parse(sessionStorage.getItem('jwt-debug-logs') || '[]');
+    console.log('📜 JWT Debug Logs:', logs);
+    
+    // Create downloadable log file
+    const logContent = JSON.stringify(logs, null, 2);
+    const blob = new Blob([logContent], { type: 'application/json' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `jwt-debug-${new Date().toISOString().slice(0, 19)}.json`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    
+    console.log('📁 Debug logs downloaded as JSON file');
+  }
+
+  // Removed tab navigation - no longer needed
 
   // Helper methods for template structure (same as New Report)
   hasCommonFields(): boolean {
@@ -555,16 +639,19 @@ export class CustomTemplateFormComponent implements OnInit {
   }
 
   getCommonFieldGroups(): any[] {
-    return this.templateData()?.commonFieldGroups || [];
+    return []; // Always return empty for custom templates
   }
 
   getBankSpecificTabs(): any[] {
     return this.templateData()?.bankSpecificTabs || [];
   }
 
-  // Field editability check (for custom template - disabled if NOT marked for custom template)
+  // Field editability check (for custom template - all active fields should be editable)
   isFieldEditable(field: any): boolean {
-    return (field as any).includeInCustomTemplate === true;
+    // For custom templates, all active fields should be editable
+    const isEditable = field.isActive !== false;
+    console.log(`🔍 Field editability check: ${field.fieldId} - isActive: ${field.isActive}, isEditable: ${isEditable}`);
+    return isEditable;
   }
 
   // Field disabled check (matching New Report pattern - disabled if NOT editable)
@@ -593,10 +680,7 @@ export class CustomTemplateFormComponent implements OnInit {
     return 'Invalid value';
   }
 
-  // Switch bank-specific tab
-  switchBankSpecificTab(tabId: string): void {
-    this.activeBankSpecificTab.set(tabId);
-  }
+  // Removed bank-specific tab switching - no longer needed
 
   // Check if tab has sections
   tabHasSections(tab: any): boolean {

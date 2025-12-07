@@ -280,13 +280,22 @@ async def get_organization_context(
     FastAPI dependency to extract and validate organization context from JWT token
     """
     try:
+        # Debug: Log the token being processed
+        logger.info(f"🔍 Processing token: {credentials.credentials[:50]}...")
+        
         # Validate JWT token
         jwt_claims = await jwt_validator.validate_token(credentials.credentials)
+        
+        # Debug: Log the JWT claims
+        logger.info(f"🔍 JWT Claims: {jwt_claims}")
         
         # Create organization context
         org_context = OrganizationContext(jwt_claims)
         
-        logger.debug(f"🏢 Organization context created: {org_context.org_short_name} ({org_context.email})")
+        # Debug: Log the organization context
+        logger.info(f"🏢 Organization context created: {org_context.org_short_name} ({org_context.email})")
+        logger.info(f"🏢 Roles: {org_context.roles}, is_manager: {org_context.is_manager}")
+        
         return org_context
         
     except Exception as e:

@@ -1,1 +1,107 @@
-<p>login works!</p>
+<div class="login-container">
+  <div class="login-card">
+    <div class="login-header">
+      <h1>Valuation App</h1>
+      <p>Property Valuation Management System</p>
+    </div>
+
+    <!-- Traditional Login Form -->
+    <form [formGroup]="loginForm" (ngSubmit)="submitLogin()" class="login-form" autocomplete="off">
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input 
+          id="email"
+          type="email" 
+          formControlName="email"
+          placeholder="Enter your email"
+          class="form-input"
+          autocomplete="off"
+          [class.error]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">
+        <div *ngIf="loginForm.get('email')?.errors?.['required'] && loginForm.get('email')?.touched" 
+             class="error-text">
+          Email is required
+        </div>
+        <div *ngIf="loginForm.get('email')?.errors?.['email'] && loginForm.get('email')?.touched" 
+             class="error-text">
+          Please enter a valid email
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <div class="password-input-wrapper">
+          <input 
+            id="password"
+            [type]="showPassword() ? 'text' : 'password'"
+            formControlName="password"
+            placeholder="Enter your password"
+            class="form-input"
+            autocomplete="off"
+            [class.error]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
+          <button 
+            type="button" 
+            class="password-toggle"
+            (click)="togglePasswordVisibility()">
+            {{ showPassword() ? '🙈' : '👁️' }}
+          </button>
+        </div>
+        <div *ngIf="loginForm.get('password')?.errors?.['required'] && loginForm.get('password')?.touched" 
+             class="error-text">
+          Password is required
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="checkbox-group">
+          <input 
+            type="checkbox" 
+            id="rememberMe"
+            formControlName="rememberMe">
+          <label for="rememberMe">Remember me</label>
+        </div>
+      </div>
+
+      <!-- Error Message -->
+      <div *ngIf="error()" class="error-message">
+        {{ error() }}
+      </div>
+
+      <button 
+        type="submit" 
+        class="btn btn-primary btn-full"
+        [disabled]="loginForm.invalid || isLoading()">
+        <span *ngIf="isLoading()" class="btn-spinner"></span>
+        {{ isLoading() ? 'Signing in...' : 'Sign In' }}
+      </button>
+    </form>
+
+    <!-- Admin Quick Login -->
+    <div class="admin-login-section">
+      <div class="admin-divider">
+        <span>Administrator Access</span>
+      </div>
+      
+      <button 
+        class="btn btn-admin"
+        (click)="adminLogin()"
+        [disabled]="isLoading()">
+        <div class="btn-content">
+          <span class="btn-icon">👑</span>
+          <div>
+            <div class="btn-title">System Administrator</div>
+            <div class="btn-subtitle">admin@system.com</div>
+          </div>
+        </div>
+      </button>
+    </div>
+
+    <div class="login-footer">
+      <p>Don't have an account? <a href="#" class="link">Contact your administrator</a></p>
+    </div>
+
+    <!-- Version Info -->
+    <div class="version-info">
+      <small>Version 1.0.0</small>
+    </div>
+  </div>
+</div>

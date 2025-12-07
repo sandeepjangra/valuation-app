@@ -62,10 +62,10 @@ export class CustomTemplateService {
     let params = new HttpParams();
     
     if (bankCode) {
-      params = params.set('bank_code', bankCode);
+      params = params.set('bankCode', bankCode);
     }
     if (propertyType) {
-      params = params.set('property_type', propertyType);
+      params = params.set('propertyType', propertyType);
     }
 
     console.log('🌐 CustomTemplateService: Listing templates', { bankCode, propertyType });
@@ -76,8 +76,8 @@ export class CustomTemplateService {
     ).pipe(
       tap(response => {
         console.log('✅ Templates fetched:', {
-          total: response.count.total,
-          filtered: response.count.filtered
+          total: response.data?.length || 0,
+          data: response.data
         });
       }),
       catchError(error => {
@@ -116,19 +116,82 @@ export class CustomTemplateService {
   createTemplate(request: CreateCustomTemplateRequest): Observable<CustomTemplate> {
     console.log('🌐 CustomTemplateService: Creating template', request.templateName);
 
+    // Get organization context for API call
+    const orgContext = this.getOrganizationContext();
+    if (!orgContext?.orgShortName) {
+      console.error('❌ No organization context available for template creation');
+      return throwError(() => new Error('Organization context required'));
+    }
+
+    const endpoint = `${this.API_BASE_URL}/organizations/${orgContext.orgShortName}/templates/from-report`;
+    console.log('🌐 Using organization-specific endpoint:', endpoint);
+
+    // Transform request to match the from-report endpoint
+    const transformedRequest = {
+      templateName: request.templateName,
+      description: request.description,
+      bankCode: request.bankCode,
+      templateCode: `${request.propertyType}-property`, // Convert propertyType to templateCode
+      fieldValues: request.fieldValues
+    };
+
+    // Debug: Check authentication state
+    console.log('🔍 Authentication Debug:', {
+      endpoint,
+      orgContext,
+      transformedRequest,
+      localStorage: {
+        auth_data: !!localStorage.getItem('auth_data'),
+        access_token: !!localStorage.getItem('access_token')
+      }
+    });
+
     return this.http.post<CustomTemplateCreateResponse>(
-      `${this.API_BASE_URL}/custom-templates`,
-      request
+      endpoint,
+      transformedRequest
     ).pipe(
-      map(response => response.data.template),
+      map(response => response.data.template || response.data), // Handle different response formats
       tap(template => {
-        console.log('✅ Template created:', template._id);
+        console.log('✅ Template created:', template._id || template.templateName);
       }),
       catchError(error => {
-        console.error('❌ Failed to create template:', error);
+        console.error('❌ Failed to create template - Full Error:', {
+          status: error.status,
+          statusText: error.statusText,
+          message: error.message,
+          error: error.error,
+          url: error.url,
+          headers: error.headers
+        });
         return throwError(() => error);
       })
     );
+  }
+
+  /**
+   * Get organization context from current URL or auth service
+   */
+  private getOrganizationContext(): any {
+    // First try to get from current URL path
+    const currentPath = window.location.pathname;
+    const orgMatch = currentPath.match(/\/org\/([^/]+)/);
+    if (orgMatch) {
+      return { orgShortName: orgMatch[1] };
+    }
+
+    // Fallback to localStorage
+    try {
+      const authData = localStorage.getItem('auth_data');
+      if (authData) {
+        const parsed = JSON.parse(authData);
+        return {
+          orgShortName: parsed.user?.org_short_name || parsed.organization?.org_short_name
+        };
+      }
+    } catch (e) {
+      console.error('Error getting organization context:', e);
+    }
+    return null;
   }
 
   /**
