@@ -56,7 +56,7 @@ import { User, Organization } from '../../models/organization.model';
               {{ getUserInitials() }}
             </div>
             <div class="user-basic-info">
-              <h2>{{ currentUser()?.first_name }} {{ currentUser()?.last_name }}</h2>
+              <h2>{{ currentUser()?.full_name }}</h2>
               <p class="user-email">{{ currentUser()?.email }}</p>
               <div class="user-roles">
                                 @for (role of currentUser()?.roles; track role) {
@@ -98,47 +98,22 @@ import { User, Organization } from '../../models/organization.model';
             <div class="detail-grid">
               <div class="detail-item">
                 <span class="detail-label">User ID:</span>
-                <span class="detail-value">{{ currentUser()?._id }}</span>
+                <span class="detail-value">{{ currentUser()?.user_id }}</span>
               </div>
               
               <div class="detail-item">
                 <span class="detail-label">Account Status:</span>
-                @if (currentUser()?.is_active) {
-                  <span class="detail-value status-active">
-                    Active
-                  </span>
-                } @else {
-                  <span class="detail-value status-inactive">
-                    Inactive
-                  </span>
-                }
+                <span class="detail-value status-active">
+                  Active
+                </span>
               </div>
-              
-              @if (currentUser()?.department) {
-                <div class="detail-item">
-                  <span class="detail-label">Department:</span>
-                  <span class="detail-value">{{ currentUser()?.department }}</span>
-                </div>
-              }
-              
-              @if (currentUser()?.phone_number) {
-                <div class="detail-item">
-                  <span class="detail-label">Phone Number:</span>
-                  <span class="detail-value">{{ currentUser()?.phone_number }}</span>
-                </div>
-              }
               
               <div class="detail-item">
                 <span class="detail-label">Member Since:</span>
-                <span class="detail-value">{{ formatDate(currentUser()?.created_at) }}</span>
+                <span class="detail-value">Not available</span>
               </div>
               
-              @if (currentUser()?.last_login) {
-                <div class="detail-item">
-                  <span class="detail-label">Last Login:</span>
-                  <span class="detail-value">{{ formatDate(currentUser()?.last_login) }}</span>
-                </div>
-              }
+
             </div>
           </div>
         </div>
@@ -563,8 +538,12 @@ export class UserProfileComponent implements OnInit {
    */
   getUserInitials(): string {
     const user = this.currentUser();
-    if (user?.first_name && user?.last_name) {
-      return (user.first_name.charAt(0) + user.last_name.charAt(0)).toUpperCase();
+    if (user?.full_name) {
+      const names = user.full_name.split(' ');
+      if (names.length >= 2) {
+        return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
+      }
+      return names[0].charAt(0).toUpperCase();
     }
     return user?.email?.charAt(0).toUpperCase() || 'U';
   }

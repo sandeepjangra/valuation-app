@@ -1,0 +1,94 @@
+<div class="login-container">
+  <div class="login-card">
+    <div class="login-header">
+      <h2>Valuation App</h2>
+      <p>Sign in to your account</p>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+      <!-- Email Field -->
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input
+          type="email"
+          id="email"
+          formControlName="email"
+          class="form-control"
+          [class.is-invalid]="f['email'].invalid && f['email'].touched"
+          placeholder="Enter your email"
+        />
+        <div class="invalid-feedback" *ngIf="f['email'].invalid && f['email'].touched">
+          <div *ngIf="f['email'].errors?.['required']">Email is required</div>
+          <div *ngIf="f['email'].errors?.['email']">Please enter a valid email</div>
+        </div>
+      </div>
+
+      <!-- Password Field -->
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input
+          type="password"
+          id="password"
+          formControlName="password"
+          class="form-control"
+          [class.is-invalid]="f['password'].invalid && f['password'].touched"
+          placeholder="Enter your password"
+        />
+        <div class="invalid-feedback" *ngIf="f['password'].invalid && f['password'].touched">
+          <div *ngIf="f['password'].errors?.['required']">Password is required</div>
+          <div *ngIf="f['password'].errors?.['minlength']">Password must be at least 6 characters</div>
+        </div>
+      </div>
+
+      <!-- Remember Me -->
+      <div class="form-group form-check">
+        <input
+          type="checkbox"
+          id="rememberMe"
+          formControlName="rememberMe"
+          class="form-check-input"
+        />
+        <label for="rememberMe" class="form-check-label">Remember me</label>
+      </div>
+
+      <!-- Error Message -->
+      <div class="alert alert-danger" *ngIf="error">
+        {{ error }}
+      </div>
+
+      <!-- Submit Button -->
+      <button
+        type="submit"
+        class="btn btn-primary btn-block"
+        [disabled]="loading || loginForm.invalid"
+      >
+        <span *ngIf="loading" class="spinner-border spinner-border-sm mr-2"></span>
+        {{ loading ? 'Signing in...' : 'Sign In' }}
+      </button>
+    </form>
+
+    <!-- Development Login Buttons (Remove in Production) -->
+    <div class="dev-login-section" *ngIf="true">
+      <hr>
+      <p class="text-muted text-center">Development Login</p>
+      <div class="dev-buttons">
+        <button type="button" class="btn btn-outline-danger btn-sm" (click)="loginAsAdmin()">
+          Login as Admin
+        </button>
+        <button type="button" class="btn btn-outline-warning btn-sm" (click)="loginAsManager()">
+          Login as Manager
+        </button>
+        <button type="button" class="btn btn-outline-info btn-sm" (click)="loginAsEmployee()">
+          Login as Employee
+        </button>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="login-footer">
+      <p class="text-muted text-center">
+        Secure authentication powered by AWS Cognito
+      </p>
+    </div>
+  </div>
+</div>

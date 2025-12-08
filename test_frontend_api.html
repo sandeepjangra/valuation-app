@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Frontend API Test</title>
+</head>
+<body>
+    <h1>Frontend API Test</h1>
+    <div id="results"></div>
+
+    <script>
+        async function testAPI() {
+            const resultsDiv = document.getElementById('results');
+            
+            try {
+                // Step 1: Login as admin in sk-tindwal
+                console.log('🔐 Logging in as admin...');
+                const loginResponse = await fetch('http://localhost:8000/api/auth/dev-login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'admin@system.com',
+                        organizationId: 'sk-tindwal',
+                        role: 'system_admin'
+                    })
+                });
+                
+                const loginData = await loginResponse.json();
+                const token = loginData.data.access_token;
+                
+                resultsDiv.innerHTML += `<p>✅ Login successful: ${loginData.data.user.email} in ${loginData.data.user.org_short_name}</p>`;
+                
+                // Step 2: Get templates
+                console.log('📋 Fetching templates...');
+                const templatesResponse = await fetch('http://localhost:8000/api/custom-templates', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const templatesData = await templatesResponse.json();
+                
+                resultsDiv.innerHTML += `<h2>Templates Response:</h2>`;
+                resultsDiv.innerHTML += `<p>Status: ${templatesResponse.status}</p>`;
+                resultsDiv.innerHTML += `<p>Templates found: ${templatesData.data.length}</p>`;
+                
+                templatesData.data.forEach((template, index) => {
+                    resultsDiv.innerHTML += `
+                        <div style="border: 1px solid #ccc; margin: 10px; padding: 10px;">
+                            <h3>Template ${index + 1}: ${template.templateName}</h3>
+                            <p><strong>ID:</strong> ${template._id}</p>
+                            <p><strong>Created by:</strong> ${template.createdByName}</p>
+                            <p><strong>Organization ID:</strong> ${template.organizationId}</p>
+                            <p><strong>Bank:</strong> ${template.bankCode}</p>
+                            <p><strong>Property Type:</strong> ${template.propertyType}</p>
+                        </div>
+                    `;
+                });
+                
+                // Check organization IDs
+                const orgIds = [...new Set(templatesData.data.map(t => t.organizationId))];
+                resultsDiv.innerHTML += `<p><strong>Organization IDs found:</strong> ${orgIds.join(', ')}</p>`;
+                
+                if (orgIds.includes('sk-tindwal') && orgIds.includes('system-administration')) {
+                    resultsDiv.innerHTML += `<p style="color: red;">❌ ISSUE: Templates from multiple organizations!</p>`;
+                } else if (orgIds.includes('sk-tindwal')) {
+                    resultsDiv.innerHTML += `<p style="color: green;">✅ GOOD: Only sk-tindwal templates</p>`;
+                } else if (orgIds.includes('system-administration')) {
+                    resultsDiv.innerHTML += `<p style="color: red;">❌ ISSUE: Only system-administration templates</p>`;
+                }
+                
+            } catch (error) {
+                resultsDiv.innerHTML += `<p style="color: red;">❌ Error: ${error.message}</p>`;
+                console.error('Error:', error);
+            }
+        }
+        
+        // Run test when page loads
+        testAPI();
+    </script>
+</body>
+</html>

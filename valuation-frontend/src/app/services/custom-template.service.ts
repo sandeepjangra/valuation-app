@@ -4,9 +4,10 @@
  */
 
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { map, catchError, tap } from 'rxjs/operators';
+import { AuthService } from './auth.service';
 import {
   CustomTemplate,
   CustomTemplateListItem,
@@ -25,7 +26,16 @@ import { environment } from '../../environments/environment';
 })
 export class CustomTemplateService {
   private readonly http = inject(HttpClient);
+  private readonly authService = inject(AuthService);
   private readonly API_BASE_URL = environment.apiUrl || 'http://localhost:8000/api';
+
+  private getAuthHeaders(): HttpHeaders {
+    const token = this.authService.getToken();
+    return new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    });
+  }
 
   /**
    * Get field structure for a specific bank and property type
@@ -40,7 +50,7 @@ export class CustomTemplateService {
 
     return this.http.get<CustomTemplateFieldsResponse>(
       `${this.API_BASE_URL}/custom-templates/fields`,
-      { params }
+      { params, headers: this.getAuthHeaders() }
     ).pipe(
       tap(response => {
         console.log('✅ Template fields fetched:', {
@@ -72,7 +82,7 @@ export class CustomTemplateService {
 
     return this.http.get<CustomTemplatesListResponse>(
       `${this.API_BASE_URL}/custom-templates`,
-      { params }
+      { params, headers: this.getAuthHeaders() }
     ).pipe(
       tap(response => {
         console.log('✅ Templates fetched:', {
@@ -95,7 +105,8 @@ export class CustomTemplateService {
     console.log(`🌐 CustomTemplateService: Fetching template ${templateId}`);
 
     return this.http.get<CustomTemplateResponse>(
-      `${this.API_BASE_URL}/custom-templates/${templateId}`
+      `${this.API_BASE_URL}/custom-templates/${templateId}`,
+      { headers: this.getAuthHeaders() }
     ).pipe(
       map(response => response.data),
       tap(template => {
@@ -116,53 +127,26 @@ export class CustomTemplateService {
   createTemplate(request: CreateCustomTemplateRequest): Observable<CustomTemplate> {
     console.log('🌐 CustomTemplateService: Creating template', request.templateName);
 
-    // Get organization context for API call
-    const orgContext = this.getOrganizationContext();
-    if (!orgContext?.orgShortName) {
-      console.error('❌ No organization context available for template creation');
-      return throwError(() => new Error('Organization context required'));
-    }
-
-    const endpoint = `${this.API_BASE_URL}/organizations/${orgContext.orgShortName}/templates/from-report`;
-    console.log('🌐 Using organization-specific endpoint:', endpoint);
-
-    // Transform request to match the from-report endpoint
+    const endpoint = `${this.API_BASE_URL}/custom-templates`;
     const transformedRequest = {
       templateName: request.templateName,
       description: request.description,
       bankCode: request.bankCode,
-      templateCode: `${request.propertyType}-property`, // Convert propertyType to templateCode
+      propertyType: request.propertyType,
       fieldValues: request.fieldValues
     };
 
-    // Debug: Check authentication state
-    console.log('🔍 Authentication Debug:', {
-      endpoint,
-      orgContext,
-      transformedRequest,
-      localStorage: {
-        auth_data: !!localStorage.getItem('auth_data'),
-        access_token: !!localStorage.getItem('access_token')
-      }
-    });
-
     return this.http.post<CustomTemplateCreateResponse>(
       endpoint,
-      transformedRequest
+      transformedRequest,
+      { headers: this.getAuthHeaders() }
     ).pipe(
-      map(response => response.data.template || response.data), // Handle different response formats
+      map(response => response.data.template || response.data),
       tap(template => {
         console.log('✅ Template created:', template._id || template.templateName);
       }),
       catchError(error => {
-        console.error('❌ Failed to create template - Full Error:', {
-          status: error.status,
-          statusText: error.statusText,
-          message: error.message,
-          error: error.error,
-          url: error.url,
-          headers: error.headers
-        });
+        console.error('❌ Failed to create template:', error);
         return throwError(() => error);
       })
     );
@@ -203,7 +187,8 @@ export class CustomTemplateService {
 
     return this.http.put<CustomTemplateResponse>(
       `${this.API_BASE_URL}/custom-templates/${templateId}`,
-      request
+      request,
+      { headers: this.getAuthHeaders() }
     ).pipe(
       map(response => response.data),
       tap(template => {
@@ -224,7 +209,8 @@ export class CustomTemplateService {
     console.log(`🌐 CustomTemplateService: Deleting template ${templateId}`);
 
     return this.http.delete<CustomTemplateResponse>(
-      `${this.API_BASE_URL}/custom-templates/${templateId}`
+      `${this.API_BASE_URL}/custom-templates/${templateId}`,
+      { headers: this.getAuthHeaders() }
     ).pipe(
       map(() => void 0),
       tap(() => {
@@ -247,7 +233,8 @@ export class CustomTemplateService {
 
     return this.http.post<CustomTemplateCreateResponse>(
       `${this.API_BASE_URL}/custom-templates/${templateId}/clone`,
-      request
+      request,
+      { headers: this.getAuthHeaders() }
     ).pipe(
       map(response => response.data.template),
       tap(template => {

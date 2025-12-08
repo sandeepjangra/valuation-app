@@ -1,129 +1,128 @@
-/**
- * Login Component for Valuation App
- * Clean login interface with admin access
- */
-
-import { Component, inject, signal } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
-import { AuthService } from '../../services/auth.service';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router, ActivatedRoute } from '@angular/router';
+import { AuthService, LoginRequest } from '../../services/auth.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
-  templateUrl: './login.html',
-  styleUrls: ['./login.css']
+  imports: [CommonModule, ReactiveFormsModule],
+  templateUrl: './login.component.html',
+  styleUrls: ['./login.component.css']
 })
-export class LoginComponent {
-  private readonly authService = inject(AuthService);
-  private readonly router = inject(Router);
-  private readonly fb = inject(FormBuilder);
-
-  // Component state
-  readonly isLoading = signal<boolean>(false);
-  readonly error = signal<string | null>(null);
-  readonly showPassword = signal<boolean>(false);
-
-  // Login form
+export class LoginComponent implements OnInit {
   loginForm: FormGroup;
+  loading = false;
+  error = '';
+  returnUrl = '';
 
-  constructor() {
-    this.loginForm = this.fb.group({
+  constructor(
+    private formBuilder: FormBuilder,
+    private authService: AuthService,
+    private router: Router,
+    private route: ActivatedRoute
+  ) {
+    this.loginForm = this.formBuilder.group({
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required]],
+      password: ['', [Validators.required, Validators.minLength(6)]],
       rememberMe: [false]
     });
+  }
 
-    // Redirect if already authenticated
+  ngOnInit(): void {
+    // Get return URL from route parameters or default to dashboard
+    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
+
+    // Redirect if already logged in
     if (this.authService.isAuthenticated()) {
-      this.router.navigate(['/dashboard']);
+      this.router.navigate([this.returnUrl]);
     }
   }
 
-  /**
-   * Admin quick login
-   */
-  adminLogin(): void {
-    this.isLoading.set(true);
-    this.error.set(null);
-
-    this.authService.loginWithDevToken('admin@system.com', 'system_admin', 'system_admin').subscribe({
-      next: () => {
-        this.isLoading.set(false);
-        this.redirectAfterLogin();
-      },
-      error: (error) => {
-        console.error('Admin login failed:', error);
-        this.error.set('Admin login failed. Please try again.');
-        this.isLoading.set(false);
-      }
-    });
+  get f() {
+    return this.loginForm.controls;
   }
 
-  /**
-   * Traditional login form submission
-   */
-  submitLogin(): void {
-    if (this.loginForm.invalid) return;
+  onSubmit(): void {
+    if (this.loginForm.invalid) {
+      return;
+    }
 
-    this.isLoading.set(true);
-    this.error.set(null);
+    this.loading = true;
+    this.error = '';
 
-    const credentials = this.loginForm.value;
-    
-    this.authService.login(credentials).subscribe({
-      next: () => {
-        this.isLoading.set(false);
-        this.redirectAfterLogin();
-      },
-      error: (error) => {
-        console.error('Login failed:', error);
-        this.error.set(error.message || 'Login failed. Please check your credentials.');
-        this.isLoading.set(false);
-      }
-    });
-  }
+    const loginRequest: LoginRequest = {
+      email: this.f['email'].value,
+      password: this.f['password'].value,
+      remember_me: this.f['rememberMe'].value
+    };
 
-  /**
-   * Toggle password visibility
-   */
-  togglePasswordVisibility(): void {
-    this.showPassword.set(!this.showPassword());
-  }
-
-  /**
-   * Redirect after successful login
-   */
-  private redirectAfterLogin(): void {
-    // Check for attempted URL in session storage
-    const attemptedUrl = sessionStorage.getItem('attempted_url');
-    if (attemptedUrl) {
-      sessionStorage.removeItem('attempted_url');
-      this.router.navigateByUrl(attemptedUrl);
-    } else {
-      // Get user's organization context for proper redirect
-      const orgContext = this.authService.getOrganizationContext();
-      
-      if (orgContext) {
-        // For system admin, redirect to admin dashboard
-        if (orgContext.isSystemAdmin) {
-          console.log('🔄 Redirecting System Admin to /admin');
-          this.router.navigate(['/admin']);
-        } else {
-          // For regular users, redirect to org dashboard
-          const orgShortName = orgContext.orgShortName;
-          console.log(`🔄 Redirecting to /org/${orgShortName}/dashboard`);
-          this.router.navigate(['/org', orgShortName, 'dashboard']);
+    this.authService.login(loginRequest).subscribe({
+      next: (response) => {
+        if (response.success) {
+          // Redirect based on user role
+          const user = response.data.user;
+          
+          console.log('Login successful, user:', user);
+          
+          // Get organization short name from user data
+          const orgShortName = user.org_short_name || 'system-administration';
+          
+          // Redirect based on user role and organization
+          if (user.permissions?.is_admin || user.is_system_admin || user.role === 'admin') {
+            // System admin goes to admin dashboard
+            this.router.navigate(['/admin']);
+          } else if (user.permissions?.is_manager || user.role === 'manager') {
+            // Manager goes to their organization dashboard
+            this.router.navigate([`/org/${orgShortName}/dashboard`]);
+          } else {
+            // Regular user goes to their organization dashboard
+            this.router.navigate([`/org/${orgShortName}/dashboard`]);
+          }
         }
-      } else {
-        // Fallback to login if no context
-        console.error('❌ No organization context found after login');
-        this.router.navigate(['/login']);
+      },
+      error: (error) => {
+        this.loading = false;
+        
+        console.error('Full login error:', error);
+        console.error('Error status:', error.status);
+        console.error('Error message:', error.message);
+        console.error('Error details:', error.error);
+        
+        if (error.status === 401) {
+          this.error = 'Invalid email or password';
+        } else if (error.error?.detail) {
+          this.error = error.error.detail;
+        } else {
+          this.error = 'Login failed. Please try again.';
+        }
       }
-    }
+    });
   }
 
+  // Development login helpers (remove in production)
+  loginAsAdmin(): void {
+    this.loginForm.patchValue({
+      email: 'admin@system.com',
+      password: 'admin123'
+    });
+    this.onSubmit();
+  }
 
+  loginAsManager(): void {
+    this.loginForm.patchValue({
+      email: 'manager@test.com',
+      password: 'manager123'
+    });
+    this.onSubmit();
+  }
+
+  loginAsEmployee(): void {
+    this.loginForm.patchValue({
+      email: 'employee@test.com',
+      password: 'employee123'
+    });
+    this.onSubmit();
+  }
 }

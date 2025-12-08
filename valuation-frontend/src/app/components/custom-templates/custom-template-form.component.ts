@@ -97,7 +97,9 @@ export class CustomTemplateFormComponent implements OnInit {
         
         if (!bankCode || !propertyType) {
           this.error.set('Missing bank code or property type');
-          setTimeout(() => this.router.navigate(['/custom-templates']), 2000);
+          const user = this.authService.currentUser();
+          const orgShortName = user?.org_short_name || user?.organization_id;
+          setTimeout(() => this.router.navigate([`/org/${orgShortName}/custom-templates`]), 2000);
           return;
         }
 
@@ -339,7 +341,14 @@ export class CustomTemplateFormComponent implements OnInit {
   // Removed tab change method - no longer needed
 
   goBack(): void {
-    this.router.navigate(['/custom-templates']);
+    const user = this.authService.currentUser();
+    const orgShortName = user?.org_short_name || user?.organization_id;
+    console.log('🔍 goBack() - Navigation debug:', {
+      user: user,
+      orgShortName: orgShortName,
+      targetRoute: `/org/${orgShortName}/custom-templates`
+    });
+    this.router.navigate([`/org/${orgShortName}/custom-templates`]);
   }
 
   onSubmit(): void {
@@ -410,8 +419,15 @@ export class CustomTemplateFormComponent implements OnInit {
     this.customTemplateService.createTemplate(request).subscribe({
       next: (template) => {
         console.log('✅ Template created successfully:', template);
+        const user = this.authService.currentUser();
+        const orgShortName = user?.org_short_name || user?.organization_id;
+        console.log('🔍 createTemplate() - Navigation debug:', {
+          user: user,
+          orgShortName: orgShortName,
+          targetRoute: `/org/${orgShortName}/custom-templates`
+        });
         alert('Template created successfully!');
-        this.router.navigate(['/custom-templates']);
+        this.router.navigate([`/org/${orgShortName}/custom-templates`]);
       },
       error: (error) => {
         console.error('❌ Failed to create template:', error);
@@ -433,7 +449,9 @@ export class CustomTemplateFormComponent implements OnInit {
       next: (template) => {
         console.log('✅ Template updated successfully:', template);
         alert('Template updated successfully!');
-        this.router.navigate(['/custom-templates']);
+        const user = this.authService.currentUser();
+        const orgShortName = user?.org_short_name || user?.organization_id;
+        this.router.navigate([`/org/${orgShortName}/custom-templates`]);
       },
       error: (error) => {
         console.error('❌ Failed to update template:', error);
@@ -591,23 +609,26 @@ export class CustomTemplateFormComponent implements OnInit {
     
     if (!isAuth || !token) {
       console.log('❌ Not authenticated - no token available');
-      alert('Not authenticated. Click "Dev Login" first.');
+      alert('Not authenticated. Please login first.');
       return;
     }
 
     // Clear previous logs
     sessionStorage.removeItem('jwt-debug-logs');
     
-    // Test basic auth endpoint
-    this.http.get('http://localhost:8000/api/auth/me').subscribe({
+    // Test basic auth endpoint with proper headers
+    const headers = {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    };
+    
+    this.http.get('http://localhost:8000/api/auth/me', { headers }).subscribe({
       next: (response) => {
         console.log('✅ Auth test successful:', response);
-        this.showDebugLogs();
         alert('Authentication test successful! Check console for debug logs.');
       },
       error: (error) => {
         console.error('❌ Auth test failed:', error);
-        this.showDebugLogs();
         alert(`Auth test failed: ${error.status} ${error.statusText}. Check console for debug logs.`);
       }
     });

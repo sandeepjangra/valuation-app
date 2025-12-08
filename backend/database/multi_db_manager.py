@@ -166,6 +166,21 @@ class MultiDatabaseManager:
             raise ValueError(f"Unknown database type: {db_type}")
         return self.databases[db_type]
     
+    def get_shared_database(self) -> AsyncIOMotorDatabase[Any]:
+        """Get shared database reference for custom templates and shared resources"""
+        if not self.is_connected:
+            raise RuntimeError("Database not connected. Call connect() first.")
+        return self.databases.get("shared", self.databases.get("admin"))
+    
+    async def get_config_db(self) -> AsyncIOMotorDatabase[Any]:
+        """Get config database reference for organizations and system configuration"""
+        if not self.is_connected:
+            raise RuntimeError("Database not connected. Call connect() first.")
+        # Return val_app_config database which contains organizations
+        if not self.client:
+            raise RuntimeError("Client not initialized")
+        return self.client["val_app_config"]
+    
     def get_collection(self, db_type: DatabaseType, collection_name: str) -> AsyncIOMotorCollection[Any]:
         """Get a collection reference from specific database"""
         database = self.get_database(db_type)
@@ -560,5 +575,12 @@ class MultiDatabaseSession:
         await self.manager.disconnect()
 
 
-# Global instance for import
-multi_db_manager = MultiDatabaseManager()
+# Global instance for import (lazy initialization)
+multi_db_manager = None
+
+def get_multi_db_manager():
+    """Get or create the global multi-database manager instance"""
+    global multi_db_manager
+    if multi_db_manager is None:
+        multi_db_manager = MultiDatabaseManager()
+    return multi_db_manager

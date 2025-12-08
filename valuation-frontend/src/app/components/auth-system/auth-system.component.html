@@ -1,0 +1,228 @@
+<div class="auth-system-container">
+  <div class="auth-header">
+    <h1>🔐 Authentication System</h1>
+    <p>Investigate and test user authentication, roles, and permissions</p>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="tab-navigation">
+    <button 
+      class="tab-btn" 
+      [class.active]="activeTab() === 'overview'"
+      (click)="setActiveTab('overview')">
+      Overview
+    </button>
+    <button 
+      class="tab-btn" 
+      [class.active]="activeTab() === 'testing'"
+      (click)="setActiveTab('testing')">
+      User Testing
+    </button>
+    <button 
+      class="tab-btn" 
+      [class.active]="activeTab() === 'permissions'"
+      (click)="setActiveTab('permissions')">
+      Permissions
+    </button>
+    <button 
+      class="tab-btn" 
+      [class.active]="activeTab() === 'debug'"
+      (click)="setActiveTab('debug')">
+      Debug Info
+    </button>
+  </div>
+
+  <!-- Overview Tab -->
+  @if (activeTab() === 'overview') {
+    <div class="tab-content">
+      <div class="current-auth-status">
+        <h2>Current Authentication Status</h2>
+        
+        @if (currentAuth().isAuthenticated) {
+          <div class="auth-card success">
+            <h3>✅ Authenticated</h3>
+            <div class="auth-details">
+              <p><strong>Email:</strong> {{ currentAuth().orgContext?.email }}</p>
+              <p><strong>Organization:</strong> {{ currentAuth().orgContext?.orgShortName }}</p>
+              <p><strong>Roles:</strong> {{ currentAuth().orgContext?.roles.join(', ') }}</p>
+              <p><strong>System Admin:</strong> {{ currentAuth().isSystemAdmin ? 'Yes' : 'No' }}</p>
+              <p><strong>Manager:</strong> {{ currentAuth().isManager ? 'Yes' : 'No' }}</p>
+              <p><strong>Employee:</strong> {{ currentAuth().isEmployee ? 'Yes' : 'No' }}</p>
+            </div>
+            <button class="btn btn-secondary" (click)="logout()">Logout</button>
+          </div>
+        } @else {
+          <div class="auth-card warning">
+            <h3>⚠️ Not Authenticated</h3>
+            <p>No user is currently logged in</p>
+          </div>
+        }
+      </div>
+
+      <div class="quick-login">
+        <h2>Quick Login</h2>
+        <div class="login-buttons">
+          <button class="btn btn-admin" (click)="loginAsUser('admin@system.com', 'admin')">
+            System Admin
+          </button>
+          <button class="btn btn-manager" (click)="loginAsUser('sk.tindwal@gmail.com', 'admin')">
+            SK Manager
+          </button>
+          <button class="btn btn-employee" (click)="loginAsUser('sanjeev.jangra@gmail.com', 'admin')">
+            SK Employee
+          </button>
+          <button class="btn btn-manager" (click)="loginAsUser('yjangra007@gmail.com', 'admin')">
+            YJ Manager
+          </button>
+          <button class="btn btn-employee" (click)="loginAsUser('lucky.jangra@gmail.com', 'admin')">
+            YJ Employee
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- User Testing Tab -->
+  @if (activeTab() === 'testing') {
+    <div class="tab-content">
+      <div class="testing-controls">
+        <h2>Authentication Testing</h2>
+        <div class="test-buttons">
+          <button class="btn btn-primary" (click)="testAllUsers()" [disabled]="isLoading()">
+            {{ isLoading() ? 'Testing...' : 'Test All Users' }}
+          </button>
+          <button class="btn btn-secondary" (click)="resetTests()">Reset Tests</button>
+        </div>
+      </div>
+
+      <div class="test-results">
+        <h3>Test Results</h3>
+        <div class="results-grid">
+          @for (test of testResults(); track test.email) {
+            <div class="test-card" [class]="test.status">
+              <div class="test-header">
+                <h4>{{ test.email }}</h4>
+                <span class="status-badge" [class]="test.status">{{ test.status }}</span>
+              </div>
+              
+              <div class="test-details">
+                <p><strong>Expected Org:</strong> {{ test.expectedOrg }}</p>
+                <p><strong>Expected Role:</strong> {{ test.expectedRole }}</p>
+                
+                @if (test.status === 'success' && test.result) {
+                  <div class="success-details">
+                    <p><strong>✅ Actual Org:</strong> {{ test.result.organization }}</p>
+                    <p><strong>✅ Actual Roles:</strong> {{ test.result.roles.join(', ') }}</p>
+                    <p><strong>System Admin:</strong> {{ test.result.isSystemAdmin ? 'Yes' : 'No' }}</p>
+                    <p><strong>Manager:</strong> {{ test.result.isManager ? 'Yes' : 'No' }}</p>
+                  </div>
+                }
+                
+                @if (test.status === 'failed' && test.error) {
+                  <div class="error-details">
+                    <p><strong>❌ Error:</strong> {{ test.error }}</p>
+                  </div>
+                }
+              </div>
+              
+              <button class="btn btn-sm" (click)="testSingleUser(test)" [disabled]="isLoading()">
+                Test Again
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Permissions Tab -->
+  @if (activeTab() === 'permissions') {
+    <div class="tab-content">
+      <h2>Current User Permissions</h2>
+      
+      @if (currentAuth().isAuthenticated) {
+        <div class="permissions-grid">
+          <div class="permission-category">
+            <h3>Role-Based Permissions</h3>
+            <div class="permissions-list">
+              @for (permission of getPermissionsList(); track permission) {
+                <div class="permission-item">
+                  <span class="permission-icon">✅</span>
+                  <span class="permission-name">{{ permission }}</span>
+                </div>
+              }
+            </div>
+          </div>
+
+          <div class="permission-category">
+            <h3>Role Checks</h3>
+            <div class="role-checks">
+              <div class="role-check">
+                <span class="role-name">System Admin:</span>
+                <span class="role-value" [class.active]="currentAuth().isSystemAdmin">
+                  {{ currentAuth().isSystemAdmin ? 'Yes' : 'No' }}
+                </span>
+              </div>
+              <div class="role-check">
+                <span class="role-name">Manager:</span>
+                <span class="role-value" [class.active]="currentAuth().isManager">
+                  {{ currentAuth().isManager ? 'Yes' : 'No' }}
+                </span>
+              </div>
+              <div class="role-check">
+                <span class="role-name">Employee:</span>
+                <span class="role-value" [class.active]="currentAuth().isEmployee">
+                  {{ currentAuth().isEmployee ? 'Yes' : 'No' }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      } @else {
+        <div class="no-auth-message">
+          <p>Please log in to view permissions</p>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Debug Info Tab -->
+  @if (activeTab() === 'debug') {
+    <div class="tab-content">
+      <h2>Debug Information</h2>
+      
+      <div class="debug-sections">
+        <div class="debug-section">
+          <h3>Authentication State</h3>
+          <pre class="debug-code">{{ currentAuth() | json }}</pre>
+        </div>
+
+        @if (currentAuth().orgContext) {
+          <div class="debug-section">
+            <h3>Organization Context</h3>
+            <pre class="debug-code">{{ currentAuth().orgContext | json }}</pre>
+          </div>
+        }
+
+        @if (currentAuth().user) {
+          <div class="debug-section">
+            <h3>User Object</h3>
+            <pre class="debug-code">{{ currentAuth().user | json }}</pre>
+          </div>
+        }
+
+        <div class="debug-section">
+          <h3>JWT Token</h3>
+          <div class="token-info">
+            @if (authService.getToken()) {
+              <p><strong>Token exists:</strong> Yes</p>
+              <p><strong>Token preview:</strong> {{ authService.getToken()?.substring(0, 50) }}...</p>
+            } @else {
+              <p><strong>Token exists:</strong> No</p>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

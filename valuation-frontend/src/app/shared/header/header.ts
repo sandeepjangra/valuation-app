@@ -42,8 +42,10 @@ export class Header implements OnInit {
 
   // Computed properties for reactive updates
   readonly isAuthenticated = computed(() => {
-    const auth = this.authService.isAuthenticated();
-    console.log('🔍 Header isAuthenticated:', auth);
+    const hasToken = !!this.authService.tokenValue;
+    const hasUser = !!this.authService.currentUserValue;
+    const auth = hasToken && hasUser;
+    console.log('🔍 Header isAuthenticated:', { hasToken, hasUser, auth });
     return auth;
   });
   readonly currentUser = computed(() => this.authService.currentUser());
@@ -80,17 +82,35 @@ export class Header implements OnInit {
    * Check if user has manager permissions
    */
   hasManagerPermissions(): boolean {
-    return this.authService.hasPermission('users', 'read');
+    const hasPermission = this.authService.hasPermission('users', 'read');
+    const isManager = this.authService.isManager();
+    const result = hasPermission || isManager;
+    console.log('🔍 Header hasManagerPermissions:', { hasPermission, isManager, result });
+    return result;
+  }
+
+  /**
+   * Check if user is manager by role
+   */
+  isManager(): boolean {
+    const isManager = this.authService.isManager();
+    console.log('🔍 Header isManager:', isManager);
+    return isManager;
   }
 
   /**
    * Check if user is system admin
    */
   isSystemAdmin(): boolean {
+    const isAuthServiceSystemAdmin = this.authService.isSystemAdmin();
     const orgContext = this.orgContext();
-    const isSystemAdmin = orgContext?.isSystemAdmin || false;
+    const isOrgContextSystemAdmin = orgContext?.isSystemAdmin || false;
+    const isSystemAdmin = isAuthServiceSystemAdmin || isOrgContextSystemAdmin;
+    
     console.log('🔍 Header isSystemAdmin:', {
+      isAuthServiceSystemAdmin,
       orgContext,
+      isOrgContextSystemAdmin,
       isSystemAdmin,
       orgShortName: orgContext?.orgShortName,
       roles: orgContext?.roles

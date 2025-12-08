@@ -9,6 +9,10 @@ export const routes: Routes = [
     path: 'login', 
     loadComponent: () => import('./components/login/login.component').then(m => m.LoginComponent)
   },
+  { 
+    path: 'unauthorized', 
+    loadComponent: () => import('./components/unauthorized/unauthorized.component').then(m => m.UnauthorizedComponent)
+  },
   
   // User profile route
   { 
@@ -21,7 +25,7 @@ export const routes: Routes = [
   // Organization-based routes (NEW!)
   {
     path: 'org/:orgShortName',
-    canActivate: [authGuard()],
+    canActivate: [authGuard],
     children: [
       {
         path: '',
@@ -119,7 +123,7 @@ export const routes: Routes = [
   // Admin routes for system administrators
   {
     path: 'admin',
-    canActivate: [systemAdminGuard()],
+    canActivate: [systemAdminGuard],
     children: [
       {
         path: '',
@@ -187,49 +191,8 @@ export const routes: Routes = [
     ]
   },
   
-  // Organization management routes (legacy, kept for backward compatibility)
-  {
-    path: 'organization',
-    canActivate: [authGuard],
-    children: [
-      {
-        path: 'users',
-        loadComponent: () =>
-          import('./components/user-management/user-management.component')
-            .then(m => m.UserManagementComponent),
-        canActivate: [managerGuard],
-        title: 'User Management - Valuation App'
-      }
-    ]
-  },
 
-  // Custom Templates Management (legacy)
-  {
-    path: 'custom-templates',
-    canActivate: [authGuard],
-    children: [
-      {
-        path: '',
-        loadComponent: () =>
-          import('./components/custom-templates/custom-templates-management.component')
-            .then(m => m.CustomTemplatesManagementComponent),
-        title: 'Custom Templates - Valuation App'
-      },
-      {
-        path: 'create',
-        loadComponent: () =>
-          import('./components/custom-templates/custom-template-form.component')
-            .then(m => m.CustomTemplateFormComponent),
-        title: 'Create Template - Valuation App'
-      },
-      {
-        path: 'edit/:id',
-        loadComponent: () =>
-          import('./components/custom-templates/custom-template-form.component')
-            .then(m => m.CustomTemplateFormComponent),
-        title: 'Edit Template - Valuation App'
-      }
-    ]
-  }
+
+
 ];
 

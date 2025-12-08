@@ -616,7 +616,7 @@ export class UserManagementComponent implements OnInit {
         roles: this.selectedRoles
       };
       
-      this.organizationService.updateUser(this.currentEditUser!._id, updateData).subscribe({
+      this.organizationService.updateUser(this.currentEditUser!.user_id, updateData).subscribe({
         next: () => {
           this.closeUserModal();
           this.refreshUsers();
@@ -663,11 +663,11 @@ export class UserManagementComponent implements OnInit {
     
     const newStatus = !user.is_active;
     
-    this.organizationService.toggleUserStatus(user._id, newStatus).subscribe({
+    this.organizationService.toggleUserStatus(user.user_id, newStatus).subscribe({
       next: () => {
         // Update local user data
         const updatedUsers = this.users().map(u => 
-          u._id === user._id ? { ...u, is_active: newStatus } : u
+          u.user_id === user.user_id ? { ...u, is_active: newStatus } : u
         );
         this.users.set(updatedUsers);
       },
@@ -683,7 +683,7 @@ export class UserManagementComponent implements OnInit {
    */
   viewUser(user: User): void {
     // Navigate to user detail page or open view modal
-    this.router.navigate(['/organization/users', user._id]);
+    this.router.navigate(['/organization/users', user.user_id]);
   }
 
   /**
@@ -709,7 +709,7 @@ export class UserManagementComponent implements OnInit {
   canToggleUserStatus(user: User): boolean {
     // Same logic as edit, plus can't deactivate self
     const currentUser = this.authService.currentUser();
-    const isSelf = currentUser?._id === user._id;
+    const isSelf = currentUser?.user_id === user.user_id;
     
     return this.canEditUser(user) && !isSelf;
   }
@@ -718,7 +718,7 @@ export class UserManagementComponent implements OnInit {
    * Utility methods
    */
   trackByUserId(index: number, user: User): string {
-    return user._id;
+    return user.user_id;
   }
 
   getUserInitials(user: User): string {

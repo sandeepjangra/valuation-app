@@ -89,9 +89,8 @@ export class Dashboard implements OnInit {
   }
 
   checkUserSystemAdminStatus() {
-    // For now, assume user is system admin if they can access system-administration org
-    // In a real app, this would check user permissions/roles
-    this.isUserSystemAdmin = true; // Temporarily set to true to test the switcher
+    // Check if user has system admin privileges based on their authentication
+    this.isUserSystemAdmin = this.authService.isSystemAdmin();
     console.log('User system admin status:', this.isUserSystemAdmin);
   }
 

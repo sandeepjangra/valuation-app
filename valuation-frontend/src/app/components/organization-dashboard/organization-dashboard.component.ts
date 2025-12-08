@@ -169,10 +169,10 @@ export class OrganizationDashboardComponent implements OnInit {
 
   // Auth state
   readonly currentUser = this.authService.currentUser;
-  readonly organizationContext = this.authService.organizationContext;
-  readonly isSystemAdmin = this.authService.isSystemAdmin;
-  readonly isManager = this.authService.isManager;
-  readonly userRoles = this.authService.userRoles;
+  readonly organizationContext = this.authService.getOrganizationContext();
+  readonly isSystemAdmin = () => this.authService.isSystemAdmin();
+  readonly isManager = () => this.authService.isManager();
+  readonly userRoles = () => this.authService.userRoles();
 
   // Computed dashboard data
   readonly dashboardCards = computed(() => this.buildDashboardCards());
@@ -310,7 +310,7 @@ export class OrganizationDashboardComponent implements OnInit {
       'employee': 'Employee'
     };
 
-    return roles.map(role => labels[role]).join(', ');
+    return roles.map(role => labels[role as UserRole]).join(', ');
   }
 
   /**

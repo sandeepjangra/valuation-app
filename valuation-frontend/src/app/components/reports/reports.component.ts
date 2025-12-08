@@ -1088,27 +1088,47 @@ export class ReportsComponent implements OnInit {
     const mockUsers: User[] = [
       {
         _id: 'user-1',
+        user_id: 'user-1',
         organization_id: 'demo_org_001',
         email: 'john.doe@demo.com',
         first_name: 'John',
         last_name: 'Doe',
+        full_name: 'John Doe',
+        role: 'employee',
         roles: ['employee'],
+        status: 'active',
         is_active: true,
         created_at: new Date(),
         updated_at: new Date(),
-        last_login: new Date()
+        last_login: new Date(),
+        permissions: {
+          can_submit_reports: true,
+          can_manage_users: false,
+          is_manager: false,
+          is_admin: false
+        }
       },
       {
         _id: 'user-2',
+        user_id: 'user-2',
         organization_id: 'demo_org_001',
         email: 'jane.smith@demo.com',
         first_name: 'Jane',
         last_name: 'Smith',
+        full_name: 'Jane Smith',
+        role: 'manager',
         roles: ['manager'],
+        status: 'active',
         is_active: true,
         created_at: new Date(),
         updated_at: new Date(),
-        last_login: new Date()
+        last_login: new Date(),
+        permissions: {
+          can_submit_reports: true,
+          can_manage_users: true,
+          is_manager: true,
+          is_admin: false
+        }
       }
     ];
 

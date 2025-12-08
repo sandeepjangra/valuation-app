@@ -68,20 +68,31 @@ export interface OrganizationSettings {
 }
 
 export interface User {
-  _id: string;
+  _id?: string;
+  user_id: string;
   organization_id: string;
   email: string;
+  full_name: string;
   first_name?: string;
   last_name?: string;
+  role: string;
   roles: UserRole[];
+  status: string;
   department?: string;
+  phone?: string;
   phone_number?: string;
-  is_active: boolean;
+  is_active?: boolean;
   last_login?: Date;
   created_by?: string;
-  created_at: Date;
-  updated_at: Date;
+  created_at?: Date;
+  updated_at?: Date;
   profile?: UserProfile;
+  permissions: {
+    can_submit_reports: boolean;
+    can_manage_users: boolean;
+    is_manager: boolean;
+    is_admin: boolean;
+  };
 }
 
 export interface UserProfile {

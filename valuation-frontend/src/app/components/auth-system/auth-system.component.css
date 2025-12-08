@@ -1,0 +1,83 @@
+/* Auth System Component Styles */
+.auth-system-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.nav-tabs {
+  margin-bottom: 20px;
+}
+
+.test-results {
+  margin-top: 20px;
+}
+
+.test-item {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 15px;
+  margin-bottom: 10px;
+}
+
+.test-item.success {
+  border-color: #28a745;
+  background-color: #d4edda;
+}
+
+.test-item.failed {
+  border-color: #dc3545;
+  background-color: #f8d7da;
+}
+
+.test-item.pending {
+  border-color: #ffc107;
+  background-color: #fff3cd;
+}
+
+.auth-details {
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 4px;
+  margin: 10px 0;
+}
+
+.token-preview {
+  font-family: monospace;
+  background-color: #e9ecef;
+  padding: 10px;
+  border-radius: 4px;
+  word-break: break-all;
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.875em;
+  font-weight: bold;
+}
+
+.status-badge.authenticated {
+  background-color: #28a745;
+  color: white;
+}
+
+.status-badge.unauthenticated {
+  background-color: #dc3545;
+  color: white;
+}
+
+.loading-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

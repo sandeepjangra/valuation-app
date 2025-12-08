@@ -172,26 +172,8 @@ app.include_router(organization_router)
 app.include_router(admin_router)
 app.include_router(pdf_router)
 
-# Password hashing context with bcrypt fallback
-import bcrypt
-
-def verify_password(password: str, hashed: str) -> bool:
-    """Fallback password verification"""
-    try:
-        return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
-    except Exception as e:
-        print(f"❌ Password verification error: {e}")
-        return False
-
-try:
-    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-except Exception as e:
-    print(f"⚠️ Bcrypt configuration issue: {e}")
-    # Fallback to simpler bcrypt setup is handled by verify_password function
-    
-    def hash_password(password: str) -> str:
-        """Fallback password hashing"""
-        return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+# Password hashing context
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Security scheme
 security = HTTPBearer()
@@ -372,15 +354,7 @@ async def login(login_request: LoginRequest, request: Request):
                 sys_db = db_manager.client["system-administration"]
                 user = await sys_db.users.find_one({"email": login_request.email})
                 
-                # Safe password verification with fallback
-                password_valid = False
-                try:
-                    password_valid = pwd_context.verify(login_request.password, user['password_hash'])
-                except Exception as e:
-                    print(f"⚠️ Using bcrypt fallback due to: {e}")
-                    password_valid = verify_password(login_request.password, user['password_hash'])
-                
-                if user and password_valid:
+                if user and pwd_context.verify(login_request.password, user['password_hash']):
                     # Create system admin token with proper organization context
                     org_short_name = "system-administration"
                     token_data = create_dev_token(login_request.email, org_short_name, "admin")
@@ -469,15 +443,7 @@ async def login(login_request: LoginRequest, request: Request):
         
         # Validate password if password_hash exists
         if user.get("password_hash"):
-            # Safe password verification with fallback
-            password_valid = False
-            try:
-                password_valid = pwd_context.verify(login_request.password, user["password_hash"])
-            except Exception as e:
-                print(f"⚠️ Using bcrypt fallback due to: {e}")
-                password_valid = verify_password(login_request.password, user["password_hash"])
-            
-            if not password_valid:
+            if not pwd_context.verify(login_request.password, user["password_hash"]):
                 logger.warning(f"❌ Invalid password for: {login_request.email}")
                 
                 # Log failed login attempt
@@ -3747,14 +3713,7 @@ async def get_report_activity(report_id: str, request: Request):
         db_manager = MultiDatabaseManager()
         await db_manager.connect()
         
-        # For system admin, use the organization they're currently working in
-        if org_context.is_system_admin:
-            current_org = org_context.org_short_name
-            org_db = db_manager.get_org_database(current_org)
-            target_org_id = current_org
-        else:
-            org_db = db_manager.get_org_database(org_context.organization_id)
-            target_org_id = org_context.organization_id
+        org_db = db_manager.get_org_database(org_context.organization_id)
         
         # Get all activity logs for this report
         activities_cursor = org_db.activity_logs.find({
@@ -4277,14 +4236,7 @@ async def update_custom_template(
         db_manager = MultiDatabaseManager()
         await db_manager.connect()
         
-        # For system admin, use the organization they're currently working in
-        if org_context.is_system_admin:
-            current_org = org_context.org_short_name
-            org_db = db_manager.get_org_database(current_org)
-            target_org_id = current_org
-        else:
-            org_db = db_manager.get_org_database(org_context.organization_id)
-            target_org_id = org_context.organization_id
+        org_db = db_manager.get_org_database(org_context.organization_id)
         
         # Check if template exists
         existing_template = await org_db.custom_templates.find_one({
@@ -4879,14 +4831,7 @@ async def get_pending_reports(
         db_manager = MultiDatabaseManager()
         await db_manager.connect()
         
-        # For system admin, use the organization they're currently working in
-        if org_context.is_system_admin:
-            current_org = org_context.org_short_name
-            org_db = db_manager.get_org_database(current_org)
-            target_org_id = current_org
-        else:
-            org_db = db_manager.get_org_database(org_context.organization_id)
-            target_org_id = org_context.organization_id
+        org_db = db_manager.get_org_database(org_context.organization_id)
         
         # Get reports with status 'draft' or 'in_progress' (pending completion)
         pending_reports_cursor = org_db.reports.find({
@@ -4953,14 +4898,7 @@ async def get_created_reports(
         db_manager = MultiDatabaseManager()
         await db_manager.connect()
         
-        # For system admin, use the organization they're currently working in
-        if org_context.is_system_admin:
-            current_org = org_context.org_short_name
-            org_db = db_manager.get_org_database(current_org)
-            target_org_id = current_org
-        else:
-            org_db = db_manager.get_org_database(org_context.organization_id)
-            target_org_id = org_context.organization_id
+        org_db = db_manager.get_org_database(org_context.organization_id)
         
         # Get recently created reports (all statuses)
         created_reports_cursor = org_db.reports.find({}).sort("created_at", -1).limit(limit)
@@ -5095,14 +5033,7 @@ async def get_recent_activities(
         db_manager = MultiDatabaseManager()
         await db_manager.connect()
         
-        # For system admin, use the organization they're currently working in
-        if org_context.is_system_admin:
-            current_org = org_context.org_short_name
-            org_db = db_manager.get_org_database(current_org)
-            target_org_id = current_org
-        else:
-            org_db = db_manager.get_org_database(org_context.organization_id)
-            target_org_id = org_context.organization_id
+        org_db = db_manager.get_org_database(org_context.organization_id)
         
         # Get recent activities from activity logs
         activities_cursor = org_db.activity_logs.find({}).sort("timestamp", -1).limit(limit)
@@ -5165,14 +5096,7 @@ async def get_dashboard_stats(
         db_manager = MultiDatabaseManager()
         await db_manager.connect()
         
-        # For system admin, use the organization they're currently working in
-        if org_context.is_system_admin:
-            current_org = org_context.org_short_name
-            org_db = db_manager.get_org_database(current_org)
-            target_org_id = current_org
-        else:
-            org_db = db_manager.get_org_database(org_context.organization_id)
-            target_org_id = org_context.organization_id
+        org_db = db_manager.get_org_database(org_context.organization_id)
         
         # Get various counts for dashboard stats
         stats = {}

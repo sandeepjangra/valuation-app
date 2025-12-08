@@ -26,8 +26,8 @@
         <a [routerLink]="getNavLinks().newReport" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="closeMobileMenu()">New Report</a>
         <a [routerLink]="getNavLinks().reports" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="closeMobileMenu()">Reports</a>
         <a [routerLink]="getNavLinks().banks" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="closeMobileMenu()">Banks</a>
-        <!-- Templates link for all authenticated users -->
-        @if (isAuthenticated()) {
+        <!-- Templates link for authenticated users (especially managers and admins) -->
+        @if (isAuthenticated() || hasManagerPermissions() || isManager() || isSystemAdmin()) {
           <a [routerLink]="getNavLinks().templates" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="closeMobileMenu()">Templates</a>
         }
         <!-- Admin link only for system admin users -->
@@ -46,7 +46,7 @@
         @if (isAuthenticated()) {
           <div class="user-info">
             <a routerLink="/profile" class="user-btn" routerLinkActive="active" (click)="closeMobileMenu()">
-              {{ (currentUser()?.first_name && currentUser()?.last_name ? currentUser()?.first_name + ' ' + currentUser()?.last_name : null) || (currentUser()?.email ? currentUser()!.email.split('@')[0] : null) || 'User' }}
+              {{ currentUser()?.full_name || (currentUser()?.email ? currentUser()!.email.split('@')[0] : null) || 'User' }}
             </a>
             <button (click)="logout()" class="logout-btn">Logout</button>
           </div>
