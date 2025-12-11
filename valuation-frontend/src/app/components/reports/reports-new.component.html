@@ -1,0 +1,209 @@
+<div class="reports-container">
+  <!-- Header Section -->
+  <div class="reports-header">
+    <div class="header-content">
+      <div class="header-title">
+        <h1>📊 Reports</h1>
+        <p>Manage and view all organization reports</p>
+      </div>
+      
+      <div class="header-actions">
+        <button class="create-btn" (click)="createNewReport()">
+          ➕ Create New Report
+        </button>
+        
+        <button class="filter-btn" (click)="toggleFilters()" [class.active]="showFilters">
+          🔍 Filters
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-section" *ngIf="showFilters">
+    <div class="filters-grid">
+      <div class="filter-group">
+        <label>Status</label>
+        <select [(ngModel)]="filterStatus" (change)="applyFilters()">
+          <option value="">All Statuses</option>
+          <option value="draft">Draft</option>
+          <option value="in_progress">In Progress</option>
+          <option value="submitted">Submitted</option>
+          <option value="completed">Completed</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Bank</label>
+        <select [(ngModel)]="filterBank" (change)="applyFilters()">
+          <option value="">All Banks</option>
+          <option *ngFor="let bank of banks" [value]="bank.bankCode">
+            {{ bank.bankName }}
+          </option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Created By</label>
+        <input type="text" [(ngModel)]="filterCreatedBy" (keyup.enter)="applyFilters()" 
+               placeholder="Email or name">
+      </div>
+
+      <div class="filter-group">
+        <label>Start Date</label>
+        <input type="date" [(ngModel)]="filterStartDate" (change)="applyFilters()">
+      </div>
+
+      <div class="filter-group">
+        <label>End Date</label>
+        <input type="date" [(ngModel)]="filterEndDate" (change)="applyFilters()">
+      </div>
+
+      <div class="filter-actions">
+        <button class="clear-btn" (click)="clearFilters()">Clear All</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs Section -->
+  <div class="tabs-section">
+    <div class="tabs">
+      <button 
+        class="tab-btn" 
+        [class.active]="selectedTab === 'all'"
+        (click)="selectTab('all')">
+        All Reports ({{ totalReports }})
+      </button>
+      <button 
+        class="tab-btn" 
+        [class.active]="selectedTab === 'draft'"
+        (click)="selectTab('draft')">
+        Draft Reports
+      </button>
+      <button 
+        class="tab-btn" 
+        [class.active]="selectedTab === 'submitted'"
+        (click)="selectTab('submitted')">
+        Submitted Reports
+      </button>
+    </div>
+  </div>
+
+  <!-- Reports Table -->
+  <div class="reports-content">
+    <div class="loading-state" *ngIf="loading">
+      <div class="loading-spinner"></div>
+      <p>Loading reports...</p>
+    </div>
+
+    <div class="empty-state" *ngIf="!loading && reports.length === 0">
+      <div class="empty-icon">📄</div>
+      <h3>No reports found</h3>
+      <p>No reports match your current filters.</p>
+      <button class="create-btn" (click)="createNewReport()">Create Your First Report</button>
+    </div>
+
+    <div class="reports-table" *ngIf="!loading && reports.length > 0">
+      <div class="table-header">
+        <div class="col-ref">Reference</div>
+        <div class="col-property">Property Address</div>
+        <div class="col-bank">Bank</div>
+        <div class="col-status">Status</div>
+        <div class="col-created">Created</div>
+        <div class="col-updated">Updated</div>
+        <div class="col-actions">Actions</div>
+      </div>
+
+      <div class="table-body">
+        <div 
+          class="table-row" 
+          *ngFor="let report of reports" 
+          (click)="viewReport(report)"
+          [class]="'status-' + report.status">
+          
+          <div class="col-ref">
+            <div class="ref-number">{{ report.reference_number || report.report_id }}</div>
+            <div class="report-id">ID: {{ report.report_id }}</div>
+          </div>
+          
+          <div class="col-property">
+            <div class="property-address">{{ report.property_address }}</div>
+            <div class="property-type">{{ report.template_id }}</div>
+          </div>
+          
+          <div class="col-bank">
+            {{ report.bank_code }}
+          </div>
+          
+          <div class="col-status">
+            <span class="status-badge" [class]="getStatusClass(report.status)">
+              {{ getStatusDisplayName(report.status) }}
+            </span>
+          </div>
+          
+          <div class="col-created">
+            <div class="date">{{ formatDate(report.created_at) }}</div>
+            <div class="author">by {{ report.created_by_email }}</div>
+          </div>
+          
+          <div class="col-updated">
+            {{ formatDate(report.updated_at) }}
+          </div>
+          
+          <div class="col-actions">
+            <button 
+              *ngIf="canEdit(report)"
+              class="action-btn edit-btn" 
+              (click)="editReport(report, $event)"
+              title="Edit Report">
+              ✏️
+            </button>
+            
+            <button 
+              *ngIf="canDelete(report)"
+              class="action-btn delete-btn" 
+              (click)="deleteReport(report, $event)"
+              title="Delete Report">
+              🗑️
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" *ngIf="!loading && reports.length > 0 && totalPages > 1">
+      <button 
+        class="page-btn" 
+        [disabled]="currentPage === 1"
+        (click)="goToPage(currentPage - 1)">
+        ← Previous
+      </button>
+      
+      <div class="page-numbers">
+        <button 
+          *ngFor="let page of [].constructor(totalPages); let i = index"
+          class="page-number" 
+          [class.active]="currentPage === (i + 1)"
+          (click)="goToPage(i + 1)">
+          {{ i + 1 }}
+        </button>
+      </div>
+      
+      <button 
+        class="page-btn" 
+        [disabled]="currentPage === totalPages"
+        (click)="goToPage(currentPage + 1)">
+        Next →
+      </button>
+    </div>
+
+    <!-- Results Summary -->
+    <div class="results-summary" *ngIf="!loading">
+      <p>
+        Showing {{ reports.length }} of {{ totalReports }} reports
+        <span *ngIf="totalPages > 1">(Page {{ currentPage }} of {{ totalPages }})</span>
+      </p>
+    </div>
+  </div>
+</div>

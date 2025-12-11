@@ -10,19 +10,22 @@ import { HttpClient } from '@angular/common/http';
 import { Router, ActivatedRoute } from '@angular/router';
 import { CustomTemplateService } from '../../services/custom-template.service';
 import { AuthService } from '../../services/auth.service';
+import { NotificationService } from '../../services/notification.service';
 import { CustomTemplateListItem, CustomTemplate } from '../../models/custom-template.model';
 import { Bank } from '../../models/bank.model';
+import { ConfirmationModalComponent, ConfirmationModalData } from '../shared/confirmation-modal.component';
 
 @Component({
   selector: 'app-custom-templates-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, ConfirmationModalComponent],
   templateUrl: './custom-templates-management.component.html',
   styleUrls: ['./custom-templates-management.component.css']
 })
 export class CustomTemplatesManagementComponent implements OnInit {
   private readonly customTemplateService = inject(CustomTemplateService);
   private readonly authService = inject(AuthService);
+  private readonly notificationService = inject(NotificationService);
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -40,6 +43,11 @@ export class CustomTemplatesManagementComponent implements OnInit {
   error = signal<string | null>(null);
   selectedBankCode = signal<string>('');
   selectedPropertyType = signal<'land' | 'apartment' | ''>('');
+
+  // Confirmation modal state
+  showConfirmationModal = signal<boolean>(false);
+  confirmationModalData = signal<ConfirmationModalData | null>(null);
+  pendingDeleteTemplate = signal<CustomTemplateListItem | null>(null);
 
   // Computed signals
   filteredTemplates = computed(() => {
@@ -67,20 +75,20 @@ export class CustomTemplatesManagementComponent implements OnInit {
       t => t.bankCode === bankCode && t.propertyType === propertyType
     ).length;
 
-    return count < 3;
+    return count < 2; // Changed from 3 to 2
   });
 
   remainingSlots = computed(() => {
     const bankCode = this.selectedBankCode();
     const propertyType = this.selectedPropertyType();
     
-    if (!bankCode || !propertyType) return 3;
+    if (!bankCode || !propertyType) return 2;
 
     const count = this.templates().filter(
       t => t.bankCode === bankCode && t.propertyType === propertyType
     ).length;
 
-    return Math.max(0, 3 - count);
+    return Math.max(0, 2 - count);
   });
 
   // User permissions
@@ -162,12 +170,12 @@ export class CustomTemplatesManagementComponent implements OnInit {
     const propertyType = this.selectedPropertyType();
 
     if (!bankCode || !propertyType) {
-      alert('Please select a bank and property type first');
+      this.notificationService.warning('Please select a bank and property type first');
       return;
     }
 
     if (!this.canCreateMore()) {
-      alert('Maximum 3 templates allowed for this bank and property type');
+      this.notificationService.warning('Maximum 2 templates allowed for this bank and property type');
       return;
     }
 
@@ -191,7 +199,7 @@ export class CustomTemplatesManagementComponent implements OnInit {
         });
       } else {
         console.error('❌ No organization context available anywhere');
-        alert('Unable to determine organization context. Please refresh the page.');
+        this.notificationService.error('Unable to determine organization context. Please refresh the page.');
       }
     }
   }
@@ -220,7 +228,7 @@ export class CustomTemplatesManagementComponent implements OnInit {
     ).length;
 
     if (count >= 3) {
-      alert('Cannot clone: Maximum 3 templates allowed for this bank and property type');
+      this.notificationService.warning('Cannot clone: Maximum 2 templates allowed for this bank and property type');
       return;
     }
 
@@ -232,38 +240,61 @@ export class CustomTemplatesManagementComponent implements OnInit {
       next: (clonedTemplate) => {
         console.log('✅ Template cloned successfully:', clonedTemplate);
         this.loadTemplates();
-        alert(`Template "${clonedTemplate.templateName}" created successfully!`);
+        this.notificationService.success(`Template "${clonedTemplate.templateName}" created successfully!`);
       },
       error: (error) => {
         console.error('❌ Failed to clone template:', error);
         const errorMsg = error.error?.error || 'Failed to clone template';
-        alert(errorMsg);
+        this.notificationService.error(errorMsg);
         this.isLoading.set(false);
       }
     });
   }
 
   deleteTemplate(template: CustomTemplateListItem): void {
-    const confirmMsg = `Are you sure you want to delete "${template.templateName}"?\n\nThis action cannot be undone.`;
+    // Store the template to be deleted
+    this.pendingDeleteTemplate.set(template);
     
-    if (!confirm(confirmMsg)) {
-      return;
-    }
+    // Configure the confirmation modal
+    this.confirmationModalData.set({
+      title: 'Delete Template',
+      message: `Are you sure you want to delete "${template.templateName}"?\n\nThis action cannot be undone and will permanently remove all associated data.`,
+      confirmText: 'Delete Template',
+      cancelText: 'Cancel',
+      type: 'danger'
+    });
+    
+    // Show the modal
+    this.showConfirmationModal.set(true);
+  }
+
+  onDeleteConfirmed(): void {
+    const template = this.pendingDeleteTemplate();
+    if (!template) return;
 
     this.isLoading.set(true);
+    this.showConfirmationModal.set(false);
+    this.pendingDeleteTemplate.set(null);
+
     this.customTemplateService.deleteTemplate(template._id).subscribe({
       next: () => {
         console.log('✅ Template deleted successfully');
         this.loadTemplates();
-        alert('Template deleted successfully');
+        this.notificationService.success('Template deleted successfully');
       },
       error: (error) => {
         console.error('❌ Failed to delete template:', error);
         const errorMsg = error.error?.error || 'Failed to delete template';
-        alert(errorMsg);
+        this.notificationService.error(errorMsg);
         this.isLoading.set(false);
       }
     });
+  }
+
+  onDeleteCancelled(): void {
+    this.showConfirmationModal.set(false);
+    this.pendingDeleteTemplate.set(null);
+    this.confirmationModalData.set(null);
   }
 
   formatDate(date: Date | string): string {

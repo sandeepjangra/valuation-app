@@ -73,15 +73,15 @@
     </div>
   </div>
 
-  <!-- Step 2: Template Selection -->
+  <!-- Step 2: Template Selection Mode -->
   <div class="step-content" *ngIf="!isLoading && step === 2">
     <div class="section-header">
       <button class="back-step-button" (click)="goBack()">
         ← Back to Bank Selection
       </button>
-      <h2 class="section-title">Select Template</h2>
+      <h2 class="section-title">How would you like to start?</h2>
       <p class="section-subtitle">
-        Choose a valuation template for <strong>{{ selectedBank?.bankName }}</strong>
+        Choose how to create your report for <strong>{{ selectedBank?.bankName }}</strong>
       </p>
     </div>
 
@@ -94,38 +94,151 @@
       </div>
     </div>
 
-    <div class="templates-grid" *ngIf="availableTemplates.length > 0">
-      <div class="template-card" 
-           *ngFor="let template of availableTemplates" 
-           (click)="selectTemplate(template)"
-           [class.selected]="selectedTemplate?.templateId === template.templateId"
-           [class.active]="template.isActive">
-        
-        <!-- Template Icon -->
-        <div class="template-icon-section">
-          <div class="template-icon">{{ getPropertyTypeIcon(template.propertyType) }}</div>
+    <!-- Compact Selection Options -->
+    <div class="start-options">
+      <!-- Option 1: From Template -->
+      <div class="start-option" 
+           (click)="selectStartOption('template')"
+           [class.selected]="selectedStartOption === 'template'"
+           [class.disabled]="isLoadingCustomTemplates">
+        <div class="option-radio">
+          <input type="radio" 
+                 name="startOption" 
+                 value="template"
+                 [checked]="selectedStartOption === 'template'"
+                 (change)="selectStartOption('template')">
         </div>
+        <div class="option-content">
+          <div class="option-header">
+            <span class="option-icon">📋</span>
+            <span class="option-title">From Template</span>
+            <span class="option-count" *ngIf="customTemplates.length > 0 && !isLoadingCustomTemplates">
+              ({{ customTemplates.length }} available)
+            </span>
+            <span class="option-count loading" *ngIf="isLoadingCustomTemplates">
+              (Loading...)
+            </span>
+            <span class="option-count" *ngIf="customTemplates.length === 0 && !isLoadingCustomTemplates">
+              (No templates)
+            </span>
+          </div>
+          <p class="option-description">Use a pre-saved template with filled values</p>
+        </div>
+      </div>
 
-        <!-- Template Info -->
-        <div class="template-content">
-          <h3 class="template-name">{{ template.templateName }}</h3>
-          <div class="template-type">{{ template.propertyType | titlecase }} Property</div>
-          <div class="template-version">v{{ template.version }}</div>
+      <!-- Option 2: Blank Template -->
+      <div class="start-option" 
+           (click)="selectStartOption('blank')"
+           [class.selected]="selectedStartOption === 'blank'">
+        <div class="option-radio">
+          <input type="radio" 
+                 name="startOption" 
+                 value="blank"
+                 [checked]="selectedStartOption === 'blank'"
+                 (change)="selectStartOption('blank')">
+        </div>
+        <div class="option-content">
+          <div class="option-header">
+            <span class="option-icon">📝</span>
+            <span class="option-title">Blank Template</span>
+          </div>
+          <p class="option-description">Start with empty form fields</p>
+        </div>
+      </div>
+
+      <!-- Option 3: From PDF -->
+      <div class="start-option" 
+           (click)="selectStartOption('pdf')"
+           [class.selected]="selectedStartOption === 'pdf'">
+        <div class="option-radio">
+          <input type="radio" 
+                 name="startOption" 
+                 value="pdf"
+                 [checked]="selectedStartOption === 'pdf'"
+                 (change)="selectStartOption('pdf')">
+        </div>
+        <div class="option-content">
+          <div class="option-header">
+            <span class="option-icon">📄</span>
+            <span class="option-title">From PDF</span>
+          </div>
+          <p class="option-description">Upload PDF to auto-fill fields</p>
         </div>
       </div>
     </div>
 
-    <!-- No templates available -->
-    <div class="no-templates" *ngIf="availableTemplates.length === 0">
+    <!-- Property Type Selection (for all options) -->
+    <div class="property-type-section" *ngIf="selectedStartOption">
+      <h3 class="property-type-title">Select Property Type</h3>
+      <div class="property-type-options">
+        <div class="property-type-card" 
+             (click)="selectPropertyType('land')"
+             [class.selected]="selectedPropertyType === 'land'">
+          <div class="property-icon">🏞️</div>
+          <span class="property-name">Land</span>
+        </div>
+        <div class="property-type-card" 
+             (click)="selectPropertyType('apartment')"
+             [class.selected]="selectedPropertyType === 'apartment'">
+          <div class="property-icon">🏢</div>
+          <span class="property-name">Apartment</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Template Selection (only for template option) -->
+    <div class="template-selection-section" 
+         *ngIf="selectedStartOption === 'template' && selectedPropertyType && customTemplates.length > 0">
+      <h3 class="template-selection-title">Choose Template</h3>
+      <p class="template-selection-subtitle">Click on a template to start creating your report</p>
+      <div class="templates-list">
+        <div class="template-item clickable" 
+             *ngFor="let template of customTemplates" 
+             (click)="selectCustomTemplate(template)">
+          <div class="template-info">
+            <h4 class="template-name">{{ template.templateName }}</h4>
+            <p class="template-meta">
+              Created by {{ template.createdByName }} • {{ formatDate(template.createdAt) }}
+            </p>
+            <p class="template-description" *ngIf="template.description">
+              {{ template.description }}
+            </p>
+          </div>
+          <div class="template-action">
+            <div class="start-button">
+              <span class="button-icon">🚀</span>
+              <span class="button-text">Start Report</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- No Templates Message -->
+    <div class="no-templates-message" 
+         *ngIf="selectedStartOption === 'template' && selectedPropertyType && customTemplates.length === 0 && !isLoadingCustomTemplates">
       <div class="no-templates-icon">📋</div>
-      <h3 class="no-templates-title">No Templates Available</h3>
-      <p class="no-templates-text">
-        {{ selectedBank?.bankName }} doesn't have any specific templates. 
-        You can proceed with a custom form.
-      </p>
-      <button class="proceed-button" (click)="proceedToForm()">
-        Proceed with Custom Form
+      <h3>No templates available</h3>
+      <p>No custom templates found for {{ selectedBank?.bankName }} - {{ selectedPropertyType | titlecase }}. You can create one or start with a blank template.</p>
+    </div>
+
+    <!-- Continue Button (only for blank and PDF options) -->
+    <div class="step-actions" *ngIf="canProceedFromStep2() && selectedStartOption !== 'template'">
+      <button class="continue-button" (click)="continueFromStep2()">
+        <span *ngIf="selectedStartOption === 'blank'">Start with Blank Form</span>
+        <span *ngIf="selectedStartOption === 'pdf'">Continue to PDF Upload</span>
       </button>
+    </div>
+
+    <!-- Template Selection Call-to-Action -->
+    <div class="template-cta" *ngIf="selectedStartOption === 'template' && selectedPropertyType && customTemplates.length === 0 && !isLoadingCustomTemplates">
+      <div class="cta-content">
+        <h4>No custom templates available</h4>
+        <p>Start with a blank form or create a custom template for future use.</p>
+        <button class="continue-button secondary" (click)="selectedStartOption = 'blank'; continueFromStep2()">
+          Start with Blank Form
+        </button>
+      </div>
     </div>
   </div>
 

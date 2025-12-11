@@ -1,0 +1,487 @@
+.reports-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Header Section */
+.reports-header {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.1);
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.header-title h1 {
+  margin: 0 0 8px 0;
+  color: #2d3748;
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+.header-title p {
+  margin: 0;
+  color: #718096;
+  font-size: 1.1rem;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.create-btn, .filter-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+}
+
+.create-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.create-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.filter-btn {
+  background: #f7fafc;
+  color: #4a5568;
+  border: 1px solid #e2e8f0;
+}
+
+.filter-btn:hover, .filter-btn.active {
+  background: #edf2f7;
+  border-color: #cbd5e0;
+}
+
+/* Filters Section */
+.filters-section {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.1);
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  align-items: end;
+}
+
+.filter-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: #4a5568;
+  font-size: 0.9rem;
+}
+
+.filter-group select, 
+.filter-group input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  transition: border-color 0.2s ease;
+}
+
+.filter-group select:focus, 
+.filter-group input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.clear-btn {
+  padding: 10px 20px;
+  background: #fed7d7;
+  color: #c53030;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.clear-btn:hover {
+  background: #feb2b2;
+}
+
+/* Tabs Section */
+.tabs-section {
+  margin-bottom: 20px;
+}
+
+.tabs {
+  display: flex;
+  background: white;
+  border-radius: 12px;
+  padding: 8px;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.1);
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 8px;
+  font-weight: 500;
+  color: #718096;
+  transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+  background: #f7fafc;
+  color: #4a5568;
+}
+
+.tab-btn.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+/* Reports Content */
+.reports-content {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.1);
+  overflow: hidden;
+}
+
+/* Loading State */
+.loading-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #718096;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e2e8f0;
+  border-top: 3px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #718096;
+}
+
+.empty-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+}
+
+.empty-state h3 {
+  margin: 0 0 8px 0;
+  color: #4a5568;
+  font-size: 1.25rem;
+}
+
+.empty-state p {
+  margin: 0 0 24px 0;
+  font-size: 1rem;
+}
+
+/* Reports Table */
+.reports-table {
+  min-height: 400px;
+}
+
+.table-header, .table-row {
+  display: grid;
+  grid-template-columns: 1.5fr 2fr 1fr 1fr 1.5fr 1fr 1fr;
+  gap: 16px;
+  padding: 16px 20px;
+  align-items: center;
+}
+
+.table-header {
+  background: #f7fafc;
+  border-bottom: 1px solid #e2e8f0;
+  font-weight: 600;
+  color: #4a5568;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.table-row {
+  border-bottom: 1px solid #f7fafc;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.table-row:hover {
+  background: #f7fafc;
+}
+
+.table-row:last-child {
+  border-bottom: none;
+}
+
+/* Row Status Styling */
+.table-row.status-draft {
+  border-left: 4px solid #fbbf24;
+}
+
+.table-row.status-in_progress {
+  border-left: 4px solid #3b82f6;
+}
+
+.table-row.status-submitted {
+  border-left: 4px solid #10b981;
+}
+
+.table-row.status-completed {
+  border-left: 4px solid #8b5cf6;
+}
+
+/* Column Content */
+.ref-number {
+  font-weight: 600;
+  color: #2d3748;
+  font-size: 0.95rem;
+}
+
+.report-id {
+  font-size: 0.8rem;
+  color: #718096;
+  margin-top: 2px;
+}
+
+.property-address {
+  font-weight: 500;
+  color: #2d3748;
+  margin-bottom: 2px;
+}
+
+.property-type {
+  font-size: 0.8rem;
+  color: #718096;
+}
+
+.date {
+  font-weight: 500;
+  color: #2d3748;
+}
+
+.author {
+  font-size: 0.8rem;
+  color: #718096;
+  margin-top: 2px;
+}
+
+/* Status Badges */
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-draft {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.status-progress {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.status-submitted {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.status-completed {
+  background: #e0e7ff;
+  color: #7c3aed;
+}
+
+.status-default {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+/* Action Buttons */
+.col-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.action-btn {
+  padding: 8px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  background: #f7fafc;
+  min-width: 36px;
+  height: 36px;
+}
+
+.action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.edit-btn:hover {
+  background: #e0e7ff;
+}
+
+.delete-btn:hover {
+  background: #fed7d7;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  border-top: 1px solid #f7fafc;
+}
+
+.page-btn, .page-number {
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  cursor: pointer;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.page-btn:hover:not(:disabled), 
+.page-number:hover {
+  background: #f7fafc;
+  border-color: #cbd5e0;
+}
+
+.page-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.page-number.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: #667eea;
+}
+
+.page-numbers {
+  display: flex;
+  gap: 4px;
+}
+
+/* Results Summary */
+.results-summary {
+  padding: 16px 20px;
+  border-top: 1px solid #f7fafc;
+  background: #f7fafc;
+  text-align: center;
+  color: #718096;
+  font-size: 0.9rem;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .table-header, .table-row {
+    grid-template-columns: 1.2fr 2fr 0.8fr 1fr 1.2fr 0.8fr 0.8fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .table-header, .table-row {
+    grid-template-columns: 1fr 1.5fr 1fr 1fr;
+    gap: 12px;
+  }
+  
+  .col-bank, .col-updated, .col-created .author {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .reports-container {
+    padding: 12px;
+  }
+  
+  .header-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .header-actions {
+    justify-content: center;
+  }
+  
+  .filters-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .tabs {
+    flex-direction: column;
+  }
+  
+  .table-header, .table-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .table-header {
+    display: none;
+  }
+  
+  .table-row {
+    background: #f7fafc;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    padding: 12px;
+  }
+}

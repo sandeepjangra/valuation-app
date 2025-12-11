@@ -1,4 +1,7 @@
 <div class="dashboard-container">
+  <!-- Dashboard Content - Always Visible -->
+  <div class="dashboard-content">
+  
   <!-- Header Section -->
   <div class="dashboard-header">
     <div class="header-content">
@@ -62,7 +65,12 @@
         <div class="card-title">Pending Reports</div>
       </div>
       <div class="card-content">
-        <div class="card-number">{{ getDisplayStats().pendingReports }}</div>
+        <div class="card-number">
+          <span *ngIf="!dataLoading; else loadingNumber">{{ stats.pending_reports }}</span>
+          <ng-template #loadingNumber>
+            <div class="number-skeleton"></div>
+          </ng-template>
+        </div>
         <div class="card-subtitle">
           {{ getCurrentOrgName() }}
         </div>
@@ -81,7 +89,12 @@
         <div class="card-title">Created Reports</div>
       </div>
       <div class="card-content">
-        <div class="card-number">{{ getDisplayStats().createdReports }}</div>
+        <div class="card-number">
+          <span *ngIf="!dataLoading; else loadingNumber">{{ stats.total_reports }}</span>
+          <ng-template #loadingNumber>
+            <div class="number-skeleton"></div>
+          </ng-template>
+        </div>
         <div class="card-subtitle">
           Organization Reports
         </div>
@@ -100,7 +113,12 @@
         <div class="card-title">Banks</div>
       </div>
       <div class="card-content">
-        <div class="card-number">{{ getDisplayStats().totalBanks }}</div>
+        <div class="card-number">
+          <span *ngIf="!dataLoading; else loadingNumber">{{ banks.length }}</span>
+          <ng-template #loadingNumber>
+            <div class="number-skeleton"></div>
+          </ng-template>
+        </div>
         <div class="card-subtitle">
           Available Banks
         </div>
@@ -110,8 +128,8 @@
       </div>
     </div>
 
-    <!-- Templates Card (Manager/Admin Only) -->
-    <div class="stats-card templates-card" *ngIf="isSystemAdmin" (click)="navigateToTemplates()">
+    <!-- Templates Card -->
+    <div class="stats-card templates-card" (click)="navigateToTemplates()">
       <div class="card-header">
         <div class="card-icon templates-icon">
           📋
@@ -119,13 +137,18 @@
         <div class="card-title">Templates</div>
       </div>
       <div class="card-content">
-        <div class="card-number">Custom</div>
+        <div class="card-number">
+          <span *ngIf="!dataLoading; else loadingNumber">{{ stats.custom_templates }}</span>
+          <ng-template #loadingNumber>
+            <div class="number-skeleton"></div>
+          </ng-template>
+        </div>
         <div class="card-subtitle">
-          Manage report templates
+          Custom Templates
         </div>
       </div>
       <div class="card-footer">
-        <span class="view-all">Manage →</span>
+        <span class="view-all">View All →</span>
       </div>
     </div>
 
@@ -135,11 +158,16 @@
         <div class="card-icon companies-icon">
           🏢
         </div>
-        <div class="card-title">Companies</div>
+        <div class="card-title">Users</div>
       </div>
       <div class="card-content">
-        <div class="card-number">{{ collectiveStats.totalCompanies }}</div>
-        <div class="card-subtitle">Active companies</div>
+        <div class="card-number">
+          <span *ngIf="!dataLoading; else loadingNumber">{{ stats.total_users }}</span>
+          <ng-template #loadingNumber>
+            <div class="number-skeleton"></div>
+          </ng-template>
+        </div>
+        <div class="card-subtitle">Active Users</div>
       </div>
       <div class="card-footer">
         <span class="view-all">Manage →</span>
@@ -151,21 +179,40 @@
   <div class="recent-activity">
     <div class="activity-header">
       <h2 class="activity-title">Recent Activity</h2>
-      <p class="activity-subtitle">Last 5 business days</p>
+      <p class="activity-subtitle">Latest report activities</p>
     </div>
     
-    <div class="activity-list">
-      <div class="activity-item" *ngFor="let activity of recentActivity">
-        <div class="activity-date">{{ activity.date }}</div>
+    <!-- Loading State for Activities -->
+    <div class="activity-loading" *ngIf="dataLoading">
+      <div class="activity-skeleton" *ngFor="let item of [1,2,3,4,5]">
+        <div class="skeleton-date"></div>
+        <div class="skeleton-content">
+          <div class="skeleton-line"></div>
+          <div class="skeleton-user"></div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Actual Activities -->
+    <div class="activity-list" *ngIf="!dataLoading && recentActivities.length > 0">
+      <div class="activity-item" *ngFor="let activity of recentActivities">
+        <div class="activity-date">{{ formatDate(activity.timestamp) }}</div>
         <div class="activity-content">
-          <div class="activity-type" [class]="activity.type">
-            {{ activity.count }} {{ activity.type === 'created' ? 'reports created' : 'reports pending' }}
+          <div class="activity-type" [class]="activity.action">
+            {{ getActivityDescription(activity) }}
           </div>
-          <div class="activity-company" *ngIf="isSystemAdmin">
-            {{ activity.company }}
+          <div class="activity-user">
+            by {{ activity.user_email }}
           </div>
         </div>
       </div>
     </div>
+    
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="!dataLoading && recentActivities.length === 0">
+      <p>No recent activities found</p>
+    </div>
   </div>
+  
+  </div> <!-- End dashboard-content -->
 </div>

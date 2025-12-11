@@ -11,14 +11,6 @@
         <h1 class="page-title">Property Valuation for {{ selectedBankName }}</h1>
       </div>
       <div class="right-section">
-        <button 
-          type="button"
-          class="save-template-button" 
-          (click)="onSaveAsTemplate()"
-          [disabled]="isLoading || !isFormReady()"
-          title="Save this report as a reusable template">
-          💾 Save as Template
-        </button>
         <button class="back-button" (click)="goBackToSelection()">
           ← Back to Selection
         </button>
@@ -1136,45 +1128,101 @@
       </div>
     </div>
 
-    <!-- Action Buttons -->
+    <!-- Action Buttons - New Workflow -->
     <div class="form-actions">
       <div class="action-buttons">
-        <button type="button" class="cancel-button" (click)="onCancel()">
+        <!-- Cancel Button -->
+        <button 
+          type="button" 
+          class="cancel-button" 
+          (click)="onCancel()"
+          title="Discard changes and go back">
           Cancel
         </button>
-        <button type="button" class="save-draft-button" (click)="onSaveDraft()">
+        
+        <!-- Save Draft Button - No validation required -->
+        <button 
+          type="button" 
+          class="save-draft-button" 
+          (click)="onSaveDraft()"
+          [disabled]="isLoading"
+          title="Save without validation (optional step)">
           Save Draft
         </button>
         
-        <!-- Submit button - Only visible for Managers and System Admins -->
+        <!-- Save Report Button - With validation, mandatory before submit -->
         <button 
-          *ngIf="canSubmitReports()" 
-          type="submit" 
-          class="submit-button" 
-          [disabled]="reportForm.invalid"
-          title="Submit report for approval">
-          Submit Report
+          type="button" 
+          class="save-report-button" 
+          (click)="onSaveReport()"
+          [disabled]="isLoading"
+          title="Save with validation (mandatory before submit)">
+          Save Report
         </button>
         
-        <!-- Save button for Employees (cannot submit) -->
+        <!-- Submit Report Button - Manager only, requires saved report -->
         <button 
-          *ngIf="!canSubmitReports()" 
-          type="submit" 
-          class="save-button" 
-          [disabled]="reportForm.invalid"
-          title="Save report (Manager approval required before submission)">
-          Save Report
+          *ngIf="isManager()" 
+          type="button" 
+          class="submit-report-button" 
+          (click)="onSubmitReport()"
+          [disabled]="isLoading || !reportStatus || reportStatus !== 'saved'"
+          title="Submit report for final approval (Manager only)">
+          Submit Report
         </button>
       </div>
       
-      <!-- Role-based info message -->
-      <div *ngIf="isEmployee()" class="employee-info-message">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"></circle>
-          <line x1="12" y1="16" x2="12" y2="12"></line>
-          <line x1="12" y1="8" x2="12.01" y2="8"></line>
-        </svg>
-        <span>Reports must be submitted by a Manager for final approval.</span>
+      <!-- Report Status Indicator -->
+      <div class="report-status" *ngIf="reportStatus">
+        <span class="status-label">Status:</span>
+        <span class="status-value" [class]="'status-' + reportStatus">
+          {{ reportStatus | titlecase }}
+        </span>
+      </div>
+      
+      <!-- Workflow Info Messages -->
+      <div class="workflow-info">
+        <div *ngIf="!reportStatus" class="info-message info-draft">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          <span>Save Draft (optional) → Save Report (required) → Submit (manager only)</span>
+        </div>
+        
+        <div *ngIf="reportStatus === 'draft'" class="info-message info-saved">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 12l2 2 4-4"></path>
+            <circle cx="12" cy="12" r="10"></circle>
+          </svg>
+          <span>Draft saved. Next: Save Report with validation.</span>
+        </div>
+        
+        <div *ngIf="reportStatus === 'saved'" class="info-message info-ready">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 12l2 2 4-4"></path>
+            <circle cx="12" cy="12" r="10"></circle>
+          </svg>
+          <span>Report saved and validated. {{ isManager() ? 'Ready to submit.' : 'Manager can now submit.' }}</span>
+        </div>
+        
+        <div *ngIf="reportStatus === 'submitted'" class="info-message info-submitted">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 6l-10 12-4-8"></path>
+          </svg>
+          <span>Report submitted successfully!</span>
+        </div>
+        
+        <!-- Role-based restriction message -->
+        <div *ngIf="!isManager() && reportStatus === 'saved'" class="info-message info-restriction">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="15" y1="9" x2="9" y2="15"></line>
+            <line x1="9" y1="9" x2="15" y2="15"></line>
+          </svg>
+          <span>Only managers can submit reports. Please contact your manager.</span>
+        </div>
       </div>
     </div>
 
@@ -1187,6 +1235,5 @@
   (choice)="onAutoFillChoice($event)">
 </app-template-autofill-modal>
 
-<!-- Save Template Dialog -->
-<app-save-template-dialog #saveTemplateDialog></app-save-template-dialog>
+
 

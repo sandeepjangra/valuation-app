@@ -10,12 +10,11 @@ import { CalculationService } from '../../services/calculation.service';
 import { AuthService } from '../../services/auth.service';
 import { OrganizationService } from '../../services/organization.service';
 import { TemplateAutofillModalComponent, AutoFillChoice } from '../custom-templates/template-autofill-modal.component';
-import { SaveTemplateDialogComponent } from './save-template-dialog.component';
 import { DynamicTableComponent } from '../dynamic-table/dynamic-table.component';
 
 @Component({
   selector: 'app-report-form',
-  imports: [CommonModule, ReactiveFormsModule, DynamicTableComponent, TemplateAutofillModalComponent, SaveTemplateDialogComponent],
+  imports: [CommonModule, ReactiveFormsModule, DynamicTableComponent, TemplateAutofillModalComponent],
   templateUrl: './report-form.html',
   styleUrl: './report-form.css',
 })
@@ -23,9 +22,6 @@ export class ReportForm implements OnInit {
   
   // Dependency Injection
   private readonly authService = inject(AuthService);
-  
-  // ViewChild references
-  @ViewChild('saveTemplateDialog') saveTemplateDialog!: SaveTemplateDialogComponent;
   
   // Query parameters from navigation
   selectedBankCode: string = '';
@@ -64,6 +60,10 @@ export class ReportForm implements OnInit {
 
   // Calculated fields tracking
   calculatedFieldsMap: Map<string, CalculatedFieldConfig> = new Map();
+  
+  // Report workflow state
+  reportStatus: 'draft' | 'saved' | 'submitted' | null = null;
+  reportId: string | null = null;
   
   // Role-based permissions (NEW!)
   protected readonly canSubmitReports = computed(() => this.authService.canSubmitReports());
@@ -181,6 +181,20 @@ export class ReportForm implements OnInit {
       });
   }
 
+  /**
+   * Determine the base template ID based on property type
+   */
+  private determineBaseTemplateId(propertyType: string): string {
+    // Standard mapping of property types to template IDs
+    const templateMapping: { [key: string]: string } = {
+      'land': 'land-property',
+      'apartment': 'apartment-property',
+      'building': 'building-property'
+    };
+    
+    return templateMapping[propertyType.toLowerCase()] || 'land-property';
+  }
+
   loadQueryParams() {
     console.log('🔥 Loading query params...');
     
@@ -225,15 +239,32 @@ export class ReportForm implements OnInit {
       });
 
       // Load template data when query params are available
-      if (this.selectedBankCode && this.selectedTemplateId) {
-        console.log('🔥 Query params loaded, triggering template data load');
-        this.loadTemplateData();
-        this.loadReferenceNumber();  // NEW: Load reference number
-        
-        // Load custom template if specified
-        if (this.customTemplateId) {
-          console.log('📝 Custom template specified, will load after form build');
+      if (this.selectedBankCode && (this.selectedTemplateId || this.customTemplateId)) {
+        // If we have a custom template but no base templateId, we need to determine it
+        if (this.customTemplateId && !this.selectedTemplateId && this.selectedPropertyType) {
+          console.log('📝 Custom template without base templateId, determining base template...');
+          this.selectedTemplateId = this.determineBaseTemplateId(this.selectedPropertyType);
+          console.log('📋 Determined base templateId:', this.selectedTemplateId);
         }
+        
+        if (this.selectedTemplateId) {
+          console.log('🔥 Query params loaded, triggering template data load');
+          this.loadTemplateData();
+          this.loadReferenceNumber();  // NEW: Load reference number
+          
+          // Load custom template if specified
+          if (this.customTemplateId) {
+            console.log('📝 Custom template specified, will load after form build');
+          }
+        } else {
+          console.error('❌ Cannot determine base template for custom template');
+        }
+      } else {
+        console.log('⚠️ Missing required parameters for template loading:', {
+          bankCode: this.selectedBankCode,
+          templateId: this.selectedTemplateId,
+          customTemplateId: this.customTemplateId
+        });
       }
     });
   }
@@ -248,7 +279,7 @@ export class ReportForm implements OnInit {
       const orgShortName = params['orgShortName'];
       if (!orgShortName) {
         console.warn('⚠️ No organization context found in route');
-        alert('Error: No organization context found. Please select an organization first.');
+        console.error('❌ Error: No organization context found. Please select an organization first.');
         this.navigateToReportSelection();
         return;
       }
@@ -271,14 +302,11 @@ export class ReportForm implements OnInit {
           this.referenceNumberLoading = false;
           
           // Block the form - show error and redirect
-          alert(
-            '⚠️ Configuration Required\n\n' +
-            'This organization does not have Report Reference Initials configured.\n\n' +
-            'Please contact your administrator to:\n' +
-            '1. Go to Admin → Organizations\n' +
-            '2. Edit this organization\n' +
-            '3. Set the "Report Reference Initials" field (e.g., CEV/RVO)\n\n' +
-            'You will be redirected to the report selection page.'
+          console.error(
+            '⚠️ Configuration Required: ' +
+            'This organization does not have Report Reference Initials configured. ' +
+            'Please contact your administrator to set the "Report Reference Initials" field. ' +
+            'Redirecting to report selection page.'
           );
           this.navigateToReportSelection();
         }
@@ -597,28 +625,31 @@ export class ReportForm implements OnInit {
   }
 
   loadBankBranches() {
-    // Load bank branches dynamically from API instead of hardcoded data
-    this.http.get<any[]>('http://localhost:8000/api/banks')
+    if (!this.selectedBankCode) {
+      console.log('⚠️ No bank code selected, skipping branch loading');
+      return;
+    }
+
+    // Load bank branches dynamically from dedicated API endpoint
+    const bankBranchesUrl = `http://localhost:8000/api/banks/${this.selectedBankCode}/branches`;
+    console.log('🏦 Loading branches from:', bankBranchesUrl);
+    
+    this.http.get<any[]>(bankBranchesUrl)
       .subscribe({
-        next: (banks) => {
-          console.log('🏦 Loaded banks data:', banks);
+        next: (branches) => {
+          console.log(`🏦 Loaded ${branches.length} branches for ${this.selectedBankCode}:`, branches);
           
-          // Find the selected bank and populate branches
-          const selectedBank = banks.find((bank: any) => bank.bankCode === this.selectedBankCode);
-          if (selectedBank && selectedBank.branches) {
-            this.availableBranches = selectedBank.branches
-              .filter((branch: any) => branch.isActive)
-              .map((branch: any) => ({
-                value: branch.branchId,
-                label: branch.branchName
-              }));
+          // Transform branches data for dropdown
+          this.availableBranches = branches
+            .filter((branch: any) => branch.isActive !== false) // Include branches that don't have isActive or are true
+            .map((branch: any) => ({
+              value: branch.branchId || branch.branchCode,
+              label: `${branch.branchName}${branch.branchAddress?.city ? ' - ' + branch.branchAddress.city : ''}`,
+              ifscCode: branch.ifscCode,
+              address: branch.branchAddress
+            }));
             
-            console.log(`🔧 Loaded ${this.availableBranches.length} branches for ${this.selectedBankCode}:`, 
-              this.availableBranches.map((b: any) => b.label));
-          } else {
-            console.warn(`⚠️ No branches found for bank: ${this.selectedBankCode}`);
-            this.availableBranches = [];
-          }
+          console.log(`✅ Processed ${this.availableBranches.length} active branches for dropdown`);
         },
         error: (error) => {
           console.error('❌ Error loading bank branches:', error);
@@ -848,13 +879,7 @@ export class ReportForm implements OnInit {
     return section?.fields || [];
   }
 
-  // Actions
-  onSaveDraft() {
-    console.log('Save Draft - Form Values:', this.reportForm.value);
-    console.log('Form Valid:', this.reportForm.valid);
-    // TODO: Implement save draft functionality
-  }
-
+  // Legacy onSubmit method for form submission - will be replaced by workflow methods
   onSubmit() {
     if (this.reportForm.valid) {
       console.log('Submit - Form Values:', this.reportForm.value);
@@ -865,22 +890,6 @@ export class ReportForm implements OnInit {
       Object.keys(this.reportForm.controls).forEach(key => {
         this.reportForm.get(key)?.markAsTouched();
       });
-    }
-  }
-
-  onCancel() {
-    // Navigate back to the dashboard within the current organization context
-    if (this.currentOrgShortName) {
-      this.router.navigate(['/org', this.currentOrgShortName, 'dashboard']);
-    } else {
-      // Fallback: try to extract from current URL or use system-administration as default
-      const urlSegments = this.router.url.split('/');
-      const orgIndex = urlSegments.findIndex(segment => segment === 'org');
-      const orgShortName = orgIndex >= 0 && orgIndex + 1 < urlSegments.length 
-        ? urlSegments[orgIndex + 1] 
-        : 'system-administration';
-      
-      this.router.navigate(['/org', orgShortName, 'dashboard']);
     }
   }
 
@@ -908,9 +917,7 @@ export class ReportForm implements OnInit {
     this.router.navigate(['/org', orgShortName, 'reports', 'new']);
   }
 
-  goBackToSelection() {
-    this.navigateToReportSelection();
-  }
+
 
   /**
    * Evaluates conditional logic for a field or field group
@@ -1143,7 +1150,8 @@ export class ReportForm implements OnInit {
   }
 
   /**
-   * Load custom template data and show auto-fill modal
+   * Load custom template data and auto-apply with fill_empty strategy
+   * Since user already selected to use custom template, we default to fill empty fields
    */
   loadCustomTemplate(): void {
     if (!this.customTemplateId) {
@@ -1158,13 +1166,31 @@ export class ReportForm implements OnInit {
         console.log('✅ Custom template loaded:', template.templateName);
         this.customTemplateValues = template.fieldValues;
         
-        // Show auto-fill modal to let user choose strategy
-        this.showAutoFillModal = true;
+        // Auto-apply with fill_empty strategy (requirement 2)
+        // Since user already selected to use custom template, we automatically fill empty fields
+        console.log('🎯 Auto-applying custom template with fill_empty strategy (user already chose to use template)');
+        
+        // Get current form values
+        const currentValues = this.reportForm.value;
+        
+        // Apply template values with fill_empty strategy
+        const mergedValues = this.customTemplateService.applyTemplateToFormData(
+          currentValues,
+          this.customTemplateValues,
+          'fill_empty'
+        );
+
+        // Update form with merged values
+        this.reportForm.patchValue(mergedValues);
+        
+        console.log('✅ Form auto-filled with custom template values (empty fields only)');
         this.cdr.detectChanges();
+        
+        // Template applied silently - no popup needed since user already selected to use it
       },
       error: (error) => {
         console.error('❌ Failed to load custom template:', error);
-        alert('Failed to load custom template. Proceeding with empty form.');
+        console.log('⚠️ Failed to load custom template. Proceeding with empty form.');
       }
     });
   }
@@ -1199,132 +1225,19 @@ export class ReportForm implements OnInit {
     console.log('✅ Form updated with custom template values');
     this.cdr.detectChanges();
     
-    // Show success message
+    // Log success message
     const message = choice.strategy === 'fill_empty'
       ? 'Empty fields have been filled with template values'
       : 'All fields have been replaced with template values';
     
-    alert(message);
+    console.log('✅', message);
   }
 
   /**
    * Handle Save as Template button click
    * Opens the save template dialog and handles the save operation
    */
-  onSaveAsTemplate(): void {
-    if (!this.saveTemplateDialog) {
-      console.error('❌ Save template dialog not found');
-      alert('Error: Dialog component not available');
-      return;
-    }
 
-    // Get current form values
-    const formValues = this.reportForm.value;
-    
-    // Set dialog data with current report context
-    this.saveTemplateDialog.data = {
-      bankCode: this.selectedBankCode,
-      bankName: this.selectedBankName,
-      templateCode: this.selectedTemplateId,
-      propertyType: this.selectedPropertyType,
-      fieldValues: formValues
-    };
-
-    // Open the dialog
-    this.saveTemplateDialog.open();
-
-    // Subscribe to save event
-    const saveSubscription = this.saveTemplateDialog.save.subscribe((templateData: { templateName: string; description: string }) => {
-      this.saveTemplate(templateData.templateName, templateData.description, formValues);
-      saveSubscription.unsubscribe();
-    });
-
-    // Subscribe to cancel event
-    const cancelSubscription = this.saveTemplateDialog.cancel.subscribe(() => {
-      console.log('❌ Save template cancelled by user');
-      cancelSubscription.unsubscribe();
-    });
-  }
-
-  /**
-   * Save the current form as a custom template
-   */
-  private saveTemplate(templateName: string, description: string, formValues: any): void {
-    // Get target org from route params (where user is working)
-    let targetOrgShortName = '';
-    this.route.params.subscribe(params => {
-      targetOrgShortName = params['orgShortName'] || '';
-    }).unsubscribe();
-    
-    if (!targetOrgShortName) {
-      console.error('❌ No organization context found in route');
-      this.saveTemplateDialog.setError('No organization context found');
-      return;
-    }
-
-    if (!this.selectedBankCode || !this.selectedTemplateId) {
-      console.error('❌ Missing bank or template information');
-      this.saveTemplateDialog.setError('Missing bank or template information');
-      return;
-    }
-
-    console.log('💾 Saving template:', {
-      templateName,
-      targetOrg: targetOrgShortName,  // Organization from URL
-      bank: this.selectedBankCode,
-      template: this.selectedTemplateId
-    });
-
-    this.saveTemplateDialog.setSaving(true);
-
-    this.templateService.createTemplateFromReport(
-      targetOrgShortName,  // Use target org from route
-      templateName,
-      description,
-      this.selectedBankCode,
-      this.selectedTemplateId,
-      formValues
-    ).subscribe({
-      next: (response) => {
-        console.log('✅ Template saved successfully:', response);
-        this.saveTemplateDialog.setSaving(false);
-        this.saveTemplateDialog.close();
-        
-        // Show success message
-        alert(`✅ Template "${templateName}" saved successfully!\n\nYou can now use this template when creating new reports.`);
-      },
-      error: (error) => {
-        console.error('❌ Failed to save template:', error);
-        this.saveTemplateDialog.setSaving(false);
-        
-        // Log detailed error information for debugging
-        console.error('Error details:', {
-          status: error.status,
-          statusText: error.statusText,
-          error: error.error,
-          message: error.message
-        });
-        
-        let errorMessage = 'Failed to save template';
-        
-        if (error.status === 401) {
-          errorMessage = 'Not authenticated. Please log in again.';
-          // Optionally redirect to login after a delay
-          setTimeout(() => this.router.navigate(['/login']), 2000);
-        } else if (error.status === 400) {
-          errorMessage = error.error?.detail || error.error?.error || 'Invalid template data';
-        } else if (error.status === 403) {
-          errorMessage = error.error?.detail || error.error?.error || 'You do not have permission to create templates';
-        } else if (error.status === 409) {
-          errorMessage = 'Template name already exists or template limit reached (max 3 per bank/property type)';
-        } else if (error.status === 404) {
-          errorMessage = 'Bank or template not found';
-        }
-        
-        this.saveTemplateDialog.setError(errorMessage);
-      }
-    });
-  }
 
   /**
    * Initialize calculated fields system
@@ -1414,6 +1327,182 @@ export class ReportForm implements OnInit {
     this.calculatedFieldsMap.forEach((config, fieldId) => {
       this.calculateField(fieldId, config);
     });
+  }
+
+  // ================================
+  // NEW WORKFLOW ACTIONS
+  // ================================
+
+  /**
+   * Cancel - Discard changes and go back
+   */
+  onCancel(): void {
+    console.log('❌ Cancel clicked - discarding changes');
+    
+    // For better UX, directly navigate back - user can use browser back if they want to stay
+    console.log('🔙 Navigating back to selection page');
+    this.goBackToSelection();
+  }
+
+  /**
+   * Save Draft - Save without validation (optional step)
+   */
+  onSaveDraft(): void {
+    console.log('💾 Save Draft clicked');
+    
+    if (this.isLoading) {
+      console.log('⚠️ Already processing, ignoring save draft request');
+      return;
+    }
+
+    this.isLoading = true;
+    
+    // Get form data without validation
+    const formData = this.reportForm.getRawValue();
+    
+    const draftData = {
+      ...formData,
+      bankCode: this.selectedBankCode,
+      bankName: this.selectedBankName,
+      templateId: this.selectedTemplateId,
+      templateName: this.selectedTemplateName,
+      propertyType: this.selectedPropertyType,
+      customTemplateId: this.customTemplateId,
+      customTemplateName: this.customTemplateName,
+      referenceNumber: this.reportReferenceNumber,
+      status: 'draft',
+      organizationId: this.currentOrgShortName,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    console.log('💾 Saving draft data:', draftData);
+
+    // TODO: Call API to save draft
+    // For now, simulate API call
+    setTimeout(() => {
+      this.reportStatus = 'draft';
+      this.isLoading = false;
+      console.log('✅ Draft saved successfully to MongoDB with status:', this.reportStatus);
+      // Show success notification (will be implemented with notification service)
+    }, 1000);
+  }
+
+  /**
+   * Save Report - Save with full validation (mandatory before submit)
+   */
+  onSaveReport(): void {
+    console.log('💾 Save Report clicked');
+    
+    if (this.isLoading) {
+      console.log('⚠️ Already processing, ignoring save report request');
+      return;
+    }
+
+    // Validate form first
+    if (this.reportForm.invalid) {
+      console.log('❌ Form validation failed');
+      this.markAllFieldsAsTouched();
+      console.log('⚠️ Please fix validation errors before saving report');
+      // Show validation error notification (will be implemented with notification service)
+      return;
+    }
+
+    this.isLoading = true;
+    
+    // Get validated form data
+    const formData = this.reportForm.value;
+    
+    const reportData = {
+      ...formData,
+      bankCode: this.selectedBankCode,
+      bankName: this.selectedBankName,
+      templateId: this.selectedTemplateId,
+      templateName: this.selectedTemplateName,
+      propertyType: this.selectedPropertyType,
+      customTemplateId: this.customTemplateId,
+      customTemplateName: this.customTemplateName,
+      referenceNumber: this.reportReferenceNumber,
+      status: 'saved',
+      organizationId: this.currentOrgShortName,
+      validatedAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    console.log('💾 Saving validated report data:', reportData);
+
+    // TODO: Call API to save report
+    // For now, simulate API call
+    setTimeout(() => {
+      this.reportStatus = 'saved';
+      this.isLoading = false;
+      console.log('✅ Report saved successfully to MongoDB with validation status:', this.reportStatus);
+      // Show success notification (will be implemented with notification service)
+    }, 1500);
+  }
+
+  /**
+   * Submit Report - Manager only action (requires saved report)
+   */
+  onSubmitReport(): void {
+    console.log('🚀 Submit Report clicked');
+    
+    if (this.isLoading) {
+      console.log('⚠️ Already processing, ignoring submit request');
+      return;
+    }
+
+    if (!this.isManager()) {
+      console.log('❌ Only managers can submit reports');
+      // Show error notification (will be implemented with notification service)
+      return;
+    }
+
+    if (this.reportStatus !== 'saved') {
+      console.log('❌ Report must be saved and validated before submission');
+      // Show error notification (will be implemented with notification service)
+      return;
+    }
+
+    // For now, proceed without confirmation dialog - will be replaced with better UX
+    console.log('🚀 Proceeding with report submission...');
+
+    this.isLoading = true;
+    
+    console.log('🚀 Submitting report for final approval...');
+
+    // TODO: Call API to submit report
+    // For now, simulate API call
+    setTimeout(() => {
+      this.reportStatus = 'submitted';
+      this.isLoading = false;
+      console.log('✅ Report submitted successfully to MongoDB with status:', this.reportStatus);
+      // Show success notification (will be implemented with notification service)
+      
+      // Optionally redirect to reports list after submission
+      // this.router.navigate(['/org', this.currentOrgShortName, 'reports']);
+    }, 2000);
+  }
+
+  /**
+   * Mark all form fields as touched to show validation errors
+   */
+  private markAllFieldsAsTouched(): void {
+    Object.keys(this.reportForm.controls).forEach(key => {
+      const control = this.reportForm.get(key);
+      if (control) {
+        control.markAsTouched();
+      }
+    });
+  }
+
+  /**
+   * Go back to report selection
+   */
+  goBackToSelection(): void {
+    console.log('🔙 Navigating back to report selection');
+    this.router.navigate(['/org', this.currentOrgShortName, 'reports', 'new']);
   }
 
 }

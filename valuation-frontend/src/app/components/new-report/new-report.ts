@@ -24,6 +24,10 @@ export class NewReport implements OnInit, OnDestroy {
   isLoadingCustomTemplates = false;
   step = 1; // 1: Select Bank, 2: Select Template, 3: PDF Upload, 4: Ready to proceed
   
+  // New properties for redesigned flow
+  selectedStartOption: 'template' | 'blank' | 'pdf' | null = null;
+  selectedPropertyType: 'land' | 'apartment' | null = null;
+  
   // PDF Upload properties
   uploadedPdf: File | null = null;
   isProcessingPdf = false;
@@ -191,19 +195,92 @@ export class NewReport implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
-  selectTemplate(template: Template) {
-    console.log('📋 Template selected:', template.templateCode, template.templateName);
+  selectTemplate(template: Template): void {
+    console.log('📋 Selected template:', template.templateName);
     this.selectedTemplate = template;
     this.selectedCustomTemplate = null; // Reset custom template selection
     
-    // Skip loading custom templates since Step 3 is now PDF upload
-    // this.loadCustomTemplates(this.selectedBank!.bankCode, template.propertyType);
-    
-    this.step = 3;
-    console.log('➡️ Moving to step 3: PDF Upload');
+    // When template is selected from the new flow, go directly to form
+    if (this.selectedStartOption === 'template') {
+      console.log('➡️ Template selected in new flow - going directly to form');
+      this.proceedToForm();
+    } else {
+      // Legacy behavior - skip PDF upload and go directly to final step
+      this.step = 4; // Skip PDF upload and go directly to final step
+      console.log('➡️ Template selected - skipping PDF upload, going to step 4');
+    }
     
     // Force change detection
     this.cdr.detectChanges();
+  }
+
+  // New methods for redesigned flow
+  selectStartOption(option: 'template' | 'blank' | 'pdf') {
+    this.selectedStartOption = option;
+    this.selectedPropertyType = null;
+    this.selectedCustomTemplate = null;
+    this.customTemplates = [];
+    
+    console.log('🎯 Start option selected:', option);
+    this.cdr.detectChanges();
+  }
+
+  selectPropertyType(propertyType: 'land' | 'apartment') {
+    this.selectedPropertyType = propertyType;
+    console.log('🏠 Property type selected:', propertyType);
+    
+    // If template option is selected, load custom templates for this bank and property type
+    if (this.selectedStartOption === 'template' && this.selectedBank) {
+      this.loadCustomTemplates(this.selectedBank.bankCode, propertyType);
+    }
+    
+    this.cdr.detectChanges();
+  }
+
+  canProceedFromStep2(): boolean {
+    if (!this.selectedStartOption || !this.selectedPropertyType) {
+      return false;
+    }
+    
+    // If template option is selected, must have a template selected
+    if (this.selectedStartOption === 'template') {
+      return this.selectedCustomTemplate !== null;
+    }
+    
+    // For blank and PDF options, property type selection is enough
+    return true;
+  }
+
+  continueFromStep2() {
+    if (!this.canProceedFromStep2()) {
+      return;
+    }
+
+    // Set the template based on property type for blank and PDF options
+    if (this.selectedStartOption !== 'template') {
+      // Find the bank template for the selected property type
+      this.selectedTemplate = this.availableTemplates.find(
+        t => t.propertyType === this.selectedPropertyType
+      ) || null;
+    }
+
+    if (this.selectedStartOption === 'pdf') {
+      this.step = 3; // Go to PDF upload step
+    } else {
+      this.step = 4; // Skip PDF upload and go directly to final step
+    }
+    
+    console.log('➡️ Continuing from step 2 to step:', this.step);
+    this.cdr.detectChanges();
+  }
+
+  formatDate(date: Date | string): string {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return dateObj.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   }
 
   loadCustomTemplates(bankCode: string, propertyType: string): void {
@@ -228,9 +305,18 @@ export class NewReport implements OnInit, OnDestroy {
     this.selectedCustomTemplate = customTemplate;
     if (customTemplate) {
       console.log('📝 Custom template selected:', customTemplate.templateName);
+      
+      // If we're in the new flow with template option, go directly to form
+      if (this.selectedStartOption === 'template') {
+        console.log('➡️ Custom template selected in new flow - going directly to form');
+        this.proceedToForm();
+        return;
+      }
     } else {
       console.log('❌ No custom template selected');
     }
+    
+    // Legacy behavior - go to step 4
     this.step = 4;
     this.cdr.detectChanges();
   }
@@ -247,16 +333,22 @@ export class NewReport implements OnInit, OnDestroy {
       this.selectedBank = null;
       this.selectedTemplate = null;
       this.selectedCustomTemplate = null;
+      this.selectedStartOption = null;
+      this.selectedPropertyType = null;
       this.availableTemplates = [];
       this.customTemplates = [];
     } else if (this.step === 3) {
       this.step = 2;
-      this.selectedTemplate = null;
-      this.selectedCustomTemplate = null;
-      this.customTemplates = [];
+      // Keep the selections from step 2, just go back
+      this.uploadedPdf = null;
+      this.extractedFields = null;
     } else if (this.step === 4) {
-      this.step = 3;
-      this.selectedCustomTemplate = null;
+      // Determine where to go back based on selected start option
+      if (this.selectedStartOption === 'pdf') {
+        this.step = 3; // Back to PDF upload
+      } else {
+        this.step = 2; // Back to template selection
+      }
     }
   }
 
@@ -271,11 +363,18 @@ export class NewReport implements OnInit, OnDestroy {
         bankName: this.selectedBank.bankName
       };
       
+      // Add property type from our selection
+      if (this.selectedPropertyType) {
+        queryParams.propertyType = this.selectedPropertyType;
+      }
+      
       if (this.selectedTemplate) {
         console.log('📋 Including template:', this.selectedTemplate.templateCode);
         queryParams.templateId = this.selectedTemplate.templateCode; // Use templateCode for URL
         queryParams.templateName = this.selectedTemplate.templateName;
-        queryParams.propertyType = this.selectedTemplate.propertyType;
+        if (!queryParams.propertyType) {
+          queryParams.propertyType = this.selectedTemplate.propertyType;
+        }
       }
 
       // Add custom template ID if selected
@@ -283,6 +382,27 @@ export class NewReport implements OnInit, OnDestroy {
         console.log('📝 Including custom template:', this.selectedCustomTemplate._id);
         queryParams.customTemplateId = this.selectedCustomTemplate._id;
         queryParams.customTemplateName = this.selectedCustomTemplate.templateName;
+        
+        // IMPORTANT: When using custom template, we still need base templateId 
+        // ReportForm expects templateId to load the base template structure
+        if (this.selectedPropertyType && !queryParams.templateId) {
+          // Set base template based on property type for the selected bank
+          const baseTemplate = this.availableTemplates.find(
+            t => t.propertyType === this.selectedPropertyType
+          );
+          if (baseTemplate) {
+            queryParams.templateId = baseTemplate.templateCode;
+            queryParams.templateName = baseTemplate.templateName;
+            console.log('📋 Added base template for custom template:', baseTemplate.templateCode);
+          } else {
+            console.error('❌ No base template found for property type:', this.selectedPropertyType);
+          }
+        }
+      }
+
+      // Add start option for form initialization
+      if (this.selectedStartOption) {
+        queryParams.startOption = this.selectedStartOption;
       }
 
       // Add extracted PDF fields if available

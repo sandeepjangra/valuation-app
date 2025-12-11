@@ -67,7 +67,7 @@
         <div class="slots-info">
           <span class="slots-label">Templates: </span>
           <span class="slots-count" [class.slots-full]="!canCreateMore()">
-            {{ 3 - remainingSlots() }} / 3
+            {{ 2 - remainingSlots() }} / 2
           </span>
           @if (canCreateMore()) {
             <span class="slots-remaining">({{ remainingSlots() }} slot{{ remainingSlots() === 1 ? '' : 's' }} available)</span>
@@ -202,3 +202,11 @@
     }
   }
 </div>
+
+<!-- Confirmation Modal -->
+<app-confirmation-modal
+  [isVisible]="showConfirmationModal()"
+  [data]="confirmationModalData()"
+  (confirmed)="onDeleteConfirmed()"
+  (cancelled)="onDeleteCancelled()">
+</app-confirmation-modal>

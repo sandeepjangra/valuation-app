@@ -1,0 +1,180 @@
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { Observable, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
+import { AuthService } from './auth.service';
+
+export interface Report {
+  _id: string;
+  report_id: string;
+  reference_number: string;
+  property_address: string;
+  bank_code: string;
+  template_id: string;
+  property_type: string;
+  status: 'draft' | 'in_progress' | 'submitted' | 'completed';
+  created_by_email: string;
+  created_at: string;
+  updated_at: string;
+  submitted_at?: string;
+  version: number;
+  report_data?: any;
+}
+
+export interface ReportFilters {
+  status?: string;
+  bank_code?: string;
+  template_id?: string;
+  created_by?: string;
+  start_date?: string;
+  end_date?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface ReportListResponse {
+  success: boolean;
+  data: Report[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    total_pages: number;
+    has_next: boolean;
+    has_prev: boolean;
+  };
+  filters: ReportFilters;
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ReportsService {
+  private baseUrl = 'http://localhost:8000/api';
+
+  constructor(
+    private http: HttpClient,
+    private authService: AuthService
+  ) { }
+
+  /**
+   * Get HTTP headers with authorization token
+   */
+  private getHeaders(): HttpHeaders {
+    const token = this.authService.getToken();
+    return new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    });
+  }
+
+  /**
+   * Get all reports with filtering and pagination
+   */
+  getReports(filters: ReportFilters = {}): Observable<ReportListResponse> {
+    const headers = this.getHeaders();
+    
+    // Build query parameters
+    let params = new HttpParams();
+    
+    if (filters.status) params = params.set('status', filters.status);
+    if (filters.bank_code) params = params.set('bank_code', filters.bank_code);
+    if (filters.template_id) params = params.set('template_id', filters.template_id);
+    if (filters.created_by) params = params.set('created_by', filters.created_by);
+    if (filters.start_date) params = params.set('start_date', filters.start_date);
+    if (filters.end_date) params = params.set('end_date', filters.end_date);
+    if (filters.page) params = params.set('page', filters.page.toString());
+    if (filters.limit) params = params.set('limit', filters.limit.toString());
+    
+    return this.http.get<ReportListResponse>(`${this.baseUrl}/reports`, { headers, params })
+      .pipe(
+        catchError(error => {
+          console.error('❌ Error fetching reports:', error);
+          return of({
+            success: false,
+            data: [],
+            pagination: {
+              total: 0,
+              page: 1,
+              limit: 20,
+              total_pages: 0,
+              has_next: false,
+              has_prev: false
+            },
+            filters: {}
+          });
+        })
+      );
+  }
+
+  /**
+   * Get a specific report by ID
+   */
+  getReportById(reportId: string): Observable<Report | null> {
+    const headers = this.getHeaders();
+    return this.http.get<any>(`${this.baseUrl}/reports/${reportId}`, { headers })
+      .pipe(
+        map(response => response.success ? response.data : null),
+        catchError(error => {
+          console.error('❌ Error fetching report:', error);
+          return of(null);
+        })
+      );
+  }
+
+  /**
+   * Delete a report
+   */
+  deleteReport(reportId: string): Observable<boolean> {
+    const headers = this.getHeaders();
+    return this.http.delete<any>(`${this.baseUrl}/reports/${reportId}`, { headers })
+      .pipe(
+        map(response => response.success),
+        catchError(error => {
+          console.error('❌ Error deleting report:', error);
+          return of(false);
+        })
+      );
+  }
+
+  /**
+   * Get available banks for filtering
+   */
+  getBanks(): Observable<any[]> {
+    const headers = this.getHeaders();
+    return this.http.get<any>(`${this.baseUrl}/dashboard/banks`, { headers })
+      .pipe(
+        map(response => response.data || []),
+        catchError(error => {
+          console.error('❌ Error fetching banks:', error);
+          return of([]);
+        })
+      );
+  }
+
+  /**
+   * Format status for display
+   */
+  getStatusDisplayName(status: string): string {
+    switch (status) {
+      case 'draft': return 'Draft';
+      case 'in_progress': return 'In Progress';
+      case 'submitted': return 'Submitted';
+      case 'completed': return 'Completed';
+      default: return status;
+    }
+  }
+
+  /**
+   * Get status badge class for styling
+   */
+  getStatusClass(status: string): string {
+    switch (status) {
+      case 'draft': return 'status-draft';
+      case 'in_progress': return 'status-progress';
+      case 'submitted': return 'status-submitted';
+      case 'completed': return 'status-completed';
+      default: return 'status-default';
+    }
+  }
+}

@@ -42,7 +42,7 @@ export const routes: Routes = [
         children: [
           {
             path: '',
-            loadComponent: () => import('./components/reports/reports').then(m => m.Reports),
+            loadComponent: () => import('./components/reports/reports-new.component').then(m => m.ReportsNewComponent),
             title: 'Reports'
           },
           {

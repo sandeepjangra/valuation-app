@@ -411,6 +411,9 @@
     <!-- Form Actions -->
     <div class="form-actions">
       <button type="button" class="btn btn-secondary" (click)="goBack()">Cancel</button>
+      <button type="button" class="btn btn-warning" (click)="clearAllFields()" [disabled]="getFilledFieldsCount() === 0">
+        🗑️ Clear All Fields ({{ getFilledFieldsCount() }})
+      </button>
       <button type="button" class="btn btn-info" (click)="devLogin()">🔐 Dev Login</button>
       <button type="button" class="btn btn-warning" (click)="testAuth()">🧪 Test Auth</button>
       <button type="button" class="btn btn-primary" (click)="onSubmit()" [disabled]="isSaving() || !mainForm.get('templateName')?.value || mainForm.get('templateName')?.value.trim().length < 3">
@@ -420,3 +423,11 @@
     </div>
   </div>
 </div>
+
+<!-- Confirmation Modal -->
+<app-confirmation-modal
+  [isVisible]="showConfirmationModal()"
+  [data]="confirmationModalData()"
+  (confirmed)="onClearConfirmed()"
+  (cancelled)="onClearCancelled()">
+</app-confirmation-modal>

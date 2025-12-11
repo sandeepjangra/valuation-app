@@ -6,6 +6,8 @@
   z-index: 1000;
   border-bottom: 2px solid #c299ff;
   padding: 0;
+  margin: 0;
+  width: 100%;
 }
 
 .header-container {

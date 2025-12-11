@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { OrganizationService } from '../../services/organization.service';
 import { Organization } from '../../models/organization.model';
 import { AuthService } from '../../services/auth.service';
+import { DashboardService, DashboardData, DashboardReport, DashboardBank, DashboardTemplate, DashboardActivity } from '../../services/dashboard.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -33,35 +34,38 @@ export class Dashboard implements OnInit {
   selectedOrgForSwitch = '';
   showOrgSwitcher = false;
   
-  // Statistics data - will be populated from services later
-  companyStats = {
-    pendingReports: 12,
-    createdReports: 145,
-    totalBanks: 8
-  };
+  // Dashboard data from API
+  dashboardData: DashboardData | null = null;
+  loading = false; // UI structure loads immediately
+  dataLoading = true; // Individual data sections show loading state
   
-  // Mock collective stats for admin
-  collectiveStats = {
-    pendingReports: 47,
-    createdReports: 523,
-    totalBanks: 8,
-    totalCompanies: 4
-  };
+  // Quick access to data sections
+  get pendingReports(): DashboardReport[] { return this.dashboardData?.pendingReports || []; }
+  get createdReports(): DashboardReport[] { return this.dashboardData?.createdReports || []; }
+  get banks(): DashboardBank[] { return this.dashboardData?.banks || []; }
+  get templates(): DashboardTemplate[] { return this.dashboardData?.templates || []; }
+  get recentActivities(): DashboardActivity[] { return this.dashboardData?.recentActivities || []; }
   
-  // Recent activity for last 5 business days
-  recentActivity = [
-    { date: '2025-10-24', type: 'created', count: 3, company: 'TechCorp Valuations' },
-    { date: '2025-10-23', type: 'pending', count: 2, company: 'Global Properties' },
-    { date: '2025-10-22', type: 'created', count: 5, company: 'TechCorp Valuations' },
-    { date: '2025-10-21', type: 'pending', count: 1, company: 'Metro Appraisals' },
-    { date: '2025-10-18', type: 'created', count: 4, company: 'City Valuations' }
-  ];
+  // Statistics data
+  get stats() {
+    return this.dashboardData?.stats || {
+      total_reports: 0,
+      pending_reports: 0,
+      submitted_reports: 0,
+      custom_templates: 0,
+      recent_activities: 0,
+      total_users: 0
+    };
+  }
+  
+
 
   constructor(
     private router: Router,
     private route: ActivatedRoute,
     private orgService: OrganizationService,
-    private authService: AuthService
+    private authService: AuthService,
+    private dashboardService: DashboardService
   ) {}
 
   ngOnInit() {
@@ -96,6 +100,9 @@ export class Dashboard implements OnInit {
 
   async loadOrganizationContext() {
     try {
+      // Show UI immediately but keep data loading
+      this.loading = false;
+      this.dataLoading = true;
       console.log('loadOrganizationContext called with orgShortName:', this.currentOrgShortName);
       
       // Load current organization data
@@ -161,25 +168,45 @@ export class Dashboard implements OnInit {
 
   loadDashboardData() {
     // Load organization-specific dashboard data
-    if (this.currentOrg) {
-      console.log('Loading dashboard data for organization:', this.currentOrg.name);
+    if (this.currentOrg || this.currentOrgShortName) {
+      const orgName = this.currentOrg?.name || this.currentOrgShortName;
+      console.log('🔄 Loading dashboard data for organization:', orgName);
       
-      // TODO: Load organization-specific data:
-      // - Pending reports for this organization
-      // - Created reports for this organization  
-      // - Available banks for this organization
-      // - Recent activity for this organization
+      // Keep UI visible but show data loading states
+      this.dataLoading = true;
       
-      // For now, keep mock data but should be replaced with real API calls
-      this.companyStats = {
-        pendingReports: 12,
-        createdReports: 145,
-        totalBanks: 8
-      };
-      
-      console.log('Dashboard data loaded for:', this.currentOrg.name);
+      // Fetch all dashboard data from API
+      this.dashboardService.getDashboardData().subscribe({
+        next: (data: DashboardData) => {
+          console.log('✅ Dashboard data loaded:', data);
+          this.dashboardData = data;
+          this.dataLoading = false; // Hide loading skeletons
+        },
+        error: (error) => {
+          console.error('❌ Error loading dashboard data:', error);
+          this.dataLoading = false; // Hide loading skeletons even on error
+          
+          // Set empty data structure on error
+          this.dashboardData = {
+            pendingReports: [],
+            createdReports: [],
+            banks: [],
+            templates: [],
+            recentActivities: [],
+            stats: {
+              total_reports: 0,
+              pending_reports: 0,
+              submitted_reports: 0,
+              custom_templates: 0,
+              recent_activities: 0,
+              total_users: 0
+            }
+          };
+        }
+      });
     } else {
-      console.log('No organization loaded, cannot fetch dashboard data');
+      console.log('❌ No organization loaded, cannot fetch dashboard data');
+      this.dataLoading = false;
     }
   }
 
@@ -245,7 +272,42 @@ export class Dashboard implements OnInit {
   }
 
   getDisplayStats() {
-    return this.companyStats; // For now, return organization-specific stats
+    return this.stats; // Return real stats from API
+  }
+
+  formatDate(timestamp: string): string {
+    try {
+      const date = new Date(timestamp);
+      return date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch {
+      return 'N/A';
+    }
+  }
+
+  getActivityDescription(activity: DashboardActivity): string {
+    const details = activity.details || {};
+    
+    switch (activity.action) {
+      case 'report_created':
+        return `Created report for ${details.property_address || 'property'}`;
+      case 'report_updated':
+        return `Updated report (${details.previous_status} → ${details.new_status})`;
+      case 'report_submitted':
+        return `Submitted report for ${details.property_address || 'property'}`;
+      case 'report_deleted':
+        return `Deleted report (${details.status})`;
+      case 'template_created':
+        return `Created custom template "${details.templateName}"`;
+      case 'template_used':
+        return `Applied template "${details.templateName}"`;
+      default:
+        return `${activity.action.replace('_', ' ')} ${activity.resource_type}`;
+    }
   }
 
   getCurrentOrgName(): string {

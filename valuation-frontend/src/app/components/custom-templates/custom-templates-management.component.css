@@ -1,8 +1,10 @@
 .custom-templates-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 2rem;
+  width: 100%;
+  max-width: none; /* Use full width */
+  margin: 0;
+  padding: 20px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  min-height: calc(100vh - 70px); /* Full height minus header */
 }
 
 /* Header */

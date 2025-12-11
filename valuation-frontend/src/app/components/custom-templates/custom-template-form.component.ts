@@ -11,19 +11,22 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { CustomTemplateService } from '../../services/custom-template.service';
 import { AuthService } from '../../services/auth.service';
+import { NotificationService } from '../../services/notification.service';
 import { CustomTemplate } from '../../models/custom-template.model';
 import { ProcessedTemplateData, TemplateField, BankSpecificField } from '../../models';
+import { ConfirmationModalComponent, ConfirmationModalData } from '../shared/confirmation-modal.component';
 
 @Component({
   selector: 'app-custom-template-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, ConfirmationModalComponent],
   templateUrl: './custom-template-form.component.html',
   styleUrls: ['./custom-template-form.component.css']
 })
 export class CustomTemplateFormComponent implements OnInit {
   private readonly customTemplateService = inject(CustomTemplateService);
   private readonly authService = inject(AuthService);
+  private readonly notificationService = inject(NotificationService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
@@ -44,6 +47,10 @@ export class CustomTemplateFormComponent implements OnInit {
   propertyType = signal<'land' | 'apartment' | ''>('');
   templateData = signal<ProcessedTemplateData | null>(null);
   existingTemplate = signal<CustomTemplate | null>(null);
+
+  // Confirmation modal state
+  showConfirmationModal = signal<boolean>(false);
+  confirmationModalData = signal<ConfirmationModalData | null>(null);
 
   // Forms
   mainForm!: FormGroup; // For template metadata
@@ -426,7 +433,7 @@ export class CustomTemplateFormComponent implements OnInit {
           orgShortName: orgShortName,
           targetRoute: `/org/${orgShortName}/custom-templates`
         });
-        alert('Template created successfully!');
+        this.notificationService.success('Template created successfully!');
         this.router.navigate([`/org/${orgShortName}/custom-templates`]);
       },
       error: (error) => {
@@ -448,7 +455,7 @@ export class CustomTemplateFormComponent implements OnInit {
     this.customTemplateService.updateTemplate(this.templateId()!, request).subscribe({
       next: (template) => {
         console.log('✅ Template updated successfully:', template);
-        alert('Template updated successfully!');
+        this.notificationService.success('Template updated successfully!');
         const user = this.authService.currentUser();
         const orgShortName = user?.org_short_name || user?.organization_id;
         this.router.navigate([`/org/${orgShortName}/custom-templates`]);
@@ -555,9 +562,29 @@ export class CustomTemplateFormComponent implements OnInit {
   }
 
   clearAllFields(): void {
-    if (confirm('Are you sure you want to clear all field values? This will reset the form.')) {
-      this.fieldsForm.reset();
-    }
+    // Configure the confirmation modal
+    this.confirmationModalData.set({
+      title: 'Clear All Fields',
+      message: 'Are you sure you want to clear all field values?\n\nThis will reset the form and all entered data will be lost.',
+      confirmText: 'Clear All',
+      cancelText: 'Cancel',
+      type: 'warning'
+    });
+    
+    // Show the modal
+    this.showConfirmationModal.set(true);
+  }
+
+  onClearConfirmed(): void {
+    this.fieldsForm.reset();
+    this.showConfirmationModal.set(false);
+    this.confirmationModalData.set(null);
+    this.notificationService.success('Form cleared successfully');
+  }
+
+  onClearCancelled(): void {
+    this.showConfirmationModal.set(false);
+    this.confirmationModalData.set(null);
   }
 
   getFilledFieldsCount(): number {
@@ -581,11 +608,11 @@ export class CustomTemplateFormComponent implements OnInit {
     this.authService.loginWithDevToken('admin@demo-org.com', 'demo-org-001', 'manager').subscribe({
       next: (success) => {
         console.log('✅ Dev login successful:', success);
-        alert('Dev login successful as admin in demo-org-001!');
+        this.notificationService.success('Dev login successful as admin in demo-org-001!');
       },
       error: (error) => {
         console.error('❌ Dev login failed:', error);
-        alert('Dev login failed: ' + error.message);
+        this.notificationService.error('Dev login failed: ' + error.message);
       }
     });
   }
@@ -609,7 +636,7 @@ export class CustomTemplateFormComponent implements OnInit {
     
     if (!isAuth || !token) {
       console.log('❌ Not authenticated - no token available');
-      alert('Not authenticated. Please login first.');
+      this.notificationService.error('Not authenticated. Please login first.');
       return;
     }
 
@@ -625,11 +652,11 @@ export class CustomTemplateFormComponent implements OnInit {
     this.http.get('http://localhost:8000/api/auth/me', { headers }).subscribe({
       next: (response) => {
         console.log('✅ Auth test successful:', response);
-        alert('Authentication test successful! Check console for debug logs.');
+        this.notificationService.success('Authentication test successful! Check console for debug logs.');
       },
       error: (error) => {
         console.error('❌ Auth test failed:', error);
-        alert(`Auth test failed: ${error.status} ${error.statusText}. Check console for debug logs.`);
+        this.notificationService.error(`Auth test failed: ${error.status} ${error.statusText}. Check console for debug logs.`);
       }
     });
   }

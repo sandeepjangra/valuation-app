@@ -1,7 +1,7 @@
-from fastapi import FastAPI, HTTPException, Request, Response, Depends
+from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials
 from typing import Dict, List, Any, Optional
 from datetime import datetime, timezone
 from pydantic import BaseModel
@@ -19,7 +19,23 @@ if str(backend_dir) not in sys.path:
 
 # Import utilities after environment is loaded
 from utils.logger import RequestResponseLogger
-from utils.activity_logger import ActivityLogger, ActivityAction, get_client_ip, get_user_agent
+from utils.activity_logger import ActivityLogger, ActivityAction
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from fastapi import Request as FastAPIRequest
+
+def get_client_ip(request: "FastAPIRequest") -> Optional[str]:
+    """Get client IP address from request"""
+    if hasattr(request, 'client') and request.client:
+        return request.client.host
+    return None
+
+def get_user_agent(request: "FastAPIRequest") -> Optional[str]:
+    """Get user agent from request headers"""
+    if hasattr(request, 'headers') and request.headers:
+        return request.headers.get("user-agent")
+    return None
 
 # System databases that must NEVER be deleted
 PROTECTED_DATABASES = [
@@ -34,22 +50,20 @@ PROTECTED_DATABASES = [
 # Import existing auth middleware
 from utils.auth_middleware import (
     get_organization_context, 
-    OrganizationContext, 
-    require_permission,
-    require_role
+    OrganizationContext
 )
 
 # Import new auth components (with error handling)
+auth_router = None
 try:
-    from auth.enhanced_auth_middleware import get_security_context
-    from auth.rbac_models import SecurityContext, Permission
     from auth.auth_api import auth_router
     # Temporarily disable new auth system until AWS Cognito is configured
-    NEW_AUTH_AVAILABLE = False  # Set to True when AWS Cognito is properly configured
+    new_auth_available = False  # Set to True when AWS Cognito is properly configured
     print("🔧 New auth system disabled - using traditional authentication")
 except ImportError as e:
     print(f"⚠️ New auth system not available: {e}")
-    NEW_AUTH_AVAILABLE = False
+    new_auth_available = False
+    auth_router = None
 
 # Load environment variables FIRST
 try:
@@ -83,12 +97,12 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Helper function to convert datetime objects to ISO format strings
-def convert_datetimes_to_iso(obj):
+def convert_datetimes_to_iso(obj: Any) -> Any:
     """Recursively convert datetime objects to ISO format strings"""
     if isinstance(obj, datetime):
         return obj.isoformat()
     elif isinstance(obj, dict):
-        return {key: convert_datetimes_to_iso(value) for key, value in obj.items()}
+        return {str(key): convert_datetimes_to_iso(value) for key, value in obj.items()}
     elif isinstance(obj, list):
         return [convert_datetimes_to_iso(item) for item in obj]
     else:
@@ -128,7 +142,7 @@ async def log_activity(
         org_db = db_manager.get_org_database(organization_id)
         
         # Create activity log document
-        activity_log = {
+        activity_log: Dict[str, Any] = {
             "user_id": user_id,
             "user_email": user_email,
             "action": action,
@@ -141,7 +155,7 @@ async def log_activity(
         }
         
         # Insert into activity_logs collection
-        await org_db.activity_logs.insert_one(activity_log)
+        await org_db["activity_logs"].insert_one(activity_log)
         
         await db_manager.disconnect()
         
@@ -165,7 +179,7 @@ from admin_api import admin_router
 from api.pdf_endpoints import pdf_router
 
 # Include routers
-if NEW_AUTH_AVAILABLE:
+if new_auth_available and auth_router is not None:
     app.include_router(auth_router)
     
 app.include_router(organization_router)
@@ -193,7 +207,8 @@ except Exception as e:
         """Fallback password hashing"""
         return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
-# Security scheme
+# Security scheme (used in auth middleware)
+from fastapi.security import HTTPBearer
 security = HTTPBearer()
 
 # Pydantic models for authentication
@@ -283,7 +298,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-def json_serializer(obj):
+def json_serializer(obj: Any) -> str:
     """JSON serializer for objects not serializable by default"""
     if hasattr(obj, 'isoformat'):
         return obj.isoformat()
@@ -297,7 +312,7 @@ def create_dev_token(email: str, org_short_name: str, role: str) -> Dict[str, An
     import time
     
     # Create a simple token payload for development
-    payload = {
+    payload: Dict[str, Any] = {
         "sub": f"dev_user_{email.split('@')[0]}",
         "email": email,
         "custom:org_short_name": org_short_name,
@@ -347,8 +362,8 @@ async def login(login_request: LoginRequest, request: Request):
     from utils.login_logger import login_logger
     
     # Get client info
-    client_ip = request.client.host if request.client else None
-    user_agent = request.headers.get("user-agent")
+    client_ip = get_client_ip(request)
+    user_agent = get_user_agent(request)
     
     try:
         from database.multi_db_manager import MultiDatabaseManager
@@ -361,24 +376,24 @@ async def login(login_request: LoginRequest, request: Request):
         # Check if this is system admin (admin@system.com)
         if login_request.email == "admin@system.com":
             # Look for System Administration org in val_app_config
-            config_db = db_manager.client["val_app_config"]
-            sys_org = await config_db.organizations.find_one({
+            config_db = await db_manager.get_config_db()
+            sys_org = await config_db["organizations"].find_one({
                 "org_name": "System Administration", 
                 "is_system_org": True
             })
             
             if sys_org:
                 # Check system-administration database
-                sys_db = db_manager.client["system-administration"]
-                user = await sys_db.users.find_one({"email": login_request.email})
+                sys_db = db_manager.get_org_database("system-administration")
+                user = await sys_db["users"].find_one({"email": login_request.email})
                 
                 # Safe password verification with fallback
                 password_valid = False
                 try:
-                    password_valid = pwd_context.verify(login_request.password, user['password_hash'])
+                    password_valid = pwd_context.verify(login_request.password, user['password_hash']) if user and 'password_hash' in user else False
                 except Exception as e:
                     print(f"⚠️ Using bcrypt fallback due to: {e}")
-                    password_valid = verify_password(login_request.password, user['password_hash'])
+                    password_valid = verify_password(login_request.password, user['password_hash']) if user and 'password_hash' in user else False
                 
                 if user and password_valid:
                     # Create system admin token with proper organization context
@@ -428,8 +443,8 @@ async def login(login_request: LoginRequest, request: Request):
         
         # If not found in admin db, check valuation_admin for legacy users
         if not user:
-            valuation_admin_db = db_manager.client["valuation_admin"]
-            user = await valuation_admin_db.users.find_one({
+            valuation_admin_db = db_manager.get_database("admin")
+            user = await valuation_admin_db["users"].find_one({
                 "email": login_request.email,
                 "isActive": True
             })
@@ -472,10 +487,10 @@ async def login(login_request: LoginRequest, request: Request):
             # Safe password verification with fallback
             password_valid = False
             try:
-                password_valid = pwd_context.verify(login_request.password, user["password_hash"])
+                password_valid = pwd_context.verify(login_request.password, user["password_hash"]) if user and "password_hash" in user else False
             except Exception as e:
                 print(f"⚠️ Using bcrypt fallback due to: {e}")
-                password_valid = verify_password(login_request.password, user["password_hash"])
+                password_valid = verify_password(login_request.password, user["password_hash"]) if user and "password_hash" in user else False
             
             if not password_valid:
                 logger.warning(f"❌ Invalid password for: {login_request.email}")
@@ -505,15 +520,15 @@ async def login(login_request: LoginRequest, request: Request):
         
         # Get organization details to fetch org_short_name
         # Try val_app_config first (new schema), fallback to admin database
-        config_db = db_manager.client["val_app_config"]
-        org = await config_db.organizations.find_one({
+        config_db = await db_manager.get_config_db()
+        org = await config_db["organizations"].find_one({
             "metadata.original_organization_id": organization_id
         })
         
         # Fallback to admin database for legacy orgs
         if not org:
-            admin_db = db_manager.client["valuation_admin"]
-            org = await admin_db.organizations.find_one({
+            admin_db = db_manager.get_database("admin")
+            org = await admin_db["organizations"].find_one({
                 "organization_id": organization_id,
                 "isActive": True
             })
@@ -528,8 +543,8 @@ async def login(login_request: LoginRequest, request: Request):
         org_name = org.get("org_name") or org.get("name", "Unknown Organization")
         
         # Update last_login timestamp
-        val_admin_db = db_manager.client["valuation_admin"]
-        await val_admin_db.users.update_one(
+        val_admin_db = db_manager.get_database("admin")
+        await val_admin_db["users"].update_one(
             {"email": email},
             {
                 "$set": {
@@ -589,6 +604,8 @@ async def login(login_request: LoginRequest, request: Request):
         
         logger.info(f"✅ Login successful for {email} with role {role} in org {org_short_name}")
         
+        logger.info(f"✅ Login successful for {email} with role {role} in org {org_short_name}")
+        
         return JSONResponse(
             status_code=200,
             content={
@@ -617,7 +634,7 @@ async def login(login_request: LoginRequest, request: Request):
         raise HTTPException(status_code=500, detail="Login failed")
 
 @app.post("/api/auth/dev-login")
-async def dev_login(dev_request: DevLoginRequest, request: Request = None):
+async def dev_login(dev_request: DevLoginRequest, request: Request):
     """Development login endpoint with predefined roles"""
     logger.info(f"🧪 Development login for: {dev_request.email} as {dev_request.role}")
     
@@ -625,8 +642,8 @@ async def dev_login(dev_request: DevLoginRequest, request: Request = None):
     from utils.login_logger import login_logger
     
     # Get client info
-    client_ip = request.client.host if request.client else None
-    user_agent = request.headers.get("user-agent")
+    client_ip = get_client_ip(request)
+    user_agent = get_user_agent(request)
     
     try:
         # organizationId in dev_request is now org_short_name
@@ -678,22 +695,19 @@ async def dev_login(dev_request: DevLoginRequest, request: Request = None):
         )
 
 @app.post("/api/auth/logout")
-async def logout(request: Request = None):
+async def logout(request: Request):
     """Logout endpoint"""
     logger.info("🔓 User logout")
     
     # Log logout activity
     try:
-        from utils.login_logger import login_logger
-        
         # Try to get user info from token if available
-        auth_header = request.headers.get("Authorization")
+        auth_header = None
+        if hasattr(request, 'headers') and request.headers:
+            auth_header = request.headers.get("Authorization")
         if auth_header and auth_header.startswith("Bearer "):
             # Could extract user info from token, but for now just log generic logout
             pass
-        
-        client_ip = request.client.host if request.client else None
-        user_agent = request.headers.get("user-agent")
         
         # Note: We don't have user email in logout, so we'll log it as a system event
         # In a real implementation, you'd extract user info from the JWT token
@@ -724,7 +738,7 @@ async def get_login_activities(
         from utils.login_logger import login_logger
         
         # Get recent activities
-        activities = login_logger.get_recent_login_activities(limit=limit)
+        activities: List[Dict[str, Any]] = login_logger.get_recent_login_activities(limit=limit)
         
         # Get statistics
         stats = login_logger.get_login_stats(hours=hours)
@@ -736,7 +750,7 @@ async def get_login_activities(
                 "data": {
                     "activities": activities,
                     "statistics": stats,
-                    "total_returned": len(activities)
+                    "total_returned": len(activities) if activities else 0
                 }
             }
         )
@@ -769,7 +783,7 @@ async def admin_health_check(request: Request):
         import time
         from database.multi_db_manager import MultiDatabaseManager
         
-        health_status = {
+        health_status: Dict[str, Any] = {
             "overall_status": "healthy",
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "services": {},
@@ -790,14 +804,17 @@ async def admin_health_check(request: Request):
             db_manager = MultiDatabaseManager()
             await db_manager.connect()
             
-            # Test connection with a simple query
-            config_db = db_manager.client.val_app_config
-            org_count = await config_db.organizations.count_documents({})
+                # Test connection with a simple query
+            config_db = await db_manager.get_config_db()
+            org_count = await config_db["organizations"].count_documents({})
             
             mongo_response_time = round((time.time() - mongo_start) * 1000, 2)
             
             # Get database count
-            db_names = await db_manager.client.list_database_names()
+            if db_manager.client:
+                db_names = await db_manager.client.list_database_names()
+            else:
+                db_names = []
             
             health_status["services"]["mongodb"] = {
                 "status": "up",
@@ -1178,7 +1195,7 @@ async def get_all_banks(request: Request):
         await db_manager.connect()
         
         # Get shared resources database
-        shared_db = db_manager.get_database("shared")
+        shared_db = db_manager.get_shared_database()
         
         # Fetch all active banks
         banks_cursor = shared_db.banks.find({"isActive": True})
@@ -1243,6 +1260,62 @@ async def get_all_banks(request: Request):
         # Log the error response
         api_logger.log_response(error_response, request_data)
         
+        return error_response
+
+@app.get("/api/banks/{bank_code}/branches")
+async def get_bank_branches(bank_code: str, request: Request):
+    """Get all branches for a specific bank"""
+    request_data = await api_logger.log_request(request)
+    
+    logger.info(f"🏦 Fetching branches for bank: {bank_code}")
+    
+    try:
+        from database.multi_db_manager import MultiDatabaseManager
+        
+        db_manager = MultiDatabaseManager()
+        await db_manager.connect()
+        
+        # Get shared resources database
+        shared_db = db_manager.get_shared_database()
+        
+        # Find the specific bank
+        bank = await shared_db.banks.find_one({
+            "bankCode": bank_code.upper(),
+            "isActive": True
+        })
+        
+        if not bank:
+            logger.warning(f"❌ Bank not found: {bank_code}")
+            raise HTTPException(status_code=404, detail=f"Bank {bank_code} not found")
+        
+        # Get bank branches
+        branches = bank.get("bankBranches", [])
+        active_branches = [branch for branch in branches if branch.get("isActive", True)]
+        
+        logger.info(f"📍 Found {len(active_branches)} active branches for {bank_code}")
+        
+        await db_manager.disconnect()
+        
+        response = JSONResponse(
+            status_code=200,
+            content=json.loads(json.dumps(active_branches, default=json_serializer))
+        )
+        
+        api_logger.log_response(response, request_data)
+        return response
+        
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        logger.error(f"❌ Error fetching bank branches: {str(e)}")
+        traceback.print_exc()
+        
+        error_response = JSONResponse(
+            status_code=500,
+            content={"error": "Internal server error", "details": str(e)}
+        )
+        
+        api_logger.log_response(error_response, request_data)
         return error_response
 
 @app.get("/api/templates/{bank_code}/{template_id}/aggregated-fields")
@@ -1596,10 +1669,10 @@ def transform_common_field_to_frontend_format(field: Dict[str, Any]) -> Dict[str
     }
     
     # Handle special field types
-    if transformed["type"] == "select" and "options" in field:
+    if transformed["fieldType"] == "select" and "options" in field:
         transformed["options"] = field["options"]
-    elif transformed["type"] == "select_dynamic":
-        transformed["type"] = "select"
+    elif transformed["fieldType"] == "select_dynamic":
+        transformed["fieldType"] = "select"
         if "dataSourceConfig" in field:
             transformed["dataSourceConfig"] = field["dataSourceConfig"]
     
@@ -1609,7 +1682,7 @@ def transform_common_field_to_frontend_format(field: Dict[str, Any]) -> Dict[str
             transformed[key] = field[key]
     
     # Add technical name for backend compatibility
-    transformed["technicalName"] = field.get("technicalName", field.get("fieldId", transformed["id"]))
+    transformed["technicalName"] = field.get("technicalName", field.get("fieldId", transformed["fieldId"]))
     
     return transformed
 
@@ -1786,6 +1859,25 @@ async def calculate_field_value(calc_request: CalculationRequest, request: Reque
 
         
     except Exception as e:
+        logger.error(f"❌ Calculation error: {str(e)}")
+        error_response = JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "error": f"Calculation failed: {str(e)}",
+                "result": 0,
+                "formattedResult": "0"
+            }
+        )
+        api_logger.log_response(error_response, request_data)
+        return error_response
+
+
+def format_currency(amount: float) -> str:
+    """Format amount as Indian currency"""
+    try:
+        return f"₹{amount:,.2f}"
+    except Exception as e:
         logger.error(f"Currency formatting error: {e}")
         return f"₹{amount:,.2f}"
 
@@ -1818,8 +1910,8 @@ async def create_organization(org_request: CreateOrganizationRequest, request: R
         org_short_name_base = slugify(org_request.name)[:30]  # Limit to 30 chars
         
         # Get val_app_config database
-        config_db = db_manager.client.val_app_config
-        orgs_collection = config_db.organizations
+        config_db = await db_manager.get_config_db()
+        orgs_collection = config_db["organizations"]
         
         # Check if org_short_name exists, add number suffix if needed
         org_short_name = org_short_name_base
@@ -1967,8 +2059,8 @@ async def list_organizations(request: Request, include_system: bool = False):
         await db_manager.connect()
         
         # Get organizations from val_app_config
-        config_db = db_manager.client.val_app_config
-        orgs_collection = config_db.organizations
+        config_db = await db_manager.get_config_db()
+        orgs_collection = config_db["organizations"]
         
         # Build query filter
         query_filter = {"is_active": True}
@@ -2051,8 +2143,8 @@ async def get_organization(org_id: str, request: Request):
         await db_manager.connect()
         
         # Get organizations from val_app_config
-        config_db = db_manager.client.val_app_config
-        orgs_collection = config_db.organizations
+        config_db = await db_manager.get_config_db()
+        orgs_collection = config_db["organizations"]
         
         # Try to find by org_short_name first, then by ObjectId, then by legacy organization_id
         org = None
@@ -3485,7 +3577,7 @@ async def create_report(
                 "property_address": report_request.property_address,
                 "status": "draft"
             },
-            ip_address=request.client.host
+            ip_address=get_client_ip(request)
         )
         
         await db_manager.disconnect()
@@ -3588,7 +3680,7 @@ async def update_report(
                 "new_status": update_request.status or report.get("status"),
                 "version": update_data["version"]
             },
-            ip_address=request.client.host
+            ip_address=get_client_ip(request)
         )
         
         await db_manager.disconnect()
@@ -3687,7 +3779,7 @@ async def submit_report(
                 "property_address": report.get("property_address"),
                 "role": "manager"  # Explicitly log that a manager submitted this
             },
-            ip_address=request.client.host
+            ip_address=get_client_ip(request)
         )
         
         await db_manager.disconnect()
@@ -3792,6 +3884,301 @@ async def get_report_activity(report_id: str, request: Request):
         raise http_exc
     except Exception as e:
         logger.error(f"❌ Error fetching activity logs: {str(e)}")
+        error_response = JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+        api_logger.log_response(error_response, request_data)
+        return error_response
+
+
+@app.get("/api/reports")
+async def get_reports(
+    request: Request,
+    status: Optional[str] = None,
+    bank_code: Optional[str] = None,
+    template_id: Optional[str] = None,
+    created_by: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    page: int = 1,
+    limit: int = 20,
+    org_context: OrganizationContext = Depends(get_organization_context)
+):
+    """Get all reports with filtering options for the reports page"""
+    request_data = await api_logger.log_request(request)
+    
+    try:
+        # Check permission
+        if not org_context.has_permission("reports", "read"):
+            raise HTTPException(status_code=403, detail="Insufficient permissions to view reports")
+        
+        from database.multi_db_manager import MultiDatabaseManager
+        from datetime import datetime, timezone
+        
+        db_manager = MultiDatabaseManager()
+        await db_manager.connect()
+        
+        # Use org_short_name for database lookup
+        org_db = db_manager.get_org_database(org_context.org_short_name)
+        
+        # Build filter criteria
+        filter_criteria = {}
+        
+        if status:
+            filter_criteria["status"] = status
+        if bank_code:
+            filter_criteria["bank_code"] = bank_code
+        if template_id:
+            filter_criteria["template_id"] = template_id
+        if created_by:
+            filter_criteria["created_by_email"] = {"$regex": created_by, "$options": "i"}
+        
+        # Date range filtering
+        if start_date or end_date:
+            date_filter = {}
+            if start_date:
+                try:
+                    start_dt = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+                    date_filter["$gte"] = start_dt
+                except ValueError:
+                    raise HTTPException(status_code=400, detail="Invalid start_date format. Use ISO format.")
+            
+            if end_date:
+                try:
+                    end_dt = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+                    date_filter["$lte"] = end_dt
+                except ValueError:
+                    raise HTTPException(status_code=400, detail="Invalid end_date format. Use ISO format.")
+            
+            if date_filter:
+                filter_criteria["created_at"] = date_filter
+        
+        # Calculate skip for pagination
+        skip = (page - 1) * limit
+        
+        # Get total count for pagination
+        total_count = await org_db.reports.count_documents(filter_criteria)
+        
+        # Get reports with pagination
+        reports_cursor = org_db.reports.find(filter_criteria).sort("created_at", -1).skip(skip).limit(limit)
+        reports = await reports_cursor.to_list(length=None)
+        
+        # Format reports for frontend
+        formatted_reports = []
+        for report in reports:
+            formatted_report = {
+                "_id": str(report["_id"]),
+                "report_id": report.get("report_id"),
+                "reference_number": report.get("reference_number"),
+                "property_address": report.get("property_address", "N/A"),
+                "bank_code": report.get("bank_code", ""),
+                "template_id": report.get("template_id", ""),
+                "status": report.get("status", "draft"),
+                "created_by_email": report.get("created_by_email", ""),
+                "created_at": report.get("created_at").isoformat() if report.get("created_at") else None,
+                "updated_at": report.get("updated_at").isoformat() if report.get("updated_at") else None,
+                "submitted_at": report.get("submitted_at").isoformat() if report.get("submitted_at") else None,
+                "version": report.get("version", 1)
+            }
+            formatted_reports.append(formatted_report)
+        
+        await db_manager.disconnect()
+        
+        # Calculate pagination info
+        total_pages = (total_count + limit - 1) // limit  # Ceiling division
+        
+        response = JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "data": formatted_reports,
+                "pagination": {
+                    "total": total_count,
+                    "page": page,
+                    "limit": limit,
+                    "total_pages": total_pages,
+                    "has_next": page < total_pages,
+                    "has_prev": page > 1
+                },
+                "filters": {
+                    "status": status,
+                    "bank_code": bank_code,
+                    "template_id": template_id,
+                    "created_by": created_by,
+                    "start_date": start_date,
+                    "end_date": end_date
+                }
+            }
+        )
+        
+        api_logger.log_response(response, request_data)
+        return response
+        
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        logger.error(f"❌ Error fetching reports: {str(e)}")
+        error_response = JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+        api_logger.log_response(error_response, request_data)
+        return error_response
+
+
+@app.get("/api/reports/{report_id}")
+async def get_report_by_id(
+    report_id: str,
+    request: Request,
+    org_context: OrganizationContext = Depends(get_organization_context)
+):
+    """Get a specific report by ID for viewing/editing"""
+    request_data = await api_logger.log_request(request)
+    
+    try:
+        # Check permission
+        if not org_context.has_permission("reports", "read"):
+            raise HTTPException(status_code=403, detail="Insufficient permissions to view reports")
+        
+        from database.multi_db_manager import MultiDatabaseManager
+        
+        db_manager = MultiDatabaseManager()
+        await db_manager.connect()
+        
+        # Use org_short_name for database lookup
+        org_db = db_manager.get_org_database(org_context.org_short_name)
+        
+        # Find the report
+        report = await org_db.reports.find_one({"report_id": report_id})
+        
+        if not report:
+            raise HTTPException(status_code=404, detail=f"Report {report_id} not found")
+        
+        await db_manager.disconnect()
+        
+        # Format report for frontend
+        formatted_report = {
+            "_id": str(report["_id"]),
+            "report_id": report.get("report_id"),
+            "reference_number": report.get("reference_number"),
+            "bank_code": report.get("bank_code"),
+            "template_id": report.get("template_id"),
+            "property_type": report.get("property_type"),
+            "property_address": report.get("property_address"),
+            "report_data": report.get("report_data", {}),
+            "status": report.get("status", "draft"),
+            "created_by": report.get("created_by"),
+            "created_by_email": report.get("created_by_email"),
+            "updated_by": report.get("updated_by"),
+            "updated_by_email": report.get("updated_by_email"),
+            "organization_id": report.get("organization_id"),
+            "created_at": report.get("created_at").isoformat() if report.get("created_at") else None,
+            "updated_at": report.get("updated_at").isoformat() if report.get("updated_at") else None,
+            "submitted_at": report.get("submitted_at").isoformat() if report.get("submitted_at") else None,
+            "version": report.get("version", 1)
+        }
+        
+        response = JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "data": formatted_report
+            }
+        )
+        
+        api_logger.log_response(response, request_data)
+        return response
+        
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        logger.error(f"❌ Error fetching report {report_id}: {str(e)}")
+        error_response = JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+        api_logger.log_response(error_response, request_data)
+        return error_response
+
+
+@app.delete("/api/reports/{report_id}")
+async def delete_report(
+    report_id: str,
+    request: Request,
+    org_context: OrganizationContext = Depends(get_organization_context)
+):
+    """Delete a report (Manager can delete any, Employee can only delete their own drafts)"""
+    request_data = await api_logger.log_request(request)
+    
+    try:
+        # Check permission
+        if not org_context.has_permission("reports", "delete"):
+            raise HTTPException(status_code=403, detail="Insufficient permissions to delete reports")
+        
+        from database.multi_db_manager import MultiDatabaseManager
+        
+        db_manager = MultiDatabaseManager()
+        await db_manager.connect()
+        
+        # Use org_short_name for database lookup
+        org_db = db_manager.get_org_database(org_context.org_short_name)
+        
+        # Find the report first
+        report = await org_db.reports.find_one({"report_id": report_id})
+        
+        if not report:
+            raise HTTPException(status_code=404, detail=f"Report {report_id} not found")
+        
+        # Additional permission check for employees
+        if org_context.role == "employee":
+            # Employees can only delete their own draft reports
+            if report.get("created_by") != org_context.user_id:
+                raise HTTPException(status_code=403, detail="Employees can only delete their own reports")
+            if report.get("status") != "draft":
+                raise HTTPException(status_code=403, detail="Employees can only delete draft reports")
+        
+        # Delete the report
+        result = await org_db.reports.delete_one({"report_id": report_id})
+        
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=400, detail="Failed to delete report")
+        
+        logger.info(f"✅ Report deleted: {report_id} by {org_context.email}")
+        
+        # Log activity
+        await log_activity(
+            organization_id=org_context.org_short_name,
+            user_id=org_context.user_id,
+            user_email=org_context.email,
+            action="report_deleted",
+            resource_type="report",
+            resource_id=report_id,
+            details={
+                "reference_number": report.get("reference_number"),
+                "status": report.get("status"),
+                "property_address": report.get("property_address")
+            },
+            ip_address=get_client_ip(request)
+        )
+        
+        await db_manager.disconnect()
+        
+        response = JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "message": "Report deleted successfully"
+            }
+        )
+        
+        api_logger.log_response(response, request_data)
+        return response
+        
+    except HTTPException as http_exc:
+        raise http_exc
+    except Exception as e:
+        logger.error(f"❌ Error deleting report {report_id}: {str(e)}")
         error_response = JSONResponse(
             status_code=500,
             content={"success": False, "error": str(e)}
@@ -3947,9 +4334,20 @@ async def get_template_fields(
 async def list_custom_templates(
     request: Request,
     bankCode: Optional[str] = None,
-    propertyType: Optional[str] = None,
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    propertyType: Optional[str] = None
 ):
+    """List all custom templates for the organization."""
+    from fastapi.security import HTTPBearer
+    from utils.auth_middleware import get_organization_context
+    
+    # Get auth header manually
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing authorization header")
+    
+    token = auth_header.replace("Bearer ", "")
+    credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
+    org_context = await get_organization_context(credentials)
     """
     List all custom templates for the organization.
     Optionally filter by bankCode and/or propertyType.
@@ -4042,9 +4440,20 @@ async def list_custom_templates(
 @app.get("/api/custom-templates/{template_id}")
 async def get_custom_template(
     template_id: str,
-    request: Request,
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    request: Request
 ):
+    """Get a specific custom template with full fieldValues."""
+    from fastapi.security import HTTPBearer
+    from utils.auth_middleware import get_organization_context
+    
+    # Get auth header manually
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing authorization header")
+    
+    token = auth_header.replace("Bearer ", "")
+    credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
+    org_context = await get_organization_context(credentials)
     """
     Get a specific custom template with full fieldValues.
     """
@@ -4112,9 +4521,20 @@ async def get_custom_template(
 @app.post("/api/custom-templates")
 async def create_custom_template(
     template_data: CreateCustomTemplateRequest,
-    request: Request,
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    request: Request
 ):
+    """Create a new custom template."""
+    from fastapi.security import HTTPBearer
+    from utils.auth_middleware import get_organization_context
+    
+    # Get auth header manually
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing authorization header")
+    
+    token = auth_header.replace("Bearer ", "")
+    credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
+    org_context = await get_organization_context(credentials)
     """
     Create a new custom template.
     Only Manager and Admin can create templates.
@@ -4163,10 +4583,10 @@ async def create_custom_template(
             "isActive": True
         })
         
-        if existing_count >= 3:
+        if existing_count >= 2:
             raise HTTPException(
                 status_code=400,
-                detail=f"Maximum 3 templates allowed for {template_data.bankCode} - {template_data.propertyType}"
+                detail=f"Maximum 2 templates allowed for {template_data.bankCode} - {template_data.propertyType}"
             )
         
         # Get bank name from shared resources
@@ -4208,7 +4628,7 @@ async def create_custom_template(
                 "bankCode": template_data.bankCode,
                 "propertyType": template_data.propertyType
             },
-            ip_address=request.client.host if request.client else None
+            ip_address=get_client_ip(request)
         )
         
         await db_manager.disconnect()
@@ -4255,7 +4675,7 @@ async def update_custom_template(
     Update an existing custom template.
     Only Manager and Admin can update templates.
     """
-    request_data = api_logger.log_request(request)
+    request_data = await api_logger.log_request(request)
     
     try:
         # Verify authentication and role
@@ -4310,6 +4730,19 @@ async def update_custom_template(
             {"$set": update_doc}
         )
         
+        # Get the updated template to return it
+        updated_template = await org_db.custom_templates.find_one({
+            "_id": ObjectId(template_id)
+        })
+        
+        # Convert ObjectId and datetime for JSON serialization
+        if updated_template:
+            updated_template["_id"] = str(updated_template["_id"])
+            if updated_template.get("createdAt"):
+                updated_template["createdAt"] = updated_template["createdAt"].isoformat()
+            if updated_template.get("updatedAt"):
+                updated_template["updatedAt"] = updated_template["updatedAt"].isoformat()
+        
         # Log activity
         await log_activity(
             organization_id=target_org_id,
@@ -4323,7 +4756,7 @@ async def update_custom_template(
                 "bankCode": existing_template.get("bankCode"),
                 "propertyType": existing_template.get("propertyType")
             },
-            ip_address=request.client.host if request.client else None
+            ip_address=get_client_ip(request)
         )
         
         await db_manager.disconnect()
@@ -4334,6 +4767,7 @@ async def update_custom_template(
             status_code=200,
             content={
                 "success": True,
+                "data": updated_template,
                 "message": "Custom template updated successfully"
             }
         )
@@ -4356,9 +4790,20 @@ async def update_custom_template(
 @app.delete("/api/custom-templates/{template_id}")
 async def delete_custom_template(
     template_id: str,
-    request: Request,
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    request: Request
 ):
+    """Delete a custom template (soft delete)."""
+    from fastapi.security import HTTPBearer
+    from utils.auth_middleware import get_organization_context
+    
+    # Get auth header manually
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing authorization header")
+    
+    token = auth_header.replace("Bearer ", "")
+    credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
+    org_context = await get_organization_context(credentials)
     """
     Delete a custom template (soft delete).
     Only Manager and Admin can delete templates.
@@ -4428,7 +4873,7 @@ async def delete_custom_template(
                 "bankCode": existing_template.get("bankCode"),
                 "propertyType": existing_template.get("propertyType")
             },
-            ip_address=request.client.host if request.client else None
+            ip_address=get_client_ip(request)
         )
         
         await db_manager.disconnect()
@@ -4462,9 +4907,20 @@ async def delete_custom_template(
 async def clone_custom_template(
     template_id: str,
     clone_data: CloneCustomTemplateRequest,
-    request: Request,
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    request: Request
 ):
+    """Clone an existing custom template with a new name."""
+    from fastapi.security import HTTPBearer
+    from utils.auth_middleware import get_organization_context
+    
+    # Get auth header manually
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing authorization header")
+    
+    token = auth_header.replace("Bearer ", "")
+    credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
+    org_context = await get_organization_context(credentials)
     """
     Clone an existing custom template with a new name.
     Only Manager and Admin can clone templates.
@@ -4517,10 +4973,10 @@ async def clone_custom_template(
             "isActive": True
         })
         
-        if existing_count >= 3:
+        if existing_count >= 2:
             raise HTTPException(
                 status_code=400,
-                detail=f"Maximum 3 templates allowed for {original_template['bankCode']} - {original_template['propertyType']}"
+                detail=f"Maximum 2 templates allowed for {original_template['bankCode']} - {original_template['propertyType']}"
             )
         
         # Create cloned template
@@ -4559,7 +5015,7 @@ async def clone_custom_template(
                 "bankCode": original_template["bankCode"],
                 "propertyType": original_template["propertyType"]
             },
-            ip_address=request.client.host if request.client else None
+            ip_address=get_client_ip(request)
         )
         
         await db_manager.disconnect()
@@ -4599,9 +5055,20 @@ async def clone_custom_template(
 async def create_template_from_report(
     org_short_name: str,
     template_data: CreateTemplateFromReportRequest,
-    request: Request,
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    request: Request
 ):
+    """Create a custom template from a filled report form."""
+    from fastapi.security import HTTPBearer
+    from utils.auth_middleware import get_organization_context
+    
+    # Get auth header manually
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing authorization header")
+    
+    token = auth_header.replace("Bearer ", "")
+    credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
+    org_context = await get_organization_context(credentials)
     """
     Create a custom template from a filled report form.
     Only saves bank-specific fields with non-empty values.
@@ -4674,10 +5141,10 @@ async def create_template_from_report(
             "isActive": True
         })
         
-        if existing_count >= 3:
+        if existing_count >= 2:
             raise HTTPException(
                 status_code=400,
-                detail=f"Maximum 3 templates allowed for {template_data.bankCode} - {property_type}. Please delete an existing template first."
+                detail=f"Maximum 2 templates allowed for {template_data.bankCode} - {property_type}. Please delete an existing template first."
             )
         
         # Check for duplicate template name
@@ -4819,7 +5286,7 @@ async def create_template_from_report(
                 "fieldCount": len(filtered_field_values),
                 "createdBySystemAdmin": org_context.is_system_admin  # Track if created by system admin
             },
-            ip_address=request.client.host if request.client else None
+            ip_address=get_client_ip(request)
         )
         
         await db_manager.disconnect()
@@ -4864,9 +5331,20 @@ async def create_template_from_report(
 @app.get("/api/dashboard/pending-reports")
 async def get_pending_reports(
     request: Request,
-    limit: int = 5,
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    limit: int = 5
 ):
+    """Get pending reports for dashboard component"""
+    from fastapi.security import HTTPBearer
+    from utils.auth_middleware import get_organization_context
+    
+    # Get auth header manually
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing authorization header")
+    
+    token = auth_header.replace("Bearer ", "")
+    credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
+    org_context = await get_organization_context(credentials)
     """Get pending reports for dashboard component"""
     request_data = await api_logger.log_request(request)
     
@@ -4938,9 +5416,20 @@ async def get_pending_reports(
 @app.get("/api/dashboard/created-reports")
 async def get_created_reports(
     request: Request,
-    limit: int = 5,
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    limit: int = 5
 ):
+    """Get recently created reports for dashboard component"""
+    from fastapi.security import HTTPBearer
+    from utils.auth_middleware import get_organization_context
+    
+    # Get auth header manually
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing authorization header")
+    
+    token = auth_header.replace("Bearer ", "")
+    credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
+    org_context = await get_organization_context(credentials)
     """Get recently created reports for dashboard component"""
     request_data = await api_logger.log_request(request)
     
@@ -5010,9 +5499,20 @@ async def get_created_reports(
 @app.get("/api/dashboard/banks")
 async def get_dashboard_banks(
     request: Request,
-    limit: int = 8,
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    limit: int = 8
 ):
+    """Get banks summary for dashboard component"""
+    from fastapi.security import HTTPBearer
+    from utils.auth_middleware import get_organization_context
+    
+    # Get auth header manually
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing authorization header")
+    
+    token = auth_header.replace("Bearer ", "")
+    credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
+    org_context = await get_organization_context(credentials)
     """Get banks summary for dashboard component"""
     request_data = await api_logger.log_request(request)
     
@@ -5080,9 +5580,20 @@ async def get_dashboard_banks(
 @app.get("/api/dashboard/recent-activities")
 async def get_recent_activities(
     request: Request,
-    limit: int = 10,
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    limit: int = 10
 ):
+    """Get recent activities for dashboard component"""
+    from fastapi.security import HTTPBearer
+    from utils.auth_middleware import get_organization_context
+    
+    # Get auth header manually
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing authorization header")
+    
+    token = auth_header.replace("Bearer ", "")
+    credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
+    org_context = await get_organization_context(credentials)
     """Get recent activities for dashboard component"""
     request_data = await api_logger.log_request(request)
     
@@ -5140,6 +5651,93 @@ async def get_recent_activities(
         
     except Exception as e:
         logger.error(f"❌ Error fetching recent activities: {str(e)}")
+        error_response = JSONResponse(
+            status_code=500,
+            content={"success": False, "error": str(e)}
+        )
+        api_logger.log_response(error_response, request_data)
+        return error_response
+
+
+@app.get("/api/dashboard/templates")
+async def get_dashboard_templates(
+    request: Request,
+    limit: int = 5
+):
+    """Get custom templates count and summary for dashboard component"""
+    from fastapi.security import HTTPBearer
+    from utils.auth_middleware import get_organization_context
+    
+    # Get auth header manually
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing authorization header")
+    
+    token = auth_header.replace("Bearer ", "")
+    credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
+    org_context = await get_organization_context(credentials)
+    request_data = await api_logger.log_request(request)
+    
+    try:
+        from database.multi_db_manager import MultiDatabaseManager
+        
+        db_manager = MultiDatabaseManager()
+        await db_manager.connect()
+        
+        # For system admin, use the organization they're currently working in
+        if org_context.is_system_admin:
+            current_org = org_context.org_short_name
+            org_db = db_manager.get_org_database(current_org)
+            target_org_id = current_org
+        else:
+            org_db = db_manager.get_org_database(org_context.organization_id)
+            target_org_id = org_context.organization_id
+        
+        # Get custom templates for this organization
+        templates_cursor = org_db.custom_templates.find({
+            "isActive": True
+        }).sort("created_at", -1).limit(limit)
+        
+        templates = await templates_cursor.to_list(length=None)
+        
+        # Get total count
+        total_count = await org_db.custom_templates.count_documents({
+            "isActive": True
+        })
+        
+        # Format templates for dashboard display
+        formatted_templates = []
+        for template in templates:
+            formatted_template = {
+                "_id": str(template["_id"]),
+                "templateName": template.get("templateName", ""),
+                "description": template.get("description", ""),
+                "bankCode": template.get("bankCode", ""),
+                "templateCode": template.get("templateCode", ""),
+                "propertyType": template.get("propertyType", ""),
+                "created_by_email": template.get("created_by_email", ""),
+                "created_at": template.get("created_at").isoformat() if template.get("created_at") else None,
+                "usage_count": template.get("usage_count", 0)
+            }
+            formatted_templates.append(formatted_template)
+        
+        await db_manager.disconnect()
+        
+        response = JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "data": formatted_templates,
+                "total": total_count,
+                "showing": len(formatted_templates)
+            }
+        )
+        
+        api_logger.log_response(response, request_data)
+        return response
+        
+    except Exception as e:
+        logger.error(f"❌ Error fetching dashboard templates: {str(e)}")
         error_response = JSONResponse(
             status_code=500,
             content={"success": False, "error": str(e)}

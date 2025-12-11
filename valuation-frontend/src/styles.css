@@ -1,1 +1,15 @@
-/* You can add global styles to this file, and also import other style files */
+/* Global Styles for Valuation App */
+
+/* Ensure full page utilization */
+html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Make sure all elements use border-box */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
