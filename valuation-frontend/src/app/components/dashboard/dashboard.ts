@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -39,11 +39,27 @@ export class Dashboard implements OnInit {
   loading = false; // UI structure loads immediately
   dataLoading = true; // Individual data sections show loading state
   
+  // Temporary override for debugging - can be called from console
+  forceShowData() {
+    console.log('🚨 FORCING dataLoading = false for debugging');
+    this.dataLoading = false;
+    this.cdr.detectChanges();
+  }
+  
   // Quick access to data sections
   get pendingReports(): DashboardReport[] { return this.dashboardData?.pendingReports || []; }
   get createdReports(): DashboardReport[] { return this.dashboardData?.createdReports || []; }
   get banks(): DashboardBank[] { return this.dashboardData?.banks || []; }
-  get templates(): DashboardTemplate[] { return this.dashboardData?.templates || []; }
+  get templates(): DashboardTemplate[] { 
+    // Handle both array and object format from API
+    const templateData = this.dashboardData?.templates;
+    if (Array.isArray(templateData)) {
+      return templateData;
+    } else if (templateData && typeof templateData === 'object' && 'templates' in templateData) {
+      return (templateData as any).templates || [];
+    }
+    return [];
+  }
   get recentActivities(): DashboardActivity[] { return this.dashboardData?.recentActivities || []; }
   
   // Statistics data
@@ -65,7 +81,8 @@ export class Dashboard implements OnInit {
     private route: ActivatedRoute,
     private orgService: OrganizationService,
     private authService: AuthService,
-    private dashboardService: DashboardService
+    private dashboardService: DashboardService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -75,7 +92,8 @@ export class Dashboard implements OnInit {
     // Get organization context from route
     this.route.params.subscribe(params => {
       const newOrgShortName = params['orgShortName'] || '';
-      console.log('Route changed - Previous org:', this.currentOrgShortName, 'New org:', newOrgShortName);
+      console.log('📍 Route changed - Previous org:', this.currentOrgShortName, 'New org:', newOrgShortName);
+      console.log('🔑 Dashboard route change - Current token:', this.authService.getToken()?.substring(0, 50) + '...');
       
       // IMMEDIATE UI UPDATE: Set cached name first for instant display
       this.currentOrgDisplayName = this.orgNameCache[newOrgShortName] || 'Loading...';
@@ -100,6 +118,23 @@ export class Dashboard implements OnInit {
 
   async loadOrganizationContext() {
     try {
+      // Validate auth token matches route organization (only if not already loading)
+      if (!this.dataLoading) {
+        const currentToken = this.authService.getToken();
+        const routeOrg = this.currentOrgShortName;
+        
+        console.log('🔍 Security check: Route org =', routeOrg, '| Token org context =', currentToken?.includes(routeOrg || ''));
+        
+        // If token doesn't match route organization, re-authenticate silently
+        if (routeOrg && currentToken && !currentToken.includes(routeOrg)) {
+          console.log('🔄 Token mismatch detected, re-authenticating silently for:', routeOrg);
+          
+          // Silent re-authentication without user disruption
+          this.forceOrganizationReauth(routeOrg);
+          return;
+        }
+      }
+      
       // Show UI immediately but keep data loading
       this.loading = false;
       this.dataLoading = true;
@@ -171,20 +206,36 @@ export class Dashboard implements OnInit {
     if (this.currentOrg || this.currentOrgShortName) {
       const orgName = this.currentOrg?.name || this.currentOrgShortName;
       console.log('🔄 Loading dashboard data for organization:', orgName);
+      console.log('🔑 Auth token available:', !!this.authService.getToken());
       
       // Keep UI visible but show data loading states
       this.dataLoading = true;
+      this.cdr.detectChanges(); // Ensure UI updates immediately
+      console.log('🔧 Set dataLoading to true, starting API calls');
+      
+      // Set a timeout to prevent infinite loading - temporarily disabled for debugging
+      // const timeoutId = setTimeout(() => {
+      //   console.warn('⚠️ Dashboard data loading timeout - stopping loading state');
+      //   this.dataLoading = false;
+      // }, 15000);
       
       // Fetch all dashboard data from API
       this.dashboardService.getDashboardData().subscribe({
         next: (data: DashboardData) => {
           console.log('✅ Dashboard data loaded:', data);
+          console.log('🔧 Setting dataLoading to false');
           this.dashboardData = data;
           this.dataLoading = false; // Hide loading skeletons
+          console.log('🔍 Current dataLoading state:', this.dataLoading);
+          
+          // Force change detection to update the UI
+          this.cdr.detectChanges();
+          console.log('🔄 Forced change detection');
         },
         error: (error) => {
           console.error('❌ Error loading dashboard data:', error);
           this.dataLoading = false; // Hide loading skeletons even on error
+          this.cdr.detectChanges(); // Force change detection on error too
           
           // Set empty data structure on error
           this.dashboardData = {
@@ -208,6 +259,50 @@ export class Dashboard implements OnInit {
       console.log('❌ No organization loaded, cannot fetch dashboard data');
       this.dataLoading = false;
     }
+  }
+
+  /**
+   * Force re-authentication when organization token mismatch is detected
+   */
+  private forceOrganizationReauth(targetOrg: string): void {
+    console.log('🔒 Smoothly re-authenticating for organization:', targetOrg);
+    
+    // Use dev login to get correct token for target organization
+    this.authService.loginWithDevToken('admin@system.com', targetOrg, 'system_admin').subscribe({
+      next: (response) => {
+        console.log('✅ Re-authentication successful for organization:', targetOrg);
+        console.log('🔄 Reloading dashboard data with correct token');
+        
+        // Smoothly reload data instead of entire page
+        this.loadOrganizationContext();
+      },
+      error: (error) => {
+        console.error('❌ Failed to re-authenticate for organization:', targetOrg, error);
+        
+        // Show error message and stop loading
+        console.warn('⚠️ Authentication failed, stopping data loading');
+        this.loading = false;
+        this.dataLoading = false;
+      }
+    });
+  }
+
+  // Debug method - can be called from browser console
+  debugLoadingState() {
+    console.log('=== DEBUG LOADING STATE ===');
+    console.log('dataLoading:', this.dataLoading);
+    console.log('loading:', this.loading);
+    console.log('dashboardData exists:', !!this.dashboardData);
+    console.log('stats:', this.stats);
+    console.log('banks count:', this.banks.length);
+    console.log('=== END DEBUG ===');
+    return {
+      dataLoading: this.dataLoading,
+      loading: this.loading,
+      hasData: !!this.dashboardData,
+      statsCount: this.stats.total_reports,
+      banksCount: this.banks.length
+    };
   }
 
   // Organization switching for admins

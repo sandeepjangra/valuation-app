@@ -8,7 +8,32 @@
         </div>
       </div>
       <div class="header-info">
-        <h1 class="page-title">Property Valuation for {{ selectedBankName }}</h1>
+        <h1 class="page-title">
+          <span *ngIf="reportId">
+            <span class="mode-indicator" [class.view-mode]="isViewMode" [class.edit-mode]="isEditMode">
+              {{ isViewMode ? '👁️ Viewing' : '✏️ Editing' }}
+            </span>
+            Report: {{ reportReferenceNumber }}
+          </span>
+          <span *ngIf="!reportId">
+            ➕ New Property Valuation for {{ selectedBankName }}
+          </span>
+        </h1>
+      </div>
+      <div class="mode-controls" *ngIf="reportId">
+        <button 
+          *ngIf="isViewMode" 
+          class="edit-btn"
+          (click)="switchToEditMode()"
+          [disabled]="reportStatus === 'submitted'">
+          ✏️ Edit Report
+        </button>
+        <button 
+          *ngIf="isEditMode" 
+          class="view-btn"
+          (click)="switchToViewMode()">
+          👁️ View Mode
+        </button>
       </div>
       <div class="right-section">
         <button class="back-button" (click)="goBackToSelection()">
@@ -19,7 +44,8 @@
   </div>
 
   <!-- Form Content -->
-  <form [formGroup]="reportForm" (ngSubmit)="onSubmit()" class="report-form">
+  <form [formGroup]="reportForm" (ngSubmit)="onSubmit()" class="report-form" 
+        [class.view-mode]="isViewMode" [class.edit-mode]="isEditMode">
     
     <!-- Common Fields Section -->
     <div class="form-section" *ngIf="!isLoading && hasCommonFields() && isFormReady()">
@@ -33,6 +59,25 @@
         <div class="loading-spinner"></div>
         <p>Loading template fields: {{ selectedBankCode }}/{{ selectedTemplateId }}...</p>
         <small>Fetching common fields + bank-specific fields from server</small>
+      </div>
+
+      <!-- Fallback: Simple form display when template not available -->
+      <div *ngIf="!isLoading && !hasCommonFields() && reportId && reportForm" class="minimal-form-section">
+        <div class="section-header">
+          <h2 class="section-title">📄 Report Data</h2>
+          <p class="section-subtitle">Viewing saved report data (template not available)</p>
+        </div>
+        
+        <div class="minimal-fields-grid">
+          <div *ngFor="let control of getFormControlsArray()" class="minimal-field">
+            <label class="field-label">{{ formatFieldLabel(control.key) }}</label>
+            <input 
+              type="text" 
+              [formControlName]="control.key" 
+              class="form-input"
+              readonly>
+          </div>
+        </div>
       </div>
       
       <!-- Common Field Groups -->
@@ -1128,8 +1173,8 @@
       </div>
     </div>
 
-    <!-- Action Buttons - New Workflow -->
-    <div class="form-actions">
+    <!-- Action Buttons - New Workflow (Hidden in view mode) -->
+    <div class="form-actions" *ngIf="isEditMode || !reportId">
       <div class="action-buttons">
         <!-- Cancel Button -->
         <button 

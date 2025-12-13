@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { Observable, of, timer } from 'rxjs';
+import { map, catchError, timeout, timeoutWith } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 
 export interface Report {
@@ -72,7 +72,9 @@ export class ReportsService {
    * Get all reports with filtering and pagination
    */
   getReports(filters: ReportFilters = {}): Observable<ReportListResponse> {
+    console.log('🔄 ReportsService.getReports called with filters:', filters);
     const headers = this.getHeaders();
+    const url = `${this.baseUrl}/reports`;
     
     // Build query parameters
     let params = new HttpParams();
@@ -86,23 +88,39 @@ export class ReportsService {
     if (filters.page) params = params.set('page', filters.page.toString());
     if (filters.limit) params = params.set('limit', filters.limit.toString());
     
-    return this.http.get<ReportListResponse>(`${this.baseUrl}/reports`, { headers, params })
+    console.log('📡 Making HTTP request to:', url);
+    console.log('🎛️ Request params:', params.toString());
+    
+    const errorResponse: ReportListResponse = {
+      success: false,
+      data: [],
+      pagination: {
+        total: 0,
+        page: 1,
+        limit: 20,
+        total_pages: 0,
+        has_next: false,
+        has_prev: false
+      },
+      filters: {}
+    };
+    
+    return this.http.get<ReportListResponse>(url, { headers, params })
       .pipe(
+        timeout(10000), // 10 second timeout
         catchError(error => {
-          console.error('❌ Error fetching reports:', error);
-          return of({
-            success: false,
-            data: [],
-            pagination: {
-              total: 0,
-              page: 1,
-              limit: 20,
-              total_pages: 0,
-              has_next: false,
-              has_prev: false
-            },
-            filters: {}
+          console.error('❌ Error fetching reports:', {
+            status: error.status,
+            message: error.message,
+            url: url,
+            isTimeout: error.name === 'TimeoutError'
           });
+          
+          if (error.name === 'TimeoutError') {
+            console.warn('⏰ getReports request timed out after 10 seconds');
+          }
+          
+          return of(errorResponse);
         })
       );
   }
@@ -111,12 +129,21 @@ export class ReportsService {
    * Get a specific report by ID
    */
   getReportById(reportId: string): Observable<Report | null> {
+    console.log('🔄 ReportsService.getReportById called for:', reportId);
     const headers = this.getHeaders();
-    return this.http.get<any>(`${this.baseUrl}/reports/${reportId}`, { headers })
+    const url = `${this.baseUrl}/reports/${reportId}`;
+    
+    return this.http.get<any>(url, { headers })
       .pipe(
+        timeout(10000), // 10 second timeout
         map(response => response.success ? response.data : null),
         catchError(error => {
-          console.error('❌ Error fetching report:', error);
+          console.error('❌ Error fetching report:', {
+            status: error.status,
+            message: error.message,
+            url: url,
+            isTimeout: error.name === 'TimeoutError'
+          });
           return of(null);
         })
       );

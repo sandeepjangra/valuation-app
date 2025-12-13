@@ -68,7 +68,7 @@ export class TemplateVersioningService {
    * Create a new valuation report
    */
   createReport(request: CreateReportRequest): Observable<ValuationReport> {
-    return this.http.post<ValuationReport>(`${this.baseUrl}/api/v1/reports`, request, this.httpOptions)
+    return this.http.post<ValuationReport>(`${this.baseUrl}/api/reports`, request, this.httpOptions)
       .pipe(
         catchError(this.handleError)
       );

@@ -343,23 +343,108 @@ export class OrganizationSelectorComponent implements OnInit {
     
     if (!newOrgShortName) return;
     
+    // Prevent rapid switching that causes flickering
+    if (this.isLoading()) {
+      console.log('⏳ Already switching organizations, ignoring request');
+      return;
+    }
+    
     console.log('🔄 Switching organization:', {
       from: this.selectedOrgShortName(),
       to: newOrgShortName
     });
     
-    // Update selected organization
-    this.selectedOrgShortName.set(newOrgShortName);
-    localStorage.setItem(this.SELECTED_ORG_KEY, newOrgShortName);
+    // Set loading state
+    this.isLoading.set(true);
     
-    // Update current org name
-    const selectedOrg = this.organizations().find(org => org.org_short_name === newOrgShortName);
-    this.currentOrgName.set(selectedOrg?.name || this.formatOrgName(newOrgShortName));
+    // Get current user info to maintain email and role
+    const currentUser = this.authService.currentUserValue;
+    const userEmail = currentUser?.email || 'admin@system.com';
+    const userRole = currentUser?.roles?.includes('system_admin') ? 'system_admin' : 'manager';
     
-    // Navigate to org-specific dashboard
-    this.router.navigate(['/org', newOrgShortName, 'dashboard']);
+    console.log('🔑 Re-authenticating for organization:', newOrgShortName);
     
-    console.log('✅ Organization switched successfully');
+    // Re-authenticate with the new organization context
+    this.authService.loginWithDevToken(userEmail, newOrgShortName, userRole).subscribe({
+      next: (response) => {
+        console.log('✅ Organization switch successful:', newOrgShortName);
+        
+        // Clear any cached data to force fresh loading for the new organization
+        // this.clearOrganizationCache(); // TODO: Implement proper cache clearing
+        
+        // Clear cached data to prevent stale data from showing
+        this.clearAllCachedData();
+        
+        // Update selected organization
+        this.selectedOrgShortName.set(newOrgShortName);
+        localStorage.setItem(this.SELECTED_ORG_KEY, newOrgShortName);
+        
+        // Update current org name
+        const selectedOrg = this.organizations().find(org => org.org_short_name === newOrgShortName);
+        this.currentOrgName.set(selectedOrg?.name || this.formatOrgName(newOrgShortName));
+        
+        // Smooth navigation without page reload
+        console.log('🔄 Smoothly navigating to new organization context');
+        this.router.navigate(['/org', newOrgShortName, 'dashboard']).then(() => {
+          this.isLoading.set(false);
+          console.log('✅ Organization switched successfully with new token for:', newOrgShortName);
+          console.log('🔄 Dashboard should reload with organization-specific data');
+        });
+      },
+      error: (error) => {
+        console.error('❌ Failed to re-authenticate with new organization:', error);
+        this.isLoading.set(false);
+        
+        // Revert selection on error
+        const currentOrg = this.selectedOrgShortName();
+        if (select.value !== currentOrg) {
+          select.value = currentOrg;
+        }
+        
+        alert('Failed to switch organization. Please try again.');
+      }
+    });
+  }
+
+  /**
+   * Clear ALL cached data when switching organizations
+   * This prevents cross-organization data leakage
+   */
+  private clearAllCachedData(): void {
+    console.log('🧹 CRITICAL: Clearing ALL cached data to prevent cross-organization leakage');
+    
+    // Clear dashboard data cache
+    if (typeof window !== 'undefined' && window.localStorage) {
+      // Remove any cached dashboard data
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.includes('dashboard') || key.includes('template') || key.includes('report'))) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(key => {
+        console.log('🗑️ Removing cached data:', key);
+        localStorage.removeItem(key);
+      });
+    }
+    
+    // Force services to clear their internal caches
+    // Note: This is a nuclear option - forces complete data refresh
+    console.log('💥 Forcing complete data refresh for new organization context');
+  }
+
+  /**
+   * Clear organization-specific cached data when switching
+   */
+  private clearOrganizationCache(): void {
+    console.log('🧹 Clearing organization cache to ensure fresh data loading');
+    
+    // Clear any service-level caches that might persist organization data
+    // This ensures that when we switch organizations, we get fresh data
+    
+    // Note: Individual services should implement their own cache clearing if needed
+    // For now, we rely on the authentication token change to fetch new data
   }
 
   /**

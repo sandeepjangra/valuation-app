@@ -6,11 +6,14 @@ import { HttpClient } from '@angular/common/http';
 import { CommonField, BankBranch, ProcessedTemplateData, FieldGroup, TemplateField, BankSpecificField, BankSpecificTab, BankSpecificSection, CalculatedFieldConfig } from '../../models';
 import { TemplateService } from '../../services/template.service';
 import { CustomTemplateService } from '../../services/custom-template.service';
+import { TemplateVersioningService } from '../../services/template-versioning.service';
+import { CreateReportRequest } from '../../models/template-versioning.models';
 import { CalculationService } from '../../services/calculation.service';
 import { AuthService } from '../../services/auth.service';
 import { OrganizationService } from '../../services/organization.service';
 import { TemplateAutofillModalComponent, AutoFillChoice } from '../custom-templates/template-autofill-modal.component';
 import { DynamicTableComponent } from '../dynamic-table/dynamic-table.component';
+import { ReportsService } from '../../services/reports.service';
 
 @Component({
   selector: 'app-report-form',
@@ -45,6 +48,9 @@ export class ReportForm implements OnInit {
   referenceNumberLoading = false;
   referenceNumberError: string | null = null;
   
+  // Current report ID (for updates after initial save)
+  currentReportId: string | null = null;
+  
   // Custom template auto-fill
   showAutoFillModal = false;
   customTemplateValues: Record<string, any> | null = null;
@@ -64,6 +70,11 @@ export class ReportForm implements OnInit {
   // Report workflow state
   reportStatus: 'draft' | 'saved' | 'submitted' | null = null;
   reportId: string | null = null;
+  pendingReportData: any = null;
+  
+  // View/Edit mode
+  isViewMode = false;
+  isEditMode = false;
   
   // Role-based permissions (NEW!)
   protected readonly canSubmitReports = computed(() => this.authService.canSubmitReports());
@@ -81,7 +92,9 @@ export class ReportForm implements OnInit {
     private customTemplateService: CustomTemplateService,
     private calculationService: CalculationService,
     private organizationService: OrganizationService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private templateVersioningService: TemplateVersioningService,
+    private reportsService: ReportsService
   ) {
     this.reportForm = this.fb.group({});
   }
@@ -96,6 +109,7 @@ export class ReportForm implements OnInit {
     
     this.loadQueryParams();
     this.loadBankBranches();
+    this.checkForExistingReport();
     
     // Load template data after query params are loaded
     if (this.selectedBankCode && this.selectedTemplateId) {
@@ -169,6 +183,17 @@ export class ReportForm implements OnInit {
           // Force change detection to ensure template updates
           this.cdr.detectChanges();
           console.log('🔄 Change detection triggered after template data load');
+          
+          // If we have pending report data (loading existing report), populate the form
+          if (this.pendingReportData) {
+            console.log('📝 Template loaded successfully, now populating form with pending report data');
+            console.log('📝 Form ready state:', !!this.reportForm);
+            console.log('📝 Form controls count:', Object.keys(this.reportForm?.controls || {}).length);
+            this.populateFormWithReportData(this.pendingReportData);
+            this.pendingReportData = null; // Clear after use
+          } else {
+            console.log('📝 No pending report data to populate');
+          }
         },
         error: (error) => {
           console.error('❌ Error loading template data:', error);
@@ -193,6 +218,382 @@ export class ReportForm implements OnInit {
     };
     
     return templateMapping[propertyType.toLowerCase()] || 'land-property';
+  }
+
+  checkForExistingReport() {
+    // Check if we're loading an existing report by ID
+    this.route.params.subscribe(params => {
+      const reportId = params['id'];
+      if (reportId) {
+        console.log('📄 Loading existing report:', reportId);
+        this.reportId = reportId;
+        this.currentReportId = reportId;
+        
+        // Check query params for mode
+        this.route.queryParams.subscribe(queryParams => {
+          const mode = queryParams['mode'];
+          this.isViewMode = mode === 'view';
+          this.isEditMode = mode === 'edit' || !mode; // Default to edit if no mode specified
+          
+          console.log('📄 Report mode:', { mode, isViewMode: this.isViewMode, isEditMode: this.isEditMode });
+        });
+        
+        this.loadExistingReport(reportId);
+      } else {
+        // New report - always edit mode
+        this.isViewMode = false;
+        this.isEditMode = true;
+      }
+    });
+  }
+
+  loadExistingReport(reportId: string) {
+    console.log('📄 Loading existing report data for:', reportId);
+    this.isLoading = true;
+    
+    // Use the reports service to get report details
+    this.reportsService.getReportById(reportId).subscribe({
+      next: (reportData) => {
+        console.log('✅ Existing report loaded:', reportData);
+        console.log('📊 Report data structure:', JSON.stringify(reportData, null, 2));
+        if (reportData) {
+          
+          // Extract template information from the report
+          this.selectedBankCode = reportData.bank_code || '';
+          this.selectedTemplateId = reportData.template_id || '';
+          this.selectedPropertyType = reportData.property_type || '';
+          this.reportReferenceNumber = reportData.reference_number || '';
+          
+          // Set report status (map to form status values)
+          this.reportStatus = reportData.status === 'in_progress' ? 'draft' : 
+                             reportData.status === 'completed' ? 'saved' : 
+                             reportData.status || 'draft';
+          
+          console.log('📋 Report template info extracted:', {
+            bankCode: this.selectedBankCode,
+            templateId: this.selectedTemplateId,
+            propertyType: this.selectedPropertyType,
+            referenceNumber: this.reportReferenceNumber,
+            status: this.reportStatus
+          });
+          
+          // The template_id might be an ObjectId, let's try to determine the template code
+          if (this.selectedTemplateId && !this.selectedPropertyType) {
+            // If we don't have property_type, try to infer from common patterns
+            console.log('⚠️ No property_type found, will need to determine template code from template_id');
+            // For now, default to 'land' which seems to be the most common
+            this.selectedTemplateId = 'LAND'; // This will be converted to lowercase in loadTemplateData
+          } else if (this.selectedPropertyType) {
+            // Map property type to template ID if needed
+            const templateMapping: { [key: string]: string } = {
+              'residential land': 'LAND',
+              'commercial land': 'LAND',
+              'agricultural land': 'LAND',
+              'land': 'LAND',
+              'residential': 'RESIDENTIAL',
+              'commercial': 'COMMERCIAL'
+            };
+            
+            const mappedTemplate = templateMapping[this.selectedPropertyType.toLowerCase()];
+            if (mappedTemplate) {
+              this.selectedTemplateId = mappedTemplate;
+              console.log('📋 Mapped property type to template:', this.selectedPropertyType, '->', this.selectedTemplateId);
+            }
+          }
+          
+          // Store report data to populate after template loads
+          this.pendingReportData = reportData;
+          
+          // Since the report has an ObjectId template_id, we need to call backend to get available templates
+          // and match or use a fallback approach
+          console.log('� Template ID is ObjectId, need to determine correct template code');
+          console.log('📋 Report has property_address:', reportData.property_address);
+          
+          // For now, let's try some common SBI templates and see what works
+          this.tryLoadingAvailableTemplate(this.selectedBankCode);
+        } else {
+          console.error('❌ Report not found or invalid data');
+          this.isLoading = false;
+        }
+      },
+      error: (error) => {
+        console.error('❌ Error loading existing report:', error);
+        this.isLoading = false;
+        // Could redirect back to reports list or show error message
+      }
+    });
+  }
+
+  populateFormWithReportData(reportData: any) {
+    console.log('📝 Populating form with report data:', reportData);
+    console.log('📝 Report data structure:', JSON.stringify(reportData.report_data, null, 2));
+    console.log('📝 Available form controls:', Object.keys(this.reportForm.controls));
+    
+    if (this.reportForm && reportData.report_data) {
+      // Handle nested structure - flatten the report_data
+      const flattenData = (obj: any, prefix = ''): any => {
+        const flattened: any = {};
+        Object.keys(obj).forEach(key => {
+          const value = obj[key];
+          const newKey = prefix ? `${prefix}.${key}` : key;
+          
+          if (value && typeof value === 'object' && !Array.isArray(value)) {
+            // Recursively flatten nested objects
+            Object.assign(flattened, flattenData(value, newKey));
+          } else {
+            flattened[newKey] = value;
+          }
+        });
+        return flattened;
+      };
+      
+      const flattenedData = flattenData(reportData.report_data);
+      console.log('📝 Flattened report data:', flattenedData);
+      
+      // Try to populate form fields with flattened data
+      Object.keys(flattenedData).forEach(fieldKey => {
+        const control = this.reportForm.get(fieldKey);
+        if (control) {
+          const value = flattenedData[fieldKey];
+          control.setValue(value);
+          console.log(`✅ Set field ${fieldKey}:`, value);
+        } else {
+          console.log(`⚠️ Form control not found for field: ${fieldKey}`);
+        }
+      });
+      
+      // Also try direct mapping for nested structure
+      console.log('📝 Trying direct nested structure mapping...');
+      Object.keys(reportData.report_data).forEach(section => {
+        const sectionData = reportData.report_data[section];
+        console.log(`📝 Processing section: ${section}`, sectionData);
+        
+        if (typeof sectionData === 'object') {
+          Object.keys(sectionData).forEach(fieldKey => {
+            const control = this.reportForm.get(fieldKey);
+            if (control) {
+              const value = sectionData[fieldKey];
+              control.setValue(value);
+              console.log(`✅ Set nested field ${fieldKey}:`, value);
+            } else {
+              console.log(`⚠️ Form control not found for nested field: ${fieldKey}`);
+            }
+          });
+        }
+      });
+      
+      // Apply readonly state if in view mode
+      this.applyViewModeState();
+      
+      // Force change detection to update UI
+      this.cdr.detectChanges();
+      console.log('📝 Form populated with existing report data');
+    } else {
+      console.log('📝 No report_data found or form not ready, fields will remain empty for draft');
+    }
+    
+    this.isLoading = false;
+  }
+
+  // Try to find a working template for the bank
+  tryLoadingAvailableTemplate(bankCode: string) {
+    console.log('🔍 Trying to find available templates for bank:', bankCode);
+    
+    // Common template codes to try for SBI
+    const commonTemplates = ['LAND', 'land-property', 'residential', 'commercial', 'agricultural'];
+    
+    let templateIndex = 0;
+    
+    const tryNextTemplate = () => {
+      if (templateIndex >= commonTemplates.length) {
+        console.error('❌ No working templates found for bank:', bankCode);
+        console.log('🔄 Creating minimal form structure for report viewing...');
+        this.createMinimalFormForViewing();
+        return;
+      }
+      
+      const templateToTry = commonTemplates[templateIndex];
+      console.log(`🔄 Trying template ${templateIndex + 1}/${commonTemplates.length}: ${templateToTry}`);
+      
+      this.selectedTemplateId = templateToTry;
+      
+      // Try to load this template
+      const templateCode = templateToTry.toLowerCase();
+      this.templateService.getAggregatedTemplateFields(bankCode, templateCode)
+        .subscribe({
+          next: (response) => {
+            console.log(`✅ Found working template: ${templateToTry}`);
+            // Process the response like in loadTemplateData
+            this.handleTemplateResponse(response);
+          },
+          error: (error) => {
+            console.log(`❌ Template ${templateToTry} not available:`, error.error?.detail || error.message);
+            templateIndex++;
+            tryNextTemplate();
+          }
+        });
+    };
+    
+    tryNextTemplate();
+  }
+
+  // Create a minimal form structure when no template is available
+  createMinimalFormForViewing() {
+    console.log('📝 Creating minimal form structure for report viewing...');
+    
+    // Create basic form controls based on the report_data structure
+    if (this.pendingReportData?.report_data) {
+      const formGroup: any = {};
+      
+      const addControlsFromObject = (obj: any, prefix = '') => {
+        Object.keys(obj).forEach(key => {
+          const value = obj[key];
+          const controlName = prefix ? `${prefix}_${key}` : key;
+          
+          if (value && typeof value === 'object' && !Array.isArray(value)) {
+            addControlsFromObject(value, controlName);
+          } else {
+            formGroup[controlName] = [value || ''];
+            console.log(`➕ Added control: ${controlName} = ${value}`);
+          }
+        });
+      };
+      
+      addControlsFromObject(this.pendingReportData.report_data);
+      
+      // Create the form
+      this.reportForm = this.fb.group(formGroup);
+      
+      console.log('📝 Minimal form created with controls:', Object.keys(formGroup));
+      
+      // Apply view mode and populate data
+      this.applyViewModeState();
+      this.populateFormWithMinimalStructure(this.pendingReportData);
+      
+      this.isLoading = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  // Handle successful template response
+  handleTemplateResponse(response: any) {
+    console.log('✅ Template response received:', response);
+    
+    if (response && response.success && response.data) {
+      this.templateData = response.data;
+      console.log('📊 Template data structure loaded:', {
+        totalFields: this.templateData?.totalFieldCount,
+        templateData: this.templateData
+      });
+      
+      this.buildFormControls();
+      this.initializeBankSpecificTabs();
+      
+      // Force change detection
+      this.cdr.detectChanges();
+      
+      // Now populate with report data
+      if (this.pendingReportData) {
+        console.log('📝 Template loaded, populating with report data');
+        this.populateFormWithReportData(this.pendingReportData);
+        this.pendingReportData = null;
+      }
+      
+      this.isLoading = false;
+    } else {
+      console.error('❌ Invalid template response format');
+      this.createMinimalFormForViewing();
+    }
+  }
+
+  // Populate form with minimal structure when template isn't available
+  populateFormWithMinimalStructure(reportData: any) {
+    console.log('📝 Populating minimal form structure');
+    
+    if (this.reportForm && reportData.report_data) {
+      const populateFromObject = (obj: any, prefix = '') => {
+        Object.keys(obj).forEach(key => {
+          const value = obj[key];
+          const controlName = prefix ? `${prefix}_${key}` : key;
+          
+          if (value && typeof value === 'object' && !Array.isArray(value)) {
+            populateFromObject(value, controlName);
+          } else {
+            const control = this.reportForm.get(controlName);
+            if (control) {
+              control.setValue(value);
+              console.log(`✅ Set ${controlName} = ${value}`);
+            }
+          }
+        });
+      };
+      
+      populateFromObject(reportData.report_data);
+      this.cdr.detectChanges();
+    }
+  }
+
+  // Helper methods for minimal form display
+  getFormControlsArray(): Array<{key: string, control: any}> {
+    if (!this.reportForm) return [];
+    
+    return Object.keys(this.reportForm.controls).map(key => ({
+      key: key,
+      control: this.reportForm.controls[key]
+    }));
+  }
+
+  formatFieldLabel(fieldKey: string): string {
+    // Convert field keys like 'property_details_property_type' to 'Property Type'
+    return fieldKey
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  }
+
+  // Mode switching methods
+  switchToEditMode() {
+    console.log('✏️ Switching to Edit Mode');
+    this.isViewMode = false;
+    this.isEditMode = true;
+    this.applyEditModeState();
+    
+    // Update URL to reflect edit mode
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { mode: 'edit' },
+      queryParamsHandling: 'merge'
+    });
+  }
+
+  switchToViewMode() {
+    console.log('👁️ Switching to View Mode');
+    this.isViewMode = true;
+    this.isEditMode = false;
+    this.applyViewModeState();
+    
+    // Update URL to reflect view mode
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { mode: 'view' },
+      queryParamsHandling: 'merge'
+    });
+  }
+
+  applyViewModeState() {
+    if (this.reportForm && this.isViewMode) {
+      // Disable all form controls for view mode
+      this.reportForm.disable();
+      console.log('🔒 Form disabled for view mode');
+    }
+  }
+
+  applyEditModeState() {
+    if (this.reportForm && this.isEditMode) {
+      // Enable all form controls for edit mode
+      this.reportForm.enable();
+      console.log('🔓 Form enabled for edit mode');
+    }
   }
 
   loadQueryParams() {
@@ -1378,14 +1779,101 @@ export class ReportForm implements OnInit {
 
     console.log('💾 Saving draft data:', draftData);
 
-    // TODO: Call API to save draft
-    // For now, simulate API call
-    setTimeout(() => {
-      this.reportStatus = 'draft';
+    // Ensure we have required fields
+    const propertyAddress = formData['property_address'] || 
+                           formData['Property Address'] || 
+                           formData['propertyAddress'] || 
+                           'Property Address TBD';
+    
+    // Validate required fields
+    if (!this.selectedBankCode) {
       this.isLoading = false;
-      console.log('✅ Draft saved successfully to MongoDB with status:', this.reportStatus);
-      // Show success notification (will be implemented with notification service)
-    }, 1000);
+      alert('Bank code is required to save draft');
+      return;
+    }
+    
+    if (!this.selectedTemplateId && !this.customTemplateId) {
+      this.isLoading = false;
+      alert('Template ID is required to save draft');
+      return;
+    }
+
+    // Create report request to match backend API
+    const createRequest = {
+      bank_code: this.selectedBankCode,
+      template_id: this.selectedTemplateId || this.customTemplateId || '',
+      property_address: propertyAddress,
+      report_data: {
+        ...formData,
+        status: 'draft',
+        bankName: this.selectedBankName,
+        templateName: this.selectedTemplateName || this.customTemplateName,
+        referenceNumber: this.reportReferenceNumber,
+        organizationId: this.currentOrgShortName,
+        customTemplateId: this.customTemplateId,
+        customTemplateName: this.customTemplateName,
+        propertyType: this.selectedPropertyType,
+        reportType: 'valuation_report',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+    };
+
+    console.log('📡 Creating report via API:', createRequest);
+    console.log('🔍 Request validation:');
+    console.log('  - bank_code:', createRequest.bank_code);
+    console.log('  - template_id:', createRequest.template_id);
+    console.log('  - property_address:', createRequest.property_address);
+    console.log('  - report_data keys:', Object.keys(createRequest.report_data));
+
+    // Call API to create/save draft using HTTP client directly with auth headers
+    const token = this.authService.getToken();
+    console.log('🔑 Auth token available:', !!token);
+    const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+    
+    this.http.post<any>('http://localhost:8000/api/reports', createRequest, { headers }).subscribe({
+      next: (response) => {
+        console.log('✅ Draft saved successfully:', response);
+        this.reportStatus = 'draft';
+        this.isLoading = false;
+        
+        // Store report ID for future updates
+        if (response.success && response.data && response.data.report_id) {
+          this.currentReportId = response.data.report_id;
+          console.log('📋 Report ID stored:', this.currentReportId);
+          
+          // Also store the reference number if available
+          if (response.data.reference_number) {
+            this.reportReferenceNumber = response.data.reference_number;
+            console.log('📋 Reference number updated:', this.reportReferenceNumber);
+          }
+        }
+        
+        // Show success message
+        alert(`Draft saved successfully! Report ID: ${this.currentReportId}`);
+      },
+      error: (error) => {
+        console.error('❌ Error saving draft - Full error object:', error);
+        console.error('❌ Error status:', error.status);
+        console.error('❌ Error message:', error.message);
+        console.error('❌ Error error property:', JSON.stringify(error.error, null, 2));
+        
+        this.isLoading = false;
+        
+        let errorMessage = 'Failed to save draft. Please try again.';
+        if (error.error) {
+          if (typeof error.error === 'string') {
+            errorMessage += `\nError: ${error.error}`;
+          } else if (error.error.detail) {
+            errorMessage += `\nError: ${error.error.detail}`;
+          } else {
+            errorMessage += `\nError: ${JSON.stringify(error.error)}`;
+          }
+        }
+        
+        alert(errorMessage);
+      }
+    });
   }
 
   /**

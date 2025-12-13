@@ -103,6 +103,9 @@ export class CustomTemplatesManagementComponent implements OnInit {
       if (orgShortName) {
         this.currentOrgShortName.set(orgShortName);
         console.log('📍 Templates component - Current organization:', orgShortName);
+        
+        // Load templates directly for now
+        this.loadTemplates();
       }
     });
 
@@ -134,16 +137,23 @@ export class CustomTemplatesManagementComponent implements OnInit {
       });
   }
 
+
+
   loadTemplates(): void {
+    console.log('🔄 Loading templates...');
     this.isLoading.set(true);
     this.customTemplateService.getTemplates().subscribe({
       next: (response) => {
+        console.log('✅ Templates loaded successfully:', response);
+        console.log('📊 Number of templates found:', response.data.length);
+        console.log('📋 Template details:', response.data.map(t => ({ id: t._id, name: t.templateName })));
         this.templates.set(response.data);
         this.isLoading.set(false);
         this.error.set(null);
       },
       error: (error) => {
         console.error('❌ Failed to load templates:', error);
+        console.error('❌ Error details:', JSON.stringify(error, null, 2));
         this.error.set('Failed to load custom templates');
         this.isLoading.set(false);
       }

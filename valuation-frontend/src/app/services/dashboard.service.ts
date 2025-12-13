@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, forkJoin, of } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { Observable, forkJoin, of, throwError, timer } from 'rxjs';
+import { map, catchError, timeout, timeoutWith } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 
 export interface DashboardReport {
@@ -89,15 +89,41 @@ export class DashboardService {
   }
 
   /**
+   * Extract organization from token for debugging
+   */
+  private extractOrgFromToken(authHeader: string): string {
+    try {
+      const token = authHeader.replace('Bearer ', '');
+      // Dev tokens have format: dev_admin_system.com_ORGNAME_role
+      const parts = token.split('_');
+      if (parts.length >= 4) {
+        return parts[3]; // Organization name is the 4th part
+      }
+      return 'unknown';
+    } catch (error) {
+      return 'parse-error';
+    }
+  }
+
+  /**
    * Get pending reports for dashboard
    */
   getPendingReports(limit: number = 5): Observable<DashboardReport[]> {
     const headers = this.getHeaders();
+    console.log('🔄 Fetching pending reports...');
+    
     return this.http.get<any>(`${this.baseUrl}/dashboard/pending-reports?limit=${limit}`, { headers })
       .pipe(
-        map(response => response.data || []),
+        timeout(30000), // 30 second timeout
+        map(response => {
+          console.log('✅ Pending reports response:', response);
+          return response.data || [];
+        }),
         catchError(error => {
           console.error('❌ Error fetching pending reports:', error);
+          if (error.name === 'TimeoutError') {
+            console.error('❌ Pending reports request timed out');
+          }
           return of([]);
         })
       );
@@ -107,12 +133,21 @@ export class DashboardService {
    * Get recently created reports for dashboard
    */
   getCreatedReports(limit: number = 5): Observable<DashboardReport[]> {
+    console.log('🔄 DashboardService.getCreatedReports called with limit:', limit);
     const headers = this.getHeaders();
-    return this.http.get<any>(`${this.baseUrl}/dashboard/created-reports?limit=${limit}`, { headers })
+    const url = `${this.baseUrl}/dashboard/created-reports?limit=${limit}`;
+    
+    return this.http.get<any>(url, { headers })
       .pipe(
+        timeout(10000),
         map(response => response.data || []),
         catchError(error => {
-          console.error('❌ Error fetching created reports:', error);
+          console.error('❌ Error fetching created reports:', {
+            status: error.status,
+            message: error.message,
+            url: url,
+            isTimeout: error.name === 'TimeoutError'
+          });
           return of([]);
         })
       );
@@ -122,12 +157,21 @@ export class DashboardService {
    * Get banks summary for dashboard
    */
   getBanks(limit: number = 8): Observable<DashboardBank[]> {
+    console.log('🔄 DashboardService.getBanks called with limit:', limit);
     const headers = this.getHeaders();
-    return this.http.get<any>(`${this.baseUrl}/dashboard/banks?limit=${limit}`, { headers })
+    const url = `${this.baseUrl}/dashboard/banks?limit=${limit}`;
+    
+    return this.http.get<any>(url, { headers })
       .pipe(
+        timeout(10000),
         map(response => response.data || []),
         catchError(error => {
-          console.error('❌ Error fetching banks:', error);
+          console.error('❌ Error fetching banks:', {
+            status: error.status,
+            message: error.message,
+            url: url,
+            isTimeout: error.name === 'TimeoutError'
+          });
           return of([]);
         })
       );
@@ -137,15 +181,31 @@ export class DashboardService {
    * Get custom templates for dashboard
    */
   getTemplates(limit: number = 5): Observable<{templates: DashboardTemplate[], total: number}> {
+    console.log('🔄 DashboardService.getTemplates called with limit:', limit);
     const headers = this.getHeaders();
-    return this.http.get<any>(`${this.baseUrl}/dashboard/templates?limit=${limit}`, { headers })
+    const url = `${this.baseUrl}/dashboard/templates?limit=${limit}`;
+    const currentToken = headers.get('Authorization');
+    console.log('🔑 DashboardService: Using token for templates:', currentToken?.substring(0, 50) + '...');
+    
+    // CRITICAL: Log what organization this token is for
+    if (currentToken) {
+      console.log('🏢 DashboardService: Token organization context:', this.extractOrgFromToken(currentToken));
+    }
+    
+    return this.http.get<any>(url, { headers })
       .pipe(
+        timeout(10000),
         map(response => ({
           templates: response.data || [],
           total: response.total || 0
         })),
         catchError(error => {
-          console.error('❌ Error fetching templates:', error);
+          console.error('❌ Error fetching templates:', {
+            status: error.status,
+            message: error.message,
+            url: url,
+            isTimeout: error.name === 'TimeoutError'
+          });
           return of({ templates: [], total: 0 });
         })
       );
@@ -155,12 +215,21 @@ export class DashboardService {
    * Get recent activities for dashboard
    */
   getRecentActivities(limit: number = 10): Observable<DashboardActivity[]> {
+    console.log('🔄 DashboardService.getRecentActivities called with limit:', limit);
     const headers = this.getHeaders();
-    return this.http.get<any>(`${this.baseUrl}/dashboard/recent-activities?limit=${limit}`, { headers })
+    const url = `${this.baseUrl}/dashboard/recent-activities?limit=${limit}`;
+    
+    return this.http.get<any>(url, { headers })
       .pipe(
+        timeout(10000),
         map(response => response.data || []),
         catchError(error => {
-          console.error('❌ Error fetching recent activities:', error);
+          console.error('❌ Error fetching recent activities:', {
+            status: error.status,
+            message: error.message,
+            url: url,
+            isTimeout: error.name === 'TimeoutError'
+          });
           return of([]);
         })
       );
@@ -170,12 +239,21 @@ export class DashboardService {
    * Get dashboard statistics
    */
   getStats(): Observable<DashboardStats> {
+    console.log('🔄 DashboardService.getStats called');
     const headers = this.getHeaders();
-    return this.http.get<any>(`${this.baseUrl}/dashboard/stats`, { headers })
+    const url = `${this.baseUrl}/dashboard/stats`;
+    
+    return this.http.get<any>(url, { headers })
       .pipe(
+        timeout(10000),
         map(response => response.data || {}),
         catchError(error => {
-          console.error('❌ Error fetching stats:', error);
+          console.error('❌ Error fetching stats:', {
+            status: error.status,
+            message: error.message,
+            url: url,
+            isTimeout: error.name === 'TimeoutError'
+          });
           return of({
             total_reports: 0,
             pending_reports: 0,
@@ -189,27 +267,37 @@ export class DashboardService {
   }
 
   /**
-   * Get all dashboard data in a single call
+   * Get all dashboard data in a single call with timeout
    */
   getDashboardData(): Observable<DashboardData> {
+    console.log('🔄 Starting dashboard data fetch...');
+    
     return forkJoin({
       pendingReports: this.getPendingReports(),
-      createdReports: this.getCreatedReports(),
+      createdReports: this.getCreatedReports(), 
       banks: this.getBanks(),
       templates: this.getTemplates(),
       recentActivities: this.getRecentActivities(),
       stats: this.getStats()
     }).pipe(
-      map(results => ({
-        pendingReports: results.pendingReports,
-        createdReports: results.createdReports,
-        banks: results.banks,
-        templates: results.templates.templates,
-        recentActivities: results.recentActivities,
-        stats: results.stats
-      })),
+      map(results => {
+        console.log('✅ Dashboard data fetch completed:', results);
+        return {
+          pendingReports: results.pendingReports,
+          createdReports: results.createdReports,
+          banks: results.banks,
+          templates: results.templates.templates,
+          recentActivities: results.recentActivities,
+          stats: results.stats
+        };
+      }),
       catchError(error => {
         console.error('❌ Error fetching dashboard data:', error);
+        console.error('❌ Error details:', {
+          message: error.message,
+          status: error.status,
+          url: error.url
+        });
         return of({
           pendingReports: [],
           createdReports: [],

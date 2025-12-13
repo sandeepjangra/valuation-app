@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Debug Tool</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 1200px; 
+            margin: 20px auto; 
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .endpoint { 
+            margin-bottom: 20px; 
+            padding: 15px; 
+            border: 1px solid #ddd; 
+            border-radius: 4px;
+            background: #fafafa;
+        }
+        .endpoint h3 { 
+            margin: 0 0 10px 0; 
+            color: #333;
+        }
+        button { 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            padding: 8px 16px; 
+            border-radius: 4px; 
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover { background: #0056b3; }
+        button.loading { 
+            background: #6c757d; 
+            cursor: not-allowed;
+        }
+        .result { 
+            margin-top: 10px; 
+            padding: 10px; 
+            border-radius: 4px; 
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success { 
+            background: #d4edda; 
+            color: #155724; 
+            border: 1px solid #c3e6cb;
+        }
+        .error { 
+            background: #f8d7da; 
+            color: #721c24; 
+            border: 1px solid #f5c6cb;
+        }
+        .loading-result { 
+            background: #fff3cd; 
+            color: #856404; 
+            border: 1px solid #ffeaa7;
+        }
+        .login-section {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .login-section input {
+            margin: 5px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        #authToken {
+            width: 100%;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 API Debug Tool</h1>
+        <p>Test individual API endpoints to identify performance issues.</p>
+        
+        <!-- Login Section -->
+        <div class="login-section">
+            <h3>🔑 Authentication</h3>
+            <input type="email" id="username" placeholder="Email" value="admin@system.com">
+            <input type="password" id="password" placeholder="Password" value="admin123">
+            <button onclick="login()">Login</button>
+            <input type="text" id="authToken" placeholder="Auth token will appear here..." readonly>
+            <div id="auth-result"></div>
+        </div>
+
+        <!-- Dashboard API Endpoints -->
+        <div class="endpoint">
+            <h3>📊 Dashboard API - Stats</h3>
+            <button onclick="testEndpoint('/api/dashboard/stats', 'stats')">Test Stats</button>
+            <button onclick="testEndpoint('/api/dashboard/pending-reports', 'pending')">Test Pending Reports</button>
+            <button onclick="testEndpoint('/api/dashboard/created-reports', 'created')">Test Created Reports</button>
+            <div id="stats-result"></div>
+        </div>
+
+        <div class="endpoint">
+            <h3>📋 Dashboard API - Data</h3>
+            <button onclick="testEndpoint('/api/dashboard/banks', 'banks')">Test Banks</button>
+            <button onclick="testEndpoint('/api/dashboard/templates', 'templates')">Test Templates</button>
+            <button onclick="testEndpoint('/api/dashboard/recent-activities', 'activities')">Test Activities</button>
+            <div id="data-result"></div>
+        </div>
+
+        <!-- Reports API Endpoints -->
+        <div class="endpoint">
+            <h3>📄 Reports API</h3>
+            <button onclick="testEndpoint('/api/reports', 'reports')">Test Reports List</button>
+            <button onclick="testEndpoint('/api/reports?limit=5', 'reports-small')">Test Reports (Limited)</button>
+            <div id="reports-result"></div>
+        </div>
+
+        <!-- Health Check -->
+        <div class="endpoint">
+            <h3>❤️ Health Check</h3>
+            <button onclick="testHealthCheck()">Test Health</button>
+            <div id="health-result"></div>
+        </div>
+    </div>
+
+    <script>
+        const BASE_URL = 'http://localhost:8000';
+        let authToken = '';
+
+        async function login() {
+            const email = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            console.log('🔑 Attempting login with:', email);
+            showResult('auth-result', 'Logging in...', 'loading-result');
+            
+            try {
+                const response = await fetch(`${BASE_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                console.log('📡 Login response status:', response.status);
+                
+                const data = await response.json();
+                console.log('📋 Login response data:', data);
+                
+                if (data.success && data.data && data.data.access_token) {
+                    authToken = data.data.access_token;
+                    document.getElementById('authToken').value = authToken;
+                    showResult('auth-result', `✅ Login successful! Token: ${authToken.substring(0, 20)}...`, 'success');
+                } else {
+                    showResult('auth-result', '❌ Login failed: ' + JSON.stringify(data, null, 2), 'error');
+                }
+            } catch (error) {
+                console.error('❌ Login error:', error);
+                showResult('auth-result', '❌ Login error: ' + error.message, 'error');
+            }
+        }
+
+        async function testEndpoint(endpoint, resultId) {
+            const fullResultId = resultId + '-result';
+            showResult(fullResultId, 'Testing...', 'loading-result');
+            
+            const startTime = performance.now();
+            
+            try {
+                const response = await Promise.race([
+                    fetch(`${BASE_URL}${endpoint}`, {
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`,
+                            'Content-Type': 'application/json'
+                        }
+                    }),
+                    new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Request timeout (15s)')), 15000)
+                    )
+                ]);
+                
+                const endTime = performance.now();
+                const duration = Math.round(endTime - startTime);
+                
+                const data = await response.json();
+                const status = response.status;
+                
+                const result = {
+                    status: status,
+                    duration: `${duration}ms`,
+                    endpoint: endpoint,
+                    response: data
+                };
+                
+                const className = status >= 200 && status < 300 ? 'success' : 'error';
+                showResult(fullResultId, JSON.stringify(result, null, 2), className);
+                
+            } catch (error) {
+                const endTime = performance.now();
+                const duration = Math.round(endTime - startTime);
+                
+                const result = {
+                    error: error.message,
+                    duration: `${duration}ms`,
+                    endpoint: endpoint
+                };
+                
+                showResult(fullResultId, JSON.stringify(result, null, 2), 'error');
+            }
+        }
+
+        async function testHealthCheck() {
+            showResult('health-result', 'Testing...', 'loading-result');
+            
+            const startTime = performance.now();
+            
+            try {
+                const response = await fetch(`${BASE_URL}/api/health`);
+                const endTime = performance.now();
+                const duration = Math.round(endTime - startTime);
+                
+                const data = await response.json();
+                
+                const result = {
+                    status: response.status,
+                    duration: `${duration}ms`,
+                    response: data
+                };
+                
+                showResult('health-result', JSON.stringify(result, null, 2), 'success');
+                
+            } catch (error) {
+                const endTime = performance.now();
+                const duration = Math.round(endTime - startTime);
+                
+                const result = {
+                    error: error.message,
+                    duration: `${duration}ms`
+                };
+                
+                showResult('health-result', JSON.stringify(result, null, 2), 'error');
+            }
+        }
+
+        function showResult(elementId, text, className) {
+            const element = document.getElementById(elementId);
+            if (!element) {
+                // Create result div if it doesn't exist
+                const parent = document.querySelector(`[onclick*="${elementId.replace('-result', '')}"]`)?.parentElement;
+                if (parent) {
+                    const resultDiv = document.createElement('div');
+                    resultDiv.id = elementId;
+                    resultDiv.className = 'result';
+                    parent.appendChild(resultDiv);
+                }
+            }
+            
+            const resultElement = document.getElementById(elementId);
+            if (resultElement) {
+                resultElement.textContent = text;
+                resultElement.className = `result ${className}`;
+            }
+        }
+
+        // Auto-login on page load
+        window.onload = function() {
+            console.log('🚀 Page loaded, attempting auto-login');
+            // Delay auto-login by 1 second to let page fully load
+            setTimeout(() => {
+                login();
+            }, 1000);
+        };
+    </script>
+</body>
+</html>

@@ -68,6 +68,12 @@ export class CustomTemplateFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.initializeForms();
+    
+    // Add organization context validation
+    const currentOrgFromRoute = this.route.snapshot.paramMap.get('orgShortName');
+    console.log('🏢 CustomTemplateForm - Current organization from route:', currentOrgFromRoute);
+    console.log('🔑 CustomTemplateForm - Current auth token org context:', this.authService.getToken()?.substring(0, 50) + '...');
+    
     this.loadRouteParams();
   }
 
@@ -120,8 +126,13 @@ export class CustomTemplateFormComponent implements OnInit {
   private loadExistingTemplate(templateId: string): void {
     this.isLoading.set(true);
     
+    // Get current organization from route to validate access
+    const currentOrgFromRoute = this.route.snapshot.paramMap.get('orgShortName');
+    console.log('🔍 Loading template for organization:', currentOrgFromRoute);
+    
     this.customTemplateService.getTemplate(templateId).subscribe({
       next: (template) => {
+        console.log('✅ Template loaded successfully:', template.templateName);
         this.existingTemplate.set(template);
         this.bankCode.set(template.bankCode);
         this.propertyType.set(template.propertyType);
@@ -137,7 +148,24 @@ export class CustomTemplateFormComponent implements OnInit {
       },
       error: (error) => {
         console.error('❌ Failed to load template:', error);
-        this.error.set('Failed to load template');
+        console.error('❌ Error details:', error);
+        
+        // Check if it's a 404 error (template not found in current organization)
+        if (error.status === 404) {
+          this.error.set('Template not found in current organization. You may not have access to this template.');
+          
+          // Redirect to templates list for the current organization
+          const currentOrg = this.route.snapshot.paramMap.get('orgShortName');
+          if (currentOrg) {
+            console.log('🔄 Redirecting to templates list for organization:', currentOrg);
+            setTimeout(() => {
+              this.router.navigate(['/org', currentOrg, 'custom-templates']);
+            }, 2000);
+          }
+        } else {
+          this.error.set('Failed to load template');
+        }
+        
         this.isLoading.set(false);
       }
     });

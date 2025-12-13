@@ -8,22 +8,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { OrganizationService } from '../../services/organization.service';
+import { ReportsService, Report as ApiReport } from '../../services/reports.service';
 import { User, OrganizationContext } from '../../models/organization.model';
 
-interface Report {
-  id: string;
-  title: string;
-  description: string;
-  type: 'property_valuation' | 'market_analysis' | 'comparative_analysis';
-  status: 'draft' | 'in_progress' | 'completed' | 'reviewed';
-  createdBy: string;
-  createdAt: Date;
-  updatedAt: Date;
-  organizationId: string;
-  propertyAddress?: string;
-  valuation?: number;
-  currency?: string;
-}
+// Using ApiReport from ReportsService
 
 interface ReportFilters {
   type?: string;
@@ -227,10 +215,10 @@ interface ReportFilters {
             
             <div class="report-header">
               <div class="report-title-section">
-                <h3 class="report-title">{{ report.title }}</h3>
+                <h3 class="report-title">{{ report.reference_number }}</h3>
                 <div class="report-meta">
-                  <span class="report-type">{{ getTypeLabel(report.type) }}</span>
-                  <span class="report-date">{{ formatDate(report.createdAt) }}</span>
+                  <span class="report-type">{{ report.bank_code }}</span>
+                  <span class="report-date">{{ formatDate(report.created_at) }}</span>
                 </div>
               </div>
               
@@ -242,22 +230,27 @@ interface ReportFilters {
             </div>
 
             <div class="report-content">
-              <p class="report-description">{{ report.description }}</p>
+              <p class="report-description">Report ID: {{ report.report_id }}</p>
               
               <div class="report-details">
-                <div *ngIf="report.propertyAddress" class="detail-item">
+                <div *ngIf="report.property_address" class="detail-item">
                   <span class="detail-label">📍 Property:</span>
-                  <span class="detail-value">{{ report.propertyAddress }}</span>
-                </div>
-                
-                <div *ngIf="report.valuation" class="detail-item">
-                  <span class="detail-label">💰 Valuation:</span>
-                  <span class="detail-value">{{ formatCurrency(report.valuation) }}</span>
+                  <span class="detail-value">{{ report.property_address }}</span>
                 </div>
                 
                 <div class="detail-item">
-                  <span class="detail-label">👤 Created by:</span>
-                  <span class="detail-value">{{ getUserName(report.createdBy) }}</span>
+                  <span class="detail-label">🏦 Bank:</span>
+                  <span class="detail-value">{{ report.bank_code }}</span>
+                </div>
+                
+                <div class="detail-item">
+                  <span class="detail-label">� Created by:</span>
+                  <span class="detail-value">{{ report.created_by_email }}</span>
+                </div>
+                
+                <div class="detail-item">
+                  <span class="detail-label">� Created:</span>
+                  <span class="detail-value">{{ formatDate(report.created_at) }}</span>
                 </div>
               </div>
             </div>
@@ -276,6 +269,7 @@ interface ReportFilters {
                 Edit
               </button>
               
+              <!-- Delete functionality temporarily disabled
               <button 
                 *ngIf="canDeleteReport(report)"
                 class="btn btn-outline btn-danger" 
@@ -283,6 +277,7 @@ interface ReportFilters {
                 <span class="btn-icon">🗑️</span>
                 Delete
               </button>
+              -->
             </div>
           </div>
         </div>
@@ -911,6 +906,7 @@ interface ReportFilters {
 export class ReportsComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly organizationService = inject(OrganizationService);
+  private readonly reportsService = inject(ReportsService);
   private readonly fb = inject(FormBuilder);
 
   // Component state
@@ -920,7 +916,7 @@ export class ReportsComponent implements OnInit {
   readonly showCreateModal = signal<boolean>(false);
 
   // Data
-  readonly allReports = signal<Report[]>([]);
+  readonly allReports = signal<ApiReport[]>([]);
   readonly organizationUsers = signal<User[]>([]);
   readonly currentPage = signal<number>(1);
   readonly itemsPerPage = 10;
@@ -942,23 +938,19 @@ export class ReportsComponent implements OnInit {
     if (this.searchTerm.trim()) {
       const search = this.searchTerm.toLowerCase();
       reports = reports.filter(report =>
-        report.title.toLowerCase().includes(search) ||
-        report.description.toLowerCase().includes(search) ||
-        (report.propertyAddress && report.propertyAddress.toLowerCase().includes(search))
+        report.reference_number.toLowerCase().includes(search) ||
+        (report.property_address && report.property_address.toLowerCase().includes(search)) ||
+        report.bank_code.toLowerCase().includes(search)
       );
     }
     
-    // Apply other filters
-    if (this.selectedFilters.type) {
-      reports = reports.filter(report => report.type === this.selectedFilters.type);
-    }
-    
+    // Apply status filter
     if (this.selectedFilters.status) {
       reports = reports.filter(report => report.status === this.selectedFilters.status);
     }
     
     if (this.selectedFilters.createdBy) {
-      reports = reports.filter(report => report.createdBy === this.selectedFilters.createdBy);
+      reports = reports.filter(report => report.created_by_email === this.selectedFilters.createdBy);
     }
     
     // Apply date range filter
@@ -981,7 +973,7 @@ export class ReportsComponent implements OnInit {
           break;
       }
       
-      reports = reports.filter(report => report.createdAt >= filterDate);
+      reports = reports.filter(report => new Date(report.created_at) >= filterDate);
     }
     
     // Apply pagination
@@ -995,7 +987,7 @@ export class ReportsComponent implements OnInit {
       total: reports.length,
       inProgress: reports.filter(r => r.status === 'in_progress').length,
       completed: reports.filter(r => r.status === 'completed').length,
-      totalValue: reports.reduce((sum, r) => sum + (r.valuation || 0), 0)
+      totalValue: 0 // Real reports don't have valuation in the basic data
     };
   });
 
@@ -1024,58 +1016,22 @@ export class ReportsComponent implements OnInit {
     this.isLoading.set(true);
     this.error.set(null);
 
-    // Simulate API call for now - replace with real API call
-    setTimeout(() => {
-      try {
-        const mockReports: Report[] = [
-          {
-            id: '1',
-            title: 'Downtown Office Building Valuation',
-            description: 'Comprehensive valuation of 10-story office building',
-            type: 'property_valuation',
-            status: 'completed',
-            createdBy: 'user-1',
-            createdAt: new Date(2024, 0, 15),
-            updatedAt: new Date(2024, 0, 20),
-            organizationId: 'demo_org_001',
-            propertyAddress: '123 Main St, Downtown',
-            valuation: 2500000,
-            currency: 'USD'
-          },
-          {
-            id: '2',
-            title: 'Residential Market Analysis Q1 2024',
-            description: 'Market trends analysis for residential properties',
-            type: 'market_analysis',
-            status: 'in_progress',
-            createdBy: 'user-2',
-            createdAt: new Date(2024, 1, 1),
-            updatedAt: new Date(2024, 1, 10),
-            organizationId: 'demo_org_001'
-          },
-          {
-            id: '3',
-            title: 'Suburban Home Comparative Analysis',
-            description: 'Comparative analysis of similar properties in suburbs',
-            type: 'comparative_analysis',
-            status: 'draft',
-            createdBy: 'user-1',
-            createdAt: new Date(2024, 1, 5),
-            updatedAt: new Date(2024, 1, 5),
-            organizationId: 'demo_org_001',
-            propertyAddress: '456 Oak Ave, Suburbs',
-            valuation: 450000,
-            currency: 'USD'
-          }
-        ];
-
-        this.allReports.set(mockReports);
+    console.log('🔄 Loading reports from API...');
+    
+    this.reportsService.getReports().subscribe({
+      next: (response) => {
+        console.log('✅ Reports loaded successfully:', response);
+        console.log('📊 Number of reports found:', response.data.length);
+        this.allReports.set(response.data);
         this.isLoading.set(false);
-      } catch (error) {
+        this.error.set(null);
+      },
+      error: (error) => {
+        console.error('❌ Failed to load reports:', error);
         this.error.set('Failed to load reports. Please try again.');
         this.isLoading.set(false);
       }
-    }, 1000);
+    });
   }
 
   /**
@@ -1143,12 +1099,12 @@ export class ReportsComponent implements OnInit {
            this.authService.hasPermission('users', 'read');
   }
 
-  canEditReport(report: Report): boolean {
+  canEditReport(report: ApiReport): boolean {
     const orgContext = this.orgContext();
-    return orgContext?.userId === report.createdBy || this.canManageReports();
+    return orgContext?.userId === report.created_by_email || this.canManageReports();
   }
 
-  canDeleteReport(report: Report): boolean {
+  canDeleteReport(report: ApiReport): boolean {
     return this.canEditReport(report);
   }
 
@@ -1206,55 +1162,38 @@ export class ReportsComponent implements OnInit {
 
   submitCreateReport(): void {
     if (this.createReportForm.invalid) return;
-
     this.isCreating.set(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      const formData = this.createReportForm.value;
-      const newReport: Report = {
-        id: Date.now().toString(),
-        title: formData.title,
-        description: formData.description || '',
-        type: formData.type,
-        status: 'draft',
-        createdBy: this.orgContext()?.userId || 'current-user',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        organizationId: this.orgContext()?.organizationId || 'demo_org_001',
-        propertyAddress: formData.propertyAddress
-      };
-
-      const reports = [...this.allReports(), newReport];
-      this.allReports.set(reports);
-      
-      this.isCreating.set(false);
-      this.closeCreateModal();
-    }, 1000);
+    // TODO: Implement real API integration for creating reports
+    console.log('Create report functionality needs API integration');
+    this.isCreating.set(false);
+    this.closeCreateModal();
   }
 
-  viewReport(report: Report): void {
+  viewReport(report: ApiReport): void {
     console.log('Viewing report:', report);
-    // Navigate to report detail view
+    // TODO: Navigate to report details view
   }
 
-  editReport(report: Report): void {
+  editReport(report: ApiReport): void {
     console.log('Editing report:', report);
     // Open edit modal or navigate to edit view
   }
 
-  deleteReport(report: Report): void {
-    if (confirm(`Are you sure you want to delete "${report.title}"?`)) {
-      const reports = this.allReports().filter(r => r.id !== report.id);
+  // Temporarily commented out - needs API integration
+  /*
+  deleteReport(report: ApiReport): void {
+    if (confirm(`Are you sure you want to delete "${report.reference_number}"?`)) {
+      const reports = this.allReports().filter(r => r._id !== report._id);
       this.allReports.set(reports);
     }
   }
+  */
 
   /**
    * Utility methods
    */
-  trackByReportId(index: number, report: Report): string {
-    return report.id;
+  trackByReportId(index: number, report: ApiReport): string {
+    return report._id;
   }
 
   getTypeLabel(type: string): string {
@@ -1281,12 +1220,13 @@ export class ReportsComponent implements OnInit {
     return user ? `${user.first_name} ${user.last_name}` : 'Unknown User';
   }
 
-  formatDate(date: Date): string {
+  formatDate(date: string | Date): string {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
     return new Intl.DateTimeFormat('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
-    }).format(date);
+    }).format(dateObj);
   }
 
   formatCurrency(amount: number): string {

@@ -38,6 +38,23 @@ export class CustomTemplateService {
   }
 
   /**
+   * Extract organization from token for debugging
+   */
+  extractOrgFromToken(authHeader: string): string {
+    try {
+      const token = authHeader.replace('Bearer ', '');
+      // Dev tokens have format: dev_admin_system.com_ORGNAME_role
+      const parts = token.split('_');
+      if (parts.length >= 4) {
+        return parts[3]; // Organization name is the 4th part
+      }
+      return 'unknown';
+    } catch (error) {
+      return 'parse-error';
+    }
+  }
+
+  /**
    * Get field structure for a specific bank and property type
    * Used when creating/editing custom templates to show all available fields
    */
@@ -78,11 +95,14 @@ export class CustomTemplateService {
       params = params.set('propertyType', propertyType);
     }
 
+    const headers = this.getAuthHeaders();
     console.log('🌐 CustomTemplateService: Listing templates', { bankCode, propertyType });
+    console.log('🔑 CustomTemplateService: Using token:', headers.get('Authorization')?.substring(0, 50) + '...');
+    console.log('🏢 CustomTemplateService: Token org context:', this.extractOrgFromToken(headers.get('Authorization') || ''));
 
     return this.http.get<CustomTemplatesListResponse>(
       `${this.API_BASE_URL}/custom-templates`,
-      { params, headers: this.getAuthHeaders() }
+      { params, headers }
     ).pipe(
       tap(response => {
         console.log('✅ Templates fetched:', {
@@ -103,10 +123,12 @@ export class CustomTemplateService {
    */
   getTemplate(templateId: string): Observable<CustomTemplate> {
     console.log(`🌐 CustomTemplateService: Fetching template ${templateId}`);
+    const headers = this.getAuthHeaders();
+    console.log('🔑 CustomTemplateService.getTemplate: Using token:', headers.get('Authorization')?.substring(0, 50) + '...');
 
     return this.http.get<CustomTemplateResponse>(
       `${this.API_BASE_URL}/custom-templates/${templateId}`,
-      { headers: this.getAuthHeaders() }
+      { headers }
     ).pipe(
       map(response => response.data),
       tap(template => {

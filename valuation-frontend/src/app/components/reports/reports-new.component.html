@@ -91,6 +91,9 @@
 
   <!-- Reports Table -->
   <div class="reports-content">
+    <!-- Debug info -->
+
+    
     <div class="loading-state" *ngIf="loading">
       <div class="loading-spinner"></div>
       <p>Loading reports...</p>
@@ -101,6 +104,13 @@
       <h3>No reports found</h3>
       <p>No reports match your current filters.</p>
       <button class="create-btn" (click)="createNewReport()">Create Your First Report</button>
+    </div>
+
+    <!-- Summary Info -->
+    <div class="summary-info" style="background: #f8f9fa; padding: 10px; margin: 10px 0; border-radius: 5px;">
+      <strong>� Reports Summary:</strong> 
+      Showing {{ reports.length }} {{ selectedTab === 'all' ? 'total' : selectedTab }} reports
+      <span *ngIf="allReports.length > 0"> ({{ allReports.length }} total loaded)</span>
     </div>
 
     <div class="reports-table" *ngIf="!loading && reports.length > 0">
