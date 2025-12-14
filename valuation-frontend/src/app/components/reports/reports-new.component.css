@@ -26,14 +26,14 @@
 .header-title h1 {
   margin: 0 0 8px 0;
   color: #2d3748;
-  font-size: 2rem;
+  font-size: 1.6rem;
   font-weight: 600;
 }
 
 .header-title p {
   margin: 0;
   color: #718096;
-  font-size: 1.1rem;
+  font-size: 1rem;
 }
 
 .header-actions {

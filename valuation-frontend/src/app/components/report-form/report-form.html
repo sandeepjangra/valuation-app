@@ -15,8 +15,11 @@
             </span>
             Report: {{ reportReferenceNumber }}
           </span>
-          <span *ngIf="!reportId">
-            ➕ New Property Valuation for {{ selectedBankName }}
+          <span *ngIf="!reportId && selectedTemplateName">
+            {{ selectedTemplateName }}
+          </span>
+          <span *ngIf="!reportId && !selectedTemplateName">
+            Property Valuation for {{ selectedBankName }}
           </span>
         </h1>
       </div>

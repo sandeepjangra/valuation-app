@@ -277,27 +277,42 @@ export class ReportForm implements OnInit {
             status: this.reportStatus
           });
           
-          // The template_id might be an ObjectId, let's try to determine the template code
-          if (this.selectedTemplateId && !this.selectedPropertyType) {
-            // If we don't have property_type, try to infer from common patterns
-            console.log('⚠️ No property_type found, will need to determine template code from template_id');
-            // For now, default to 'land' which seems to be the most common
-            this.selectedTemplateId = 'LAND'; // This will be converted to lowercase in loadTemplateData
-          } else if (this.selectedPropertyType) {
-            // Map property type to template ID if needed
-            const templateMapping: { [key: string]: string } = {
-              'residential land': 'LAND',
-              'commercial land': 'LAND',
-              'agricultural land': 'LAND',
-              'land': 'LAND',
-              'residential': 'RESIDENTIAL',
-              'commercial': 'COMMERCIAL'
-            };
+          // Check if report has stored template information from draft (extended data)
+          const reportDataAny = reportData as any;
+          if (reportDataAny.templateStructure || reportDataAny.report_data?.templateStructure) {
+            console.log('📋 Report has stored template structure, using it');
+            const templateInfo = reportDataAny.templateStructure || reportDataAny.report_data?.templateStructure;
+            this.selectedTemplateId = reportDataAny.templateId || reportData.template_id || 'land-property';
+            this.selectedBankCode = reportDataAny.bankCode || reportData.bank_code || this.selectedBankCode;
+            this.selectedPropertyType = reportDataAny.propertyType || reportData.property_type || '';
+            console.log('📋 Using stored template info:', {
+              templateId: this.selectedTemplateId,
+              bankCode: this.selectedBankCode,
+              propertyType: this.selectedPropertyType
+            });
+          } else {
+            // Fallback: try to determine from available data
+            console.log('📋 No stored template structure, inferring from data');
             
-            const mappedTemplate = templateMapping[this.selectedPropertyType.toLowerCase()];
-            if (mappedTemplate) {
-              this.selectedTemplateId = mappedTemplate;
-              console.log('📋 Mapped property type to template:', this.selectedPropertyType, '->', this.selectedTemplateId);
+            // Use a sensible default that we know works for SBI
+            this.selectedTemplateId = 'land-property'; // This should match the create URL
+            
+            if (this.selectedPropertyType) {
+              // Map property type to template ID if available
+              const templateMapping: { [key: string]: string } = {
+                'residential land': 'land-property',
+                'commercial land': 'land-property',
+                'agricultural land': 'land-property',
+                'land': 'land-property',
+                'residential': 'residential',
+                'commercial': 'commercial'
+              };
+              
+              const mappedTemplate = templateMapping[this.selectedPropertyType.toLowerCase()];
+              if (mappedTemplate) {
+                this.selectedTemplateId = mappedTemplate;
+                console.log('📋 Mapped property type to template:', this.selectedPropertyType, '->', this.selectedTemplateId);
+              }
             }
           }
           
@@ -398,9 +413,10 @@ export class ReportForm implements OnInit {
   // Try to find a working template for the bank
   tryLoadingAvailableTemplate(bankCode: string) {
     console.log('🔍 Trying to find available templates for bank:', bankCode);
+    console.log('🔍 Current report data has property_address:', this.pendingReportData?.property_address);
     
-    // Common template codes to try for SBI
-    const commonTemplates = ['LAND', 'land-property', 'residential', 'commercial', 'agricultural'];
+    // First try the exact templates that are known to work for SBI based on the create URL
+    const commonTemplates = ['land-property', 'LAND', 'residential', 'commercial', 'agricultural'];
     
     let templateIndex = 0;
     
@@ -492,17 +508,67 @@ export class ReportForm implements OnInit {
       // Force change detection
       this.cdr.detectChanges();
       
-      // Now populate with report data
+      // Now populate with report data if available
       if (this.pendingReportData) {
-        console.log('📝 Template loaded, populating with report data');
-        this.populateFormWithReportData(this.pendingReportData);
+        console.log('📝 Template loaded, populating with existing report data');
+        this.populateFormWithFullTemplate(this.pendingReportData);
         this.pendingReportData = null;
+      } else {
+        console.log('📝 Template loaded for new report');
       }
       
       this.isLoading = false;
     } else {
       console.error('❌ Invalid template response format');
       this.createMinimalFormForViewing();
+    }
+  }
+
+  // Enhanced form population for full template
+  populateFormWithFullTemplate(reportData: any) {
+    console.log('📝 Populating full template with report data');
+    console.log('📝 Available form controls:', Object.keys(this.reportForm.controls));
+    console.log('📝 Report data to populate:', reportData.report_data);
+    
+    if (this.reportForm && reportData.report_data) {
+      // First, try to map the nested structure to form controls
+      const mapNestedData = (data: any, prefix = '') => {
+        Object.keys(data).forEach(key => {
+          const value = data[key];
+          
+          // Try different control name variations
+          const possibleControlNames = [
+            key,  // direct key
+            prefix ? `${prefix}_${key}` : key,  // prefixed
+            prefix ? `${prefix}.${key}` : key,  // dot notation
+          ];
+          
+          if (value && typeof value === 'object' && !Array.isArray(value)) {
+            // Recurse into nested objects
+            mapNestedData(value, key);
+          } else {
+            // Try to find a matching form control
+            for (const controlName of possibleControlNames) {
+              const control = this.reportForm.get(controlName);
+              if (control) {
+                control.setValue(value);
+                console.log(`✅ Mapped ${JSON.stringify(data)} -> ${controlName} = ${value}`);
+                return; // Found and set, move to next
+              }
+            }
+            console.log(`⚠️ No form control found for: ${key} (tried: ${possibleControlNames.join(', ')})`);
+          }
+        });
+      };
+      
+      mapNestedData(reportData.report_data);
+      
+      // Apply appropriate mode
+      if (this.isViewMode) {
+        this.applyViewModeState();
+      }
+      
+      this.cdr.detectChanges();
     }
   }
 
@@ -549,6 +615,110 @@ export class ReportForm implements OnInit {
       .split('_')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
+  }
+
+  /**
+   * Organize flat form data into nested structure matching template expectations
+   * This converts flat field keys into nested objects based on template structure
+   */
+  organizeFormDataForTemplate(flatFormData: any): any {
+    console.log('🔄 Organizing form data for template structure...');
+    console.log('📊 Input flat data keys:', Object.keys(flatFormData));
+    
+    if (!this.templateData || !this.templateData.bankSpecificTabs) {
+      console.log('⚠️ No template data available, keeping flat structure');
+      return flatFormData;
+    }
+
+    const organizedData: any = {};
+    
+    // Process bank-specific tabs to create nested structure
+    this.templateData.bankSpecificTabs.forEach(tab => {
+      console.log(`📁 Processing tab: ${tab.tabId} (${tab.tabName})`);
+      
+      if (tab.hasSections && tab.sections) {
+        // Tab has sections - create nested structure: tab -> section -> fields
+        const tabData: any = {};
+        
+        tab.sections.forEach(section => {
+          console.log(`  📂 Processing section: ${section.sectionId} (${section.sectionName})`);
+          const sectionData: any = {};
+          
+          section.fields.forEach(field => {
+            const fieldKey = field.fieldId;
+            if (flatFormData.hasOwnProperty(fieldKey)) {
+              sectionData[fieldKey] = flatFormData[fieldKey];
+              console.log(`    ✅ Mapped ${fieldKey} to ${tab.tabId}.${section.sectionId}.${fieldKey}`);
+            }
+          });
+          
+          if (Object.keys(sectionData).length > 0) {
+            tabData[section.sectionId] = sectionData;
+          }
+        });
+        
+        if (Object.keys(tabData).length > 0) {
+          organizedData[tab.tabId] = tabData;
+        }
+      } else {
+        // Tab has direct fields - create simple nested structure: tab -> fields
+        const tabData: any = {};
+        
+        tab.fields.forEach(field => {
+          const fieldKey = field.fieldId;
+          if (flatFormData.hasOwnProperty(fieldKey)) {
+            tabData[fieldKey] = flatFormData[fieldKey];
+            console.log(`    ✅ Mapped ${fieldKey} to ${tab.tabId}.${fieldKey}`);
+          }
+        });
+        
+        if (Object.keys(tabData).length > 0) {
+          organizedData[tab.tabId] = tabData;
+        }
+      }
+    });
+    
+    // Also include common fields at root level
+    if (this.templateData.commonFieldGroups) {
+      this.templateData.commonFieldGroups.forEach(group => {
+        group.fields.forEach(field => {
+          const fieldKey = field.fieldId;
+          if (flatFormData.hasOwnProperty(fieldKey)) {
+            organizedData[fieldKey] = flatFormData[fieldKey];
+            console.log(`✅ Mapped common field ${fieldKey} to root level`);
+          }
+        });
+      });
+    }
+    
+    // Include any unmapped fields at root level (for compatibility)
+    Object.keys(flatFormData).forEach(key => {
+      let isMapped = false;
+      
+      // Check if already mapped in nested structure
+      const checkNested = (obj: any): boolean => {
+        for (const [objKey, objValue] of Object.entries(obj)) {
+          if (objKey === key) return true;
+          if (typeof objValue === 'object' && objValue !== null) {
+            if (checkNested(objValue)) return true;
+          }
+        }
+        return false;
+      };
+      
+      if (!checkNested(organizedData) && !organizedData.hasOwnProperty(key)) {
+        organizedData[key] = flatFormData[key];
+        console.log(`📋 Included unmapped field ${key} at root level`);
+      }
+    });
+
+    console.log('✅ Organized data structure:', {
+      totalTabs: Object.keys(organizedData).filter(key => typeof organizedData[key] === 'object').length,
+      totalFields: Object.keys(organizedData).length,
+      organizedKeys: Object.keys(organizedData)
+    });
+    
+    return organizedData;
   }
 
   // Mode switching methods
@@ -1758,11 +1928,13 @@ export class ReportForm implements OnInit {
 
     this.isLoading = true;
     
-    // Get form data without validation
+    // Get form data without validation - include ALL fields even if empty
     const formData = this.reportForm.getRawValue();
+    console.log('💾 Raw form data for draft:', formData);
     
+    // Create comprehensive draft data with template information
     const draftData = {
-      ...formData,
+      // Core template information - essential for re-loading
       bankCode: this.selectedBankCode,
       bankName: this.selectedBankName,
       templateId: this.selectedTemplateId,
@@ -1771,11 +1943,33 @@ export class ReportForm implements OnInit {
       customTemplateId: this.customTemplateId,
       customTemplateName: this.customTemplateName,
       referenceNumber: this.reportReferenceNumber,
+      
+      // Form data - all fields including empty ones
+      formData: formData,
+      
+      // Template structure for future reconstruction
+      templateStructure: this.templateData ? {
+        totalFieldCount: this.templateData.totalFieldCount,
+        // Store basic template info for reconstruction
+        templateDataSnapshot: JSON.stringify(this.templateData)
+      } : null,
+      
+      // Status and metadata
       status: 'draft',
       organizationId: this.currentOrgShortName,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
+    
+    console.log('💾 Comprehensive draft data prepared:', {
+      hasTemplateStructure: !!draftData.templateStructure,
+      formFieldCount: Object.keys(formData).length,
+      templateInfo: {
+        bankCode: draftData.bankCode,
+        templateId: draftData.templateId,
+        propertyType: draftData.propertyType
+      }
+    });
 
     console.log('💾 Saving draft data:', draftData);
 
@@ -1798,13 +1992,15 @@ export class ReportForm implements OnInit {
       return;
     }
 
-    // Create report request to match backend API
+    // Create report request to match backend API with nested structure matching template
+    const organizedFormData = this.organizeFormDataForTemplate(formData);
+    
     const createRequest = {
       bank_code: this.selectedBankCode,
       template_id: this.selectedTemplateId || this.customTemplateId || '',
       property_address: propertyAddress,
       report_data: {
-        ...formData,
+        ...organizedFormData,
         status: 'draft',
         bankName: this.selectedBankName,
         templateName: this.selectedTemplateName || this.customTemplateName,
