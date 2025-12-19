@@ -14,6 +14,12 @@
               {{ isViewMode ? '👁️ Viewing' : '✏️ Editing' }}
             </span>
             Report: {{ reportReferenceNumber }}
+            <!-- Status Display in Header -->
+            <span class="header-status" *ngIf="reportStatus">
+              <span class="status-badge" [class]="'status-' + reportStatus">
+                {{ reportStatus | titlecase }}
+              </span>
+            </span>
           </span>
           <span *ngIf="!reportId && selectedTemplateName">
             {{ selectedTemplateName }}
@@ -39,8 +45,8 @@
         </button>
       </div>
       <div class="right-section">
-        <button class="back-button" (click)="goBackToSelection()">
-          ← Back to Selection
+        <button class="back-button" (click)="goBackToReports()">
+          ← Back to Reports
         </button>
       </div>
     </div>
@@ -1177,8 +1183,8 @@
     </div>
 
     <!-- Action Buttons - New Workflow (Hidden in view mode) -->
-    <div class="form-actions" *ngIf="isEditMode || !reportId">
-      <div class="action-buttons">
+    <div class="form-actions" *ngIf="isEditMode || !reportId">      
+      <div class="action-buttons">        
         <!-- Cancel Button -->
         <button 
           type="button" 
@@ -1218,59 +1224,6 @@
           title="Submit report for final approval (Manager only)">
           Submit Report
         </button>
-      </div>
-      
-      <!-- Report Status Indicator -->
-      <div class="report-status" *ngIf="reportStatus">
-        <span class="status-label">Status:</span>
-        <span class="status-value" [class]="'status-' + reportStatus">
-          {{ reportStatus | titlecase }}
-        </span>
-      </div>
-      
-      <!-- Workflow Info Messages -->
-      <div class="workflow-info">
-        <div *ngIf="!reportStatus" class="info-message info-draft">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="16" x2="12" y2="12"></line>
-            <line x1="12" y1="8" x2="12.01" y2="8"></line>
-          </svg>
-          <span>Save Draft (optional) → Save Report (required) → Submit (manager only)</span>
-        </div>
-        
-        <div *ngIf="reportStatus === 'draft'" class="info-message info-saved">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 12l2 2 4-4"></path>
-            <circle cx="12" cy="12" r="10"></circle>
-          </svg>
-          <span>Draft saved. Next: Save Report with validation.</span>
-        </div>
-        
-        <div *ngIf="reportStatus === 'saved'" class="info-message info-ready">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 12l2 2 4-4"></path>
-            <circle cx="12" cy="12" r="10"></circle>
-          </svg>
-          <span>Report saved and validated. {{ isManager() ? 'Ready to submit.' : 'Manager can now submit.' }}</span>
-        </div>
-        
-        <div *ngIf="reportStatus === 'submitted'" class="info-message info-submitted">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M20 6l-10 12-4-8"></path>
-          </svg>
-          <span>Report submitted successfully!</span>
-        </div>
-        
-        <!-- Role-based restriction message -->
-        <div *ngIf="!isManager() && reportStatus === 'saved'" class="info-message info-restriction">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="15" y1="9" x2="9" y2="15"></line>
-            <line x1="9" y1="9" x2="15" y2="15"></line>
-          </svg>
-          <span>Only managers can submit reports. Please contact your manager.</span>
-        </div>
       </div>
     </div>
 

@@ -1,8 +1,9 @@
 .report-form-container {
-  min-height: 100vh;
+  min-height: calc(100vh - 70px); /* Account for header height instead of full viewport */
   background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
   padding: 5px;
-  padding-top: 0;
+  padding-top: 0; /* Remove top padding since main-content now handles header spacing */
+  padding-bottom: 80px; /* Add bottom padding to prevent overlap with fixed bottom bar */
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
@@ -10,16 +11,47 @@
 .page-header {
   background: white;
   border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 24px;
+  padding: 8px 24px; /* Reduced padding to half for lower height */
+  margin-bottom: 16px; /* Reduced margin */
   box-shadow: 0 2px 8px rgba(139, 92, 246, 0.1);
   border: 1px solid rgba(139, 92, 246, 0.1);
   position: sticky;
-  top: 0;
-  z-index: 100;
+  top: 0; /* Changed to 0 since main content now has padding-top */
+  z-index: 1000; /* Updated to stay below main header (1100) but above content */
 }
 
+/* Header Status Display */
+.header-status {
+  margin-left: 12px;
+  display: inline-flex;
+  align-items: center;
+}
 
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.status-draft {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.status-badge.status-saved {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.status-badge.status-submitted {
+  background: #d1fae5;
+  color: #059669;
+}
 
 .inline-sub-tabs {
   display: flex;
@@ -746,19 +778,25 @@
 
 /* Form Actions */
 .form-actions {
-  position: sticky;
-  bottom: 20px;
+  position: fixed; /* Changed from sticky to fixed for better control */
+  bottom: 0;
+  left: 0;
+  right: 0;
   background: white;
-  border-radius: 12px;
-  padding: 20px 32px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(139, 92, 246, 0.1);
+  padding: 12px 20px; /* Compact padding */
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.1);
+  border-top: 1px solid rgba(139, 92, 246, 0.1);
+  z-index: 800; /* Below headers but above content */
 }
 
 .action-buttons {
   display: flex;
-  gap: 16px;
-  justify-content: flex-end;
+  gap: 12px; /* Reduced gap */
+  justify-content: center; /* Center buttons */
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto; /* Center the container */
+  flex-wrap: wrap; /* Allow wrapping on small screens */
 }
 
 .cancel-button, .save-draft-button, .submit-button, .save-button {
@@ -904,108 +942,25 @@
   box-shadow: none;
 }
 
-/* Report Status Indicator */
-.report-status {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 16px;
-  padding: 8px 12px;
-  border-radius: 6px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-}
-
-.status-label {
-  font-size: 12px;
-  font-weight: 500;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.status-value {
-  font-size: 13px;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 4px;
-  text-transform: capitalize;
-}
-
-.status-draft {
-  background: #fef3c7;
-  color: #d97706;
-}
-
-.status-saved {
-  background: #dbeafe;
-  color: #2563eb;
-}
-
-.status-submitted {
-  background: #d1fae5;
-  color: #059669;
-}
-
-/* Workflow Info Messages */
-.workflow-info {
-  margin-top: 16px;
-}
-
-.info-message {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  border-radius: 8px;
-  font-size: 13px;
-  margin-bottom: 8px;
-}
-
-.info-draft {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  color: #475569;
-}
-
-.info-saved {
-  background: #ecfdf5;
-  border: 1px solid #bbf7d0;
-  color: #065f46;
-}
-
-.info-ready {
-  background: #dbeafe;
-  border: 1px solid #93c5fd;
-  color: #1e40af;
-}
-
-.info-submitted {
-  background: #d1fae5;
-  border: 1px solid #a7f3d0;
-  color: #065f46;
-}
-
-.info-restriction {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #dc2626;
-}
-
-.info-message svg {
-  flex-shrink: 0;
-}
-
 /* Responsive Design */
 @media (max-width: 768px) {
   .report-form-container {
-    padding: 16px;
+    min-height: calc(100vh - 60px); /* Account for mobile header height */
+    padding: 10px;
+    padding-bottom: 100px; /* More space for mobile bottom bar */
+  }
+  
+  /* Mobile Header Adjustments */
+  .page-header {
+    top: 0; /* Changed to 0 since main content now has padding-top for mobile */
+    padding: 6px 16px; /* Reduced to half for lower height on mobile */
+    margin-bottom: 12px;
   }
   
   .header-content {
     flex-direction: column;
     align-items: center;
-    gap: 16px;
+    gap: 12px; /* Reduced gap */
   }
   
   .left-section, .right-section {
@@ -1020,6 +975,45 @@
   .header-info {
     text-align: center;
     order: -1;
+  }
+  
+  .page-title {
+    font-size: 16px; /* Smaller title on mobile */
+    line-height: 1.3;
+  }
+  
+  /* Mobile Status Display */
+  .header-status {
+    display: block; /* Stack below title */
+    margin-left: 0;
+    margin-top: 4px;
+    text-align: center;
+  }
+  
+  .status-badge {
+    font-size: 10px;
+    padding: 3px 6px;
+  }
+  
+  /* Mobile Workflow Info */
+  .header-workflow-info {
+    text-align: center;
+    margin-top: 6px;
+  }
+  
+  .inline-info-message {
+    font-size: 11px;
+    padding: 3px 6px;
+  }
+  
+  /* Mobile Action Bar */
+  .form-actions {
+    padding: 8px 12px; /* More compact mobile padding */
+  }
+  
+  .action-buttons {
+    gap: 8px; /* Smaller gap on mobile */
+    justify-content: center;
   }
   
   .template-name {
@@ -1051,6 +1045,27 @@
   
   .cancel-button, .save-draft-button, .submit-button {
     width: 100%;
+  }
+}
+
+/* Additional Mobile Breakpoints for Header Positioning */
+@media (max-width: 480px) {
+  .report-form-container {
+    min-height: calc(100vh - 56px); /* Account for smaller mobile header height */
+  }
+
+  .page-header {
+    top: 0; /* Changed to 0 since main content now has padding-top */
+  }
+}
+
+@media (max-width: 360px) {
+  .report-form-container {
+    min-height: calc(100vh - 50px); /* Account for extra small mobile header height */
+  }
+
+  .page-header {
+    top: 0; /* Changed to 0 since main content now has padding-top */
   }
 }
 
@@ -1232,6 +1247,70 @@
   outline: none !important;
 }
 
+/* View Mode Specific Styles - Readable black text for filled values */
+.view-mode .disabled-field {
+  background-color: #f8f9fa !important;
+  color: #1f2937 !important; /* Dark text for readability */
+  border-color: #d1d5db !important;
+  cursor: default !important;
+  opacity: 1 !important; /* Full opacity for better readability */
+}
+
+.view-mode .disabled-field:hover {
+  background-color: #f8f9fa !important;
+  border-color: #d1d5db !important;
+}
+
+.view-mode .disabled-field:focus {
+  background-color: #f8f9fa !important;
+  border-color: #d1d5db !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* View Mode - Override native disabled styles for form controls */
+.view-mode input:disabled,
+.view-mode select:disabled,
+.view-mode textarea:disabled {
+  color: #1f2937 !important; /* Dark text for readability */
+  background-color: #f8f9fa !important;
+  opacity: 1 !important;
+  cursor: default !important;
+  -webkit-text-fill-color: #1f2937 !important; /* Override webkit autofill */
+}
+
+/* View Mode - Specific form control styles */
+.view-mode .form-input:disabled,
+.view-mode .form-select:disabled,
+.view-mode .form-textarea:disabled {
+  color: #1f2937 !important;
+  background-color: #f8f9fa !important;
+  border-color: #d1d5db !important;
+  opacity: 1 !important;
+  cursor: default !important;
+}
+
+/* View Mode - Ensure select options remain readable */
+.view-mode select:disabled option {
+  color: #1f2937 !important;
+}
+
+/* View Mode - Placeholder styling for better contrast */
+.view-mode input:disabled::placeholder,
+.view-mode textarea:disabled::placeholder {
+  color: #6b7280 !important;
+  opacity: 0.8 !important;
+}
+
+/* View Mode - Ensure any webkit autofill doesn't override our styles */
+.view-mode input:disabled:-webkit-autofill,
+.view-mode input:disabled:-webkit-autofill:hover,
+.view-mode input:disabled:-webkit-autofill:focus {
+  -webkit-text-fill-color: #1f2937 !important;
+  -webkit-box-shadow: 0 0 0px 1000px #f8f9fa inset !important;
+  transition: background-color 5000s ease-in-out 0s !important;
+}
+
 /* Disabled fieldset styling */
 fieldset:disabled {
   background-color: #f9fafb;
@@ -1250,6 +1329,26 @@ fieldset:disabled .form-textarea {
   color: #6b7280;
   border-color: #d1d5db;
   cursor: not-allowed;
+}
+
+/* View Mode - Override fieldset disabled styles for better readability */
+.view-mode fieldset:disabled {
+  background-color: #f8f9fa;
+  border-color: #d1d5db;
+  opacity: 1; /* Full opacity for better readability */
+}
+
+.view-mode fieldset:disabled .group-legend {
+  color: #374151; /* Darker text for readability */
+}
+
+.view-mode fieldset:disabled .form-input,
+.view-mode fieldset:disabled .form-select,
+.view-mode fieldset:disabled .form-textarea {
+  background-color: #f8f9fa !important;
+  color: #1f2937 !important; /* Dark text for readability */
+  border-color: #d1d5db !important;
+  cursor: default !important;
 }
 
 /* Hidden field styling */

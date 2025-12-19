@@ -34,19 +34,22 @@ import { NotificationService } from '../../services/notification.service';
   styles: [`
     .notification-container {
       position: fixed;
-      top: 80px; /* Below header */
-      right: 20px;
+      top: 60px; /* Just below header */
+      left: 0;
+      right: 0;
       z-index: 1050;
-      max-width: 400px;
-      width: 100%;
+      padding: 0 20px;
+      max-width: 800px;
+      margin: 0 auto;
     }
 
     .notification {
       margin-bottom: 10px;
       border-radius: 8px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      animation: slideInRight 0.3s ease-out;
+      animation: slideInTop 0.3s ease-out;
       border-left: 4px solid;
+      width: 100%;
     }
 
     .notification-content {
@@ -137,13 +140,13 @@ import { NotificationService } from '../../services/notification.service';
       color: white;
     }
 
-    @keyframes slideInRight {
+    @keyframes slideInTop {
       from {
-        transform: translateX(100%);
+        transform: translateY(-100%);
         opacity: 0;
       }
       to {
-        transform: translateX(0);
+        transform: translateY(0);
         opacity: 1;
       }
     }
@@ -151,10 +154,8 @@ import { NotificationService } from '../../services/notification.service';
     /* Mobile responsive */
     @media (max-width: 480px) {
       .notification-container {
-        top: 70px;
-        right: 10px;
-        left: 10px;
-        max-width: none;
+        top: 60px;
+        padding: 0 10px;
       }
     }
   `]

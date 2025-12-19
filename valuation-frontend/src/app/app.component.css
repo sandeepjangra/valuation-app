@@ -12,6 +12,10 @@ html, body {
   height: 100%;
   width: 100%;
   overflow-x: hidden;
+  /* Ensure sticky elements work properly */
+  position: relative;
+  /* Add extra height to ensure sticky always has room */
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 /* Body styling */
@@ -24,17 +28,19 @@ body {
 
 /* App root to use full height */
 app-root {
-  display: flex;
-  flex-direction: column;
+  display: block; /* Changed from flex to block for better sticky behavior */
   min-height: 100vh;
   width: 100%;
+  /* Ensure sticky positioning works for child elements */
+  position: relative;
 }
 
 /* Main content area - fills remaining space after header */
 .main-content {
-  flex: 1;
   width: 100%;
   background: linear-gradient(135deg, #faf9ff 0%, #f3f0ff 100%);
+  min-height: calc(100vh - 70px); /* Ensure enough content height for sticky to work */
+  padding-top: 70px; /* Add padding to account for fixed header */
   /* No padding - let individual components handle their own spacing */
 }
 
@@ -61,6 +67,11 @@ app-root {
 
 /* Basic responsive design */
 @media (max-width: 768px) {
+  .main-content {
+    min-height: calc(100vh - 60px); /* Account for mobile header height */
+    padding-top: 60px; /* Add padding for fixed header on mobile */
+  }
+
   .container {
     padding: 15px;
   }
@@ -71,11 +82,23 @@ app-root {
 }
 
 @media (max-width: 480px) {
+  .main-content {
+    min-height: calc(100vh - 56px); /* Account for smaller mobile header height */
+    padding-top: 56px; /* Add padding for fixed header on small mobile */
+  }
+
   .container {
     padding: 10px;
   }
   
   .page-container {
     padding: 10px;
+  }
+}
+
+@media (max-width: 360px) {
+  .main-content {
+    min-height: calc(100vh - 50px); /* Account for extra small mobile header height */
+    padding-top: 50px; /* Add padding for fixed header on extra small mobile */
   }
 }
