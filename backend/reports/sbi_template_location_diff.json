@@ -1,0 +1,691 @@
+{
+  "total_compared": 137,
+  "moved_count": 137,
+  "moved_fields": [
+    {
+      "fieldId": "additional_information",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Site Characteristics / section:Part B - Access & Services"
+    },
+    {
+      "fieldId": "agriculture_conversion",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Property Details / section:Part C - Property Information / parent:government_regulation"
+    },
+    {
+      "fieldId": "aluminum_handrails",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications / parent:amenities"
+    },
+    {
+      "fieldId": "aluminum_works",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications / parent:amenities"
+    },
+    {
+      "fieldId": "amenities",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications"
+    },
+    {
+      "fieldId": "amenities_total",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Detailed Valuation / direct"
+    },
+    {
+      "fieldId": "approval_documents",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Valuation / section:Part B - Building Details"
+    },
+    {
+      "fieldId": "approved_map_authority",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Valuation / section:Part B - Building Details / parent:approval_documents"
+    },
+    {
+      "fieldId": "approved_map_date_validity",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Valuation / section:Part B - Building Details / parent:approval_documents"
+    },
+    {
+      "fieldId": "architectural_elevation",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications / parent:amenities"
+    },
+    {
+      "fieldId": "area_classification",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Property Details / section:Part C - Property Information"
+    },
+    {
+      "fieldId": "area_type",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Property Details / section:Part C - Property Information / parent:area_classification"
+    },
+    {
+      "fieldId": "bath_tubs",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications / parent:plumbing_installation"
+    },
+    {
+      "fieldId": "borrower_name",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Property Details / section:Part B - Address Details"
+    },
+    {
+      "fieldId": "boundaries_dimensions_table",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Property Details / section:Part D - Others"
+    },
+    {
+      "fieldId": "building_age_remarks",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Valuation / section:Part B - Building Details / parent:building_condition"
+    },
+    {
+      "fieldId": "building_basic_info",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Valuation / section:Part B - Building Details"
+    },
+    {
+      "fieldId": "building_condition",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Valuation / section:Part B - Building Details"
+    },
+    {
+      "fieldId": "building_constructed",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Valuation / section:Part B - Building Details"
+    },
+    {
+      "fieldId": "building_dimensions",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Valuation / section:Part B - Building Details"
+    },
+    {
+      "fieldId": "building_specifications_table",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part A - Building Specifications"
+    },
+    {
+      "fieldId": "building_total",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Detailed Valuation / direct"
+    },
+    {
+      "fieldId": "building_type",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Valuation / section:Part B - Building Details / parent:building_basic_info"
+    },
+    {
+      "fieldId": "cb_deposits_fittings",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications / parent:services"
+    },
+    {
+      "fieldId": "city_town_village",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Property Details / section:Part B - Address Details"
+    },
+    {
+      "fieldId": "civic_amenities_feasibility",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Site Characteristics / section:Part A - Locality & Features / parent:locality_surroundings"
+    },
+    {
+      "fieldId": "compound_wall",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications / parent:services"
+    },
+    {
+      "fieldId": "compound_wall_details",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications"
+    },
+    {
+      "fieldId": "construction_type",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications / parent:compound_wall_details"
+    },
+    {
+      "fieldId": "construction_year",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Valuation / section:Part B - Building Details / parent:building_basic_info"
+    },
+    {
+      "fieldId": "coordinates",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Property Details / section:Part D - Others"
+    },
+    {
+      "fieldId": "corner_or_intermittent",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Site Characteristics / section:Part A - Locality & Features / parent:planning_approvals"
+    },
+    {
+      "fieldId": "door_no",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Property Details / section:Part B - Address Details / parent:property_location"
+    },
+    {
+      "fieldId": "drainage_arrangements",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications / parent:services"
+    },
+    {
+      "fieldId": "east_west_dimension",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Valuation / section:Part A - Land Valuation / parent:plot_size"
+    },
+    {
+      "fieldId": "electrical_installation",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications"
+    },
+    {
+      "fieldId": "estimated_land_value",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Valuation / section:Part A - Land Valuation / parent:estimated_valuation"
+    },
+    {
+      "fieldId": "estimated_valuation",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Valuation / section:Part A - Land Valuation"
+    },
+    {
+      "fieldId": "exterior_condition",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Valuation / section:Part B - Building Details / parent:building_condition"
+    },
+    {
+      "fieldId": "extra_items",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications"
+    },
+    {
+      "fieldId": "extra_items_total",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Detailed Valuation / direct"
+    },
+    {
+      "fieldId": "extra_sinks_bathtubs",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications / parent:amenities"
+    },
+    {
+      "fieldId": "extra_steel_gates",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications / parent:extra_items"
+    },
+    {
+      "fieldId": "false_ceiling",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications / parent:amenities"
+    },
+    {
+      "fieldId": "fan_points",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications / parent:electrical_installation"
+    },
+    {
+      "fieldId": "fittings_class",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications / parent:electrical_installation"
+    },
+    {
+      "fieldId": "flooding_possibility",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Site Characteristics / section:Part A - Locality & Features / parent:physical_characteristics"
+    },
+    {
+      "fieldId": "floor_height",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Valuation / section:Part B - Building Details / parent:building_dimensions"
+    },
+    {
+      "fieldId": "floor_wise_valuation_table",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part A - Building Specifications"
+    },
+    {
+      "fieldId": "glazed_tiles",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications / parent:amenities"
+    },
+    {
+      "fieldId": "government_regulation",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Property Details / section:Part C - Property Information"
+    },
+    {
+      "fieldId": "grand_total",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Detailed Valuation / direct"
+    },
+    {
+      "fieldId": "height",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications / parent:compound_wall_details"
+    },
+    {
+      "fieldId": "interior_condition",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Valuation / section:Part B - Building Details / parent:building_condition"
+    },
+    {
+      "fieldId": "interior_decorations",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications / parent:amenities"
+    },
+    {
+      "fieldId": "land_area_and_occupancy",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Property Details / section:Part D - Others"
+    },
+    {
+      "fieldId": "land_level_topography",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Site Characteristics / section:Part A - Locality & Features / parent:physical_characteristics"
+    },
+    {
+      "fieldId": "land_only_confirmation",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Valuation / section:Part B - Building Details / parent:no_building_remarks"
+    },
+    {
+      "fieldId": "land_shape",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Site Characteristics / section:Part A - Locality & Features / parent:physical_characteristics"
+    },
+    {
+      "fieldId": "land_total",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Detailed Valuation / direct"
+    },
+    {
+      "fieldId": "land_usage",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Site Characteristics / section:Part A - Locality & Features"
+    },
+    {
+      "fieldId": "land_valuation_basis",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Valuation / section:Part B - Building Details / parent:no_building_remarks"
+    },
+    {
+      "fieldId": "landlocked_status",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Site Characteristics / section:Part B - Access & Services / parent:road_access"
+    },
+    {
+      "fieldId": "latitude",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Property Details / section:Part D - Others / parent:coordinates"
+    },
+    {
+      "fieldId": "length",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications / parent:compound_wall_details"
+    },
+    {
+      "fieldId": "locality_classification",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Site Characteristics / section:Part A - Locality & Features / parent:locality_surroundings"
+    },
+    {
+      "fieldId": "locality_surroundings",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Site Characteristics / section:Part A - Locality & Features"
+    },
+    {
+      "fieldId": "longitude",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Property Details / section:Part D - Others / parent:coordinates"
+    },
+    {
+      "fieldId": "mandal_district",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Property Details / section:Part B - Address Details / parent:property_location"
+    },
+    {
+      "fieldId": "map_authenticity_verified",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Valuation / section:Part B - Building Details / parent:approval_documents"
+    },
+    {
+      "fieldId": "marble_ceramic_flooring",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications / parent:amenities"
+    },
+    {
+      "fieldId": "market_rate",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Valuation / section:Part A - Land Valuation"
+    },
+    {
+      "fieldId": "market_rate_max",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Valuation / section:Part A - Land Valuation / parent:market_rate"
+    },
+    {
+      "fieldId": "market_rate_min",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Valuation / section:Part A - Land Valuation / parent:market_rate"
+    },
+    {
+      "fieldId": "miscellaneous",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications"
+    },
+    {
+      "fieldId": "miscellaneous_total",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Detailed Valuation / direct"
+    },
+    {
+      "fieldId": "municipal_corporation",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Property Details / section:Part C - Property Information / parent:area_classification"
+    },
+    {
+      "fieldId": "no_building_remarks",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Valuation / section:Part B - Building Details"
+    },
+    {
+      "fieldId": "north_south_dimension",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Valuation / section:Part A - Land Valuation / parent:plot_size"
+    },
+    {
+      "fieldId": "number_of_floors",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Valuation / section:Part B - Building Details / parent:building_dimensions"
+    },
+    {
+      "fieldId": "occupied_by",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Property Details / section:Part D - Others / parent:land_area_and_occupancy"
+    },
+    {
+      "fieldId": "ornamental_front_door",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications / parent:extra_items"
+    },
+    {
+      "fieldId": "other_fixtures_sink",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications / parent:plumbing_installation"
+    },
+    {
+      "fieldId": "overhead_water_tank",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications / parent:extra_items"
+    },
+    {
+      "fieldId": "owner_details",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Property Details / section:Part B - Address Details"
+    },
+    {
+      "fieldId": "paneling_works",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications / parent:amenities"
+    },
+    {
+      "fieldId": "pavement",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications / parent:services"
+    },
+    {
+      "fieldId": "physical_characteristics",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Site Characteristics / section:Part A - Locality & Features"
+    },
+    {
+      "fieldId": "planning_approvals",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Site Characteristics / section:Part A - Locality & Features"
+    },
+    {
+      "fieldId": "plinth_area_floorwise",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Valuation / section:Part B - Building Details / parent:building_dimensions"
+    },
+    {
+      "fieldId": "plot_size",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Valuation / section:Part A - Land Valuation"
+    },
+    {
+      "fieldId": "plot_survey_no",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Property Details / section:Part B - Address Details / parent:property_location"
+    },
+    {
+      "fieldId": "plumbing_installation",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications"
+    },
+    {
+      "fieldId": "portico",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications / parent:extra_items"
+    },
+    {
+      "fieldId": "postal_address",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Property Details / section:Part B - Address Details"
+    },
+    {
+      "fieldId": "power_supply_available",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Site Characteristics / section:Part B - Access & Services / parent:utility_services_group"
+    },
+    {
+      "fieldId": "property_description",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Property Details / section:Part B - Address Details"
+    },
+    {
+      "fieldId": "property_location",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Property Details / section:Part B - Address Details"
+    },
+    {
+      "fieldId": "registrar_rate",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Valuation / section:Part A - Land Valuation / parent:market_rate"
+    },
+    {
+      "fieldId": "road_access",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Site Characteristics / section:Part B - Access & Services"
+    },
+    {
+      "fieldId": "road_facilities",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Site Characteristics / section:Part B - Access & Services / parent:road_access"
+    },
+    {
+      "fieldId": "road_type_present",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Site Characteristics / section:Part B - Access & Services / parent:road_access"
+    },
+    {
+      "fieldId": "road_width",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Site Characteristics / section:Part B - Access & Services / parent:road_access"
+    },
+    {
+      "fieldId": "separate_lumber_room",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications / parent:miscellaneous"
+    },
+    {
+      "fieldId": "separate_toilet",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications / parent:miscellaneous"
+    },
+    {
+      "fieldId": "separate_water_tank_sump",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications / parent:miscellaneous"
+    },
+    {
+      "fieldId": "services",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications"
+    },
+    {
+      "fieldId": "services_total",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Detailed Valuation / direct"
+    },
+    {
+      "fieldId": "site_advantages",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Site Characteristics / section:Part B - Access & Services / parent:additional_information"
+    },
+    {
+      "fieldId": "site_area",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Property Details / section:Part D - Others / parent:land_area_and_occupancy"
+    },
+    {
+      "fieldId": "sitout_verandah_grills",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications / parent:extra_items"
+    },
+    {
+      "fieldId": "socio_economic_class",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Property Details / section:Part C - Property Information / parent:area_classification"
+    },
+    {
+      "fieldId": "spare_plug_points",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications / parent:electrical_installation"
+    },
+    {
+      "fieldId": "special_remarks",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Site Characteristics / section:Part B - Access & Services / parent:additional_information"
+    },
+    {
+      "fieldId": "state_enactments",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Property Details / section:Part C - Property Information / parent:government_regulation"
+    },
+    {
+      "fieldId": "surrounding_area",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Site Characteristics / section:Part A - Locality & Features / parent:locality_surroundings"
+    },
+    {
+      "fieldId": "total_extent_plot",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Valuation / section:Part A - Land Valuation / parent:plot_size"
+    },
+    {
+      "fieldId": "town_planning_approved",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Site Characteristics / section:Part A - Locality & Features / parent:planning_approvals"
+    },
+    {
+      "fieldId": "trees_gardening",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications / parent:miscellaneous"
+    },
+    {
+      "fieldId": "ts_no_village",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Property Details / section:Part B - Address Details / parent:property_location"
+    },
+    {
+      "fieldId": "underground_sewerage",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Site Characteristics / section:Part B - Access & Services / parent:utility_services_group"
+    },
+    {
+      "fieldId": "urban_rural",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Property Details / section:Part C - Property Information / parent:area_classification"
+    },
+    {
+      "fieldId": "urinals",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications / parent:plumbing_installation"
+    },
+    {
+      "fieldId": "usage_restrictions",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Site Characteristics / section:Part A - Locality & Features / parent:land_usage"
+    },
+    {
+      "fieldId": "usage_type",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Site Characteristics / section:Part A - Locality & Features / parent:land_usage"
+    },
+    {
+      "fieldId": "utility_services_group",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Site Characteristics / section:Part B - Access & Services"
+    },
+    {
+      "fieldId": "valuation_area",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Property Details / section:Part D - Others / parent:land_area_and_occupancy"
+    },
+    {
+      "fieldId": "valuation_rate",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Valuation / section:Part A - Land Valuation / parent:estimated_valuation"
+    },
+    {
+      "fieldId": "valuer_comments_authenticity",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Valuation / section:Part B - Building Details / parent:approval_documents"
+    },
+    {
+      "fieldId": "ward_taluka_tehsil",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Property Details / section:Part B - Address Details / parent:property_location"
+    },
+    {
+      "fieldId": "wardrobes",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications / parent:amenities"
+    },
+    {
+      "fieldId": "wash_basins",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications / parent:plumbing_installation"
+    },
+    {
+      "fieldId": "water_closets",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications / parent:plumbing_installation"
+    },
+    {
+      "fieldId": "water_meter_taps",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications / parent:plumbing_installation"
+    },
+    {
+      "fieldId": "water_potentiality",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Site Characteristics / section:Part B - Access & Services / parent:utility_services_group"
+    },
+    {
+      "fieldId": "water_supply_arrangements",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications / parent:services"
+    },
+    {
+      "fieldId": "wiring_type",
+      "backup_location": null,
+      "refreshed_location": "document:SBI Land Construction Specifications / section:Part B - Material Specifications / parent:electrical_installation"
+    }
+  ]
+}

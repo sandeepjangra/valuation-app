@@ -7,7 +7,7 @@
     "database": "valuation_admin",
     "description": "Dynamic tab structure for UCO Apartment Property Details template",
     "refreshedFrom": "MongoDB",
-    "refreshDate": "2025-12-05T20:03:37.896919",
+    "refreshDate": "2025-12-21T17:12:05.124796",
     "bankCode": "UCO",
     "branchCount": 1
   },
@@ -1710,7 +1710,7 @@
         "bankName": "UCO Bank",
         "totalBranches": 1,
         "addedBy": "refresh_templates_from_mongodb.py",
-        "addedDate": "2025-12-05T20:03:37.896862"
+        "addedDate": "2025-12-21T17:12:05.124749"
       }
     }
   ]

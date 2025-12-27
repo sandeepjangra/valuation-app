@@ -7,7 +7,7 @@
     "database": "valuation_admin",
     "description": "Dynamic tab structure for ubi land Property Details template",
     "refreshedFrom": "MongoDB",
-    "refreshDate": "2025-12-05T20:03:36.551586",
+    "refreshDate": "2025-12-21T17:12:04.136931",
     "bankCode": "UBI",
     "branchCount": 1
   },
@@ -1915,7 +1915,7 @@
         "bankName": "Union Bank of India",
         "totalBranches": 1,
         "addedBy": "refresh_templates_from_mongodb.py",
-        "addedDate": "2025-12-05T20:03:36.551452"
+        "addedDate": "2025-12-21T17:12:04.136612"
       }
     }
   ]

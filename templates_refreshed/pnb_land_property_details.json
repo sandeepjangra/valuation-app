@@ -7,7 +7,7 @@
     "database": "valuation_admin",
     "description": "Dynamic tab structure for pnb all Property Details template",
     "refreshedFrom": "MongoDB",
-    "refreshDate": "2025-12-05T20:03:38.433434",
+    "refreshDate": "2025-12-21T17:12:05.613764",
     "bankCode": "PNB",
     "branchCount": 1
   },
@@ -1696,7 +1696,7 @@
         "bankName": "Punjab National Bank",
         "totalBranches": 1,
         "addedBy": "refresh_templates_from_mongodb.py",
-        "addedDate": "2025-12-05T20:03:38.433389"
+        "addedDate": "2025-12-21T17:12:05.613727"
       }
     }
   ]

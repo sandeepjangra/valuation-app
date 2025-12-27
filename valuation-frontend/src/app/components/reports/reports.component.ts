@@ -243,6 +243,11 @@ interface ReportFilters {
                   <span class="detail-value">{{ report.bank_code }}</span>
                 </div>
                 
+                <div *ngIf="report.bank_branch_name" class="detail-item">
+                  <span class="detail-label">🏢 Branch:</span>
+                  <span class="detail-value">{{ report.bank_branch_name }}</span>
+                </div>
+                
                 <div class="detail-item">
                   <span class="detail-label">� Created by:</span>
                   <span class="detail-value">{{ report.created_by_email }}</span>

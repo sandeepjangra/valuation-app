@@ -7,7 +7,7 @@
     "database": "valuation_admin",
     "description": "Dynamic tab structure for BOI Apartment Property Details template",
     "refreshedFrom": "MongoDB",
-    "refreshDate": "2025-12-05T20:03:37.321539",
+    "refreshDate": "2025-12-21T17:12:04.810201",
     "bankCode": "BOI",
     "branchCount": 1
   },
@@ -1703,7 +1703,7 @@
         "bankName": "Bank of India",
         "totalBranches": 1,
         "addedBy": "refresh_templates_from_mongodb.py",
-        "addedDate": "2025-12-05T20:03:37.321479"
+        "addedDate": "2025-12-21T17:12:04.810161"
       }
     }
   ]

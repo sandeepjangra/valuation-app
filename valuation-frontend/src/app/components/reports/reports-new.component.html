@@ -27,9 +27,8 @@
         <select [(ngModel)]="filterStatus" (change)="applyFilters()">
           <option value="">All Statuses</option>
           <option value="draft">Draft</option>
-          <option value="in_progress">In Progress</option>
+          <option value="saved">Saved</option>
           <option value="submitted">Submitted</option>
-          <option value="completed">Completed</option>
         </select>
       </div>
 
@@ -44,23 +43,37 @@
       </div>
 
       <div class="filter-group">
+        <label>Property Type</label>
+        <select [(ngModel)]="filterPropertyType" (change)="applyFilters()">
+          <option value="">All Types</option>
+          <option value="land-property">Land Property</option>
+          <option value="residential">Residential</option>
+          <option value="commercial">Commercial</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
         <label>Created By</label>
         <input type="text" [(ngModel)]="filterCreatedBy" (keyup.enter)="applyFilters()" 
                placeholder="Email or name">
       </div>
 
       <div class="filter-group">
-        <label>Start Date</label>
-        <input type="date" [(ngModel)]="filterStartDate" (change)="applyFilters()">
+        <label>Reference</label>
+        <input type="text" [(ngModel)]="filterReference" (keyup.enter)="applyFilters()" 
+               placeholder="Report reference">
       </div>
 
       <div class="filter-group">
-        <label>End Date</label>
-        <input type="date" [(ngModel)]="filterEndDate" (change)="applyFilters()">
+        <label>Applicant Name</label>
+        <input type="text" [(ngModel)]="filterApplicantName" (keyup.enter)="applyFilters()" 
+               placeholder="Applicant name">
       </div>
 
       <div class="filter-actions">
-        <button class="clear-btn" (click)="clearFilters()">Clear All</button>
+        <button class="clear-filters-btn" (click)="clearFilters()">
+          🗑️ Clear All Filters
+        </button>
       </div>
     </div>
   </div>
@@ -116,9 +129,12 @@
     <div class="reports-table" *ngIf="!loading && reports.length > 0">
       <div class="table-header">
         <div class="col-ref">Reference</div>
-        <div class="col-property">Property Address</div>
+        <div class="col-applicant">Applicant Name</div>
+        <div class="col-address">Address</div>
         <div class="col-bank">Bank</div>
+        <div class="col-property-type">Property Type</div>
         <div class="col-status">Status</div>
+        <div class="col-created-by">Created By</div>
         <div class="col-created">Created</div>
         <div class="col-updated">Updated</div>
         <div class="col-actions">Actions</div>
@@ -133,16 +149,22 @@
           
           <div class="col-ref">
             <div class="ref-number">{{ report.reference_number || report.report_id }}</div>
-            <div class="report-id">ID: {{ report.report_id }}</div>
           </div>
           
-          <div class="col-property">
-            <div class="property-address">{{ report.property_address }}</div>
-            <div class="property-type">{{ report.template_id }}</div>
+          <div class="col-applicant">
+            <div class="applicant-name">{{ getApplicantName(report) }}</div>
+          </div>
+          
+          <div class="col-address">
+            <div class="address-text">{{ getPostalAddress(report) }}</div>
           </div>
           
           <div class="col-bank">
-            {{ report.bank_code }}
+            <span class="bank-code">{{ report.bank_code }}</span>
+          </div>
+          
+          <div class="col-property-type">
+            <span class="property-type">{{ getPropertyTypeDisplayName(report) }}</span>
           </div>
           
           <div class="col-status">
@@ -151,16 +173,25 @@
             </span>
           </div>
           
+          <div class="col-created-by">
+            <span class="created-by">{{ report.created_by_email }}</span>
+          </div>
+          
           <div class="col-created">
             <div class="date">{{ formatDate(report.created_at) }}</div>
-            <div class="author">by {{ report.created_by_email }}</div>
           </div>
           
           <div class="col-updated">
-            {{ formatDate(report.updated_at) }}
+            <div class="date">{{ formatDate(report.updated_at) }}</div>
           </div>
           
           <div class="col-actions">
+            <button 
+              class="action-btn view-btn" 
+              (click)="viewReport(report); $event.stopPropagation()"
+              title="View Report">
+              👁️
+            </button>
             <button 
               *ngIf="canEdit(report)"
               class="action-btn edit-btn" 

@@ -10,6 +10,8 @@ export interface Report {
   reference_number: string;
   property_address: string;
   bank_code: string;
+  bank_branch?: string;  // NEW: Bank branch ID
+  bank_branch_name?: string;  // NEW: Bank branch display name
   template_id: string;
   property_type: string;
   status: 'draft' | 'in_progress' | 'submitted' | 'completed';
@@ -79,6 +81,15 @@ export class ReportsService {
     // Build query parameters
     let params = new HttpParams();
     
+    // Add organization context - CRITICAL FIX
+    const orgShortName = this.authService.getOrgShortName();
+    if (orgShortName) {
+      params = params.set('organization_id', orgShortName);
+      console.log('🏢 Adding organization context to request:', orgShortName);
+    } else {
+      console.warn('⚠️ No organization context available - API may return wrong data');
+    }
+    
     if (filters.status) params = params.set('status', filters.status);
     if (filters.bank_code) params = params.set('bank_code', filters.bank_code);
     if (filters.template_id) params = params.set('template_id', filters.template_id);
@@ -133,7 +144,15 @@ export class ReportsService {
     const headers = this.getHeaders();
     const url = `${this.baseUrl}/reports/${reportId}`;
     
-    return this.http.get<any>(url, { headers })
+    // Build query parameters for organization context
+    let params = new HttpParams();
+    const orgShortName = this.authService.getOrgShortName();
+    if (orgShortName) {
+      params = params.set('organization_id', orgShortName);
+      console.log('🏢 Adding organization context to getReportById:', orgShortName);
+    }
+    
+    return this.http.get<any>(url, { headers, params })
       .pipe(
         timeout(10000), // 10 second timeout
         map(response => response.success ? response.data : null),
@@ -154,7 +173,16 @@ export class ReportsService {
    */
   deleteReport(reportId: string): Observable<boolean> {
     const headers = this.getHeaders();
-    return this.http.delete<any>(`${this.baseUrl}/reports/${reportId}`, { headers })
+    
+    // Build query parameters for organization context
+    let params = new HttpParams();
+    const orgShortName = this.authService.getOrgShortName();
+    if (orgShortName) {
+      params = params.set('organization_id', orgShortName);
+      console.log('🏢 Adding organization context to deleteReport:', orgShortName);
+    }
+    
+    return this.http.delete<any>(`${this.baseUrl}/reports/${reportId}`, { headers, params })
       .pipe(
         map(response => response.success),
         catchError(error => {

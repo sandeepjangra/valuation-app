@@ -7,7 +7,7 @@
     "database": "valuation_admin",
     "description": "Dynamic tab structure for BOB Land Property Details template",
     "refreshedFrom": "MongoDB",
-    "refreshDate": "2025-12-05T20:03:38.271356",
+    "refreshDate": "2025-12-21T17:12:05.443133",
     "bankCode": "BOB",
     "branchCount": 2
   },
@@ -2277,7 +2277,7 @@
         "bankName": "Bank of Baroda",
         "totalBranches": 2,
         "addedBy": "refresh_templates_from_mongodb.py",
-        "addedDate": "2025-12-05T20:03:38.271297"
+        "addedDate": "2025-12-21T17:12:05.443081"
       }
     }
   ]

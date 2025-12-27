@@ -395,6 +395,9 @@ export class ReportForm implements OnInit {
         isViewMode: this.isViewMode,
         formEnabled: this.reportForm.enabled
       });
+      
+      // Recalculate all calculated fields after populating with existing data
+      this.recalculateAllFields();
     } else {
       console.log('📝 No report_data found or form not ready, fields will remain empty for draft');
     }
@@ -1302,27 +1305,13 @@ export class ReportForm implements OnInit {
 
   /**
    * Set the reference number in the form field (called after form is built)
+   * NOTE: Reference numbers are now generated server-side only to avoid duplication
    */
   setReferenceNumberInForm() {
-    if (this.reportReferenceNumber && this.reportForm) {
-      const refControl = this.reportForm.get('report_reference_number');
-      if (refControl) {
-        refControl.setValue(this.reportReferenceNumber);
-        refControl.disable();
-        console.log('📋 Reference number set in form and DISABLED:', {
-          value: this.reportReferenceNumber,
-          disabled: refControl.disabled,
-          status: refControl.status
-        });
-      } else {
-        console.log('⚠️ Reference number field not found in form yet');
-      }
-    } else {
-      console.log('⚠️ Cannot set reference number:', {
-        hasReferenceNumber: !!this.reportReferenceNumber,
-        hasForm: !!this.reportForm
-      });
-    }
+    // NO LONGER SETTING REFERENCE NUMBER IN FORM 
+    // The backend will generate reference_number automatically
+    // This prevents duplicate reference fields in the database
+    console.log('📋 Reference number will be generated server-side:', this.reportReferenceNumber);
   }
 
   /**
@@ -2189,13 +2178,19 @@ export class ReportForm implements OnInit {
         control.enable({ emitEvent: false });
       }
       
-      control.setValue(calculatedValue, { emitEvent: false });
+      // Format currency fields with ₹ symbol and proper formatting
+      let displayValue: string | number = calculatedValue;
+      if (config.outputFormat === 'currency' || fieldId.toLowerCase().includes('value') || fieldId.toLowerCase().includes('amount')) {
+        displayValue = this.calculationService.formatCurrency(calculatedValue);
+      }
+      
+      control.setValue(displayValue, { emitEvent: false });
       
       if (wasDisabled) {
         control.disable({ emitEvent: false });
       }
 
-      console.log(`🧮 Calculated ${fieldId} = ${calculatedValue}`);
+      console.log(`🧮 Calculated ${fieldId} = ${displayValue} (raw: ${calculatedValue})`);
     }
   }
 
@@ -2263,7 +2258,8 @@ export class ReportForm implements OnInit {
       propertyType: this.selectedPropertyType,
       customTemplateId: this.customTemplateId,
       customTemplateName: this.customTemplateName,
-      referenceNumber: this.reportReferenceNumber,
+      // NOTE: Removed referenceNumber to prevent duplication
+      // Backend generates reference_number automatically
       
       // Form data - all fields including empty ones
       formData: formData,
@@ -2351,7 +2347,8 @@ export class ReportForm implements OnInit {
         status: 'draft',
         bankName: this.selectedBankName,
         templateName: this.selectedTemplateName || this.customTemplateName,
-        referenceNumber: this.reportReferenceNumber,
+        // NOTE: Removed referenceNumber to prevent duplication
+        // Backend generates reference_number automatically
         organizationId: this.currentOrgShortName,
         customTemplateId: this.customTemplateId,
         customTemplateName: this.customTemplateName,

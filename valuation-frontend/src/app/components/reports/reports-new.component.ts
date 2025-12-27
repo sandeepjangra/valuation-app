@@ -48,6 +48,9 @@ export class ReportsNewComponent implements OnInit {
   filterCreatedBy = '';
   filterStartDate = '';
   filterEndDate = '';
+  filterPropertyType = '';
+  filterReference = '';
+  filterApplicantName = '';
   searchText = '';
 
   constructor(
@@ -225,6 +228,17 @@ export class ReportsNewComponent implements OnInit {
       next: (response) => {
         console.log('✅ Reports loaded:', response);
         console.log('📊 Response data array:', response.data);
+        
+        // Debug: Log first report data for analysis
+        if (response.data && response.data.length > 0) {
+          const firstReport = response.data[0];
+          console.log('🔍 First report data:', {
+            reference: firstReport.reference_number,
+            bank_code: firstReport.bank_code,
+            template_id: firstReport.template_id,
+            report_data_keys: firstReport.report_data ? Object.keys(firstReport.report_data) : 'No report_data'
+          });
+        }
         console.log('📊 Data array length:', response.data?.length);
         console.log('📊 First report:', response.data?.[0]);
         console.log('📊 All report statuses:', response.data?.map(r => r.status));
@@ -318,19 +332,88 @@ export class ReportsNewComponent implements OnInit {
   }
 
   applyFilters() {
-    // Build filters object
-    this.filters = {
-      page: 1,
-      limit: this.reportsPerPage,
-      status: this.filterStatus || undefined,
-      bank_code: this.filterBank || undefined,
-      created_by: this.filterCreatedBy || undefined,
-      start_date: this.filterStartDate || undefined,
-      end_date: this.filterEndDate || undefined
-    };
+    console.log('🔍 Applying enhanced filters');
     
-    this.currentPage = 1;
-    this.loadReports();
+    // If we have all reports loaded, do client-side filtering
+    if (this.allReports.length > 0) {
+      let filtered = [...this.allReports];
+      
+      // Apply status filter
+      if (this.filterStatus) {
+        filtered = filtered.filter(report => report.status === this.filterStatus);
+      }
+      
+      // Apply bank filter
+      if (this.filterBank) {
+        filtered = filtered.filter(report => report.bank_code === this.filterBank);
+      }
+      
+      // Apply property type filter
+      if (this.filterPropertyType) {
+        filtered = filtered.filter(report => 
+          report.template_id === this.filterPropertyType ||
+          (report.report_data && report.report_data.property_type === this.filterPropertyType)
+        );
+      }
+      
+      // Apply created by filter
+      if (this.filterCreatedBy) {
+        const searchTerm = this.filterCreatedBy.toLowerCase();
+        filtered = filtered.filter(report => 
+          report.created_by_email.toLowerCase().includes(searchTerm)
+        );
+      }
+      
+      // Apply reference filter
+      if (this.filterReference) {
+        const searchTerm = this.filterReference.toLowerCase();
+        filtered = filtered.filter(report => 
+          (report.reference_number && report.reference_number.toLowerCase().includes(searchTerm)) ||
+          report.report_id.toLowerCase().includes(searchTerm)
+        );
+      }
+      
+      // Apply applicant name filter
+      if (this.filterApplicantName) {
+        const searchTerm = this.filterApplicantName.toLowerCase();
+        filtered = filtered.filter(report => 
+          this.getApplicantName(report).toLowerCase().includes(searchTerm)
+        );
+      }
+      
+      // Apply current tab filter
+      switch (this.selectedTab) {
+        case 'draft':
+          filtered = filtered.filter(report => report.status === 'draft');
+          break;
+        case 'submitted':
+          filtered = filtered.filter(report => report.status === 'submitted');
+          break;
+      }
+      
+      this.filteredReports = filtered;
+      this.reports = filtered;
+      
+      console.log('🔍 Client-side filter results:', {
+        original: this.allReports.length,
+        filtered: filtered.length
+      });
+      
+    } else {
+      // Fallback to server-side filtering
+      this.filters = {
+        page: 1,
+        limit: this.reportsPerPage,
+        status: this.filterStatus || undefined,
+        bank_code: this.filterBank || undefined,
+        created_by: this.filterCreatedBy || undefined,
+        start_date: this.filterStartDate || undefined,
+        end_date: this.filterEndDate || undefined
+      };
+      
+      this.currentPage = 1;
+      this.loadReports();
+    }
   }
 
   clearFilters() {
@@ -339,6 +422,9 @@ export class ReportsNewComponent implements OnInit {
     this.filterCreatedBy = '';
     this.filterStartDate = '';
     this.filterEndDate = '';
+    this.filterPropertyType = '';
+    this.filterReference = '';
+    this.filterApplicantName = '';
     this.searchText = '';
     
     this.filters = {
@@ -346,7 +432,7 @@ export class ReportsNewComponent implements OnInit {
       limit: this.reportsPerPage
     };
     
-    this.loadReports();
+    this.applyFilters();
   }
 
   // Pagination
@@ -446,4 +532,196 @@ export class ReportsNewComponent implements OnInit {
     // Only allow deleting draft reports for now
     return report.status === 'draft';
   }
+
+  // New methods for enhanced table display
+  getApplicantName(report: Report): string {
+    // Debug: Log the entire report for the one with address
+    if (report.reference_number === 'CEV/RVO/299/0003/13122025') {
+      console.log('🔍 FULL REPORT DEBUG:', report);
+      if (report.report_data) {
+        console.log('🔍 REPORT_DATA KEYS:', Object.keys(report.report_data));
+        console.log('🔍 REPORT_DATA SAMPLE:', report.report_data);
+      }
+    }
+    
+    // Try to extract applicant name from report data
+    if (report.report_data) {
+      const data = report.report_data;
+      
+      // Check all possible field name variations
+      const possibleNameFields = [
+        'applicant_name', 'borrower_name', 'customer_name', 'client_name',
+        'name', 'full_name', 'person_name', 'owner_name',
+        'first_name', 'lastName', 'firstName',
+        'Applicant Name', 'Borrower Name', 'Customer Name', 'Name'
+      ];
+      
+      for (const field of possibleNameFields) {
+        const value = data[field];
+        if (value && typeof value === 'string' && value.trim() && value !== 'N/A') {
+          console.log(`🔍 Found name in field "${field}": ${value}`);
+          return value.trim();
+        }
+      }
+      
+      // Try to construct from first/last name
+      const firstName = data.first_name || data.firstName || data['First Name'];
+      const lastName = data.last_name || data.lastName || data['Last Name'];
+      if (firstName && lastName) {
+        return `${firstName.trim()} ${lastName.trim()}`;
+      }
+      
+      // Search for any field containing "name"
+      for (const [key, value] of Object.entries(data)) {
+        if (key.toLowerCase().includes('name') && 
+            typeof value === 'string' && 
+            value.trim() && 
+            value !== 'N/A' &&
+            value.length > 2 &&
+            value.length < 100) {
+          console.log(`🔍 Found potential name in "${key}": ${value}`);
+          return value.trim();
+        }
+      }
+    }
+    
+    return 'N/A';
+  }
+
+  getPostalAddress(report: Report): string {
+    // Try to extract postal address from report data
+    if (report.report_data) {
+      const data = report.report_data;
+      
+      // Check all possible address field names
+      const possibleAddressFields = [
+        'postal_address', 'property_address', 'address', 'full_address', 
+        'complete_address', 'street_address', 'location',
+        'Postal Address', 'Property Address', 'Address', 'Location'
+      ];
+      
+      for (const field of possibleAddressFields) {
+        let address = data[field];
+        
+        if (address && address.trim() && 
+            address !== 'Property Address TBD' && 
+            address !== 'N/A' && 
+            address.length > 5) {
+          
+          // If it's an object, try to construct address string
+          if (typeof address === 'object') {
+            const parts = [
+              address.street || address.address_line_1 || address.line1,
+              address.city || address.address_line_2 || address.line2,
+              address.state || address.district,
+              address.pincode || address.postal_code || address.zip
+            ].filter(part => part && part.trim());
+            
+            if (parts.length > 0) {
+              return parts.join(', ');
+            }
+          } else {
+            if (report.reference_number === 'CEV/RVO/299/0003/13122025') {
+              console.log(`🏠 Found address in field "${field}": ${address}`);
+            }
+            return address.trim();
+          }
+        }
+      }
+      
+      // Try to construct from individual address components
+      const addressParts = [
+        data.door_no || data.house_no || data.building_no,
+        data.street || data.street_name,
+        data.city_town_village || data.city || data.town || data.village,
+        data.mandal_district || data.district,
+        data.ward_taluka_tehsil || data.taluka || data.tehsil,
+        data.state,
+        data.pincode || data.pin_code
+      ].filter(part => part && part.trim() && part !== 'N/A');
+      
+      if (addressParts.length > 1) {
+        return addressParts.join(', ');
+      }
+      
+      // Search for any field containing "address" or location terms
+      for (const [key, value] of Object.entries(data)) {
+        if ((key.toLowerCase().includes('address') || 
+             key.toLowerCase().includes('location') ||
+             key.toLowerCase().includes('street') ||
+             key.toLowerCase().includes('postal')) && 
+            typeof value === 'string' && 
+            value.trim() && 
+            value !== 'N/A' &&
+            value !== 'Property Address TBD' &&
+            value.length > 10) {
+          if (report.reference_number === 'CEV/RVO/299/0003/13122025') {
+            console.log(`🏠 Found potential address in "${key}": ${value}`);
+          }
+          return value.trim();
+        }
+      }
+    }
+    
+    // Fallback to property_address from report metadata
+    return report.property_address && report.property_address !== 'Property Address TBD' 
+           ? report.property_address 
+           : 'N/A';
+  }
+
+  getPropertyTypeDisplayName(report: Report): string {
+    // Extract property type from template_id or report data
+    if (report.report_data) {
+      const data = report.report_data;
+      
+      // Check for property type in report data
+      const possiblePropertyFields = [
+        'property_type', 'propertyType', 'property_category', 'category',
+        'Property Type', 'Property Category', 'type'
+      ];
+      
+      for (const field of possiblePropertyFields) {
+        const propertyType = data[field];
+        
+        if (propertyType && typeof propertyType === 'string' && propertyType.trim()) {
+          // Check if it's a MongoDB ObjectId (24 character hex string)
+          if (propertyType.length === 24 && /^[0-9a-fA-F]+$/.test(propertyType)) {
+            // It's an ObjectId, skip it
+            console.log('🔍 Skipping ObjectId in property type:', propertyType);
+            continue;
+          } else if (propertyType.length > 50) {
+            // It's too long to be a property type, skip it
+            console.log('🔍 Skipping long string in property type:', propertyType.substring(0, 50) + '...');
+            continue;
+          } else {
+            return propertyType;
+          }
+        }
+      }
+    }
+    
+    // Map template_id to readable property type
+    const templateMap: { [key: string]: string } = {
+      'land-property': 'Land Property',
+      'residential': 'Residential', 
+      'commercial': 'Commercial',
+      'industrial': 'Industrial',
+      'apartment': 'Apartment'
+    };
+    
+    const mappedType = templateMap[report.template_id];
+    if (mappedType) {
+      return mappedType;
+    }
+    
+    // If template_id exists but not in map, use it as-is (cleaned up)
+    if (report.template_id) {
+      return report.template_id.replace(/-/g, ' ')
+                               .replace(/([a-z])([A-Z])/g, '$1 $2')
+                               .replace(/^\w/, c => c.toUpperCase());
+    }
+    
+    return 'N/A';
+  }
+
 }

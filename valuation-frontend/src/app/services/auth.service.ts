@@ -273,6 +273,10 @@ export class AuthService {
     return this.currentUserValue?.organization_id || null;
   }
 
+  getOrgShortName(): string | null {
+    return this.currentUserValue?.org_short_name || this.currentUserValue?.organization_id || null;
+  }
+
   getUserRole(): string | null {
     return this.currentUserValue?.role || null;
   }

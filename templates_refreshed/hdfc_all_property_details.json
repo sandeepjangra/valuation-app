@@ -7,7 +7,7 @@
     "database": "valuation_admin",
     "description": "Dynamic tab structure for hdfc all Property Details template",
     "refreshedFrom": "MongoDB",
-    "refreshDate": "2025-12-05T20:03:38.810366",
+    "refreshDate": "2025-12-21T17:12:06.093875",
     "bankCode": "HDFC",
     "branchCount": 1
   },
@@ -1696,7 +1696,7 @@
         "bankName": "HDFC Bank",
         "totalBranches": 1,
         "addedBy": "refresh_templates_from_mongodb.py",
-        "addedDate": "2025-12-05T20:03:38.810304"
+        "addedDate": "2025-12-21T17:12:06.093405"
       }
     }
   ]

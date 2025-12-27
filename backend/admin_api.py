@@ -700,3 +700,72 @@ async def get_server_logs(
     except Exception as e:
         logger.error(f"Error reading server logs: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@admin_router.post("/refresh-collections")
+async def refresh_collections() -> Dict[str, Any]:
+    """Refresh all collections from MongoDB to local JSON files"""
+    try:
+        from pathlib import Path
+        import json
+        
+        # Initialize database session
+        async with MultiDatabaseSession() as db:
+            successful_count = 0
+            total_count = 0
+            errors = []
+            
+            # Define collections to refresh
+            collections_to_refresh = {
+                "admin": ["banks", "common_form_fields"],
+                "main": ["organizations", "users"],
+                "reports": ["valuation_reports"]
+            }
+            
+            # Base path for storing JSON files
+            base_path = Path(__file__).parent / "data"
+            base_path.mkdir(exist_ok=True)
+            
+            # Process each database and collection
+            for database_name, collections in collections_to_refresh.items():
+                for collection_name in collections:
+                    try:
+                        total_count += 1
+                        
+                        # Get all documents from the collection
+                        documents = await db.find_many(
+                            database_name, 
+                            collection_name, 
+                            {}
+                        )
+                        
+                        # Convert ObjectIds to strings for JSON serialization
+                        json_documents = []
+                        for doc in documents:
+                            if '_id' in doc and isinstance(doc['_id'], ObjectId):
+                                doc['_id'] = str(doc['_id'])
+                            json_documents.append(doc)
+                        
+                        # Save to JSON file
+                        json_file_path = base_path / f"{collection_name}.json"
+                        with open(json_file_path, 'w', encoding='utf-8') as f:
+                            json.dump(json_documents, f, indent=2, ensure_ascii=False, default=json_serializer)
+                        
+                        successful_count += 1
+                        logger.info(f"✅ Refreshed {collection_name}: {len(json_documents)} documents")
+                        
+                    except Exception as e:
+                        error_msg = f"Failed to refresh {collection_name}: {str(e)}"
+                        logger.error(f"❌ {error_msg}")
+                        errors.append(error_msg)
+            
+            return {
+                "success": True,
+                "successful_count": successful_count,
+                "total_count": total_count,
+                "errors": errors,
+                "message": f"Refreshed {successful_count}/{total_count} collections successfully"
+            }
+            
+    except Exception as e:
+        logger.error(f"Error refreshing collections: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

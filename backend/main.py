@@ -1497,6 +1497,9 @@ async def get_aggregated_template_fields(bank_code: str, template_id: str, reque
                             if document_section:
                                 section_fields = document_section.get("fields", [])
                                 
+                                # Process fields to enhance calculation metadata
+                                section_fields = process_template_fields(section_fields)
+                                
                                 # Check if this is a documents section - integrate document types
                                 section_name = section_config.get("sectionName", "").lower()
                                 print(f"DEBUG: Processing section: '{section_name}' - checking for document keyword")
@@ -1542,13 +1545,13 @@ async def get_aggregated_template_fields(bank_code: str, template_id: str, reque
                             # Find the document with matching templateId
                             for document in doc.get("documents", []):
                                 if document.get("templateId") == document_source:
-                                    tab["fields"] = document.get("fields", [])
+                                    tab["fields"] = process_template_fields(document.get("fields", []))
                                     break
                         else:
                             # Fallback: get all fields if no documentSource specified
                             all_doc_fields = []
                             for document in doc.get("documents", []):
-                                doc_fields = document.get("fields", [])
+                                doc_fields = process_template_fields(document.get("fields", []))
                                 all_doc_fields.extend(doc_fields)
                             tab["fields"] = all_doc_fields
                     
@@ -1718,24 +1721,52 @@ def process_template_fields(fields_list: List[Dict[str, Any]]) -> List[Dict[str,
     for field in fields_list:
         processed_field = dict(field)  # Create a copy
         
-        # Check if field has calculation metadata
+        # Check if field has calculation metadata or is a calculated field
         calc_metadata = field.get('calculationMetadata', {})
+        field_type = field.get('fieldType', '')
+        formula = field.get('formula') or calc_metadata.get('formula')
         
-        if calc_metadata:
+        if calc_metadata or field_type == 'calculated' or formula:
             logger.debug(f"Processing calculation field: {field.get('fieldId', 'unknown')}")
             
-            # Ensure calculation metadata is properly structured
-            if calc_metadata.get('isCalculatedField'):
+            # Handle calculated fields (fieldType: "calculated" or calculationMetadata.isCalculatedField)
+            if field_type == 'calculated' or calc_metadata.get('isCalculatedField') or formula:
                 # This is a calculated field (result field)
                 processed_field['isReadonly'] = True  # Calculated fields are always readonly
                 processed_field['isCalculated'] = True
                 
                 # Ensure formula exists
-                if not processed_field.get('formula') and calc_metadata.get('formula'):
-                    processed_field['formula'] = calc_metadata['formula']
+                if not processed_field.get('formula') and formula:
+                    processed_field['formula'] = formula
+                
+                # Create calculatedField property for frontend calculation service
+                dependencies = calc_metadata.get('dependencies', [])
+                if not dependencies and formula:
+                    # Extract dependencies from formula (simple variable names)
+                    import re
+                    dependencies = re.findall(r'\b[a-zA-Z_][a-zA-Z0-9_]*\b', formula)
+                    # Filter out common math functions and operators
+                    dependencies = [dep for dep in dependencies if dep not in ['Math', 'min', 'max', 'round', 'ceil', 'floor']]
+                
+                # Determine calculation type based on formula
+                calc_type = 'custom'  # Default
+                if '*' in formula and len(dependencies) == 2:
+                    calc_type = 'product'
+                elif '+' in formula and len(dependencies) >= 2:
+                    calc_type = 'sum'
+                elif '/' in formula and len(dependencies) == 2:
+                    calc_type = 'custom'  # Division is custom
+                
+                processed_field['calculatedField'] = {
+                    'type': calc_type,
+                    'sourceFields': dependencies,
+                    'customFormula': formula if calc_type == 'custom' else None,
+                    'dependencies': dependencies,
+                    'outputFormat': 'currency' if calc_metadata.get('formatting', {}).get('currency') or field_type == 'currency' else 'number'
+                }
                 
                 # Ensure formatting is applied
-                if calc_metadata.get('formatting', {}).get('currency'):
+                if calc_metadata.get('formatting', {}).get('currency') or field_type == 'currency':
                     if processed_field.get('fieldType') != 'currency':
                         processed_field['fieldType'] = 'currency'
                         processed_field['displayFormat'] = 'currency'
@@ -1751,6 +1782,492 @@ def process_template_fields(fields_list: List[Dict[str, Any]]) -> List[Dict[str,
         processed_fields.append(processed_field)
     
     return processed_fields
+
+# ================================
+# TEMPLATE TRANSFORMATION UTILITIES
+# ================================
+
+async def get_template_version(bank_code: str, template_id: str) -> str:
+    """Fetch the current version of the template for version tracking"""
+    try:
+        logger.info(f"📋 Fetching template version for {bank_code}/{template_id}")
+        
+        from database.multi_db_manager import MultiDatabaseManager
+        
+        db_manager = MultiDatabaseManager()
+        await db_manager.connect()
+        
+        try:
+            admin_db = db_manager.get_database("admin")
+            
+            # Find the comprehensive document
+            unified_doc = await admin_db.banks.find_one({"_id": "all_banks_comprehensive_v4"})
+            
+            if not unified_doc:
+                # Fallback to any document with banks data
+                any_doc = await admin_db.banks.find_one({})
+                if any_doc and "banks" in any_doc:
+                    unified_doc = any_doc
+            
+            if not unified_doc:
+                logger.warning(f"⚠️ Banks configuration not found, using default version")
+                return "1.0.0"
+            
+            # Find the specific bank
+            all_banks = unified_doc.get("banks", [])
+            bank_doc = None
+            
+            for bank in all_banks:
+                if bank.get("bankCode", "").upper() == bank_code.upper():
+                    bank_doc = bank
+                    break
+            
+            if not bank_doc:
+                logger.warning(f"⚠️ Bank {bank_code} not found, using default version")
+                return "1.0.0"
+            
+            # Find the specific template
+            templates = bank_doc.get("templates", [])
+            target_template = None
+            
+            for template in templates:
+                if (template.get("templateCode", "").upper() == template_id.upper() or 
+                    template.get("templateId", "").upper() == template_id.upper()):
+                    target_template = template
+                    break
+            
+            if not target_template:
+                logger.warning(f"⚠️ Template {template_id} not found for bank {bank_code}, using default version")
+                return "1.0.0"
+            
+            version = target_template.get("version", "1.0.0")
+            logger.info(f"✅ Template version found: {version}")
+            return version
+            
+        finally:
+            await db_manager.disconnect()
+            
+    except Exception as e:
+        logger.error(f"❌ Error fetching template version: {e}")
+        return "1.0.0"  # Default fallback
+
+async def transform_flat_to_template_structure(
+    input_data: Dict[str, Any], 
+    bank_code: str, 
+    template_id: str,
+    mapping_service: Any
+) -> Dict[str, Any]:
+    """
+    SIMPLE TRANSFORMATION: Save all data in restructured format with template version
+    New structure: { common_fields: {}, report_data: { data: {}, tables: {} }, template_version: "1.0" }
+    """
+    logger.info(f"🚀 NEW STRUCTURE TRANSFORMATION: {bank_code}/{template_id}")
+    logger.info(f"📋 Processing {len(input_data)} input fields")
+    
+    # Fetch template version first
+    template_version = await get_template_version(bank_code, template_id)
+    
+    result = {
+        "common_fields": {},
+        "data": {},
+        "tables": {},
+        "template_version": template_version
+    }
+    
+    # Common fields that go to separate section (outside of report_data)
+    common_field_ids = {"valuation_date", "applicant_name", "inspection_date", "valuation_purpose"}
+    
+    # System metadata to filter out (including property_address as requested)
+    metadata_fields = {
+        'status', 'bankName', 'templateName', 'organizationId', 
+        'customTemplateId', 'customTemplateName', 'propertyType', 
+        'reportType', 'createdAt', 'updatedAt', 'property_address'
+    }
+    
+    table_count = 0
+    field_count = 0
+    
+    def is_table_field(field_id: str, field_value: Any) -> bool:
+        """Check if field is a table"""
+        table_indicators = ['table', 'list', 'items', 'rows', 'entries', 'specifications', 'valuation_table', '_table']
+        if any(indicator in field_id.lower() for indicator in table_indicators):
+            if isinstance(field_value, (list, dict)):
+                return True
+        
+        if isinstance(field_value, list) and len(field_value) > 0:
+            first_item = field_value[0]
+            if isinstance(first_item, dict) and len(first_item) > 1:
+                return True
+        
+        if isinstance(field_value, dict):
+            if 'rows' in field_value or 'columns' in field_value or 'tableData' in field_value:
+                return True
+        
+        return False
+    
+    def create_table_def(field_id: str, field_value: Any) -> Dict[str, Any]:
+        """Create table definition"""
+        definition = {
+            "field_id": field_id,
+            "table_type": "dynamic",
+            "created_at": datetime.utcnow().isoformat() + "Z",
+            "structure": {
+                "columns": [],
+                "rows": [],
+                "metadata": {}
+            }
+        }
+        
+        if isinstance(field_value, list) and len(field_value) > 0:
+            first_item = field_value[0]
+            if isinstance(first_item, dict):
+                for col_key, col_value in first_item.items():
+                    column_def = {
+                        "id": col_key,
+                        "name": col_key.replace('_', ' ').title(),
+                        "type": "text",
+                        "editable": True,
+                        "required": False
+                    }
+                    definition["structure"]["columns"].append(column_def)
+                
+                definition["structure"]["rows"] = field_value
+                definition["structure"]["metadata"] = {
+                    "row_count": len(field_value),
+                    "column_count": len(definition["structure"]["columns"]),
+                    "allow_add_rows": True,
+                    "allow_add_columns": True,
+                    "allow_delete_rows": True
+                }
+        
+        return definition
+    
+    # Process each field
+    for field_id, field_value in input_data.items():
+        
+        # Skip empty values and metadata
+        if field_value is None or field_value == "" or field_id in metadata_fields:
+            continue
+            
+        # Handle structured data from frontend (flatten it)
+        if isinstance(field_value, dict) and field_id not in common_field_ids:
+            # Check if it's a nested structure like property_details
+            if any(key.startswith(('property_part_', 'site_part_', 'valuation_part_', 'construction_part_')) for key in field_value.keys()):
+                logger.info(f"🔄 Flattening structured data from {field_id}")
+                # Flatten the nested structure
+                for section_key, section_data in field_value.items():
+                    if isinstance(section_data, dict):
+                        for sub_field_id, sub_field_value in section_data.items():
+                            if sub_field_value is not None and sub_field_value != "":
+                                result["data"][sub_field_id] = sub_field_value
+                                field_count += 1
+                continue
+        
+        # Check if it's a common field
+        if field_id in common_field_ids:
+            result["common_fields"][field_id] = field_value
+            logger.info(f"📄 Common field: {field_id}")
+            continue
+            
+        # Check if it's a dynamic table
+        if is_table_field(field_id, field_value):
+            table_definition = create_table_def(field_id, field_value)
+            result["tables"][field_id] = table_definition
+            
+            # Also save raw data in data section for backward compatibility
+            result["data"][field_id] = field_value
+            table_count += 1
+            logger.info(f"📊 Table: {field_id} with {len(field_value) if isinstance(field_value, list) else 'object'} entries")
+        else:
+            # Regular field - save in data section
+            result["data"][field_id] = field_value
+            logger.info(f"📄 Field: {field_id}")
+            
+        field_count += 1
+    
+    # Ensure all common fields have values (add defaults for missing ones)
+    common_field_defaults = {
+        "valuation_date": datetime.now().strftime("%Y-%m-%d"),
+        "applicant_name": "N/A",
+        "inspection_date": datetime.now().strftime("%Y-%m-%d"), 
+        "valuation_purpose": "bank_purpose"
+    }
+    
+    for field_id, default_value in common_field_defaults.items():
+        if field_id not in result["common_fields"]:
+            result["common_fields"][field_id] = default_value
+            logger.info(f"📄 Added missing common field with default: {field_id} = {default_value}")
+    
+    logger.info(f"✅ New structure transformation complete: {field_count} fields, {table_count} tables, version: {template_version}")
+    return result
+    return result
+    try:
+        import httpx
+        logger.info(f"� TRANSFORMATION FUNCTION CALLED! Bank: {bank_code}, Template: {template_id}")
+        logger.info(f"�🔄 Starting dynamic transformation with template structure fetching")
+        logger.info(f"🔍 Input data type: {type(input_data)}, keys: {list(input_data.keys()) if isinstance(input_data, dict) else 'Not dict'}")
+        
+        # Fetch template structure dynamically
+        template_url = f"http://localhost:8000/api/templates/{bank_code}/{template_id}/aggregated-fields"
+        
+        try:
+            async with httpx.AsyncClient() as client:
+                template_response = await client.get(template_url, timeout=10.0)
+                if template_response.status_code != 200:
+                    logger.error(f"❌ Failed to fetch template: {template_response.status_code}")
+                    return await fallback_transformation(input_data)
+                
+                template_data = template_response.json()
+                logger.info(f"✅ Template fetched successfully")
+                
+        except Exception as e:
+            logger.error(f"❌ Template fetch error: {e}")
+            return await fallback_transformation(input_data)
+        
+        # Build field mapping from template structure
+        field_to_location = {}
+        group_fields = {}
+        
+        # Process bank specific tabs
+        bank_tabs = template_data.get('bankSpecificTabs', [])
+        
+        for tab in bank_tabs:
+            tab_id = tab.get('tabId', 'unknown')
+            tab_name = tab.get('tabName', 'Unknown Tab')
+            
+            sections = tab.get('sections', [])
+            for section in sections:
+                section_id = section.get('sectionId', 'unknown')
+                section_name = section.get('sectionName', 'Unknown Section')
+                
+                fields = section.get('fields', [])
+                for field in fields:
+                    field_id = field.get('fieldId')
+                    field_type = field.get('fieldType', 'text')
+                    
+                    if field_id:
+                        field_to_location[field_id] = {
+                            "tab": tab_name,
+                            "section": section_id,  # Use actual section ID like property_part_a
+                            "type": field_type
+                        }
+                        
+                        # Handle group fields
+                        if field_type == 'group':
+                            subfields = field.get('subFields', [])
+                            group_fields[field_id] = [sf.get('fieldId') for sf in subfields if sf.get('fieldId')]
+                            logger.info(f"🔗 Group field {field_id}: {len(group_fields[field_id])} subfields")
+        
+        logger.info(f"📊 Mapped {len(field_to_location)} fields, {len(group_fields)} group fields")
+        
+        # Identify already structured vs flat data
+        structured_tabs = set()
+        flat_fields = {}
+        
+        # Handle common fields (from template.commonFields)
+        common_field_ids = set()
+        for common_field in template_data.get('commonFields', []):
+            field_id = common_field.get('fieldId')
+            if field_id:
+                common_field_ids.add(field_id)
+        
+        # Separate structured tabs from individual fields
+        for key, value in input_data.items():
+            if isinstance(value, dict) and key not in common_field_ids:
+                # Check if this looks like a structured tab
+                expected_tabs = {tab.get('tabName') for tab in bank_tabs}
+                expected_tabs.update(['property_details', 'site_characteristics', 'valuation', 'construction_specifications', 'detailed_valuation'])
+                
+                if key in expected_tabs or key.lower().replace(' ', '_') in {t.lower().replace(' ', '_') for t in expected_tabs}:
+                    structured_tabs.add(key)
+                else:
+                    flat_fields[key] = value
+            else:
+                # Individual field or common field
+                flat_fields[key] = value
+        
+        logger.info(f"📊 Found {len(structured_tabs)} structured tabs, {len(flat_fields)} individual fields")
+        
+        # Start with structured data if it exists
+        result = {}
+        
+        # Skip structured tabs that contain old format data - only use properly formatted ones
+        for tab_key, tab_data in input_data.items():
+            if tab_key in structured_tabs and isinstance(tab_data, dict):
+                # Map old tab names to new ones
+                tab_mapping = {
+                    'property_details': 'Property Details',
+                    'site_characteristics': 'Site Characteristics', 
+                    'valuation': 'Valuation',
+                    'construction_specifications': 'Construction Specifications',
+                    'detailed_valuation': 'Detailed Valuation'
+                }
+                
+                proper_tab_name = tab_mapping.get(tab_key, tab_key)
+                
+                # Check if this has proper section structure with actual data
+                has_proper_sections = any(section_key.startswith(('property_part_', 'site_part_', 'valuation_part_', 'construction_part_')) for section_key in tab_data.keys())
+                
+                if has_proper_sections:
+                    if proper_tab_name not in result:
+                        result[proper_tab_name] = {}
+                    
+                    # Process each section in the structured data
+                    for section_key, section_data in tab_data.items():
+                        if isinstance(section_data, dict) and section_data:  # Only process non-empty sections
+                            if section_key not in result[proper_tab_name]:
+                                result[proper_tab_name][section_key] = {}
+                            
+                            # Extract individual fields and organize them properly
+                            for field_id, field_value in section_data.items():
+                                if field_value is not None and field_value != "":
+                                    # Check if this field is a group field
+                                    if field_id in group_fields:
+                                        # This field itself is a group - the value should be a dict of subfields
+                                        if isinstance(field_value, dict):
+                                            result[proper_tab_name][section_key][field_id] = field_value
+                                        else:
+                                            # Single value for group field - this shouldn't happen but handle it
+                                            result[proper_tab_name][section_key][field_id] = field_value
+                                    else:
+                                        # Check if this is a subfield that should be grouped
+                                        parent_group = None
+                                        for group_id, subfield_list in group_fields.items():
+                                            if field_id in subfield_list:
+                                                parent_group = group_id
+                                                break
+                                        
+                                        if parent_group:
+                                            # Create group if it doesn't exist
+                                            if parent_group not in result[proper_tab_name][section_key]:
+                                                result[proper_tab_name][section_key][parent_group] = {}
+                                            result[proper_tab_name][section_key][parent_group][field_id] = field_value
+                                        else:
+                                            # Regular field - add directly
+                                            result[proper_tab_name][section_key][field_id] = field_value
+                    
+                    logger.info(f"✅ Processed structured tab {tab_key} -> {proper_tab_name} with {len(tab_data)} sections")
+                    
+                    # Remove this from flat_fields so it doesn't get processed again
+                    if tab_key in flat_fields:
+                        del flat_fields[tab_key]
+        
+        # Process individual flat fields
+        common_fields = {}
+        
+        # Filter out metadata fields that shouldn't be processed
+        metadata_fields = {
+            'status', 'bankName', 'templateName', 'organizationId', 'customTemplateId', 
+            'customTemplateName', 'propertyType', 'reportType', 'createdAt', 'updatedAt'
+        }
+        
+        for field_id, field_value in flat_fields.items():
+            if field_value is None or field_value == "" or field_id in metadata_fields:
+                continue
+                
+            # Check if it's a common field
+            if field_id in common_field_ids:
+                common_fields[field_id] = field_value
+                continue
+            
+            # Check if field is mapped in template
+            if field_id in field_to_location:
+                location = field_to_location[field_id]
+                tab_name = location["tab"]
+                section_id = location["section"]
+                
+                # Initialize tab and section if needed
+                if tab_name not in result:
+                    result[tab_name] = {}
+                if section_id not in result[tab_name]:
+                    result[tab_name][section_id] = {}
+                
+                result[tab_name][section_id][field_id] = field_value
+                
+            else:
+                # Check if this field is a subfield of a group
+                parent_group = None
+                for group_id, subfield_list in group_fields.items():
+                    if field_id in subfield_list:
+                        parent_group = group_id
+                        break
+                
+                if parent_group and parent_group in field_to_location:
+                    # This is a subfield - add it to its parent group
+                    location = field_to_location[parent_group]
+                    tab_name = location["tab"]
+                    section_id = location["section"]
+                    
+                    # Initialize structures
+                    if tab_name not in result:
+                        result[tab_name] = {}
+                    if section_id not in result[tab_name]:
+                        result[tab_name][section_id] = {}
+                    if parent_group not in result[tab_name][section_id]:
+                        result[tab_name][section_id][parent_group] = {}
+                    
+                    # Add subfield to group
+                    result[tab_name][section_id][parent_group][field_id] = field_value
+                    logger.info(f"📄 Added subfield {field_id} to group {parent_group}")
+                    
+                else:
+                    # Only add unmapped fields if they are actual form data (not metadata)
+                    if not field_id.startswith(('_', 'custom', 'bank', 'template', 'organization', 'property_type', 'report_type')):
+                        if "_unmapped_" not in result:
+                            result["_unmapped_"] = {}
+                        result["_unmapped_"][field_id] = field_value
+        
+        # Add common fields if any
+        if common_fields:
+            result["_common_fields_"] = common_fields
+        
+        # Clean up empty _unmapped_ section
+        if "_unmapped_" in result and not result["_unmapped_"]:
+            del result["_unmapped_"]
+        
+        logger.info(f"✅ Transformation complete: {len(result)} tabs created")
+        return result
+        
+    except Exception as e:
+        logger.error(f"❌ Transformation error: {e}")
+        return await fallback_transformation(input_data)
+
+async def fallback_transformation(input_data: Dict[str, Any]) -> Dict[str, Any]:
+    """Fallback transformation when template fetch fails"""
+    logger.info("� FALLBACK TRANSFORMATION CALLED - Main transformation failed!")
+    logger.info("�🔄 Using fallback transformation")
+    
+    # Basic structure
+    result = {
+        "Property Details": {
+            "property_part_a": {},
+            "property_part_b": {}
+        },
+        "_unmapped_": {}
+    }
+    
+    # Common fields that should not be in main structure
+    common_field_ids = {"report_reference_number", "valuation_date", "applicant_name"}
+    common_fields = {}
+    
+    for field_id, value in input_data.items():
+        if value is None or value == "":
+            continue
+            
+        if field_id in common_field_ids:
+            common_fields[field_id] = value
+        elif field_id in ["agreement_to_sell", "list_of_documents_produced", "layout_plan", "sales_deed"]:
+            result["Property Details"]["property_part_a"][field_id] = value
+        elif field_id in ["owner_details", "borrower_name", "postal_address"]:
+            result["Property Details"]["property_part_b"][field_id] = value
+        else:
+            result["_unmapped_"][field_id] = value
+    
+    if common_fields:
+        result["_common_fields_"] = common_fields
+        
+    return result
+
 
 # ================================
 # CALCULATION ENGINE APIs
@@ -1871,6 +2388,71 @@ async def calculate_field_value(calc_request: CalculationRequest, request: Reque
         )
         api_logger.log_response(error_response, request_data)
         return error_response
+
+
+@app.post("/api/calculate/land-valuation")
+async def calculate_land_valuation(request: Request) -> JSONResponse:
+    """Calculate Estimated Value of Land based on plot size and market rate"""
+    try:
+        body = await request.json()
+        plot_size = body.get("plot_size", 0)
+        market_rate = body.get("market_rate", 0)
+        
+        logger.info(f"🧮 Calculating land valuation: {plot_size} × {market_rate}")
+        
+        # Clean and convert inputs to numbers
+        def clean_numeric_input(value):
+            if value is None or value == "":
+                return 0
+            if isinstance(value, str):
+                # Remove currency symbols, commas, and extract numeric value
+                cleaned = str(value).replace('₹', '').replace(',', '').replace(' ', '').strip()
+                # Handle area units (sq ft, sq.ft, etc.)
+                cleaned = cleaned.replace('sq', '').replace('ft', '').replace('.', '').strip()
+                try:
+                    return float(cleaned) if cleaned else 0
+                except ValueError:
+                    return 0
+            return float(value)
+        
+        plot_size_num = clean_numeric_input(plot_size)
+        market_rate_num = clean_numeric_input(market_rate)
+        
+        # Calculate estimated land value
+        estimated_value = plot_size_num * market_rate_num
+        
+        # Format as Indian currency
+        formatted_value = format_currency(estimated_value)
+        
+        logger.info(f"✅ Land valuation calculated: {plot_size_num} × {market_rate_num} = {estimated_value}")
+        
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "calculation": {
+                    "plot_size": plot_size_num,
+                    "market_rate": market_rate_num,
+                    "estimated_value": estimated_value,
+                    "formatted_value": formatted_value
+                },
+                "formula": "plot_size × market_rate",
+                "result": estimated_value,
+                "formattedResult": formatted_value
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"❌ Land valuation calculation error: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "error": f"Land valuation calculation failed: {str(e)}",
+                "result": 0,
+                "formattedResult": "₹0.00"
+            }
+        )
 
 
 def format_currency(amount: float) -> str:
@@ -3487,7 +4069,7 @@ async def update_user_role(user_id: str, role_request: UpdateUserRoleRequest, re
 class ReportCreateRequest(BaseModel):
     bank_code: str
     template_id: str
-    property_address: str
+    # property_address: removed - now extracted from report_data
     report_data: Dict[str, Any]
 
 class ReportUpdateRequest(BaseModel):
@@ -3503,54 +4085,173 @@ async def create_report(
     """Create a new report (Manager and Employee can create)"""
     request_data = await api_logger.log_request(request)
     
+    def get_report_display_data(report: Dict[str, Any]) -> Dict[str, Any]:
+        """Extract display data from report handling both old and new structures"""
+        property_address = "N/A"
+        applicant_name = "N/A"
+        
+        report_data = report.get("report_data", {})
+        
+        if isinstance(report_data, dict):
+            # NEW FORMAT: Check report_data.common_fields.applicant_name (direct)
+            if "common_fields" in report_data and isinstance(report_data["common_fields"], dict):
+                applicant_name = report_data["common_fields"].get("applicant_name", "N/A")
+            
+            # NEW FORMAT: Check report_data.data.postal_address (direct)
+            if "data" in report_data and isinstance(report_data["data"], dict):
+                data_section = report_data["data"]
+                property_address = data_section.get("postal_address") or data_section.get("property_address", "N/A")
+            
+            # OLD FORMAT FALLBACK: report_data.report_data.data (nested)
+            elif "report_data" in report_data and isinstance(report_data["report_data"], dict):
+                nested_report_data = report_data["report_data"]
+                if "data" in nested_report_data and isinstance(nested_report_data["data"], dict):
+                    data_section = nested_report_data["data"]
+                    property_address = data_section.get("postal_address") or data_section.get("property_address", "N/A")
+            
+            # OLD FORMAT: Direct fields in report_data
+            elif isinstance(report_data, dict):
+                property_address = report_data.get("postal_address") or report_data.get("property_address", "N/A")
+            
+            # OLD FORMAT FALLBACK: _common_fields_ inside report_data
+            if applicant_name == "N/A" and "_common_fields_" in report_data and isinstance(report_data["_common_fields_"], dict):
+                applicant_name = report_data["_common_fields_"].get("applicant_name", "N/A")
+        
+        if property_address == "N/A":
+            property_address = report.get("property_address", "N/A")
+        
+        return {"property_address": property_address, "applicant_name": applicant_name}
+    
+    logger.info(f"🚀🚀 CREATE REPORT ENTRY POINT - Function called successfully!")
+    logger.info(f"🔍 CREATE REPORT CALLED: {report_request.bank_code}/{report_request.template_id}")
+    
     try:
         # Check permission
         if not org_context.has_permission("reports", "create"):
             raise HTTPException(status_code=403, detail="Insufficient permissions to create reports")
         
+        # Extract target organization from URL for system admins
+        target_org_short_name = org_context.org_short_name
+        
+        # Check if URL contains /org/{org_short_name}/ pattern
+        path_parts = request.url.path.split("/")
+        url_org_short_name = None
+        
+        try:
+            if "org" in path_parts:
+                org_index = path_parts.index("org")
+                if org_index + 1 < len(path_parts):
+                    url_org_short_name = path_parts[org_index + 1]
+        except (ValueError, IndexError):
+            pass
+        
+        # System admins can create reports in any organization via URL
+        if org_context.is_system_admin and url_org_short_name:
+            target_org_short_name = url_org_short_name
+            logger.info(f"🔑 System admin creating report in organization: {target_org_short_name}")
+        elif url_org_short_name and url_org_short_name != org_context.org_short_name:
+            # Non-system-admin trying to access different org
+            raise HTTPException(
+                status_code=403, 
+                detail=f"Access denied to organization: {url_org_short_name}"
+            )
+        
         from database.multi_db_manager import MultiDatabaseManager
         from services.reference_number_service import ReferenceNumberService
+        from services.template_field_mapping import TemplateFieldMappingService
         import uuid
         
         db_manager = MultiDatabaseManager()
         await db_manager.connect()
         
-        # Initialize reference number service
+        # Initialize services
         ref_service = ReferenceNumberService(db_manager)
+        mapping_service = TemplateFieldMappingService()
+        await mapping_service.connect()
         
-        # Generate unique reference number with retry logic for race conditions
         try:
-            reference_number = await ref_service.generate_with_retry(
-                org_context.org_short_name,
-                max_retries=3
-            )
-            logger.info(f"📋 Generated reference number: {reference_number}")
+            # Check if reference number already exists in flat data
+            flat_data = report_request.report_data
+            existing_ref = flat_data.get("report_reference_number")
+            
+            if existing_ref and existing_ref.strip():
+                # Use existing reference number for testing
+                reference_number = existing_ref.strip()
+                logger.info(f"📋 Using provided reference number: {reference_number}")
+            else:
+                # Generate unique reference number with retry logic for race conditions
+                reference_number = await ref_service.generate_with_retry(
+                    target_org_short_name,  # Use target organization
+                    max_retries=3
+                )
+                logger.info(f"📋 Generated reference number for {target_org_short_name}: {reference_number}")
+                
         except Exception as ref_error:
-            logger.error(f"❌ Failed to generate reference number: {ref_error}")
+            logger.error(f"❌ Failed to generate reference number for {target_org_short_name}: {ref_error}")
             await db_manager.disconnect()
             raise HTTPException(
                 status_code=400,
                 detail=f"Failed to generate reference number. Please ensure organization has configured report reference initials. Error: {str(ref_error)}"
             )
         
-        # Use org_short_name for database lookup
-        org_db = db_manager.get_org_database(org_context.org_short_name)
+        logger.info(f"🔍 DEBUG: About to start transformation process")
+        
+        # Transform flat data structure to template-organized structure
+        logger.info(f"🔄 Transforming flat data to template structure: {report_request.bank_code}/{report_request.template_id}")
+        logger.info(f"🔍 ABOUT TO CALL TRANSFORMATION FUNCTION - This should appear in logs!")
+        
+        # Transform flat data to organized structure using template mapping
+        flat_data = report_request.report_data
+        organized_data = await transform_flat_to_template_structure(
+            flat_data, 
+            report_request.bank_code, 
+            report_request.template_id,
+            mapping_service
+        )
+        
+        # Validate that we received nested structure matching template format
+        if isinstance(organized_data, dict):
+            logger.info(f"✅ Received nested data structure for new report")
+            logger.info(f"📋 Report data contains {len(organized_data)} top-level sections/tabs")
+            
+            # Validate nested data structure
+            is_valid, validation_errors = await mapping_service.validate_report_structure(
+                organized_data,
+                report_request.bank_code,
+                report_request.template_id
+            )
+            
+            if not is_valid:
+                logger.warning(f"⚠️ Report structure validation warnings: {validation_errors}")
+                # Continue anyway but log the warnings
+            else:
+                logger.info(f"✅ Report structure validation passed for new report")
+                
+        else:
+            logger.warning(f"⚠️ Report data not in expected nested format, using as-is")
+        
+        # Use target_org_short_name for database lookup
+        org_db = db_manager.get_org_database(target_org_short_name)
         
         # Generate report ID
         report_id = f"rpt_{uuid.uuid4().hex[:12]}"
         
-        # Create report document
+        # Extract property address from report data for logging/reference
+        temp_report = {"report_data": organized_data}
+        display_data = get_report_display_data(temp_report) 
+        
+        # Create report document with organized data
         report = {
             "report_id": report_id,
             "reference_number": reference_number,  # NEW: Unique reference number
             "bank_code": report_request.bank_code,
             "template_id": report_request.template_id,
-            "property_address": report_request.property_address,
-            "report_data": report_request.report_data,
+            # property_address: removed - now in report_data structure
+            "report_data": organized_data,  # NEW: Organized by template tabs
             "status": "draft",  # Initial status is always draft
             "created_by": org_context.user_id,
             "created_by_email": org_context.email,
-            "organization_id": org_context.organization_id,
+            "organization_id": target_org_short_name,  # Use target organization
             "created_at": datetime.now(timezone.utc),
             "updated_at": datetime.now(timezone.utc),
             "submitted_at": None,
@@ -3560,11 +4261,11 @@ async def create_report(
         # Insert report
         result = await org_db.reports.insert_one(report)
         
-        logger.info(f"✅ Report created: {report_id} by {org_context.email}")
+        logger.info(f"✅ Report created with organized structure: {report_id} by {org_context.email}")
         
         # Log activity
         await log_activity(
-            organization_id=org_context.organization_id,
+            organization_id=target_org_short_name,  # Use target organization
             user_id=org_context.user_id,
             user_email=org_context.email,
             action="report_created",
@@ -3574,13 +4275,13 @@ async def create_report(
                 "reference_number": reference_number,  # NEW: Include reference number in activity log
                 "bank_code": report_request.bank_code,
                 "template_id": report_request.template_id,
-                "property_address": report_request.property_address,
-                "status": "draft"
+                "property_address": display_data["property_address"],  # Extract from report data
+                "applicant_name": display_data["applicant_name"],  # Extract from report data
+                "status": "draft",
+                "data_organization": "new_structure"  # NEW: Indicate new structure
             },
             ip_address=get_client_ip(request)
         )
-        
-        await db_manager.disconnect()
         
         report["_id"] = str(result.inserted_id)
         report["created_at"] = report["created_at"].isoformat()
@@ -3590,7 +4291,7 @@ async def create_report(
             status_code=201,
             content={
                 "success": True,
-                "message": "Report created successfully",
+                "message": "Report created successfully with organized structure",
                 "data": report
             }
         )
@@ -3610,6 +4311,8 @@ async def create_report(
         )
         api_logger.log_response(error_response, request_data)
         return error_response
+    finally:
+        await mapping_service.disconnect()
 
 
 @app.put("/api/reports/{report_id}")
@@ -3628,73 +4331,146 @@ async def update_report(
             raise HTTPException(status_code=403, detail="Insufficient permissions to update reports")
         
         from database.multi_db_manager import MultiDatabaseManager
+        from services.template_field_mapping import TemplateFieldMappingService
         
         db_manager = MultiDatabaseManager()
         await db_manager.connect()
         
-        # Use org_short_name for database lookup
-        org_db = db_manager.get_org_database(org_context.org_short_name)
+        mapping_service = TemplateFieldMappingService()
+        await mapping_service.connect()
         
-        # Find existing report (filter by org for security)
-        report = await org_db.reports.find_one({
-            "report_id": report_id
-        })
-        
-        if not report:
-            raise HTTPException(status_code=404, detail=f"Report {report_id} not found")
-        
-        # Prepare update data
-        update_data = {
-            "report_data": update_request.report_data,
-            "updated_at": datetime.now(timezone.utc),
-            "updated_by": org_context.user_id,
-            "updated_by_email": org_context.email,
-            "version": report.get("version", 1) + 1
-        }
-        
-        # Only allow status update if explicitly provided
-        if update_request.status:
-            update_data["status"] = update_request.status
-        
-        # Update report
-        result = await org_db.reports.update_one(
-            {"report_id": report_id},
-            {"$set": update_data}
-        )
-        
-        if result.modified_count == 0:
-            raise HTTPException(status_code=400, detail="Failed to update report")
-        
-        logger.info(f"✅ Report updated: {report_id} by {org_context.email}")
-        
-        # Log activity
-        await log_activity(
-            organization_id=org_context.org_short_name,
-            user_id=org_context.user_id,
-            user_email=org_context.email,
-            action="report_updated",
-            resource_type="report",
-            resource_id=report_id,
-            details={
-                "previous_status": report.get("status"),
-                "new_status": update_request.status or report.get("status"),
-                "version": update_data["version"]
-            },
-            ip_address=get_client_ip(request)
-        )
-        
-        await db_manager.disconnect()
-        
-        response = JSONResponse(
-            status_code=200,
-            content={
-                "success": True,
-                "message": "Report updated successfully"
+        try:
+            # Use org_short_name for database lookup
+            org_db = db_manager.get_org_database(org_context.org_short_name)
+            
+            # Find existing report (filter by org for security)
+            report = await org_db.reports.find_one({
+                "report_id": report_id
+            })
+            
+            if not report:
+                raise HTTPException(status_code=404, detail=f"Report {report_id} not found")
+            
+            bank_code = report.get("bank_code", "")
+            template_id = report.get("template_id", "")
+            
+            # Transform flat data structure to template-organized structure
+            logger.info(f"🔄 Transforming flat update data to template structure: {bank_code}/{template_id}")
+            
+            # Transform flat data to organized structure using template mapping
+            flat_data = update_request.report_data
+            organized_report_data = await transform_flat_to_template_structure(
+                flat_data, 
+                bank_code, 
+                template_id,
+                mapping_service
+            )
+            
+            # Validate that we received nested structure matching template format
+            if isinstance(organized_report_data, dict) and bank_code and template_id:
+                logger.info(f"✅ Received nested data structure for report: {report_id}")
+                logger.info(f"📋 Update data contains {len(organized_report_data)} top-level sections/tabs")
+                
+                # Validate the nested structure matches template expectations
+                try:
+                    is_valid, validation_errors = await mapping_service.validate_report_structure(
+                        organized_report_data, bank_code, template_id
+                    )
+                    
+                    if not is_valid:
+                        logger.warning(f"⚠️ Report structure validation warnings for report: {report_id}: {validation_errors}")
+                        # Continue with update but log warnings
+                    else:
+                        logger.info(f"✅ Report structure validation passed for report: {report_id}")
+                        
+                except Exception as validation_error:
+                    logger.warning(f"⚠️ Could not validate report structure: {validation_error}")
+                    # Continue with update
+                    
+            else:
+                logger.warning(f"⚠️ Missing bank_code/template_id or data not in expected nested format for report: {report_id}")
+                # Continue with update using data as-is
+            
+            # Prepare update data
+            update_data = {
+                "report_data": organized_report_data,  # NEW: Organized by tabs
+                "updated_at": datetime.now(timezone.utc),
+                "updated_by": org_context.user_id,
+                "updated_by_email": org_context.email,
+                "version": report.get("version", 1) + 1
             }
-        )
+            
+            # Only allow status update if explicitly provided
+            if update_request.status:
+                update_data["status"] = update_request.status
+            
+            # Update report
+            result = await org_db.reports.update_one(
+                {"report_id": report_id},
+                {"$set": update_data}
+            )
+            
+            if result.modified_count == 0:
+                raise HTTPException(status_code=400, detail="Failed to update report")
+            
+            logger.info(f"✅ Report updated with organized structure: {report_id} by {org_context.email}")
+            
+            # Get the updated report to return to frontend
+            updated_report = await org_db.reports.find_one({"report_id": report_id})
+            
+            # Format the updated report for response (similar to get_report_by_id)
+            formatted_report = {
+                "_id": str(updated_report["_id"]),
+                "report_id": updated_report.get("report_id"),
+                "reference_number": updated_report.get("reference_number"),
+                "bank_code": updated_report.get("bank_code"),
+                "template_id": updated_report.get("template_id"),
+                "property_type": updated_report.get("property_type"),
+                "property_address": updated_report.get("property_address"),
+                "report_data": updated_report.get("report_data", {}),
+                "status": updated_report.get("status", "draft"),
+                "created_by": updated_report.get("created_by"),
+                "created_by_email": updated_report.get("created_by_email"),
+                "updated_by": updated_report.get("updated_by"),
+                "updated_by_email": updated_report.get("updated_by_email"),
+                "organization_id": updated_report.get("organization_id"),
+                "created_at": updated_report.get("created_at").isoformat() if updated_report.get("created_at") else None,
+                "updated_at": updated_report.get("updated_at").isoformat() if updated_report.get("updated_at") else None,
+                "submitted_at": updated_report.get("submitted_at").isoformat() if updated_report.get("submitted_at") else None,
+                "version": updated_report.get("version", 1)
+            }
+            
+            # Log activity
+            await log_activity(
+                organization_id=org_context.org_short_name,
+                user_id=org_context.user_id,
+                user_email=org_context.email,
+                action="report_updated",
+                resource_type="report",
+                resource_id=report_id,
+                details={
+                    "previous_status": report.get("status"),
+                    "new_status": update_request.status or report.get("status"),
+                    "version": update_data["version"],
+                    "data_organized": bool(bank_code and template_id)
+                },
+                ip_address=get_client_ip(request)
+            )
+            
+            response = JSONResponse(
+                status_code=200,
+                content={
+                    "success": True,
+                    "message": "Report updated successfully",
+                    "data": formatted_report
+                }
+            )
+            
+            api_logger.log_response(response, request_data)
+            return response
         
-        api_logger.log_response(response, request_data)
-        return response
+        finally:
+            await mapping_service.disconnect()
         
     except HTTPException as http_exc:
         raise http_exc
@@ -3903,9 +4679,61 @@ async def get_reports(
     end_date: Optional[str] = None,
     page: int = 1,
     limit: int = 20,
+    organization_id: Optional[str] = None,  # NEW: Allow explicit org filtering
     org_context: OrganizationContext = Depends(get_organization_context)
 ):
     """Get all reports with filtering options for the reports page"""
+    
+    def get_report_display_data(report: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Extract display data from report handling both old and new structures
+        Old: property_address at root, applicant_name in _common_fields_
+        New: postal_address in report_data.data, applicant_name in report_data.common_fields
+        """
+        # Initialize defaults
+        property_address = "N/A"
+        applicant_name = "N/A"
+        
+        # Get the report_data section
+        report_data = report.get("report_data", {})
+        
+        if isinstance(report_data, dict):
+            # NEW FORMAT: Check report_data.common_fields.applicant_name (direct)
+            if "common_fields" in report_data and isinstance(report_data["common_fields"], dict):
+                applicant_name = report_data["common_fields"].get("applicant_name", "N/A")
+            
+            # NEW FORMAT: Check report_data.data.postal_address (direct) 
+            if "data" in report_data and isinstance(report_data["data"], dict):
+                data_section = report_data["data"]
+                property_address = data_section.get("postal_address") or data_section.get("property_address", "N/A")
+            
+            # OLD FORMAT FALLBACK: report_data.report_data.data (nested)
+            elif "report_data" in report_data and isinstance(report_data["report_data"], dict):
+                nested_report_data = report_data["report_data"]
+                if "data" in nested_report_data and isinstance(nested_report_data["data"], dict):
+                    data_section = nested_report_data["data"]
+                    property_address = data_section.get("postal_address") or data_section.get("property_address", "N/A")
+            
+            # OLD FORMAT: Direct fields in report_data
+            elif isinstance(report_data, dict):
+                property_address = report_data.get("postal_address") or report_data.get("property_address", "N/A")
+            
+            # OLD FORMAT FALLBACK: _common_fields_ inside report_data
+            if applicant_name == "N/A" and "_common_fields_" in report_data and isinstance(report_data["_common_fields_"], dict):
+                applicant_name = report_data["_common_fields_"].get("applicant_name", "N/A")
+        
+        # LEGACY FALLBACK: Try root level
+        if property_address == "N/A":
+            property_address = report.get("property_address", "N/A")
+        
+        if applicant_name == "N/A" and "common_fields" in report and isinstance(report["common_fields"], dict):
+            applicant_name = report["common_fields"].get("applicant_name", "N/A")
+        
+        return {
+            "property_address": property_address,
+            "applicant_name": applicant_name
+        }
+    
     request_data = await api_logger.log_request(request)
     
     try:
@@ -3913,17 +4741,81 @@ async def get_reports(
         if not org_context.has_permission("reports", "read"):
             raise HTTPException(status_code=403, detail="Insufficient permissions to view reports")
         
+        # Extract target organization from URL for system admins
+        target_org_short_name = org_context.org_short_name
+        
+        # Check if URL contains /org/{org_short_name}/ pattern
+        path_parts = request.url.path.split("/")
+        url_org_short_name = None
+        
+        try:
+            if "org" in path_parts:
+                org_index = path_parts.index("org")
+                if org_index + 1 < len(path_parts):
+                    url_org_short_name = path_parts[org_index + 1]
+        except (ValueError, IndexError):
+            pass
+        
+        # Also check for organization context in headers (for SPA frontends)
+        header_org_short_name = None
+        if hasattr(request, 'headers') and request.headers:
+            # Common header names used by frontends to pass organization context
+            header_org_short_name = (
+                request.headers.get("X-Organization-Id") or 
+                request.headers.get("X-Org-Context") or 
+                request.headers.get("Organization-Context") or
+                request.headers.get("Referer", "").split("/org/")[1].split("/")[0] if "/org/" in request.headers.get("Referer", "") else None
+            )
+        
+        logger.info(f"🔍 Organization context detection - URL: {url_org_short_name}, Header: {header_org_short_name}, Token: {org_context.org_short_name}")
+        
+        # Handle organization context for system admins
+        is_system_admin = org_context.is_system_admin or "admin" in org_context.roles
+        
+        if is_system_admin:
+            # Priority: explicit organization_id param > URL org > Header org > token org
+            if organization_id:
+                target_org_short_name = organization_id
+                logger.info(f"🔑 System admin viewing reports for org (param): {target_org_short_name}")
+            elif url_org_short_name:
+                target_org_short_name = url_org_short_name
+                logger.info(f"🔑 System admin viewing reports for org (URL): {target_org_short_name}")
+            elif header_org_short_name:
+                target_org_short_name = header_org_short_name
+                logger.info(f"🔑 System admin viewing reports for org (Header): {target_org_short_name}")
+            else:
+                logger.info(f"🔑 System admin viewing reports for own org: {target_org_short_name}")
+        elif url_org_short_name and url_org_short_name != org_context.org_short_name:
+            # Non-system-admin trying to access different org
+            raise HTTPException(
+                status_code=403, 
+                detail=f"Access denied to organization: {url_org_short_name}"
+            )
+        elif organization_id and organization_id != org_context.org_short_name:
+            # Non-system-admin trying to access different org via param
+            raise HTTPException(
+                status_code=403, 
+                detail=f"Access denied to organization: {organization_id}"
+            )
+        
         from database.multi_db_manager import MultiDatabaseManager
         from datetime import datetime, timezone
         
         db_manager = MultiDatabaseManager()
         await db_manager.connect()
         
-        # Use org_short_name for database lookup
-        org_db = db_manager.get_org_database(org_context.org_short_name)
+        # Use target org for database lookup
+        org_db = db_manager.get_org_database(target_org_short_name)
+        logger.info(f"📊 Fetching reports from database: {target_org_short_name}")
         
         # Build filter criteria
-        filter_criteria = {}
+        filter_criteria = {
+            # Exclude deleted reports by default
+            "$or": [
+                {"is_deleted": {"$exists": False}},
+                {"is_deleted": False}
+            ]
+        }
         
         if status:
             filter_criteria["status"] = status
@@ -3967,12 +4859,50 @@ async def get_reports(
         # Format reports for frontend
         formatted_reports = []
         for report in reports:
+            # Extract bank branch information from report_data if available
+            report_data = report.get("report_data", {})
+            bank_branch = None
+            bank_branch_name = None
+            
+            # Try to extract bank branch from different possible locations
+            if isinstance(report_data, dict):
+                # Check direct field
+                bank_branch = report_data.get("bank_branch") or report_data.get("bankBranch")
+                
+                # If not found, search in nested structure (new organized format)
+                if not bank_branch:
+                    for tab_key, tab_data in report_data.items():
+                        if isinstance(tab_data, dict):
+                            for section_key, section_data in tab_data.items():
+                                if isinstance(section_data, dict):
+                                    found_branch = section_data.get("bank_branch") or section_data.get("bankBranch")
+                                    if found_branch:
+                                        bank_branch = found_branch
+                                        break
+                            if bank_branch:
+                                break
+                        elif tab_key in ["bank_branch", "bankBranch"]:
+                            bank_branch = tab_data
+                            break
+                
+                # Extract branch name if we have branch ID
+                if bank_branch and isinstance(bank_branch, str):
+                    # For now, use the branch ID as display name
+                    # TODO: Later we can resolve this to actual branch name via bank service
+                    bank_branch_name = bank_branch
+            
+            # Extract display data handling both old and new formats
+            display_data = get_report_display_data(report)
+            
             formatted_report = {
                 "_id": str(report["_id"]),
                 "report_id": report.get("report_id"),
                 "reference_number": report.get("reference_number"),
-                "property_address": report.get("property_address", "N/A"),
+                "property_address": display_data["property_address"],
+                "applicant_name": display_data["applicant_name"],  # NEW: From common_fields
                 "bank_code": report.get("bank_code", ""),
+                "bank_branch": bank_branch,  # NEW: Bank branch ID
+                "bank_branch_name": bank_branch_name,  # NEW: Bank branch display name
                 "template_id": report.get("template_id", ""),
                 "status": report.get("status", "draft"),
                 "created_by_email": report.get("created_by_email", ""),
@@ -4031,6 +4961,7 @@ async def get_reports(
 async def get_report_by_id(
     report_id: str,
     request: Request,
+    organization_id: Optional[str] = None,  # NEW: Allow explicit org filtering
     org_context: OrganizationContext = Depends(get_organization_context)
 ):
     """Get a specific report by ID for viewing/editing"""
@@ -4041,54 +4972,133 @@ async def get_report_by_id(
         if not org_context.has_permission("reports", "read"):
             raise HTTPException(status_code=403, detail="Insufficient permissions to view reports")
         
+        # Extract target organization from URL for system admins
+        target_org_short_name = org_context.org_short_name
+        
+        # Check if URL contains /org/{org_short_name}/ pattern
+        path_parts = request.url.path.split("/")
+        url_org_short_name = None
+        
+        try:
+            if "org" in path_parts:
+                org_index = path_parts.index("org")
+                if org_index + 1 < len(path_parts):
+                    url_org_short_name = path_parts[org_index + 1]
+        except (ValueError, IndexError):
+            pass
+        
+        # Also check for organization context in headers (for SPA frontends)
+        header_org_short_name = None
+        if hasattr(request, 'headers') and request.headers:
+            # Common header names used by frontends to pass organization context
+            header_org_short_name = (
+                request.headers.get("X-Organization-Id") or 
+                request.headers.get("X-Org-Context") or 
+                request.headers.get("Organization-Context") or
+                request.headers.get("Referer", "").split("/org/")[1].split("/")[0] if "/org/" in request.headers.get("Referer", "") else None
+            )
+        
+        logger.info(f"🔍 Organization context detection for report {report_id} - URL: {url_org_short_name}, Header: {header_org_short_name}, Token: {org_context.org_short_name}")
+        
+        # Handle organization context for system admins
+        is_system_admin = org_context.is_system_admin or "admin" in org_context.roles
+        
+        if is_system_admin:
+            # Priority: explicit organization_id param > URL org > Header org > token org
+            if organization_id:
+                target_org_short_name = organization_id
+                logger.info(f"🔑 System admin viewing report for org (param): {target_org_short_name}")
+            elif url_org_short_name:
+                target_org_short_name = url_org_short_name
+                logger.info(f"🔑 System admin viewing report for org (URL): {target_org_short_name}")
+            elif header_org_short_name:
+                target_org_short_name = header_org_short_name
+                logger.info(f"🔑 System admin viewing report for org (Header): {target_org_short_name}")
+            else:
+                logger.info(f"🔑 System admin viewing report for own org: {target_org_short_name}")
+        elif url_org_short_name and url_org_short_name != org_context.org_short_name:
+            # Non-system-admin trying to access different org
+            raise HTTPException(
+                status_code=403, 
+                detail=f"Access denied to organization: {url_org_short_name}"
+            )
+        elif organization_id and organization_id != org_context.org_short_name:
+            # Non-system-admin trying to access different org via param
+            raise HTTPException(
+                status_code=403, 
+                detail=f"Access denied to organization: {organization_id}"
+            )
+        
         from database.multi_db_manager import MultiDatabaseManager
+        from services.template_field_mapping import TemplateFieldMappingService
         
         db_manager = MultiDatabaseManager()
         await db_manager.connect()
         
-        # Use org_short_name for database lookup
-        org_db = db_manager.get_org_database(org_context.org_short_name)
+        mapping_service = TemplateFieldMappingService()
+        await mapping_service.connect()
         
-        # Find the report
-        report = await org_db.reports.find_one({"report_id": report_id})
-        
-        if not report:
-            raise HTTPException(status_code=404, detail=f"Report {report_id} not found")
-        
-        await db_manager.disconnect()
-        
-        # Format report for frontend
-        formatted_report = {
-            "_id": str(report["_id"]),
-            "report_id": report.get("report_id"),
-            "reference_number": report.get("reference_number"),
-            "bank_code": report.get("bank_code"),
-            "template_id": report.get("template_id"),
-            "property_type": report.get("property_type"),
-            "property_address": report.get("property_address"),
-            "report_data": report.get("report_data", {}),
-            "status": report.get("status", "draft"),
-            "created_by": report.get("created_by"),
-            "created_by_email": report.get("created_by_email"),
-            "updated_by": report.get("updated_by"),
-            "updated_by_email": report.get("updated_by_email"),
-            "organization_id": report.get("organization_id"),
-            "created_at": report.get("created_at").isoformat() if report.get("created_at") else None,
-            "updated_at": report.get("updated_at").isoformat() if report.get("updated_at") else None,
-            "submitted_at": report.get("submitted_at").isoformat() if report.get("submitted_at") else None,
-            "version": report.get("version", 1)
-        }
-        
-        response = JSONResponse(
-            status_code=200,
-            content={
-                "success": True,
-                "data": formatted_report
+        try:
+            # Use target org for database lookup
+            org_db = db_manager.get_org_database(target_org_short_name)
+            logger.info(f"📊 Fetching report {report_id} from database: {target_org_short_name}")
+            
+            # Find the report
+            report = await org_db.reports.find_one({"report_id": report_id})
+            
+            if not report:
+                raise HTTPException(status_code=404, detail=f"Report {report_id} not found")
+            
+            # Keep nested structure that matches template format for easy frontend rendering
+            report_data = report.get("report_data", {})
+            bank_code = report.get("bank_code", "")
+            template_id = report.get("template_id", "")
+            
+            # Use nested structure directly - matches template structure for easy frontend rendering
+            nested_data = report_data
+            logger.info(f"✅ Returning nested data structure matching template format for report: {report_id}")
+            
+            # Validate that we have the expected nested structure
+            if isinstance(nested_data, dict) and bank_code and template_id:
+                logger.info(f"📋 Report data contains {len(nested_data)} top-level sections/tabs")
+            else:
+                logger.warning(f"⚠️ Report data may not be in expected nested format or missing template info")
+            
+            # Format report for frontend with nested structure
+            formatted_report = {
+                "_id": str(report["_id"]),
+                "report_id": report.get("report_id"),
+                "reference_number": report.get("reference_number"),
+                "bank_code": bank_code,
+                "template_id": template_id,
+                "property_type": report.get("property_type"),
+                "property_address": report.get("property_address"),
+                "report_data": nested_data,  # NEW: Nested structure matching template format
+                "status": report.get("status", "draft"),
+                "created_by": report.get("created_by"),
+                "created_by_email": report.get("created_by_email"),
+                "updated_by": report.get("updated_by"),
+                "updated_by_email": report.get("updated_by_email"),
+                "organization_id": report.get("organization_id"),
+                "created_at": report.get("created_at").isoformat() if report.get("created_at") else None,
+                "updated_at": report.get("updated_at").isoformat() if report.get("updated_at") else None,
+                "submitted_at": report.get("submitted_at").isoformat() if report.get("submitted_at") else None,
+                "version": report.get("version", 1)
             }
-        )
+            
+            response = JSONResponse(
+                status_code=200,
+                content={
+                    "success": True,
+                    "data": formatted_report
+                }
+            )
+            
+            api_logger.log_response(response, request_data)
+            return response
         
-        api_logger.log_response(response, request_data)
-        return response
+        finally:
+            await mapping_service.disconnect()
         
     except HTTPException as http_exc:
         raise http_exc
@@ -4131,20 +5141,30 @@ async def delete_report(
             raise HTTPException(status_code=404, detail=f"Report {report_id} not found")
         
         # Additional permission check for employees
-        if org_context.role == "employee":
+        if org_context.is_employee and not org_context.is_manager:
             # Employees can only delete their own draft reports
             if report.get("created_by") != org_context.user_id:
                 raise HTTPException(status_code=403, detail="Employees can only delete their own reports")
             if report.get("status") != "draft":
                 raise HTTPException(status_code=403, detail="Employees can only delete draft reports")
         
-        # Delete the report
-        result = await org_db.reports.delete_one({"report_id": report_id})
+        # Soft delete the report - mark as deleted but keep in database
+        update_data = {
+            "is_deleted": True,
+            "deleted_at": datetime.now(),
+            "deleted_by": org_context.email,
+            "status": "deleted"
+        }
         
-        if result.deleted_count == 0:
+        result = await org_db.reports.update_one(
+            {"report_id": report_id},
+            {"$set": update_data}
+        )
+        
+        if result.modified_count == 0:
             raise HTTPException(status_code=400, detail="Failed to delete report")
         
-        logger.info(f"✅ Report deleted: {report_id} by {org_context.email}")
+        logger.info(f"✅ Report soft deleted: {report_id} by {org_context.email}")
         
         # Log activity
         await log_activity(

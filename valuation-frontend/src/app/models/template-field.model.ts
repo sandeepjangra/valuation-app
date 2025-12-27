@@ -8,6 +8,7 @@ export interface CalculatedFieldConfig {
   sourceFields: string[]; // Field IDs to use in calculation
   customFormula?: string; // For complex calculations (optional)
   dependencies?: string[]; // Fields that trigger recalculation
+  outputFormat?: 'currency' | 'number' | 'percentage'; // Output formatting
 }
 
 // Table field interfaces

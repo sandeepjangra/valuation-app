@@ -90,6 +90,29 @@
   align-items: end;
 }
 
+.filter-actions {
+  display: flex;
+  justify-content: center;
+  align-items: end;
+}
+
+.clear-filters-btn {
+  padding: 10px 20px;
+  background: #fed7d7;
+  color: #c53030;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clear-filters-btn:hover {
+  background: #feb2b2;
+  transform: translateY(-1px);
+}
+
 .filter-group label {
   display: block;
   margin-bottom: 6px;
@@ -228,10 +251,21 @@
 
 .table-header, .table-row {
   display: grid;
-  grid-template-columns: 1.5fr 2fr 1fr 1fr 1.5fr 1fr 1fr;
-  gap: 16px;
-  padding: 16px 20px;
+  grid-template-columns: 
+    minmax(180px, 1.5fr)  /* Reference */
+    minmax(120px, 1fr)    /* Applicant Name */
+    minmax(200px, 2.2fr)  /* Address */
+    minmax(60px, 0.6fr)   /* Bank */
+    minmax(100px, 1fr)    /* Property Type */
+    minmax(80px, 0.7fr)   /* Status */
+    minmax(120px, 1fr)    /* Created By */
+    minmax(80px, 0.7fr)   /* Created */
+    minmax(80px, 0.7fr)   /* Updated */
+    minmax(90px, 0.8fr);  /* Actions */
+  gap: 8px;
+  padding: 12px 8px;
   align-items: center;
+  word-wrap: break-word;
 }
 
 .table-header {
@@ -263,6 +297,10 @@
   border-left: 4px solid #fbbf24;
 }
 
+.table-row.status-saved {
+  border-left: 4px solid #3b82f6;
+}
+
 .table-row.status-in_progress {
   border-left: 4px solid #3b82f6;
 }
@@ -279,7 +317,52 @@
 .ref-number {
   font-weight: 600;
   color: #2d3748;
-  font-size: 0.95rem;
+  font-size: 0.9rem; /* Reduced font size for compactness */
+}
+
+.applicant-name {
+  font-weight: 500;
+  color: #2d3748;
+  font-size: 0.9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.address-text {
+  font-size: 0.85rem;
+  color: #4a5568;
+  line-height: 1.3;
+  max-height: 2.6em; /* Limit to 2 lines */
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.bank-code {
+  font-weight: 500;
+  color: #2d3748;
+  font-size: 0.85rem;
+  font-family: monospace; /* Monospace for better code display */
+}
+
+.property-type {
+  font-size: 0.8rem;
+  color: #718096;
+  padding: 2px 6px;
+  background: #f7fafc;
+  border-radius: 4px;
+  text-transform: capitalize;
+}
+
+.created-by {
+  font-size: 0.8rem;
+  color: #718096;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .report-id {
@@ -300,8 +383,9 @@
 }
 
 .date {
-  font-weight: 500;
-  color: #2d3748;
+  font-weight: 400; /* Reduced weight for compactness */
+  color: #4a5568; /* Slightly darker for better readability */
+  font-size: 0.8rem; /* Smaller font size */
 }
 
 .author {
@@ -323,6 +407,11 @@
 .status-draft {
   background: #fef3c7;
   color: #d97706;
+}
+
+.status-saved {
+  background: #dbeafe;
+  color: #2563eb;
 }
 
 .status-progress {
@@ -353,20 +442,24 @@
 }
 
 .action-btn {
-  padding: 8px;
+  padding: 6px; /* Reduced padding for compactness */
   border: none;
-  border-radius: 6px;
+  border-radius: 4px; /* Smaller border radius */
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 0.9rem; /* Smaller font size */
   transition: all 0.2s ease;
   background: #f7fafc;
-  min-width: 36px;
-  height: 36px;
+  min-width: 32px; /* Smaller minimum width */
+  height: 32px; /* Smaller height */
 }
 
 .action-btn:hover {
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.view-btn:hover {
+  background: #e6fffa;
 }
 
 .edit-btn:hover {
@@ -432,17 +525,51 @@
 /* Responsive Design */
 @media (max-width: 1200px) {
   .table-header, .table-row {
-    grid-template-columns: 1.2fr 2fr 0.8fr 1fr 1.2fr 0.8fr 0.8fr;
+    grid-template-columns: 
+      minmax(180px, 1.5fr)  /* Reference */
+      minmax(120px, 1fr)    /* Applicant Name */
+      minmax(200px, 2.2fr)  /* Address */
+      minmax(60px, 0.6fr)   /* Bank */
+      minmax(100px, 1fr)    /* Property Type */
+      minmax(80px, 0.7fr)   /* Status */
+      minmax(120px, 1fr)    /* Created By */
+      minmax(80px, 0.7fr);  /* Created */
+    gap: 6px;
+  }
+  
+  /* Hide less important columns on medium screens */
+  .col-updated, .col-actions {
+    display: none;
   }
 }
 
 @media (max-width: 900px) {
   .table-header, .table-row {
-    grid-template-columns: 1fr 1.5fr 1fr 1fr;
-    gap: 12px;
+    grid-template-columns: 
+      minmax(180px, 1.5fr)  /* Reference */
+      minmax(120px, 1fr)    /* Applicant Name */
+      minmax(200px, 2.2fr)  /* Address */
+      minmax(60px, 0.6fr)   /* Bank */
+      minmax(100px, 1fr)    /* Property Type */
+      minmax(80px, 0.7fr);  /* Status */
+    gap: 6px;
   }
   
-  .col-bank, .col-updated, .col-created .author {
+  /* Hide more columns on smaller screens */
+  .col-created-by, .col-created, .col-updated, .col-actions {
+    display: none;
+  }
+}
+
+@media (max-width: 700px) {
+  .table-header, .table-row {
+    grid-template-columns: 1fr 1.2fr 0.8fr 0.8fr;
+    gap: 6px;
+    padding: 10px 6px;
+  }
+  
+  /* Show only essential columns */
+  .col-applicant, .col-address, .col-bank, .col-created-by, .col-updated, .col-property-type {
     display: none;
   }
 }

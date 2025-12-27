@@ -146,6 +146,25 @@ export class CalculationService {
         if (field.calculatedField) {
           calculatedFieldsMap.set(field.fieldId, field.calculatedField);
         }
+        // Also check for fieldType === 'calculated' (legacy support)
+        else if (field.fieldType === 'calculated' && field.formula) {
+          // Create calculatedField config from legacy format
+          const dependencies = this.extractDependenciesFromFormula(field.formula);
+          const calcType = this.determineCalculationType(field.formula, dependencies);
+          
+          const config: CalculatedFieldConfig = {
+            type: calcType,
+            sourceFields: dependencies,
+            dependencies: dependencies,
+            outputFormat: field.displayFormat === 'currency' ? 'currency' : 'number'
+          };
+          
+          if (calcType === 'custom') {
+            config.customFormula = field.formula;
+          }
+          
+          calculatedFieldsMap.set(field.fieldId, config);
+        }
 
         // Recursively process subFields (for group fields)
         if (field.subFields && field.subFields.length > 0) {
@@ -174,6 +193,49 @@ export class CalculationService {
   }
 
   /**
+   * Extracts field dependencies from a formula string
+   */
+  private extractDependenciesFromFormula(formula: string): string[] {
+    if (!formula) return [];
+    
+    // Extract variable names using regex
+    const matches = formula.match(/\b[a-zA-Z_][a-zA-Z0-9_]*\b/g) || [];
+    
+    // Filter out common math functions and operators
+    const filtered = matches.filter(dep => 
+      !['Math', 'min', 'max', 'round', 'ceil', 'floor', 'parseFloat', 'parseInt'].includes(dep)
+    );
+    
+    // Remove duplicates
+    return [...new Set(filtered)];
+  }
+
+  /**
+   * Determines calculation type based on formula and dependencies
+   */
+  private determineCalculationType(formula: string, dependencies: string[]): 'sum' | 'product' | 'average' | 'custom' {
+    if (!formula || dependencies.length === 0) return 'custom';
+    
+    // Check for multiplication
+    if (formula.includes('*') && dependencies.length === 2) {
+      return 'product';
+    }
+    
+    // Check for addition (sum)
+    if (formula.includes('+') && dependencies.length >= 2) {
+      return 'sum';
+    }
+    
+    // Check for division or other complex operations
+    if (formula.includes('/') || formula.includes('-') || formula.includes('(') || formula.includes(')')) {
+      return 'custom';
+    }
+    
+    // Default to custom for complex formulas
+    return 'custom';
+  }
+
+  /**
    * Gets the sum of subfields within a group field
    * Useful for fields like extra_items_total (sum of all subfields in extra_items group)
    */
@@ -196,6 +258,36 @@ export class CalculationService {
     });
 
     return this.calculateSum(values);
+  }
+
+  /**
+   * Formats a number as Indian currency (₹1,23,456.00)
+   */
+  formatCurrency(value: number): string {
+    if (isNaN(value) || value === null || value === undefined) {
+      return '₹0.00';
+    }
+
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(value);
+  }
+
+  /**
+   * Parses currency string back to number
+   */
+  parseCurrency(currencyString: string): number {
+    if (!currencyString || typeof currencyString !== 'string') {
+      return 0;
+    }
+
+    // Remove currency symbols, commas, and spaces
+    const cleaned = currencyString.replace(/[₹$,\s]/g, '');
+    const parsed = parseFloat(cleaned);
+    return isNaN(parsed) ? 0 : parsed;
   }
 
   /**

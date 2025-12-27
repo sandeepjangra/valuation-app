@@ -7,7 +7,7 @@
     "database": "valuation_admin",
     "description": "Dynamic tab structure for cbi all Property Details template",
     "refreshedFrom": "MongoDB",
-    "refreshDate": "2025-12-05T20:03:37.495577",
+    "refreshDate": "2025-12-21T17:12:04.968405",
     "bankCode": "CBI",
     "branchCount": 1
   },
@@ -1632,7 +1632,7 @@
         "bankName": "Central Bank of India",
         "totalBranches": 1,
         "addedBy": "refresh_templates_from_mongodb.py",
-        "addedDate": "2025-12-05T20:03:37.495516"
+        "addedDate": "2025-12-21T17:12:04.968366"
       }
     }
   ]

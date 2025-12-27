@@ -7,7 +7,7 @@
     "database": "valuation_admin",
     "description": "Dynamic tab structure for SBI Apartment Property Details template",
     "refreshedFrom": "MongoDB",
-    "refreshDate": "2025-12-05T20:03:38.097528",
+    "refreshDate": "2025-12-21T17:12:05.287709",
     "bankCode": "SBI",
     "branchCount": 2
   },
@@ -1688,7 +1688,7 @@
         "bankName": "State Bank of India",
         "totalBranches": 2,
         "addedBy": "refresh_templates_from_mongodb.py",
-        "addedDate": "2025-12-05T20:03:38.097469"
+        "addedDate": "2025-12-21T17:12:05.287666"
       }
     }
   ]

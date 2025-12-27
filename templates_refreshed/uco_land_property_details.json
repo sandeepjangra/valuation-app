@@ -7,7 +7,7 @@
     "database": "valuation_admin",
     "description": "Dynamic tab structure for UCO Land Property Details template",
     "refreshedFrom": "MongoDB",
-    "refreshDate": "2025-12-05T20:03:38.629553",
+    "refreshDate": "2025-12-21T17:12:05.787036",
     "bankCode": "UCO",
     "branchCount": 1
   },
@@ -1728,7 +1728,7 @@
         "bankName": "UCO Bank",
         "totalBranches": 1,
         "addedBy": "refresh_templates_from_mongodb.py",
-        "addedDate": "2025-12-05T20:03:38.629490"
+        "addedDate": "2025-12-21T17:12:05.786995"
       }
     }
   ]

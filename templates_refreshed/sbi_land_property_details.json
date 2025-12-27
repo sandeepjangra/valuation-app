@@ -7,7 +7,7 @@
     "database": "valuation_admin",
     "description": "Dynamic tab structure for SBI Land Property Details template",
     "refreshedFrom": "MongoDB",
-    "refreshDate": "2025-12-05T20:03:36.736728",
+    "refreshDate": "2025-12-21T17:12:04.305866",
     "bankCode": "SBI",
     "branchCount": 2
   },
@@ -281,7 +281,7 @@
                 }
               ],
               "placeholder": "",
-              "includeInCustomTemplate": true
+              "includeInCustomTemplate": false
             },
             {
               "fieldId": "city_town_village",
@@ -304,7 +304,7 @@
               "isRequired": true,
               "sortOrder": 6,
               "placeholder": "",
-              "includeInCustomTemplate": true
+              "includeInCustomTemplate": false
             }
           ]
         },
@@ -402,7 +402,7 @@
               ],
               "isRequired": false,
               "placeholder": "",
-              "includeInCustomTemplate": true
+              "includeInCustomTemplate": false
             },
             {
               "fieldId": "government_regulation",
@@ -417,7 +417,8 @@
                   "isRequired": false,
                   "defaultValue": "NA",
                   "sortOrder": 1,
-                  "placeholder": "Whether covered under any State/ Central Govt. enactments..."
+                  "placeholder": "Whether covered under any State/ Central Govt. enactments...",
+                  "includeInCustomTemplate": true
                 },
                 {
                   "fieldId": "agriculture_conversion",
@@ -426,7 +427,8 @@
                   "isRequired": false,
                   "defaultValue": "NA",
                   "sortOrder": 2,
-                  "placeholder": "In case it is an agricultural land, any conversion to house site plots is contemplated"
+                  "placeholder": "In case it is an agricultural land, any conversion to house site plots is contemplated",
+                  "includeInCustomTemplate": true
                 }
               ],
               "isRequired": false,
@@ -795,19 +797,19 @@
                   "options": [
                     {
                       "value": "residential",
-                      "label": "Residential"
+                      "label": "For Residential Purpose"
                     },
                     {
                       "value": "commercial",
-                      "label": "Commercial"
+                      "label": "For Commercial Purpose"
                     },
                     {
                       "value": "industrial",
-                      "label": "Industrial"
+                      "label": "For Industrial Purpose"
                     },
                     {
                       "value": "agricultural",
-                      "label": "Agricultural"
+                      "label": "For Agricultural Purpose"
                     },
                     {
                       "value": "mixed_use",
@@ -2512,7 +2514,7 @@
         "bankName": "State Bank of India",
         "totalBranches": 2,
         "addedBy": "refresh_templates_from_mongodb.py",
-        "addedDate": "2025-12-05T20:03:36.736662"
+        "addedDate": "2025-12-21T17:12:04.305821"
       }
     }
   ]

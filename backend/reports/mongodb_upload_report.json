@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-11-28T21:54:11.894784",
+  "timestamp": "2025-12-25T20:05:37.199581",
   "templates_uploaded": [
     "common_form_fields",
     "bob_land_property_details",
@@ -25,7 +25,7 @@
     "hdfc_all_property_details": 62,
     "pnb_land_property_details": 62,
     "sbi_apartment_property_details": 23,
-    "sbi_land_property_details": 53,
+    "sbi_land_property_details": 49,
     "ubi_apartment_property_details": 62,
     "ubi_land_property_details": 64,
     "uco_apartment_property_details": 95,

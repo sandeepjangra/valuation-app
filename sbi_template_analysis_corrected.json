@@ -1,0 +1,1537 @@
+{
+  "field_mapping": {
+    "agreement_to_sell": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "type": "textarea",
+      "ui_name": "Agreement To Sell"
+    },
+    "list_of_documents_produced": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "type": "textarea",
+      "ui_name": "List of documents produced"
+    },
+    "allotment_letter": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "type": "textarea",
+      "ui_name": "Allotment Letter"
+    },
+    "layout_plan": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "type": "textarea",
+      "ui_name": "Layout Plan"
+    },
+    "sales_deed": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "type": "textarea",
+      "ui_name": "Sales Deed"
+    },
+    "ats": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "type": "textarea",
+      "ui_name": "ATS"
+    },
+    "sanctioned_building_plan": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "type": "textarea",
+      "ui_name": "Sanctioned building plan"
+    },
+    "owner_details": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "type": "textarea",
+      "ui_name": "Owner Details"
+    },
+    "borrower_name": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "type": "textarea",
+      "ui_name": "Borrower/Client Name"
+    },
+    "postal_address": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "type": "textarea",
+      "ui_name": "Postal Address"
+    },
+    "property_description": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "type": "textarea",
+      "ui_name": "Property Description"
+    },
+    "property_location": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "type": "group",
+      "ui_name": "Property Location"
+    },
+    "plot_survey_no": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "type": "text",
+      "ui_name": "Plot No./Survey No.",
+      "parent_group": "property_location"
+    },
+    "door_no": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "type": "text",
+      "ui_name": "Door No.",
+      "parent_group": "property_location"
+    },
+    "ts_no_village": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "type": "text",
+      "ui_name": "T.S. No./Village",
+      "parent_group": "property_location"
+    },
+    "ward_taluka_tehsil": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "type": "text",
+      "ui_name": "Ward/Taluka/Tehsil",
+      "parent_group": "property_location"
+    },
+    "mandal_district": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "type": "text",
+      "ui_name": "Mandal/District",
+      "parent_group": "property_location"
+    },
+    "city_town_village": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "type": "select",
+      "ui_name": "City/Town/Village"
+    },
+    "area_classification": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "type": "group",
+      "ui_name": "Area Classification"
+    },
+    "socio_economic_class": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "type": "select",
+      "ui_name": "High/Middle/Poor",
+      "parent_group": "area_classification"
+    },
+    "urban_rural": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "type": "select",
+      "ui_name": "Urban/Semi Urban/Rural",
+      "parent_group": "area_classification"
+    },
+    "area_type": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "type": "select",
+      "ui_name": "Area Type",
+      "parent_group": "area_classification"
+    },
+    "municipal_corporation": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "type": "select",
+      "ui_name": "Municipal Corporation",
+      "parent_group": "area_classification"
+    },
+    "government_regulation": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "type": "group",
+      "ui_name": "Government Regulation"
+    },
+    "state_enactments": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "type": "text",
+      "ui_name": "State/Central Govt Enactments",
+      "parent_group": "government_regulation"
+    },
+    "agriculture_conversion": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "type": "text",
+      "ui_name": "Agricultural Conversion",
+      "parent_group": "government_regulation"
+    },
+    "boundaries_dimensions_table": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "type": "table",
+      "ui_name": "Boundaries and Dimensions Table"
+    },
+    "coordinates": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "type": "group",
+      "ui_name": "Coorditnates of the Site"
+    },
+    "longitude": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "type": "number",
+      "ui_name": "Longitude",
+      "parent_group": "coordinates"
+    },
+    "latitude": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "type": "number",
+      "ui_name": "Latitude",
+      "parent_group": "coordinates"
+    },
+    "land_area_and_occupancy": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "type": "group",
+      "ui_name": "Land Area & Occupancy"
+    },
+    "site_area": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "type": "number",
+      "ui_name": "Site Area",
+      "parent_group": "land_area_and_occupancy"
+    },
+    "valuation_area": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "type": "number",
+      "ui_name": "Valuation Area",
+      "parent_group": "land_area_and_occupancy"
+    },
+    "occupied_by": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "type": "text",
+      "ui_name": "Occupied By",
+      "parent_group": "land_area_and_occupancy"
+    },
+    "locality_surroundings": {
+      "tab": "Site Characteristics",
+      "section_name": "Unknown Section",
+      "type": "group",
+      "ui_name": "Locality & Surroundings"
+    },
+    "locality_classification": {
+      "tab": "Site Characteristics",
+      "section_name": "Unknown Section",
+      "type": "select",
+      "ui_name": "Classification of Locality",
+      "parent_group": "locality_surroundings"
+    },
+    "surrounding_area": {
+      "tab": "Site Characteristics",
+      "section_name": "Unknown Section",
+      "type": "select",
+      "ui_name": "Surrounding Area Development",
+      "parent_group": "locality_surroundings"
+    },
+    "civic_amenities_feasibility": {
+      "tab": "Site Characteristics",
+      "section_name": "Unknown Section",
+      "type": "textarea",
+      "ui_name": "Access to Civic Amenities",
+      "parent_group": "locality_surroundings"
+    },
+    "physical_characteristics": {
+      "tab": "Site Characteristics",
+      "section_name": "Unknown Section",
+      "type": "group",
+      "ui_name": "Physical Characteristics"
+    },
+    "land_level_topography": {
+      "tab": "Site Characteristics",
+      "section_name": "Unknown Section",
+      "type": "select",
+      "ui_name": "Land Level & Topography",
+      "parent_group": "physical_characteristics"
+    },
+    "land_shape": {
+      "tab": "Site Characteristics",
+      "section_name": "Unknown Section",
+      "type": "select",
+      "ui_name": "Shape of Land",
+      "parent_group": "physical_characteristics"
+    },
+    "flooding_possibility": {
+      "tab": "Site Characteristics",
+      "section_name": "Unknown Section",
+      "type": "select",
+      "ui_name": "Flooding/Water Logging Risk",
+      "parent_group": "physical_characteristics"
+    },
+    "land_usage": {
+      "tab": "Site Characteristics",
+      "section_name": "Unknown Section",
+      "type": "group",
+      "ui_name": "Land Usage & Restrictions"
+    },
+    "usage_type": {
+      "tab": "Site Characteristics",
+      "section_name": "Unknown Section",
+      "type": "select",
+      "ui_name": "Permitted Usage Types",
+      "parent_group": "land_usage"
+    },
+    "usage_restrictions": {
+      "tab": "Site Characteristics",
+      "section_name": "Unknown Section",
+      "type": "textarea",
+      "ui_name": "Usage Restrictions",
+      "parent_group": "land_usage"
+    },
+    "planning_approvals": {
+      "tab": "Site Characteristics",
+      "section_name": "Unknown Section",
+      "type": "group",
+      "ui_name": "Planning & Approvals"
+    },
+    "town_planning_approved": {
+      "tab": "Site Characteristics",
+      "section_name": "Unknown Section",
+      "type": "select",
+      "ui_name": "Town Planning Approved Layout",
+      "parent_group": "planning_approvals"
+    },
+    "corner_or_intermittent": {
+      "tab": "Site Characteristics",
+      "section_name": "Unknown Section",
+      "type": "select",
+      "ui_name": "Plot Location Type",
+      "parent_group": "planning_approvals"
+    },
+    "road_access": {
+      "tab": "Site Characteristics",
+      "section_name": "Unknown Section",
+      "type": "group",
+      "ui_name": "Road & Access"
+    },
+    "road_facilities": {
+      "tab": "Site Characteristics",
+      "section_name": "Unknown Section",
+      "type": "select",
+      "ui_name": "Road Access Available",
+      "parent_group": "road_access"
+    },
+    "road_type_present": {
+      "tab": "Site Characteristics",
+      "section_name": "Unknown Section",
+      "type": "select",
+      "ui_name": "Type of Road",
+      "parent_group": "road_access"
+    },
+    "road_width": {
+      "tab": "Site Characteristics",
+      "section_name": "Unknown Section",
+      "type": "select",
+      "ui_name": "Road Width",
+      "parent_group": "road_access"
+    },
+    "landlocked_status": {
+      "tab": "Site Characteristics",
+      "section_name": "Unknown Section",
+      "type": "select",
+      "ui_name": "Land-locked Property",
+      "parent_group": "road_access"
+    },
+    "utility_services_group": {
+      "tab": "Site Characteristics",
+      "section_name": "Unknown Section",
+      "type": "group",
+      "ui_name": "Utility Services"
+    },
+    "water_potentiality": {
+      "tab": "Site Characteristics",
+      "section_name": "Unknown Section",
+      "type": "select",
+      "ui_name": "Water Supply Availability",
+      "parent_group": "utility_services_group"
+    },
+    "underground_sewerage": {
+      "tab": "Site Characteristics",
+      "section_name": "Unknown Section",
+      "type": "select",
+      "ui_name": "Underground Sewerage System",
+      "parent_group": "utility_services_group"
+    },
+    "power_supply_available": {
+      "tab": "Site Characteristics",
+      "section_name": "Unknown Section",
+      "type": "select",
+      "ui_name": "Power Supply Availability",
+      "parent_group": "utility_services_group"
+    },
+    "additional_information": {
+      "tab": "Site Characteristics",
+      "section_name": "Unknown Section",
+      "type": "group",
+      "ui_name": "Additional Information"
+    },
+    "site_advantages": {
+      "tab": "Site Characteristics",
+      "section_name": "Unknown Section",
+      "type": "text",
+      "ui_name": "Site Advantages & Features",
+      "parent_group": "additional_information"
+    },
+    "special_remarks": {
+      "tab": "Site Characteristics",
+      "section_name": "Unknown Section",
+      "type": "text",
+      "ui_name": "Special Remarks & Notifications",
+      "parent_group": "additional_information"
+    },
+    "plot_size": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "type": "group",
+      "ui_name": "Plot Size"
+    },
+    "north_south_dimension": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "type": "number",
+      "ui_name": "North & South (ft)",
+      "parent_group": "plot_size"
+    },
+    "east_west_dimension": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "type": "number",
+      "ui_name": "East & West (ft)",
+      "parent_group": "plot_size"
+    },
+    "total_extent_plot": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "type": "number",
+      "ui_name": "Total Extent of the Plot",
+      "parent_group": "plot_size"
+    },
+    "market_rate": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "type": "group",
+      "ui_name": "Market & Registrar Rate"
+    },
+    "market_rate_min": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "type": "currency",
+      "ui_name": "Min Rate (Rs)",
+      "parent_group": "market_rate"
+    },
+    "market_rate_max": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "type": "currency",
+      "ui_name": "Max Rate (Rs)",
+      "parent_group": "market_rate"
+    },
+    "registrar_rate": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "type": "currency",
+      "ui_name": "Registrar's Rate",
+      "parent_group": "market_rate"
+    },
+    "estimated_valuation": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "type": "group",
+      "ui_name": "Estimated Valuation"
+    },
+    "valuation_rate": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "type": "currency",
+      "ui_name": "Valuation Rate",
+      "parent_group": "estimated_valuation"
+    },
+    "estimated_land_value": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "type": "currency",
+      "ui_name": "Estimated Value of Land",
+      "parent_group": "estimated_valuation"
+    },
+    "building_constructed": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "type": "select",
+      "ui_name": "Is Building Constructed?"
+    },
+    "building_basic_info": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "type": "group",
+      "ui_name": "Building Basic Information"
+    },
+    "building_type": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "type": "select",
+      "ui_name": "Type of Building",
+      "parent_group": "building_basic_info"
+    },
+    "construction_type": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "type": "select",
+      "ui_name": "Type of Construction",
+      "parent_group": "building_basic_info"
+    },
+    "construction_year": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "type": "number",
+      "ui_name": "Year of Construction",
+      "parent_group": "building_basic_info"
+    },
+    "building_dimensions": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "type": "group",
+      "ui_name": "Building Dimensions & Structure"
+    },
+    "number_of_floors": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "type": "number",
+      "ui_name": "Number of Floors",
+      "parent_group": "building_dimensions"
+    },
+    "floor_height": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "type": "number",
+      "ui_name": "Average Floor Height (ft)",
+      "parent_group": "building_dimensions"
+    },
+    "plinth_area_floorwise": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "type": "number",
+      "ui_name": "Total Plinth Area",
+      "parent_group": "building_dimensions"
+    },
+    "building_condition": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "type": "group",
+      "ui_name": "Building Condition Assessment"
+    },
+    "exterior_condition": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "type": "select",
+      "ui_name": "Exterior Condition",
+      "parent_group": "building_condition"
+    },
+    "interior_condition": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "type": "select",
+      "ui_name": "Interior Condition",
+      "parent_group": "building_condition"
+    },
+    "building_age_remarks": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "type": "textarea",
+      "ui_name": "Age & Maintenance Remarks",
+      "parent_group": "building_condition"
+    },
+    "approval_documents": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "type": "group",
+      "ui_name": "Approval Documents & Verification"
+    },
+    "approved_map_date_validity": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "type": "date",
+      "ui_name": "Building Plan Approval Date",
+      "parent_group": "approval_documents"
+    },
+    "approved_map_authority": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "type": "select",
+      "ui_name": "Plan Approving Authority",
+      "parent_group": "approval_documents"
+    },
+    "map_authenticity_verified": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "type": "select",
+      "ui_name": "Plan Authenticity Verification",
+      "parent_group": "approval_documents"
+    },
+    "valuer_comments_authenticity": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "type": "textarea",
+      "ui_name": "Valuer Comments on Plan & Construction",
+      "parent_group": "approval_documents"
+    },
+    "no_building_remarks": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "type": "group",
+      "ui_name": "Land Only - Remarks"
+    },
+    "land_only_confirmation": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "type": "select",
+      "ui_name": "Confirmation - No Building Exists",
+      "parent_group": "no_building_remarks"
+    },
+    "land_valuation_basis": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "type": "textarea",
+      "ui_name": "Land Valuation Basis",
+      "parent_group": "no_building_remarks"
+    },
+    "building_specifications_table": {
+      "tab": "Construction Specifications",
+      "section_name": "Unknown Section",
+      "type": "dynamic_table",
+      "ui_name": "Building Specifications"
+    },
+    "floor_wise_valuation_table": {
+      "tab": "Construction Specifications",
+      "section_name": "Unknown Section",
+      "type": "dynamic_table",
+      "ui_name": "Floor-wise Valuation Details"
+    },
+    "extra_items": {
+      "tab": "Construction Specifications",
+      "section_name": "Unknown Section",
+      "type": "group",
+      "ui_name": "Extra Items"
+    },
+    "portico": {
+      "tab": "Construction Specifications",
+      "section_name": "Unknown Section",
+      "type": "currency",
+      "ui_name": "Portico",
+      "parent_group": "extra_items"
+    },
+    "ornamental_front_door": {
+      "tab": "Construction Specifications",
+      "section_name": "Unknown Section",
+      "type": "currency",
+      "ui_name": "Ornamental Front Door",
+      "parent_group": "extra_items"
+    },
+    "sitout_verandah_grills": {
+      "tab": "Construction Specifications",
+      "section_name": "Unknown Section",
+      "type": "currency",
+      "ui_name": "Sit out/Verandah with Steel Grills",
+      "parent_group": "extra_items"
+    },
+    "overhead_water_tank": {
+      "tab": "Construction Specifications",
+      "section_name": "Unknown Section",
+      "type": "currency",
+      "ui_name": "Overhead Water Tank",
+      "parent_group": "extra_items"
+    },
+    "extra_steel_gates": {
+      "tab": "Construction Specifications",
+      "section_name": "Unknown Section",
+      "type": "currency",
+      "ui_name": "Extra Steel/Collapsible Gates",
+      "parent_group": "extra_items"
+    },
+    "amenities": {
+      "tab": "Construction Specifications",
+      "section_name": "Unknown Section",
+      "type": "group",
+      "ui_name": "Amenities"
+    },
+    "wardrobes": {
+      "tab": "Construction Specifications",
+      "section_name": "Unknown Section",
+      "type": "currency",
+      "ui_name": "Wardrobes",
+      "parent_group": "amenities"
+    },
+    "glazed_tiles": {
+      "tab": "Construction Specifications",
+      "section_name": "Unknown Section",
+      "type": "currency",
+      "ui_name": "Glazed Tiles",
+      "parent_group": "amenities"
+    },
+    "extra_sinks_bathtubs": {
+      "tab": "Construction Specifications",
+      "section_name": "Unknown Section",
+      "type": "currency",
+      "ui_name": "Extra Sinks & Bath Tubs",
+      "parent_group": "amenities"
+    },
+    "marble_ceramic_flooring": {
+      "tab": "Construction Specifications",
+      "section_name": "Unknown Section",
+      "type": "currency",
+      "ui_name": "Marble/Ceramic Tiles Flooring",
+      "parent_group": "amenities"
+    },
+    "interior_decorations": {
+      "tab": "Construction Specifications",
+      "section_name": "Unknown Section",
+      "type": "currency",
+      "ui_name": "Interior Decorations",
+      "parent_group": "amenities"
+    },
+    "architectural_elevation": {
+      "tab": "Construction Specifications",
+      "section_name": "Unknown Section",
+      "type": "currency",
+      "ui_name": "Architectural Elevation Works",
+      "parent_group": "amenities"
+    },
+    "paneling_works": {
+      "tab": "Construction Specifications",
+      "section_name": "Unknown Section",
+      "type": "currency",
+      "ui_name": "Paneling Works",
+      "parent_group": "amenities"
+    },
+    "aluminum_works": {
+      "tab": "Construction Specifications",
+      "section_name": "Unknown Section",
+      "type": "currency",
+      "ui_name": "Aluminum Works",
+      "parent_group": "amenities"
+    },
+    "aluminum_handrails": {
+      "tab": "Construction Specifications",
+      "section_name": "Unknown Section",
+      "type": "currency",
+      "ui_name": "Aluminum Hand Rails",
+      "parent_group": "amenities"
+    },
+    "false_ceiling": {
+      "tab": "Construction Specifications",
+      "section_name": "Unknown Section",
+      "type": "currency",
+      "ui_name": "False Ceiling",
+      "parent_group": "amenities"
+    },
+    "miscellaneous": {
+      "tab": "Construction Specifications",
+      "section_name": "Unknown Section",
+      "type": "group",
+      "ui_name": "Miscellaneous"
+    },
+    "separate_toilet": {
+      "tab": "Construction Specifications",
+      "section_name": "Unknown Section",
+      "type": "currency",
+      "ui_name": "Separate Toilet Room",
+      "parent_group": "miscellaneous"
+    },
+    "separate_lumber_room": {
+      "tab": "Construction Specifications",
+      "section_name": "Unknown Section",
+      "type": "currency",
+      "ui_name": "Separate Lumber Room",
+      "parent_group": "miscellaneous"
+    },
+    "separate_water_tank_sump": {
+      "tab": "Construction Specifications",
+      "section_name": "Unknown Section",
+      "type": "currency",
+      "ui_name": "Separate Water Tank/Sump",
+      "parent_group": "miscellaneous"
+    },
+    "trees_gardening": {
+      "tab": "Construction Specifications",
+      "section_name": "Unknown Section",
+      "type": "currency",
+      "ui_name": "Trees, Gardening",
+      "parent_group": "miscellaneous"
+    },
+    "services": {
+      "tab": "Construction Specifications",
+      "section_name": "Unknown Section",
+      "type": "group",
+      "ui_name": "Services"
+    },
+    "water_supply_arrangements": {
+      "tab": "Construction Specifications",
+      "section_name": "Unknown Section",
+      "type": "currency",
+      "ui_name": "Water Supply Arrangements",
+      "parent_group": "services"
+    },
+    "drainage_arrangements": {
+      "tab": "Construction Specifications",
+      "section_name": "Unknown Section",
+      "type": "currency",
+      "ui_name": "Drainage Arrangements",
+      "parent_group": "services"
+    },
+    "compound_wall": {
+      "tab": "Construction Specifications",
+      "section_name": "Unknown Section",
+      "type": "currency",
+      "ui_name": "Compound Wall Cost",
+      "parent_group": "services"
+    },
+    "cb_deposits_fittings": {
+      "tab": "Construction Specifications",
+      "section_name": "Unknown Section",
+      "type": "currency",
+      "ui_name": "C.B. Deposits, Fittings etc.",
+      "parent_group": "services"
+    },
+    "pavement": {
+      "tab": "Construction Specifications",
+      "section_name": "Unknown Section",
+      "type": "currency",
+      "ui_name": "Pavement",
+      "parent_group": "services"
+    },
+    "report_reference_number": {
+      "tab": "_common_fields_",
+      "section_name": null,
+      "type": "text",
+      "ui_name": "Report Reference Number"
+    },
+    "valuation_date": {
+      "tab": "_common_fields_",
+      "section_name": null,
+      "type": "date",
+      "ui_name": "Valuation Date"
+    },
+    "inspection_date": {
+      "tab": "_common_fields_",
+      "section_name": null,
+      "type": "date",
+      "ui_name": "Inspection Date"
+    },
+    "applicant_name": {
+      "tab": "_common_fields_",
+      "section_name": null,
+      "type": "text",
+      "ui_name": "Applicant Name"
+    },
+    "valuation_purpose": {
+      "tab": "_common_fields_",
+      "section_name": null,
+      "type": "select",
+      "ui_name": "Valuation Purpose"
+    },
+    "bank_branch": {
+      "tab": "_common_fields_",
+      "section_name": null,
+      "type": "select_dynamic",
+      "ui_name": "Bank Branch"
+    }
+  },
+  "tab_structure": {
+    "Property Details": {
+      "sections": [
+        {
+          "section_name": "Unknown Section",
+          "field_count": 7,
+          "fields": [
+            "agreement_to_sell",
+            "list_of_documents_produced",
+            "allotment_letter",
+            "layout_plan",
+            "sales_deed",
+            "ats",
+            "sanctioned_building_plan"
+          ]
+        },
+        {
+          "section_name": "Unknown Section",
+          "field_count": 6,
+          "fields": [
+            "owner_details",
+            "borrower_name",
+            "postal_address",
+            "property_description",
+            "property_location",
+            "city_town_village"
+          ]
+        },
+        {
+          "section_name": "Unknown Section",
+          "field_count": 2,
+          "fields": [
+            "area_classification",
+            "government_regulation"
+          ]
+        },
+        {
+          "section_name": "Unknown Section",
+          "field_count": 3,
+          "fields": [
+            "boundaries_dimensions_table",
+            "coordinates",
+            "land_area_and_occupancy"
+          ]
+        }
+      ],
+      "total_fields": 18
+    },
+    "Site Characteristics": {
+      "sections": [
+        {
+          "section_name": "Unknown Section",
+          "field_count": 4,
+          "fields": [
+            "locality_surroundings",
+            "physical_characteristics",
+            "land_usage",
+            "planning_approvals"
+          ]
+        },
+        {
+          "section_name": "Unknown Section",
+          "field_count": 3,
+          "fields": [
+            "road_access",
+            "utility_services_group",
+            "additional_information"
+          ]
+        }
+      ],
+      "total_fields": 7
+    },
+    "Valuation": {
+      "sections": [
+        {
+          "section_name": "Unknown Section",
+          "field_count": 3,
+          "fields": [
+            "plot_size",
+            "market_rate",
+            "estimated_valuation"
+          ]
+        },
+        {
+          "section_name": "Unknown Section",
+          "field_count": 6,
+          "fields": [
+            "building_constructed",
+            "building_basic_info",
+            "building_dimensions",
+            "building_condition",
+            "approval_documents",
+            "no_building_remarks"
+          ]
+        }
+      ],
+      "total_fields": 9
+    },
+    "Construction Specifications": {
+      "sections": [
+        {
+          "section_name": "Unknown Section",
+          "field_count": 2,
+          "fields": [
+            "building_specifications_table",
+            "floor_wise_valuation_table"
+          ]
+        },
+        {
+          "section_name": "Unknown Section",
+          "field_count": 4,
+          "fields": [
+            "extra_items",
+            "amenities",
+            "miscellaneous",
+            "services"
+          ]
+        }
+      ],
+      "total_fields": 6
+    },
+    "Detailed Valuation": {
+      "sections": [],
+      "total_fields": 0
+    }
+  },
+  "group_fields": {
+    "property_location": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "subFields": [
+        {
+          "fieldId": "plot_survey_no",
+          "fieldType": "text",
+          "uiDisplayName": "Plot No./Survey No."
+        },
+        {
+          "fieldId": "door_no",
+          "fieldType": "text",
+          "uiDisplayName": "Door No."
+        },
+        {
+          "fieldId": "ts_no_village",
+          "fieldType": "text",
+          "uiDisplayName": "T.S. No./Village"
+        },
+        {
+          "fieldId": "ward_taluka_tehsil",
+          "fieldType": "text",
+          "uiDisplayName": "Ward/Taluka/Tehsil"
+        },
+        {
+          "fieldId": "mandal_district",
+          "fieldType": "text",
+          "uiDisplayName": "Mandal/District"
+        }
+      ]
+    },
+    "area_classification": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "subFields": [
+        {
+          "fieldId": "socio_economic_class",
+          "fieldType": "select",
+          "uiDisplayName": "High/Middle/Poor"
+        },
+        {
+          "fieldId": "urban_rural",
+          "fieldType": "select",
+          "uiDisplayName": "Urban/Semi Urban/Rural"
+        },
+        {
+          "fieldId": "area_type",
+          "fieldType": "select",
+          "uiDisplayName": "Area Type"
+        },
+        {
+          "fieldId": "municipal_corporation",
+          "fieldType": "select",
+          "uiDisplayName": "Municipal Corporation"
+        }
+      ]
+    },
+    "government_regulation": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "subFields": [
+        {
+          "fieldId": "state_enactments",
+          "fieldType": "text",
+          "uiDisplayName": "State/Central Govt Enactments"
+        },
+        {
+          "fieldId": "agriculture_conversion",
+          "fieldType": "text",
+          "uiDisplayName": "Agricultural Conversion"
+        }
+      ]
+    },
+    "coordinates": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "subFields": [
+        {
+          "fieldId": "longitude",
+          "fieldType": "number",
+          "uiDisplayName": "Longitude"
+        },
+        {
+          "fieldId": "latitude",
+          "fieldType": "number",
+          "uiDisplayName": "Latitude"
+        }
+      ]
+    },
+    "land_area_and_occupancy": {
+      "tab": "Property Details",
+      "section_name": "Unknown Section",
+      "subFields": [
+        {
+          "fieldId": "site_area",
+          "fieldType": "number",
+          "uiDisplayName": "Site Area"
+        },
+        {
+          "fieldId": "valuation_area",
+          "fieldType": "number",
+          "uiDisplayName": "Valuation Area"
+        },
+        {
+          "fieldId": "occupied_by",
+          "fieldType": "text",
+          "uiDisplayName": "Occupied By"
+        }
+      ]
+    },
+    "locality_surroundings": {
+      "tab": "Site Characteristics",
+      "section_name": "Unknown Section",
+      "subFields": [
+        {
+          "fieldId": "locality_classification",
+          "fieldType": "select",
+          "uiDisplayName": "Classification of Locality"
+        },
+        {
+          "fieldId": "surrounding_area",
+          "fieldType": "select",
+          "uiDisplayName": "Surrounding Area Development"
+        },
+        {
+          "fieldId": "civic_amenities_feasibility",
+          "fieldType": "textarea",
+          "uiDisplayName": "Access to Civic Amenities"
+        }
+      ]
+    },
+    "physical_characteristics": {
+      "tab": "Site Characteristics",
+      "section_name": "Unknown Section",
+      "subFields": [
+        {
+          "fieldId": "land_level_topography",
+          "fieldType": "select",
+          "uiDisplayName": "Land Level & Topography"
+        },
+        {
+          "fieldId": "land_shape",
+          "fieldType": "select",
+          "uiDisplayName": "Shape of Land"
+        },
+        {
+          "fieldId": "flooding_possibility",
+          "fieldType": "select",
+          "uiDisplayName": "Flooding/Water Logging Risk"
+        }
+      ]
+    },
+    "land_usage": {
+      "tab": "Site Characteristics",
+      "section_name": "Unknown Section",
+      "subFields": [
+        {
+          "fieldId": "usage_type",
+          "fieldType": "select",
+          "uiDisplayName": "Permitted Usage Types"
+        },
+        {
+          "fieldId": "usage_restrictions",
+          "fieldType": "textarea",
+          "uiDisplayName": "Usage Restrictions"
+        }
+      ]
+    },
+    "planning_approvals": {
+      "tab": "Site Characteristics",
+      "section_name": "Unknown Section",
+      "subFields": [
+        {
+          "fieldId": "town_planning_approved",
+          "fieldType": "select",
+          "uiDisplayName": "Town Planning Approved Layout"
+        },
+        {
+          "fieldId": "corner_or_intermittent",
+          "fieldType": "select",
+          "uiDisplayName": "Plot Location Type"
+        }
+      ]
+    },
+    "road_access": {
+      "tab": "Site Characteristics",
+      "section_name": "Unknown Section",
+      "subFields": [
+        {
+          "fieldId": "road_facilities",
+          "fieldType": "select",
+          "uiDisplayName": "Road Access Available"
+        },
+        {
+          "fieldId": "road_type_present",
+          "fieldType": "select",
+          "uiDisplayName": "Type of Road"
+        },
+        {
+          "fieldId": "road_width",
+          "fieldType": "select",
+          "uiDisplayName": "Road Width"
+        },
+        {
+          "fieldId": "landlocked_status",
+          "fieldType": "select",
+          "uiDisplayName": "Land-locked Property"
+        }
+      ]
+    },
+    "utility_services_group": {
+      "tab": "Site Characteristics",
+      "section_name": "Unknown Section",
+      "subFields": [
+        {
+          "fieldId": "water_potentiality",
+          "fieldType": "select",
+          "uiDisplayName": "Water Supply Availability"
+        },
+        {
+          "fieldId": "underground_sewerage",
+          "fieldType": "select",
+          "uiDisplayName": "Underground Sewerage System"
+        },
+        {
+          "fieldId": "power_supply_available",
+          "fieldType": "select",
+          "uiDisplayName": "Power Supply Availability"
+        }
+      ]
+    },
+    "additional_information": {
+      "tab": "Site Characteristics",
+      "section_name": "Unknown Section",
+      "subFields": [
+        {
+          "fieldId": "site_advantages",
+          "fieldType": "text",
+          "uiDisplayName": "Site Advantages & Features"
+        },
+        {
+          "fieldId": "special_remarks",
+          "fieldType": "text",
+          "uiDisplayName": "Special Remarks & Notifications"
+        }
+      ]
+    },
+    "plot_size": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "subFields": [
+        {
+          "fieldId": "north_south_dimension",
+          "fieldType": "number",
+          "uiDisplayName": "North & South (ft)"
+        },
+        {
+          "fieldId": "east_west_dimension",
+          "fieldType": "number",
+          "uiDisplayName": "East & West (ft)"
+        },
+        {
+          "fieldId": "total_extent_plot",
+          "fieldType": "number",
+          "uiDisplayName": "Total Extent of the Plot"
+        }
+      ]
+    },
+    "market_rate": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "subFields": [
+        {
+          "fieldId": "market_rate_min",
+          "fieldType": "currency",
+          "uiDisplayName": "Min Rate (Rs)"
+        },
+        {
+          "fieldId": "market_rate_max",
+          "fieldType": "currency",
+          "uiDisplayName": "Max Rate (Rs)"
+        },
+        {
+          "fieldId": "registrar_rate",
+          "fieldType": "currency",
+          "uiDisplayName": "Registrar's Rate"
+        }
+      ]
+    },
+    "estimated_valuation": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "subFields": [
+        {
+          "fieldId": "valuation_rate",
+          "fieldType": "currency",
+          "uiDisplayName": "Valuation Rate"
+        },
+        {
+          "fieldId": "estimated_land_value",
+          "fieldType": "currency",
+          "uiDisplayName": "Estimated Value of Land"
+        }
+      ]
+    },
+    "building_basic_info": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "subFields": [
+        {
+          "fieldId": "building_type",
+          "fieldType": "select",
+          "uiDisplayName": "Type of Building"
+        },
+        {
+          "fieldId": "construction_type",
+          "fieldType": "select",
+          "uiDisplayName": "Type of Construction"
+        },
+        {
+          "fieldId": "construction_year",
+          "fieldType": "number",
+          "uiDisplayName": "Year of Construction"
+        }
+      ]
+    },
+    "building_dimensions": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "subFields": [
+        {
+          "fieldId": "number_of_floors",
+          "fieldType": "number",
+          "uiDisplayName": "Number of Floors"
+        },
+        {
+          "fieldId": "floor_height",
+          "fieldType": "number",
+          "uiDisplayName": "Average Floor Height (ft)"
+        },
+        {
+          "fieldId": "plinth_area_floorwise",
+          "fieldType": "number",
+          "uiDisplayName": "Total Plinth Area"
+        }
+      ]
+    },
+    "building_condition": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "subFields": [
+        {
+          "fieldId": "exterior_condition",
+          "fieldType": "select",
+          "uiDisplayName": "Exterior Condition"
+        },
+        {
+          "fieldId": "interior_condition",
+          "fieldType": "select",
+          "uiDisplayName": "Interior Condition"
+        },
+        {
+          "fieldId": "building_age_remarks",
+          "fieldType": "textarea",
+          "uiDisplayName": "Age & Maintenance Remarks"
+        }
+      ]
+    },
+    "approval_documents": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "subFields": [
+        {
+          "fieldId": "approved_map_date_validity",
+          "fieldType": "date",
+          "uiDisplayName": "Building Plan Approval Date"
+        },
+        {
+          "fieldId": "approved_map_authority",
+          "fieldType": "select",
+          "uiDisplayName": "Plan Approving Authority"
+        },
+        {
+          "fieldId": "map_authenticity_verified",
+          "fieldType": "select",
+          "uiDisplayName": "Plan Authenticity Verification"
+        },
+        {
+          "fieldId": "valuer_comments_authenticity",
+          "fieldType": "textarea",
+          "uiDisplayName": "Valuer Comments on Plan & Construction"
+        }
+      ]
+    },
+    "no_building_remarks": {
+      "tab": "Valuation",
+      "section_name": "Unknown Section",
+      "subFields": [
+        {
+          "fieldId": "land_only_confirmation",
+          "fieldType": "select",
+          "uiDisplayName": "Confirmation - No Building Exists"
+        },
+        {
+          "fieldId": "land_valuation_basis",
+          "fieldType": "textarea",
+          "uiDisplayName": "Land Valuation Basis"
+        }
+      ]
+    },
+    "extra_items": {
+      "tab": "Construction Specifications",
+      "section_name": "Unknown Section",
+      "subFields": [
+        {
+          "fieldId": "portico",
+          "fieldType": "currency",
+          "uiDisplayName": "Portico"
+        },
+        {
+          "fieldId": "ornamental_front_door",
+          "fieldType": "currency",
+          "uiDisplayName": "Ornamental Front Door"
+        },
+        {
+          "fieldId": "sitout_verandah_grills",
+          "fieldType": "currency",
+          "uiDisplayName": "Sit out/Verandah with Steel Grills"
+        },
+        {
+          "fieldId": "overhead_water_tank",
+          "fieldType": "currency",
+          "uiDisplayName": "Overhead Water Tank"
+        },
+        {
+          "fieldId": "extra_steel_gates",
+          "fieldType": "currency",
+          "uiDisplayName": "Extra Steel/Collapsible Gates"
+        }
+      ]
+    },
+    "amenities": {
+      "tab": "Construction Specifications",
+      "section_name": "Unknown Section",
+      "subFields": [
+        {
+          "fieldId": "wardrobes",
+          "fieldType": "currency",
+          "uiDisplayName": "Wardrobes"
+        },
+        {
+          "fieldId": "glazed_tiles",
+          "fieldType": "currency",
+          "uiDisplayName": "Glazed Tiles"
+        },
+        {
+          "fieldId": "extra_sinks_bathtubs",
+          "fieldType": "currency",
+          "uiDisplayName": "Extra Sinks & Bath Tubs"
+        },
+        {
+          "fieldId": "marble_ceramic_flooring",
+          "fieldType": "currency",
+          "uiDisplayName": "Marble/Ceramic Tiles Flooring"
+        },
+        {
+          "fieldId": "interior_decorations",
+          "fieldType": "currency",
+          "uiDisplayName": "Interior Decorations"
+        },
+        {
+          "fieldId": "architectural_elevation",
+          "fieldType": "currency",
+          "uiDisplayName": "Architectural Elevation Works"
+        },
+        {
+          "fieldId": "paneling_works",
+          "fieldType": "currency",
+          "uiDisplayName": "Paneling Works"
+        },
+        {
+          "fieldId": "aluminum_works",
+          "fieldType": "currency",
+          "uiDisplayName": "Aluminum Works"
+        },
+        {
+          "fieldId": "aluminum_handrails",
+          "fieldType": "currency",
+          "uiDisplayName": "Aluminum Hand Rails"
+        },
+        {
+          "fieldId": "false_ceiling",
+          "fieldType": "currency",
+          "uiDisplayName": "False Ceiling"
+        }
+      ]
+    },
+    "miscellaneous": {
+      "tab": "Construction Specifications",
+      "section_name": "Unknown Section",
+      "subFields": [
+        {
+          "fieldId": "separate_toilet",
+          "fieldType": "currency",
+          "uiDisplayName": "Separate Toilet Room"
+        },
+        {
+          "fieldId": "separate_lumber_room",
+          "fieldType": "currency",
+          "uiDisplayName": "Separate Lumber Room"
+        },
+        {
+          "fieldId": "separate_water_tank_sump",
+          "fieldType": "currency",
+          "uiDisplayName": "Separate Water Tank/Sump"
+        },
+        {
+          "fieldId": "trees_gardening",
+          "fieldType": "currency",
+          "uiDisplayName": "Trees, Gardening"
+        }
+      ]
+    },
+    "services": {
+      "tab": "Construction Specifications",
+      "section_name": "Unknown Section",
+      "subFields": [
+        {
+          "fieldId": "water_supply_arrangements",
+          "fieldType": "currency",
+          "uiDisplayName": "Water Supply Arrangements"
+        },
+        {
+          "fieldId": "drainage_arrangements",
+          "fieldType": "currency",
+          "uiDisplayName": "Drainage Arrangements"
+        },
+        {
+          "fieldId": "compound_wall",
+          "fieldType": "currency",
+          "uiDisplayName": "Compound Wall Cost"
+        },
+        {
+          "fieldId": "cb_deposits_fittings",
+          "fieldType": "currency",
+          "uiDisplayName": "C.B. Deposits, Fittings etc."
+        },
+        {
+          "fieldId": "pavement",
+          "fieldType": "currency",
+          "uiDisplayName": "Pavement"
+        }
+      ]
+    }
+  },
+  "common_fields_count": 6
+}
