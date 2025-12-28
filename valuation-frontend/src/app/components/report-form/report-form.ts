@@ -371,9 +371,17 @@ export class ReportForm implements OnInit {
         this.populateFromFlatStructure(reportDataObj);
       }
       
-      // Apply readonly state if in view mode - CRITICAL: This must happen AFTER all data population
-      console.log('🔍 About to apply view mode state after data population');
-      this.applyViewModeState();
+      // Apply correct mode state after data population - CRITICAL: This must happen AFTER all data population
+      console.log('🔍 About to apply mode state after data population:', {
+        isViewMode: this.isViewMode,
+        isEditMode: this.isEditMode
+      });
+      
+      if (this.isViewMode) {
+        this.applyViewModeState();
+      } else if (this.isEditMode) {
+        this.applyEditModeState();
+      }
       
       // Force change detection to update UI
       this.cdr.detectChanges();
@@ -393,7 +401,9 @@ export class ReportForm implements OnInit {
       console.log('📝 Form populated with existing report data');
       console.log('🔍 Final form state:', {
         isViewMode: this.isViewMode,
-        formEnabled: this.reportForm.enabled
+        isEditMode: this.isEditMode,
+        formEnabled: this.reportForm.enabled,
+        bankBranchControlStatus: this.reportForm.get('bank_branch')?.enabled ? 'enabled' : 'disabled'
       });
       
       // Recalculate all calculated fields after populating with existing data
@@ -409,6 +419,12 @@ export class ReportForm implements OnInit {
    * Detect if report data has nested structure (new format) vs flat structure (old format)
    */
   private hasNestedStructure(reportData: any): boolean {
+    // Check for new format indicators: common_fields, data, tables
+    if (reportData.common_fields || reportData.data || reportData.tables) {
+      console.log('📝 Detected new format with common_fields/data/tables structure');
+      return true;
+    }
+    
     // Check for expected tab names in the data
     const expectedTabs = ['property_details', 'valuation', 'building_specification', 'construction_details'];
     
@@ -440,11 +456,39 @@ export class ReportForm implements OnInit {
    */
   private populateFromNestedStructure(reportData: any) {
     console.log('📝 Using nested structure population strategy');
+    console.log('📝 Report data structure for nested population:', {
+      hasCommonFields: !!reportData.common_fields,
+      hasData: !!reportData.data,
+      hasTables: !!reportData.tables,
+      commonFieldsKeys: reportData.common_fields ? Object.keys(reportData.common_fields) : [],
+      dataKeys: reportData.data ? Object.keys(reportData.data) : [],
+      topLevelKeys: Object.keys(reportData)
+    });
+    
+    // First, handle common_fields directly (bank_branch and other common fields)
+    if (reportData.common_fields && typeof reportData.common_fields === 'object') {
+      console.log('📝 Processing common_fields section:', reportData.common_fields);
+      Object.keys(reportData.common_fields).forEach(fieldKey => {
+        const value = reportData.common_fields[fieldKey];
+        const control = this.reportForm.get(fieldKey);
+        if (control) {
+          control.setValue(value || '');
+          console.log(`✅ Mapped common_field ${fieldKey} = ${value}`);
+        } else {
+          console.log(`⚠️ No form control found for common field: ${fieldKey}`);
+        }
+      });
+    }
     
     // Handle nested data similar to template loading
     const mapNestedData = (data: any, prefix = '') => {
       Object.keys(data).forEach(key => {
         const value = data[key];
+        
+        // Skip common_fields as we handled it above
+        if (key === 'common_fields') {
+          return;
+        }
         
         if (value && typeof value === 'object' && !Array.isArray(value)) {
           // Recursively handle nested objects
@@ -913,6 +957,37 @@ export class ReportForm implements OnInit {
       // Enable all form controls for edit mode
       this.reportForm.enable();
       console.log('🔓 Form enabled for edit mode');
+      
+      // Re-apply readonly logic, but allow bank_branch to be editable
+      if (this.templateData && this.templateData.allFields) {
+        this.templateData.allFields.forEach(field => {
+          // Special case: Allow bank_branch to be editable in edit mode even if marked readonly
+          const shouldDisableField = field.isReadonly && field.fieldId !== 'bank_branch';
+          
+          if (shouldDisableField) {
+            const control = this.reportForm.get(field.fieldId);
+            if (control) {
+              control.disable();
+              console.log(`🔒 Re-disabled readonly field in edit mode: ${field.fieldId}`);
+            }
+          }
+          
+          // Handle readonly sub-fields
+          if (field.fieldType === 'group' && field.subFields) {
+            field.subFields.forEach(subField => {
+              const shouldDisableSubField = subField.isReadonly && subField.fieldId !== 'bank_branch';
+              
+              if (shouldDisableSubField) {
+                const subControl = this.reportForm.get(subField.fieldId);
+                if (subControl) {
+                  subControl.disable();
+                  console.log(`🔒 Re-disabled readonly sub-field in edit mode: ${subField.fieldId}`);
+                }
+              }
+            });
+          }
+        });
+      }
     }
   }
 
@@ -1112,24 +1187,43 @@ export class ReportForm implements OnInit {
       this.handleFormValueChanges(values);
     });
     
-    // Disable readonly fields
+    // Disable readonly fields (except special cases like bank_branch in edit mode)
     this.templateData.allFields.forEach(field => {
-      if (field.isReadonly) {
+      // Special case: Allow bank_branch to be editable even if marked readonly
+      const shouldDisableField = field.isReadonly && !(field.fieldId === 'bank_branch' && this.isEditMode);
+      
+      if (shouldDisableField) {
         const control = this.reportForm.get(field.fieldId);
         if (control) {
           control.disable();
           console.log(`🔒 Disabled readonly field: ${field.fieldId} (${field.uiDisplayName})`);
+        }
+      } else if (field.fieldId === 'bank_branch' && this.isEditMode) {
+        // Ensure bank_branch is enabled in edit mode
+        const control = this.reportForm.get(field.fieldId);
+        if (control) {
+          control.enable();
+          console.log(`🔓 Enabled bank_branch field for edit mode`);
         }
       }
       
       // Handle readonly sub-fields
       if (field.fieldType === 'group' && field.subFields) {
         field.subFields.forEach(subField => {
-          if (subField.isReadonly) {
+          const shouldDisableSubField = subField.isReadonly && !(subField.fieldId === 'bank_branch' && this.isEditMode);
+          
+          if (shouldDisableSubField) {
             const subControl = this.reportForm.get(subField.fieldId);
             if (subControl) {
               subControl.disable();
               console.log(`🔒 Disabled readonly sub-field: ${subField.fieldId}`);
+            }
+          } else if (subField.fieldId === 'bank_branch' && this.isEditMode) {
+            // Ensure bank_branch is enabled in edit mode
+            const subControl = this.reportForm.get(subField.fieldId);
+            if (subControl) {
+              subControl.enable();
+              console.log(`🔓 Enabled bank_branch sub-field for edit mode`);
             }
           }
         });
@@ -2238,14 +2332,24 @@ export class ReportForm implements OnInit {
     const formData = this.reportForm.getRawValue();
     console.log('💾 Raw form data for draft:', formData);
     
+    // CRITICAL: Merge dynamic table data with form data
+    const completeFormData = {
+      ...formData,
+      ...this.dynamicTablesData
+    };
+    
+    console.log('📊 Dynamic tables data:', this.dynamicTablesData);
+    console.log('💾 Complete form data (with tables):', completeFormData);
+    console.log('🔍 Table fields included:', Object.keys(this.dynamicTablesData));
+    
     // Debug current template values
     console.log('🔍 Current template values:', {
       selectedBankCode: this.selectedBankCode,
       selectedBankName: this.selectedBankName,
       selectedTemplateId: this.selectedTemplateId,
       selectedTemplateName: this.selectedTemplateName,
-      bankBranch: formData['bank_branch'],
-      refNumber: formData['report_reference_number']
+      bankBranch: completeFormData['bank_branch'],
+      refNumber: completeFormData['report_reference_number']
     });
     
     // Create comprehensive draft data with template information
@@ -2261,8 +2365,8 @@ export class ReportForm implements OnInit {
       // NOTE: Removed referenceNumber to prevent duplication
       // Backend generates reference_number automatically
       
-      // Form data - all fields including empty ones
-      formData: formData,
+      // Form data - all fields including empty ones AND table data
+      formData: completeFormData,
       
       // Template structure for future reconstruction
       templateStructure: this.templateData ? {
@@ -2280,7 +2384,8 @@ export class ReportForm implements OnInit {
     
     console.log('💾 Comprehensive draft data prepared:', {
       hasTemplateStructure: !!draftData.templateStructure,
-      formFieldCount: Object.keys(formData).length,
+      formFieldCount: Object.keys(completeFormData).length,
+      tableFieldCount: Object.keys(this.dynamicTablesData).length,
       templateInfo: {
         bankCode: draftData.bankCode,
         templateId: draftData.templateId,
@@ -2291,22 +2396,22 @@ export class ReportForm implements OnInit {
     console.log('💾 Saving draft data:', draftData);
 
     // Ensure we have required fields
-    const propertyAddress = formData['property_address'] || 
-                           formData['Property Address'] || 
-                           formData['propertyAddress'] || 
+    const propertyAddress = completeFormData['property_address'] || 
+                           completeFormData['Property Address'] || 
+                           completeFormData['propertyAddress'] || 
                            'Property Address TBD';
     
     // Validate required fields - derive bank code if not present
     if (!this.selectedBankCode) {
       // Try to derive bank code from form data
-      const derivedBankCode = this.deriveBankCodeFromFormData(formData);
+      const derivedBankCode = this.deriveBankCodeFromFormData(completeFormData);
       if (derivedBankCode) {
         this.selectedBankCode = derivedBankCode;
         console.log('🏦 Derived bank code:', derivedBankCode);
         
         // Also derive bank name if needed
         if (!this.selectedBankName) {
-          this.selectedBankName = this.deriveBankNameFromFormData(formData);
+          this.selectedBankName = this.deriveBankNameFromFormData(completeFormData);
           console.log('🏦 Derived bank name:', this.selectedBankName);
         }
       } else {
@@ -2318,14 +2423,14 @@ export class ReportForm implements OnInit {
     
     if (!this.selectedTemplateId && !this.customTemplateId) {
       // Try to derive template ID from form data
-      const derivedTemplateId = this.deriveTemplateIdFromFormData(formData);
+      const derivedTemplateId = this.deriveTemplateIdFromFormData(completeFormData);
       if (derivedTemplateId) {
         this.selectedTemplateId = derivedTemplateId;
         console.log('📋 Derived template ID:', derivedTemplateId);
         
         // Also derive template name if needed
         if (!this.selectedTemplateName) {
-          this.selectedTemplateName = this.deriveTemplateNameFromFormData(formData);
+          this.selectedTemplateName = this.deriveTemplateNameFromFormData(completeFormData);
           console.log('📋 Derived template name:', this.selectedTemplateName);
         }
       } else {
@@ -2336,7 +2441,7 @@ export class ReportForm implements OnInit {
     }
 
     // Create report request to match backend API with nested structure matching template
-    const organizedFormData = this.organizeFormDataForTemplate(formData);
+    const organizedFormData = this.organizeFormDataForTemplate(completeFormData);
     
     const createRequest = {
       bank_code: this.selectedBankCode,

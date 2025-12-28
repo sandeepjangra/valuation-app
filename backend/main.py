@@ -1875,7 +1875,7 @@ async def transform_flat_to_template_structure(
     }
     
     # Common fields that go to separate section (outside of report_data)
-    common_field_ids = {"valuation_date", "applicant_name", "inspection_date", "valuation_purpose"}
+    common_field_ids = {"valuation_date", "applicant_name", "inspection_date", "valuation_purpose", "bank_branch"}
     
     # System metadata to filter out (including property_address as requested)
     metadata_fields = {
@@ -1990,7 +1990,8 @@ async def transform_flat_to_template_structure(
         "valuation_date": datetime.now().strftime("%Y-%m-%d"),
         "applicant_name": "N/A",
         "inspection_date": datetime.now().strftime("%Y-%m-%d"), 
-        "valuation_purpose": "bank_purpose"
+        "valuation_purpose": "bank_purpose",
+        "bank_branch": "N/A"
     }
     
     for field_id, default_value in common_field_defaults.items():
@@ -4866,10 +4867,15 @@ async def get_reports(
             
             # Try to extract bank branch from different possible locations
             if isinstance(report_data, dict):
-                # Check direct field
-                bank_branch = report_data.get("bank_branch") or report_data.get("bankBranch")
+                # PRIORITY 1: Check common_fields first (NEW FORMAT)
+                if "common_fields" in report_data and isinstance(report_data["common_fields"], dict):
+                    bank_branch = report_data["common_fields"].get("bank_branch")
                 
-                # If not found, search in nested structure (new organized format)
+                # PRIORITY 2: Check direct field (fallback)
+                if not bank_branch:
+                    bank_branch = report_data.get("bank_branch") or report_data.get("bankBranch")
+                
+                # PRIORITY 3: Search in nested structure (old organized format)
                 if not bank_branch:
                     for tab_key, tab_data in report_data.items():
                         if isinstance(tab_data, dict):

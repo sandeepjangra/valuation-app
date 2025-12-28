@@ -9,6 +9,7 @@ export interface Report {
   report_id: string;
   reference_number: string;
   property_address: string;
+  applicant_name: string;  // NEW: Extracted by backend from common_fields
   bank_code: string;
   bank_branch?: string;  // NEW: Bank branch ID
   bank_branch_name?: string;  // NEW: Bank branch display name

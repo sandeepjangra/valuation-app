@@ -535,6 +535,12 @@ export class ReportsNewComponent implements OnInit {
 
   // New methods for enhanced table display
   getApplicantName(report: Report): string {
+    // PRIORITY 1: Use the applicant_name extracted by backend (NEW)
+    if (report.applicant_name && report.applicant_name !== 'N/A') {
+      return report.applicant_name;
+    }
+
+    // PRIORITY 2: Fallback to searching in report_data (OLD FORMAT)
     // Debug: Log the entire report for the one with address
     if (report.reference_number === 'CEV/RVO/299/0003/13122025') {
       console.log('🔍 FULL REPORT DEBUG:', report);
