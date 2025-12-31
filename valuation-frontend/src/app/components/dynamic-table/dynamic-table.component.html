@@ -7,11 +7,11 @@
       
       <!-- Information Icon for Dynamic Tables -->
       <span 
-        *ngIf="placeholder || helpText" 
+        *ngIf="helpText" 
         class="field-info-icon table-info"
         [title]="getInfoText()"
         [attr.aria-label]="'Information about ' + fieldLabel">
-        <i class="info-icon">ℹ️</i>
+        <i class="info-icon">i</i>
       </span>
     </label>
     <div class="column-info">

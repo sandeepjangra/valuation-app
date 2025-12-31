@@ -492,10 +492,6 @@ export class DynamicFormComponent implements OnInit, OnDestroy {
    * Prioritizes placeholder text over helpText
    */
   getFieldInfoText(field: TemplateField): string {
-    if (field.placeholder && field.placeholder.trim()) {
-      return field.placeholder;
-    }
-    
     if (field.helpText && field.helpText.trim()) {
       return field.helpText;
     }

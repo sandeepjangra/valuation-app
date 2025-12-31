@@ -40,13 +40,13 @@
                 {{ field.uiDisplayName }}
                 <span *ngIf="field.isRequired" class="required-indicator">*</span>
                 
-                <!-- Information Icon for Placeholder/Help Text -->
+                <!-- Information Icon for Help Text -->
                 <span 
-                  *ngIf="field.placeholder || field.helpText" 
+                  *ngIf="field.helpText" 
                   class="field-info-icon"
                   [title]="getFieldInfoText(field)"
                   [attr.aria-label]="'Information about ' + field.uiDisplayName">
-                  <i class="info-icon">ℹ️</i>
+                  <i class="info-icon">i</i>
                 </span>
               </label>
               
@@ -154,11 +154,11 @@
                         
                         <!-- Information Icon for Sub-Fields -->
                         <span 
-                          *ngIf="subField.placeholder || subField.helpText" 
+                          *ngIf="subField.helpText" 
                           class="field-info-icon sub-field-info"
                           [title]="getFieldInfoText(subField)"
                           [attr.aria-label]="'Information about ' + subField.uiDisplayName">
-                          <i class="info-icon">ℹ️</i>
+                          <i class="info-icon">i</i>
                         </span>
                       </label>
 

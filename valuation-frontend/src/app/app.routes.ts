@@ -116,6 +116,46 @@ export const routes: Routes = [
             title: 'Edit Template'
           }
         ]
+      },
+      {
+        path: 'pdf-templates',
+        children: [
+          {
+            path: '',
+            loadComponent: () =>
+              import('./components/pdf-templates/pdf-templates-management.component')
+                .then(m => m.PDFTemplatesManagementComponent),
+            title: 'PDF Templates'
+          },
+          {
+            path: 'create',
+            loadComponent: () =>
+              import('./components/pdf-templates/pdf-template-form.component')
+                .then(m => m.PDFTemplateFormComponent),
+            title: 'Create PDF Template'
+          },
+          {
+            path: 'edit/:id',
+            loadComponent: () =>
+              import('./components/pdf-templates/pdf-template-form.component')
+                .then(m => m.PDFTemplateFormComponent),
+            title: 'Edit PDF Template'
+          },
+          {
+            path: 'designer',
+            loadComponent: () =>
+              import('./components/pdf-designer/pdf-designer.component')
+                .then(m => m.PDFDesignerComponent),
+            title: 'PDF Template Designer'
+          },
+          {
+            path: 'designer/:id',
+            loadComponent: () =>
+              import('./components/pdf-designer/pdf-designer.component')
+                .then(m => m.PDFDesignerComponent),
+            title: 'Edit PDF Template Designer'
+          }
+        ]
       }
     ]
   },

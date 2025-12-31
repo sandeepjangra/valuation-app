@@ -47,6 +47,9 @@ export class ReportForm implements OnInit {
   availableBranches: Array<{value: string, label: string}> = [];
   isLoading = false;
   
+  // PDF Generation
+  isGeneratingPdf = false;
+  
   // Report reference number
   reportReferenceNumber: string | null = null;
   referenceNumberLoading = false;
@@ -357,20 +360,57 @@ export class ReportForm implements OnInit {
     console.log('📝 Report data structure:', JSON.stringify(reportData.report_data, null, 2));
     console.log('📝 Available form controls:', Object.keys(this.reportForm.controls));
     
-    if (this.reportForm && reportData.report_data) {
+    if (this.reportForm && reportData) {
       
-      // Detect format: check if we have nested structure (new format) or flat structure (old format)
-      const reportDataObj = reportData.report_data;
-      const hasNestedStructure = this.hasNestedStructure(reportDataObj);
+      // STEP 1: Handle top-level fields that should map to form controls
+      console.log('📝 Step 1: Mapping top-level fields...');
       
-      console.log('📝 Detected report format:', hasNestedStructure ? 'NESTED (new)' : 'FLAT (old)');
+      // Map top-level reference_number to report_reference_number form field
+      if (reportData.reference_number) {
+        const refControl = this.reportForm.get('report_reference_number');
+        if (refControl) {
+          refControl.setValue(reportData.reference_number);
+          console.log(`✅ Mapped reference_number -> report_reference_number: ${reportData.reference_number}`);
+        } else {
+          console.log(`⚠️ No report_reference_number control found for reference_number: ${reportData.reference_number}`);
+        }
+      }
       
-      if (hasNestedStructure) {
-        // New nested format - map nested data to form controls
-        this.populateFromNestedStructure(reportDataObj);
+      // Map other top-level fields as needed
+      const topLevelFieldMappings = {
+        'reference_number': 'report_reference_number',
+        'status': 'status',
+        'bank_code': 'bank_code',
+        'template_id': 'template_id'
+      };
+      
+      Object.entries(topLevelFieldMappings).forEach(([sourceField, targetField]) => {
+        if (reportData[sourceField] && sourceField !== 'reference_number') { // Skip reference_number as it's handled above
+          const control = this.reportForm.get(targetField);
+          if (control) {
+            control.setValue(reportData[sourceField]);
+            console.log(`✅ Mapped top-level ${sourceField} -> ${targetField}: ${reportData[sourceField]}`);
+          }
+        }
+      });
+      
+      // STEP 2: Handle report_data structure
+      if (reportData.report_data) {
+        // Detect format: check if we have nested structure (new format) or flat structure (old format)
+        const reportDataObj = reportData.report_data;
+        const hasNestedStructure = this.hasNestedStructure(reportDataObj);
+        
+        console.log('📝 Step 2: Detected report format:', hasNestedStructure ? 'NESTED (new)' : 'FLAT (old)');
+        
+        if (hasNestedStructure) {
+          // New nested format - map nested data to form controls
+          this.populateFromNestedStructure(reportDataObj);
+        } else {
+          // Old flat format - directly map flat fields to form controls
+          this.populateFromFlatStructure(reportDataObj);
+        }
       } else {
-        // Old flat format - directly map flat fields to form controls
-        this.populateFromFlatStructure(reportDataObj);
+        console.log('📝 No report_data found, only using top-level fields');
       }
       
       // Apply correct mode state after data population - CRITICAL: This must happen AFTER all data population
@@ -491,6 +531,59 @@ export class ReportForm implements OnInit {
       });
     }
     
+    // Handle calculated fields - check for fields in data section that match calculated field patterns
+    console.log('📝 Step 3: Processing calculated/readonly fields...');
+    if (reportData.data && typeof reportData.data === 'object') {
+      const calculatedFields = [
+        'estimated_value_of_land',
+        'total_land_value', 
+        'market_value',
+        'final_valuation',
+        'total_value',
+        'calculated_area',
+        'total_cost'
+      ];
+      
+      calculatedFields.forEach(fieldName => {
+        // Check in nested data structure
+        let value = reportData.data[fieldName];
+        
+        // Also check in common_fields for calculated fields
+        if (!value && reportData.common_fields) {
+          value = reportData.common_fields[fieldName];
+        }
+        
+        // Also check deep nested in data section
+        if (!value) {
+          const deepSearch = (obj: any, searchKey: string): any => {
+            if (obj && typeof obj === 'object') {
+              if (obj[searchKey] !== undefined) {
+                return obj[searchKey];
+              }
+              for (const key in obj) {
+                if (typeof obj[key] === 'object') {
+                  const found = deepSearch(obj[key], searchKey);
+                  if (found !== undefined) return found;
+                }
+              }
+            }
+            return undefined;
+          };
+          value = deepSearch(reportData.data, fieldName);
+        }
+        
+        if (value !== undefined && value !== null && value !== '') {
+          const control = this.reportForm.get(fieldName);
+          if (control) {
+            control.setValue(value);
+            console.log(`✅ Mapped calculated field ${fieldName}: ${value}`);
+          } else {
+            console.log(`⚠️ No form control found for calculated field: ${fieldName}`);
+          }
+        }
+      });
+    }
+
     // Handle tables section specifically
     if (reportData.tables && typeof reportData.tables === 'object') {
       console.log('📝 Processing tables section:', reportData.tables);
@@ -1163,7 +1256,7 @@ export class ReportForm implements OnInit {
     this.route.queryParams.subscribe(params => {
       console.log('🔥 Raw query params received:', params);
       this.selectedBankCode = params['bankCode'] || '';
-      this.selectedBankName = params['bankName'] || '';
+      this.selectedBankName = params['bankName'] || this.getBankFullName(this.selectedBankCode);
       this.selectedTemplateId = params['templateId'] || '';
       this.selectedTemplateName = params['templateName'] || '';
       this.selectedPropertyType = params['propertyType'] || '';
@@ -3078,6 +3171,108 @@ export class ReportForm implements OnInit {
   goBackToSelection(): void {
     console.log('🔙 Navigating back to report selection');
     this.router.navigate(['/org', this.currentOrgShortName, 'reports', 'new']);
+  }
+
+  /**
+   * Gets the full bank name from bank code
+   */
+  getBankFullName(bankCode: string): string {
+    const bankNameMap: { [key: string]: string } = {
+      'SBI': 'State Bank of India',
+      'HDFC': 'HDFC Bank',
+      'ICICI': 'ICICI Bank',
+      'BOI': 'Bank of India',
+      'PNB': 'Punjab National Bank',
+      'BOB': 'Bank of Baroda',
+      'UBI': 'Union Bank of India',
+      'UCO': 'UCO Bank',
+      'CBI': 'Central Bank of India'
+    };
+    return bankNameMap[bankCode] || bankCode;
+  }
+
+  /**
+   * Gets the formatted template display name
+   */
+  getFormattedTemplateName(): string {
+    if (!this.selectedBankCode && !this.selectedTemplateName) {
+      return 'Property Valuation Report';
+    }
+
+    const bankFullName = this.getBankFullName(this.selectedBankCode);
+    
+    if (this.selectedTemplateName) {
+      return `${bankFullName} - ${this.selectedTemplateName}`;
+    }
+    
+    // Fallback: construct from property type if available
+    if (this.selectedPropertyType) {
+      const propertyTypeFormatted = this.selectedPropertyType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+      return `${bankFullName} - ${propertyTypeFormatted} Property Valuation`;
+    }
+    
+    return `${bankFullName} - Property Valuation`;
+  }
+
+  /**
+   * Generate PDF report
+   */
+  async generatePDF(): Promise<void> {
+    if (!this.reportId) {
+      this.notificationService.error('No report selected for PDF generation');
+      return;
+    }
+
+    this.isGeneratingPdf = true;
+
+    try {
+      // Prepare report data
+      const reportData = {
+        reportId: this.reportId,
+        bankCode: this.selectedBankCode,
+        propertyType: this.selectedPropertyType,
+        templateData: this.templateData,
+        formValues: this.reportForm.value,
+        reportReferenceNumber: this.reportReferenceNumber,
+        organizationShortName: this.currentOrgShortName
+      };
+
+      // Call the backend PDF generation endpoint
+      const response = await this.http.post(`/api/reports/${this.reportId}/generate-pdf`, reportData, {
+        responseType: 'blob'
+      }).toPromise();
+
+      if (!response) {
+        throw new Error('No response received from PDF generation service');
+      }
+
+      // Create download link
+      const blob = new Blob([response], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Generate filename
+      const bankName = this.getBankFullName(this.selectedBankCode).replace(/\s+/g, '_');
+      const propertyType = this.selectedPropertyType?.replace('_', ' ').replace(/\s+/g, '_') || 'Property';
+      const refNumber = this.reportReferenceNumber || 'Report';
+      const timestamp = new Date().toISOString().split('T')[0];
+      
+      link.download = `${bankName}_${propertyType}_Valuation_${refNumber}_${timestamp}.pdf`;
+      
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      this.notificationService.success('PDF report generated successfully');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      this.notificationService.error('Failed to generate PDF report. Please try again.');
+    } finally {
+      this.isGeneratingPdf = false;
+    }
   }
 
 }

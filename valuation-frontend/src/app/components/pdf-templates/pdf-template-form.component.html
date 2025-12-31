@@ -1,0 +1,281 @@
+<div class="pdf-template-form-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="breadcrumb">
+        <button 
+          type="button" 
+          class="breadcrumb-link"
+          (click)="goBack()">
+          PDF Templates
+        </button>
+        <span class="breadcrumb-separator">/</span>
+        <span class="breadcrumb-current">{{ pageTitle() }}</span>
+      </div>
+      <h1>{{ pageTitle() }}</h1>
+      <p class="header-subtitle">
+        @if (isEditMode()) {
+          Update PDF template settings and layout configuration
+        } @else {
+          Create a new PDF template for valuation reports
+        }
+      </p>
+    </div>
+  </div>
+
+  <!-- Permission error -->
+  @if (error()) {
+    <div class="alert alert-error">
+      <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="loading-container">
+      <div class="loading-spinner"></div>
+      <span>Loading template...</span>
+    </div>
+  } @else {
+    <!-- Form -->
+    <div class="form-container">
+      <form [formGroup]="templateForm" (ngSubmit)="onSubmit()" novalidate>
+        
+        <!-- Basic Information -->
+        <div class="form-section">
+          <h2 class="section-title">Basic Information</h2>
+          
+          <div class="form-grid">
+            <!-- Template Name -->
+            <div class="form-group">
+              <label for="name" class="form-label">Template Name *</label>
+              <input
+                type="text"
+                id="name"
+                formControlName="name"
+                class="form-input"
+                [class.error]="isFieldInvalid('name')"
+                placeholder="Enter template name">
+              @if (isFieldInvalid('name')) {
+                <div class="error-message">{{ getFieldError('name') }}</div>
+              }
+            </div>
+
+            <!-- Bank -->
+            <div class="form-group">
+              <label for="bankCode" class="form-label">Bank *</label>
+              <select
+                id="bankCode"
+                formControlName="bankCode"
+                class="form-select"
+                [class.error]="isFieldInvalid('bankCode')">
+                <option value="">Select Bank</option>
+                @for (bank of banks(); track bank._id) {
+                  <option [value]="bank.bankCode">{{ bank.bankName }}</option>
+                }
+              </select>
+              @if (isFieldInvalid('bankCode')) {
+                <div class="error-message">{{ getFieldError('bankCode') }}</div>
+              }
+            </div>
+
+            <!-- Property Type -->
+            <div class="form-group">
+              <label for="propertyType" class="form-label">Property Type *</label>
+              <select
+                id="propertyType"
+                formControlName="propertyType"
+                class="form-select"
+                [class.error]="isFieldInvalid('propertyType')">
+                <option value="">Select Property Type</option>
+                <option value="land">Land</option>
+                <option value="apartment">Apartment</option>
+              </select>
+              @if (isFieldInvalid('propertyType')) {
+                <div class="error-message">{{ getFieldError('propertyType') }}</div>
+              }
+            </div>
+
+            <!-- Description -->
+            <div class="form-group form-group-full">
+              <label for="description" class="form-label">Description</label>
+              <textarea
+                id="description"
+                formControlName="description"
+                class="form-textarea"
+                placeholder="Optional description for this template"
+                rows="3">
+              </textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Page Layout -->
+        <div class="form-section">
+          <h2 class="section-title">Page Layout</h2>
+          
+          <div class="form-grid">
+            <!-- Page Size -->
+            <div class="form-group">
+              <label for="pageSize" class="form-label">Page Size *</label>
+              <select
+                id="pageSize"
+                formControlName="pageSize"
+                class="form-select"
+                [class.error]="isFieldInvalid('pageSize')">
+                <option value="A4">A4 (210 × 297 mm)</option>
+                <option value="Letter">Letter (8.5 × 11 in)</option>
+              </select>
+              @if (isFieldInvalid('pageSize')) {
+                <div class="error-message">{{ getFieldError('pageSize') }}</div>
+              }
+            </div>
+
+            <!-- Orientation -->
+            <div class="form-group">
+              <label for="orientation" class="form-label">Orientation *</label>
+              <select
+                id="orientation"
+                formControlName="orientation"
+                class="form-select"
+                [class.error]="isFieldInvalid('orientation')">
+                <option value="portrait">Portrait</option>
+                <option value="landscape">Landscape</option>
+              </select>
+              @if (isFieldInvalid('orientation')) {
+                <div class="error-message">{{ getFieldError('orientation') }}</div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Margins -->
+        <div class="form-section">
+          <h2 class="section-title">Page Margins (mm)</h2>
+          
+          <div class="margins-grid">
+            <!-- Top Margin -->
+            <div class="form-group">
+              <label for="marginTop" class="form-label">Top *</label>
+              <input
+                type="number"
+                id="marginTop"
+                formControlName="marginTop"
+                class="form-input"
+                [class.error]="isFieldInvalid('marginTop')"
+                min="0"
+                step="1">
+              @if (isFieldInvalid('marginTop')) {
+                <div class="error-message">{{ getFieldError('marginTop') }}</div>
+              }
+            </div>
+
+            <!-- Right Margin -->
+            <div class="form-group">
+              <label for="marginRight" class="form-label">Right *</label>
+              <input
+                type="number"
+                id="marginRight"
+                formControlName="marginRight"
+                class="form-input"
+                [class.error]="isFieldInvalid('marginRight')"
+                min="0"
+                step="1">
+              @if (isFieldInvalid('marginRight')) {
+                <div class="error-message">{{ getFieldError('marginRight') }}</div>
+              }
+            </div>
+
+            <!-- Bottom Margin -->
+            <div class="form-group">
+              <label for="marginBottom" class="form-label">Bottom *</label>
+              <input
+                type="number"
+                id="marginBottom"
+                formControlName="marginBottom"
+                class="form-input"
+                [class.error]="isFieldInvalid('marginBottom')"
+                min="0"
+                step="1">
+              @if (isFieldInvalid('marginBottom')) {
+                <div class="error-message">{{ getFieldError('marginBottom') }}</div>
+              }
+            </div>
+
+            <!-- Left Margin -->
+            <div class="form-group">
+              <label for="marginLeft" class="form-label">Left *</label>
+              <input
+                type="number"
+                id="marginLeft"
+                formControlName="marginLeft"
+                class="form-input"
+                [class.error]="isFieldInvalid('marginLeft')"
+                min="0"
+                step="1">
+              @if (isFieldInvalid('marginLeft')) {
+                <div class="error-message">{{ getFieldError('marginLeft') }}</div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            (click)="onCancel()">
+            Cancel
+          </button>
+          
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="templateForm.invalid || isSaving()">
+            @if (isSaving()) {
+              <div class="btn-spinner"></div>
+              <span>{{ isEditMode() ? 'Updating...' : 'Creating...' }}</span>
+            } @else {
+              <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+              <span>{{ isEditMode() ? 'Update Template' : 'Create Template' }}</span>
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Next Steps Info -->
+    <div class="info-section">
+      <h3>Next Steps</h3>
+      <div class="info-content">
+        <div class="info-item">
+          <div class="info-icon">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <div class="info-text">
+            <strong>Visual Designer:</strong> After creating the basic template, you'll be able to add fields and sections using the visual designer (coming soon).
+          </div>
+        </div>
+        
+        <div class="info-item">
+          <div class="info-icon">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+          </div>
+          <div class="info-text">
+            <strong>PDF Generation:</strong> Templates will integrate with the existing PDF generation system for creating valuation reports.
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

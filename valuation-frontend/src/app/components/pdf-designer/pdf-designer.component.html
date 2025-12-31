@@ -1,0 +1,524 @@
+<!--
+  PDF Template Visual Designer
+  Microsoft Word-like interface for creating flexible PDF templates
+-->
+
+<div class="pdf-designer-container">
+  <!-- Top Toolbar -->
+  <div class="designer-toolbar">
+    <div class="toolbar-left">
+      <button 
+        type="button" 
+        class="btn btn-secondary btn-sm me-2" 
+        (click)="goBack()"
+      >
+        <i class="fas fa-arrow-left"></i> Back
+      </button>
+      
+      <h4 class="mb-0 me-3">{{ pageTitle() }}</h4>
+      
+      <div class="template-info" *ngIf="template()">
+        <span class="badge bg-light text-dark">{{ template()?.bankCode || 'No Bank' }}</span>
+        <span class="badge bg-light text-dark ms-1">{{ template()?.propertyType || 'No Type' }}</span>
+      </div>
+    </div>
+
+    <div class="toolbar-center">
+      <!-- Zoom Controls -->
+      <div class="zoom-controls">
+        <button class="btn btn-outline-secondary btn-sm" (click)="zoomOut()">
+          <i class="fas fa-minus"></i>
+        </button>
+        <span class="zoom-display">{{ designerState().zoomLevel }}%</span>
+        <button class="btn btn-outline-secondary btn-sm" (click)="zoomIn()">
+          <i class="fas fa-plus"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="toolbar-right">
+      <div class="toolbar-actions">
+        <!-- Grid Toggle -->
+        <button 
+          class="btn btn-outline-secondary btn-sm me-2" 
+          [class.active]="designerState().gridEnabled"
+          (click)="toggleGrid()"
+          title="Toggle Grid"
+        >
+          <i class="fas fa-th"></i>
+        </button>
+
+        <!-- Snap to Grid -->
+        <button 
+          class="btn btn-outline-secondary btn-sm me-2" 
+          [class.active]="designerState().snapToGrid"
+          (click)="toggleSnapToGrid()"
+          title="Snap to Grid"
+        >
+          <i class="fas fa-magnet"></i>
+        </button>
+
+        <!-- Save Button -->
+        <button 
+          type="button" 
+          class="btn btn-primary btn-sm" 
+          (click)="saveTemplate()"
+          [disabled]="isSaving()"
+        >
+          <i class="fas fa-spinner fa-spin me-1" *ngIf="isSaving()"></i>
+          <i class="fas fa-save me-1" *ngIf="!isSaving()"></i>
+          {{ isSaving() ? 'Saving...' : 'Save Template' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Designer Layout -->
+  <div class="designer-layout">
+    <!-- Left Panel -->
+    <div class="left-panel" [class.collapsed]="!showLeftPanel()">
+      <div class="panel-header">
+        <div class="panel-tabs">
+          <button 
+            class="tab-button" 
+            [class.active]="activeTab() === 'tools'"
+            (click)="setActiveTab('tools')"
+          >
+            <i class="fas fa-tools"></i> Tools
+          </button>
+          <button 
+            class="tab-button" 
+            [class.active]="activeTab() === 'sections'"
+            (click)="setActiveTab('sections')"
+          >
+            <i class="fas fa-layer-group"></i> Sections
+          </button>
+        </div>
+        <button 
+          class="panel-toggle" 
+          (click)="toggleLeftPanel()"
+          title="Toggle Left Panel"
+        >
+          <i class="fas" [class.fa-chevron-left]="showLeftPanel()" [class.fa-chevron-right]="!showLeftPanel()"></i>
+        </button>
+      </div>
+
+      <div class="panel-content" *ngIf="showLeftPanel()">
+        <!-- Tools Tab -->
+        <div *ngIf="activeTab() === 'tools'" class="tools-panel">
+          <div class="tool-category" *ngFor="let category of ['layout', 'content', 'data'] | slice:0:3">
+            <h6 class="category-title">{{ category | titlecase }}</h6>
+            <div class="tool-grid">
+              <button 
+                *ngFor="let tool of availableTools() | slice:0:8"
+                class="tool-button"
+                [class.category-layout]="tool.category === 'layout'"
+                [class.category-content]="tool.category === 'content'"
+                [class.category-data]="tool.category === 'data'"
+                (click)="addElement(tool)"
+                [title]="tool.description"
+              >
+                <span class="tool-icon">{{ tool.icon }}</span>
+                <span class="tool-name">{{ tool.name }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sections Tab -->
+        <div *ngIf="activeTab() === 'sections'" class="sections-panel">
+          <div class="section-controls mb-3">
+            <h6>Add Section</h6>
+            <div class="btn-group-vertical w-100">
+              <button class="btn btn-outline-primary btn-sm" (click)="addSection('header')">
+                <i class="fas fa-header"></i> Header Section
+              </button>
+              <button class="btn btn-outline-primary btn-sm" (click)="addSection('content')">
+                <i class="fas fa-align-left"></i> Content Section
+              </button>
+              <button class="btn btn-outline-primary btn-sm" (click)="addSection('footer')">
+                <i class="fas fa-shoe-prints"></i> Footer Section
+              </button>
+              <button class="btn btn-outline-secondary btn-sm" (click)="addSection('custom')">
+                <i class="fas fa-plus"></i> Custom Section
+              </button>
+            </div>
+          </div>
+
+          <div class="sections-list">
+            <h6>Sections ({{ currentSections().length }})</h6>
+            <div 
+              *ngFor="let section of currentSections(); trackBy: trackById"
+              class="section-item"
+              [class.selected]="selectedSection()?.id === section.id"
+              (click)="selectSection(section)"
+            >
+              <div class="section-info">
+                <i class="fas" 
+                   [class.fa-header]="section.type === 'header'"
+                   [class.fa-align-left]="section.type === 'content'"
+                   [class.fa-shoe-prints]="section.type === 'footer'"
+                   [class.fa-puzzle-piece]="section.type === 'custom'">
+                </i>
+                <span class="section-name">{{ section.name }}</span>
+                <span class="element-count">({{ section.elements.length }})</span>
+              </div>
+              <button 
+                class="btn btn-outline-danger btn-xs"
+                (click)="deleteSection(section.id); $event.stopPropagation()"
+                title="Delete Section"
+              >
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center Canvas -->
+    <div class="center-canvas">
+      <div class="canvas-container">
+        <div 
+          #designCanvas
+          class="design-canvas"
+          [style.zoom]="designerState().zoomLevel / 100"
+          [class.grid-enabled]="designerState().gridEnabled"
+        >
+          <!-- Page Preview -->
+          <div class="page-preview">
+            <!-- Template Basic Info -->
+            <div class="template-form-section" *ngIf="!template()?.layout?.sections?.length">
+              <div class="empty-state">
+                <i class="fas fa-file-pdf fa-3x text-muted mb-3"></i>
+                <h5>Start Building Your PDF Template</h5>
+                <p class="text-muted">Add sections and elements to create your custom PDF template</p>
+                
+                <!-- Basic Template Information -->
+                <div class="row">
+                  <div class="col-md-6">
+                    <label class="form-label">Template Name</label>
+                    <input 
+                      type="text" 
+                      class="form-control" 
+                      formControlName="name"
+                      placeholder="Enter template name"
+                    >
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Bank</label>
+                    <select class="form-select" formControlName="bankCode">
+                      <option value="">Select Bank</option>
+                      <option *ngFor="let bank of banks()" [value]="bank.bankCode">{{ bank.bankName }}</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div class="row mt-3">
+                  <div class="col-md-6">
+                    <label class="form-label">Property Type</label>
+                    <select class="form-select" formControlName="propertyType">
+                      <option value="land">Land</option>
+                      <option value="residential">Residential</option>
+                      <option value="commercial">Commercial</option>
+                      <option value="industrial">Industrial</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Description</label>
+                    <input 
+                      type="text" 
+                      class="form-control" 
+                      formControlName="description"
+                      placeholder="Brief description"
+                    >
+                  </div>
+                </div>
+
+                <div class="mt-3">
+                  <button class="btn btn-primary" (click)="addSection('header')">
+                    <i class="fas fa-plus"></i> Add First Section
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sections Rendering -->
+            <div *ngFor="let section of currentSections(); trackBy: trackById" 
+                 class="section-preview"
+                 [class.selected]="selectedSection()?.id === section.id"
+                 (click)="selectSection(section)">
+              
+              <div class="section-header">
+                <div class="section-info">
+                  <i class="fas" 
+                     [class.fa-header]="section.type === 'header'"
+                     [class.fa-align-left]="section.type === 'content'"
+                     [class.fa-shoe-prints]="section.type === 'footer'"
+                     [class.fa-puzzle-piece]="section.type === 'custom'">
+                  </i>
+                  <span class="section-name">{{ section.name }}</span>
+                  <span class="element-count">({{ section.elements.length }} elements)</span>
+                </div>
+                <div class="section-actions">
+                  <button class="btn btn-outline-primary btn-xs me-1" 
+                          *ngFor="let tool of availableTools() | slice:0:4"
+                          (click)="addElement(tool, section.id); $event.stopPropagation()"
+                          [title]="'Add ' + tool.name">
+                    {{ tool.icon }}
+                  </button>
+                </div>
+              </div>
+
+              <div class="section-content">
+                <!-- Section Elements -->
+                <div *ngFor="let element of section.elements; trackBy: trackById"
+                     class="element-preview"
+                     [class.selected]="selectedElement()?.id === element.id"
+                     (click)="selectElement(element); $event.stopPropagation()">
+                  
+                  <!-- Text Element -->
+                  <div *ngIf="element.type === 'text'" class="text-element">
+                    <span [style.font-size.px]="element.style?.fontSize || 12"
+                          [style.font-weight]="element.style?.fontWeight || 'normal'"
+                          [style.text-align]="element.style?.textAlign || 'left'"
+                          [style.color]="element.style?.color || '#000000'">
+                      {{ getElementTextForDisplay(element) }}
+                    </span>
+                  </div>
+
+                  <!-- Table Element -->
+                  <div *ngIf="element.type === 'table'" class="table-element">
+                    <table class="table table-bordered table-sm">
+                      <thead>
+                        <tr>
+                          <th *ngFor="let header of getElementHeadersForDisplay(element)">
+                            {{ header }}
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr *ngFor="let row of getElementDataForDisplay(element)">
+                          <td *ngFor="let cell of row">{{ cell.value }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <!-- List Element -->
+                  <div *ngIf="element.type === 'list'" class="list-element">
+                    <ol *ngIf="isOrderedListForDisplay(element); else unorderedList">
+                      <li *ngFor="let item of getElementItemsForDisplay(element)">
+                        {{ item.text }}
+                      </li>
+                    </ol>
+                    <ng-template #unorderedList>
+                      <ul>
+                        <li *ngFor="let item of getElementItemsForDisplay(element)">
+                          {{ item.text }}
+                        </li>
+                      </ul>
+                    </ng-template>
+                  </div>
+
+                  <!-- Element Tools -->
+                  <div class="element-tools" *ngIf="selectedElement()?.id === element.id">
+                    <button class="tool-btn" title="Edit">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="tool-btn" title="Duplicate">
+                      <i class="fas fa-copy"></i>
+                    </button>
+                    <button class="tool-btn" title="Delete">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Add Element Hint -->
+                <div *ngIf="section.elements.length === 0" class="add-element-hint">
+                  <i class="fas fa-plus-circle"></i>
+                  <span>Click tools above to add elements</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Panel -->
+    <div class="right-panel" [class.collapsed]="!showRightPanel()">
+      <div class="panel-header">
+        <div class="panel-tabs">
+          <button 
+            class="tab-button" 
+            [class.active]="activeTab() === 'properties'"
+            (click)="setActiveTab('properties')"
+          >
+            <i class="fas fa-cog"></i> Properties
+          </button>
+        </div>
+        <button 
+          class="panel-toggle" 
+          (click)="toggleRightPanel()"
+          title="Toggle Right Panel"
+        >
+          <i class="fas" [class.fa-chevron-right]="showRightPanel()" [class.fa-chevron-left]="!showRightPanel()"></i>
+        </button>
+      </div>
+
+      <div class="panel-content" *ngIf="showRightPanel()">
+        <!-- Properties Panel -->
+        <div *ngIf="activeTab() === 'properties'" class="properties-panel">
+          <!-- Selected Element Properties -->
+          <div *ngIf="selectedElement()" class="element-properties">
+            <h6><i class="fas fa-cube"></i> Element Properties</h6>
+            
+            <div class="property-group">
+              <label>Element Type</label>
+              <input type="text" class="form-control" [value]="selectedElement()?.type" readonly>
+            </div>
+
+            <div class="property-group" *ngIf="selectedElement()?.type === 'text'">
+              <label>Text Content</label>
+              <textarea 
+                class="form-control" 
+                rows="3" 
+                [value]="getElementContentText()"
+                (input)="onTextAreaInput($event, 'content.text')"
+              ></textarea>
+            </div>
+
+            <div class="property-group">
+              <label>Font Size</label>
+              <input 
+                type="number" 
+                class="form-control" 
+                [value]="selectedElement()?.style?.fontSize || 12"
+                (input)="onNumberInput($event, 'style.fontSize')"
+                min="8" 
+                max="72"
+              >
+            </div>
+
+            <div class="property-group">
+              <label>Text Alignment</label>
+              <select 
+                class="form-select" 
+                [value]="selectedElement()?.style?.textAlign || 'left'"
+                (change)="onSelectChange($event, 'style.textAlign')"
+              >
+                <option value="left">Left</option>
+                <option value="center">Center</option>
+                <option value="right">Right</option>
+                <option value="justify">Justify</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Selected Section Properties -->
+          <div *ngIf="selectedSection() && !selectedElement()" class="section-properties">
+            <h6><i class="fas fa-layer-group"></i> Section Properties</h6>
+            
+            <div class="property-group">
+              <label>Section Name</label>
+              <input 
+                type="text" 
+                class="form-control" 
+                [value]="selectedSection()?.name"
+                (input)="onSectionTextInput($event, 'name')"
+              >
+            </div>
+
+            <div class="property-group">
+              <label>Section Type</label>
+              <select 
+                class="form-select" 
+                [value]="selectedSection()?.type"
+                (change)="onSectionSelectChange($event, 'type')"
+              >
+                <option value="header">Header</option>
+                <option value="content">Content</option>
+                <option value="footer">Footer</option>
+                <option value="custom">Custom</option>
+              </select>
+            </div>
+
+            <div class="property-group">
+              <label>Background Color</label>
+              <input 
+                type="color" 
+                class="form-control" 
+                [value]="selectedSection()?.style?.backgroundColor || '#ffffff'"
+                (input)="onSectionColorInput($event, 'style.backgroundColor')"
+              >
+            </div>
+          </div>
+
+          <!-- Template Properties -->
+          <div *ngIf="!selectedElement() && !selectedSection()" class="template-properties">
+            <h6><i class="fas fa-file-pdf"></i> Template Properties</h6>
+            
+            <form [formGroup]="templateForm" class="template-form">
+              <div class="property-group">
+                <label>Template Name</label>
+                <input type="text" class="form-control" formControlName="name">
+              </div>
+
+              <div class="property-group">
+                <label>Bank</label>
+                <select class="form-select" formControlName="bankCode">
+                  <option value="">Select Bank</option>
+                  <option *ngFor="let bank of banks()" [value]="bank.bankCode">{{ bank.bankName }}</option>
+                </select>
+              </div>
+
+              <div class="property-group">
+                <label>Property Type</label>
+                <select class="form-select" formControlName="propertyType">
+                  <option value="land">Land</option>
+                  <option value="residential">Residential</option>
+                  <option value="commercial">Commercial</option>
+                  <option value="industrial">Industrial</option>
+                </select>
+              </div>
+
+              <div class="property-group">
+                <label>Page Size</label>
+                <select class="form-select" [value]="template()?.layout?.pageSize || 'A4'">
+                  <option value="A4">A4</option>
+                  <option value="A3">A3</option>
+                  <option value="Letter">Letter</option>
+                  <option value="Legal">Legal</option>
+                </select>
+              </div>
+
+              <div class="property-group">
+                <label>Orientation</label>
+                <select class="form-select" [value]="template()?.layout?.orientation || 'portrait'">
+                  <option value="portrait">Portrait</option>
+                  <option value="landscape">Landscape</option>
+                </select>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div *ngIf="isLoading()" class="loading-overlay">
+    <div class="loading-spinner">
+      <i class="fas fa-spinner fa-spin fa-2x"></i>
+      <p>Loading template...</p>
+    </div>
+  </div>
+
+  <!-- Error Display -->
+  <div *ngIf="error()" class="alert alert-danger mt-3">
+    <i class="fas fa-exclamation-triangle"></i>
+    {{ error() }}
+  </div>
+</div>

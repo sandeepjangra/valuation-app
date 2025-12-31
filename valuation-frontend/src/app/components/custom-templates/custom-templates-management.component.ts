@@ -214,6 +214,31 @@ export class CustomTemplatesManagementComponent implements OnInit {
     }
   }
 
+  /**
+   * Navigate to PDF Template Manager
+   */
+  openPDFTemplateManager(): void {
+    // Navigate to organization-specific PDF template management
+    const orgShortName = this.currentOrgShortName();
+    console.log('🔍 Opening PDF template manager - orgShortName:', orgShortName);
+    
+    if (orgShortName) {
+      console.log('✅ Navigating to PDF template manager:', `/org/${orgShortName}/pdf-templates`);
+      this.router.navigate(['/org', orgShortName, 'pdf-templates']);
+    } else {
+      console.error('❌ No organization context available for PDF template navigation');
+      // Get org from auth service as fallback
+      const authOrgContext = this.authService.getOrganizationContext();
+      if (authOrgContext?.orgShortName) {
+        console.log('✅ Using auth service org context for PDF templates:', authOrgContext.orgShortName);
+        this.router.navigate(['/org', authOrgContext.orgShortName, 'pdf-templates']);
+      } else {
+        console.error('❌ No organization context available anywhere');
+        this.notificationService.error('Unable to determine organization context. Please refresh the page.');
+      }
+    }
+  }
+
   editTemplate(templateId: string): void {
     const orgShortName = this.currentOrgShortName();
     if (orgShortName) {

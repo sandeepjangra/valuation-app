@@ -136,6 +136,7 @@ export class Header implements OnInit {
       reports: `/org/${orgShortName}/reports`,
       banks: `/org/${orgShortName}/banks`,
       templates: `/org/${orgShortName}/custom-templates`,
+      pdfTemplates: `/org/${orgShortName}/pdf-templates`,
       employeeActivities: `/org/${orgShortName}/organization/users`
     };
   }

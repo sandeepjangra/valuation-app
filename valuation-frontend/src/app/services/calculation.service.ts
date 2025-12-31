@@ -16,22 +16,37 @@ export class CalculationService {
    * @returns The calculated value
    */
   evaluateCalculatedField(config: CalculatedFieldConfig, formGroup: FormGroup): number {
+    console.log(`🧮 Evaluating calculated field with config:`, config);
+    
     if (!config || !config.sourceFields || config.sourceFields.length === 0) {
+      console.warn('Invalid config or no source fields:', config);
       return 0;
     }
 
     const values = this.getFieldValues(config.sourceFields, formGroup);
+    console.log(`🧮 Retrieved field values:`, { 
+      sourceFields: config.sourceFields, 
+      values: values 
+    });
 
     switch (config.type) {
       case 'sum':
-        return this.calculateSum(values);
+        const sumResult = this.calculateSum(values);
+        console.log(`🧮 Sum calculation result: ${sumResult}`);
+        return sumResult;
       case 'product':
-        return this.calculateProduct(values);
+        const productResult = this.calculateProduct(values);
+        console.log(`🧮 Product calculation result: ${productResult}`);
+        return productResult;
       case 'average':
-        return this.calculateAverage(values);
+        const avgResult = this.calculateAverage(values);
+        console.log(`🧮 Average calculation result: ${avgResult}`);
+        return avgResult;
       case 'custom':
-        // For future custom formula implementation
-        return this.evaluateCustomFormula(config.customFormula || '', values);
+        // Pass field IDs to enable proper variable substitution
+        const customResult = this.evaluateCustomFormula(config.customFormula || '', values, config.sourceFields);
+        console.log(`🧮 Custom calculation result: ${customResult}`);
+        return customResult;
       default:
         console.warn(`Unknown calculation type: ${config.type}`);
         return 0;
@@ -45,14 +60,25 @@ export class CalculationService {
   private getFieldValues(fieldIds: string[], formGroup: FormGroup): number[] {
     const values: number[] = [];
 
+    console.log(`🔍 Getting field values for:`, fieldIds);
+
     for (const fieldId of fieldIds) {
       const value = this.getNestedFieldValue(fieldId, formGroup);
+      
+      console.log(`🔍 Field ${fieldId}:`, {
+        rawValue: value,
+        type: typeof value,
+        exists: value !== null && value !== undefined
+      });
       
       // Convert to number, handle null/undefined/empty
       const numericValue = this.parseNumericValue(value);
       values.push(numericValue);
+      
+      console.log(`🔍 Field ${fieldId} converted to: ${numericValue}`);
     }
 
+    console.log(`🔍 Final field values array:`, values);
     return values;
   }
 
@@ -123,13 +149,57 @@ export class CalculationService {
   }
 
   /**
-   * Evaluates a custom formula (placeholder for future implementation)
+   * Evaluates a custom formula with field values
    */
-  private evaluateCustomFormula(formula: string, values: number[]): number {
-    // TODO: Implement safe formula evaluation
-    // For now, return 0
-    console.warn('Custom formula evaluation not yet implemented:', formula);
-    return 0;
+  private evaluateCustomFormula(formula: string, values: number[], fieldIds: string[] = []): number {
+    if (!formula) {
+      console.warn('No formula provided for evaluation');
+      return 0;
+    }
+
+    console.log(`🧮 Evaluating custom formula: ${formula}`, { fieldIds, values });
+
+    try {
+      // Create a mapping of field names to their values
+      const fieldValueMap: { [key: string]: number } = {};
+      if (fieldIds.length > 0) {
+        fieldIds.forEach((fieldId, index) => {
+          fieldValueMap[fieldId] = values[index] || 0;
+        });
+      }
+
+      // Replace field names in formula with their values
+      let evaluableFormula = formula;
+      Object.keys(fieldValueMap).forEach(fieldId => {
+        const value = fieldValueMap[fieldId];
+        // Replace field name with its numeric value
+        const regex = new RegExp(`\\b${fieldId}\\b`, 'g');
+        evaluableFormula = evaluableFormula.replace(regex, value.toString());
+      });
+
+      console.log(`🧮 Formula after substitution: ${evaluableFormula}`);
+
+      // Simple and safe evaluation for basic arithmetic
+      // Only allow numbers, +, -, *, /, (, ), and spaces
+      if (!/^[\d\s+\-*/().]+$/.test(evaluableFormula)) {
+        console.error('Formula contains invalid characters:', evaluableFormula);
+        return 0;
+      }
+
+      // Use Function constructor for safe evaluation (better than eval)
+      const result = Function(`"use strict"; return (${evaluableFormula})`)();
+      
+      if (typeof result === 'number' && !isNaN(result)) {
+        console.log(`🧮 Formula evaluation result: ${result}`);
+        return result;
+      } else {
+        console.error('Formula evaluation returned invalid result:', result);
+        return 0;
+      }
+    } catch (error) {
+      console.error('Error evaluating formula:', formula, error);
+      return 0;
+    }
   }
 
   /**
@@ -138,29 +208,66 @@ export class CalculationService {
    * @returns Array of field IDs that are calculated
    */
   getCalculatedFields(fields: (TemplateField | BankSpecificField)[]): Map<string, CalculatedFieldConfig> {
+    console.log(`🔍 CalculationService.getCalculatedFields called with ${fields.length} fields`);
     const calculatedFieldsMap = new Map<string, CalculatedFieldConfig>();
 
     const processFields = (fieldList: (TemplateField | BankSpecificField)[]) => {
       for (const field of fieldList) {
+        console.log(`🔍 Processing field: ${field.fieldId}`, {
+          fieldType: field.fieldType,
+          hasCalculatedField: !!field.calculatedField,
+          hasCalculationMetadata: !!(field as any).calculationMetadata,
+          calculationMetadata: (field as any).calculationMetadata
+        });
+        
         // Check if field has calculated configuration
         if (field.calculatedField) {
           calculatedFieldsMap.set(field.fieldId, field.calculatedField);
         }
+        // Check for SBI template format with calculationMetadata
+        else if ((field as any).calculationMetadata?.isCalculatedField) {
+          console.log(`🧮 Found SBI calculated field: ${field.fieldId}`);
+          
+          const metadata = (field as any).calculationMetadata;
+          const formula = metadata.formula || (field as any).formula; // Check metadata first, then top level
+          
+          if (formula) {
+            // Extract dependencies from metadata or formula
+            const dependencies = metadata.dependencies || this.extractDependenciesFromFormula(formula);
+            const calcType = this.determineCalculationType(formula, dependencies);
+            
+            const config: CalculatedFieldConfig = {
+              type: calcType,
+              sourceFields: dependencies,
+              dependencies: dependencies,
+              outputFormat: metadata.formatting?.currency ? 'currency' : 'number'
+            };
+            
+            if (calcType === 'custom') {
+              config.customFormula = formula;
+            }
+            
+            calculatedFieldsMap.set(field.fieldId, config);
+            console.log(`✅ Added calculated field config for: ${field.fieldId}`, config);
+          } else {
+            console.warn(`⚠️ SBI calculated field ${field.fieldId} has no formula`);
+          }
+        }
         // Also check for fieldType === 'calculated' (legacy support)
-        else if (field.fieldType === 'calculated' && field.formula) {
+        else if (field.fieldType === 'calculated' && (field as any).formula) {
           // Create calculatedField config from legacy format
-          const dependencies = this.extractDependenciesFromFormula(field.formula);
-          const calcType = this.determineCalculationType(field.formula, dependencies);
+          const dependencies = this.extractDependenciesFromFormula((field as any).formula);
+          const calcType = this.determineCalculationType((field as any).formula, dependencies);
           
           const config: CalculatedFieldConfig = {
             type: calcType,
             sourceFields: dependencies,
             dependencies: dependencies,
-            outputFormat: field.displayFormat === 'currency' ? 'currency' : 'number'
+            outputFormat: (field as any).displayFormat === 'currency' ? 'currency' : 'number'
           };
           
           if (calcType === 'custom') {
-            config.customFormula = field.formula;
+            config.customFormula = (field as any).formula;
           }
           
           calculatedFieldsMap.set(field.fieldId, config);

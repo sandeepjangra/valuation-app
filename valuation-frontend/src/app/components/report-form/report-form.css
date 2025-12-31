@@ -58,9 +58,11 @@
   gap: 0;
   margin: 0;
   padding: 12px 0;
-  height: 60px;
+  height: auto; /* Changed from 60px to auto for better flexibility */
+  min-height: 50px; /* Ensure minimum height */
   align-items: center;
-  overflow-x: auto;
+  overflow-x: visible; /* Changed from auto to visible to remove scrolling */
+  flex-wrap: wrap; /* Allow wrapping if needed */
   scrollbar-width: thin;
 }
 
@@ -1951,7 +1953,7 @@ fieldset:disabled .form-textarea {
   margin-left: auto;
 }
 
-.edit-btn, .view-btn {
+.edit-btn, .view-btn, .pdf-btn {
   padding: 8px 16px;
   border: none;
   border-radius: 6px;
@@ -1985,6 +1987,21 @@ fieldset:disabled .form-textarea {
 
 .view-btn:hover {
   background: #1565c0;
+}
+
+.pdf-btn {
+  background: #FF6B35;
+  color: white;
+}
+
+.pdf-btn:hover:not(:disabled) {
+  background: #E5562D;
+}
+
+.pdf-btn:disabled {
+  background: #cccccc;
+  color: #666666;
+  cursor: not-allowed;
 }
 
 /* View Mode Form Styles */
@@ -2072,15 +2089,26 @@ fieldset:disabled .form-textarea {
 }
 
 .field-info-icon .info-icon {
-  font-size: 14px;
-  opacity: 0.7;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background-color: #6c757d;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: bold;
+  font-family: serif;
   transition: all 0.2s ease;
+  opacity: 0.8;
 }
 
 .field-info-icon:hover .info-icon {
   opacity: 1;
-  color: #138496;
+  background-color: #138496;
   transform: scale(1.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 /* Tooltip styling using title attribute */
@@ -2120,7 +2148,9 @@ fieldset:disabled .form-textarea {
 }
 
 .field-info-icon.sub-field-info .info-icon {
-  font-size: 12px;
+  width: 14px;
+  height: 14px;
+  font-size: 9px;
 }
 
 /* Table info styling */
@@ -2129,7 +2159,9 @@ fieldset:disabled .form-textarea {
 }
 
 .field-info-icon.table-info .info-icon {
-  font-size: 13px;
+  width: 15px;
+  height: 15px;
+  font-size: 9px;
 }
 
 /* Responsive tooltip positioning */

@@ -374,10 +374,6 @@ export class DynamicTableComponent implements OnInit, OnDestroy {
 
   // Get information text for tooltip (prioritizes placeholder over helpText)
   getInfoText(): string {
-    if (this.placeholder && this.placeholder.trim()) {
-      return this.placeholder;
-    }
-    
     if (this.helpText && this.helpText.trim()) {
       return this.helpText;
     }

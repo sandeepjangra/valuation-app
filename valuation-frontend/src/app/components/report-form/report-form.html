@@ -3,8 +3,8 @@
   <div class="page-header">
     <div class="header-content">
       <div class="left-section">
-        <div class="template-name" *ngIf="selectedTemplateName">
-          <span class="template-label">{{ selectedTemplateName }}</span>
+        <div class="template-name">
+          <span class="template-label">{{ getFormattedTemplateName() }}</span>
         </div>
       </div>
       <div class="header-info">
@@ -42,6 +42,16 @@
           class="view-btn"
           (click)="switchToViewMode()">
           👁️ View Mode
+        </button>
+        
+        <!-- PDF Generation Button -->
+        <button 
+          class="pdf-btn"
+          (click)="generatePDF()"
+          [disabled]="isGeneratingPdf"
+          title="Generate PDF Report">
+          <span *ngIf="!isGeneratingPdf">📄 Generate PDF</span>
+          <span *ngIf="isGeneratingPdf">⏳ Generating...</span>
         </button>
       </div>
       <div class="right-section">
@@ -105,11 +115,11 @@
                   {{ field.uiDisplayName }}
                   <span class="required-indicator" *ngIf="field.isRequired">*</span>
                   <span 
-                    *ngIf="field.placeholder || field.helpText" 
+                    *ngIf="field.helpText" 
                     class="field-info-icon"
-                    [title]="field.placeholder || field.helpText"
+                    [title]="field.helpText"
                     [attr.aria-label]="'Information about ' + field.uiDisplayName">
-                    <i class="info-icon">ℹ️</i>
+                    <i class="info-icon">i</i>
                   </span>
                 </label>
                 <input
@@ -133,11 +143,11 @@
                   {{ field.uiDisplayName }}
                   <span class="required-indicator" *ngIf="field.isRequired">*</span>
                   <span 
-                    *ngIf="field.placeholder || field.helpText" 
+                    *ngIf="field.helpText" 
                     class="field-info-icon"
-                    [title]="field.placeholder || field.helpText"
+                    [title]="field.helpText"
                     [attr.aria-label]="'Information about ' + field.uiDisplayName">
-                    <i class="info-icon">ℹ️</i>
+                    <i class="info-icon">i</i>
                   </span>
                 </label>
                 <input
@@ -158,11 +168,11 @@
                   {{ field.uiDisplayName }}
                   <span class="required-indicator" *ngIf="field.isRequired">*</span>
                   <span 
-                    *ngIf="field.placeholder || field.helpText" 
+                    *ngIf="field.helpText" 
                     class="field-info-icon"
-                    [title]="field.placeholder || field.helpText"
+                    [title]="field.helpText"
                     [attr.aria-label]="'Information about ' + field.uiDisplayName">
-                    <i class="info-icon">ℹ️</i>
+                    <i class="info-icon">i</i>
                   </span>
                 </label>
                 <input
@@ -186,11 +196,11 @@
                   {{ field.uiDisplayName }}
                   <span class="required-indicator" *ngIf="field.isRequired">*</span>
                   <span 
-                    *ngIf="field.placeholder || field.helpText" 
+                    *ngIf="field.helpText" 
                     class="field-info-icon"
-                    [title]="field.placeholder || field.helpText"
+                    [title]="field.helpText"
                     [attr.aria-label]="'Information about ' + field.uiDisplayName">
-                    <i class="info-icon">ℹ️</i>
+                    <i class="info-icon">i</i>
                   </span>
                 </label>
                 <textarea
@@ -212,11 +222,11 @@
                   {{ field.uiDisplayName }}
                   <span class="required-indicator" *ngIf="field.isRequired">*</span>
                   <span 
-                    *ngIf="field.placeholder || field.helpText" 
+                    *ngIf="field.helpText" 
                     class="field-info-icon"
-                    [title]="field.placeholder || field.helpText"
+                    [title]="field.helpText"
                     [attr.aria-label]="'Information about ' + field.uiDisplayName">
-                    <i class="info-icon">ℹ️</i>
+                    <i class="info-icon">i</i>
                   </span>
                 </label>
                 
@@ -287,7 +297,7 @@
             <!-- Compact Header with Inline Sub-tabs -->
             <div class="compact-section-header">
               <div class="header-left">
-                <h3 class="section-title">{{ selectedBankName }} - {{ selectedTemplateName }}</h3>
+                <h3 class="section-title">{{ getFormattedTemplateName() }}</h3>
                 <p class="section-subtitle">Bank-specific fields for {{ selectedPropertyType }} property valuation</p>
               </div>
               
@@ -336,11 +346,11 @@
                                   {{ field.uiDisplayName }}
                                   <span class="required-indicator" *ngIf="field.isRequired">*</span>
                                   <span 
-                                    *ngIf="field.placeholder || field.helpText" 
+                                    *ngIf="field.helpText" 
                                     class="field-info-icon"
-                                    [title]="field.placeholder || field.helpText"
+                                    [title]="field.helpText"
                                     [attr.aria-label]="'Information about ' + field.uiDisplayName">
-                                    <i class="info-icon">ℹ️</i>
+                                    <i class="info-icon">i</i>
                                   </span>
                                 </legend>
                                 
@@ -360,7 +370,7 @@
                                           class="field-info-icon sub-field-info"
                                           [title]="subField.placeholder || subField.helpText"
                                           [attr.aria-label]="'Information about ' + subField.uiDisplayName">
-                                          <i class="info-icon">ℹ️</i>
+                                          <i class="info-icon">i</i>
                                         </span>
                                       </label>
                                       <input
@@ -390,7 +400,7 @@
                                           class="field-info-icon sub-field-info"
                                           [title]="subField.placeholder || subField.helpText"
                                           [attr.aria-label]="'Information about ' + subField.uiDisplayName">
-                                          <i class="info-icon">ℹ️</i>
+                                          <i class="info-icon">i</i>
                                         </span>
                                       </label>
                                       <input
@@ -420,7 +430,7 @@
                                           class="field-info-icon sub-field-info"
                                           [title]="subField.placeholder || subField.helpText"
                                           [attr.aria-label]="'Information about ' + subField.uiDisplayName">
-                                          <i class="info-icon">ℹ️</i>
+                                          <i class="info-icon">i</i>
                                         </span>
                                       </label>
                                       <select 
@@ -449,7 +459,7 @@
                                           class="field-info-icon sub-field-info"
                                           [title]="subField.placeholder || subField.helpText"
                                           [attr.aria-label]="'Information about ' + subField.uiDisplayName">
-                                          <i class="info-icon">ℹ️</i>
+                                          <i class="info-icon">i</i>
                                         </span>
                                       </label>
                                       <input
@@ -476,7 +486,7 @@
                                           class="field-info-icon sub-field-info"
                                           [title]="subField.placeholder || subField.helpText"
                                           [attr.aria-label]="'Information about ' + subField.uiDisplayName">
-                                          <i class="info-icon">ℹ️</i>
+                                          <i class="info-icon">i</i>
                                         </span>
                                       </label>
                                       <textarea
@@ -508,11 +518,11 @@
                                 {{ field.uiDisplayName }}
                                 <span class="required-indicator" *ngIf="field.isRequired">*</span>
                                 <span 
-                                  *ngIf="field.placeholder || field.helpText" 
+                                  *ngIf="field.helpText" 
                                   class="field-info-icon"
-                                  [title]="field.placeholder || field.helpText"
+                                  [title]="field.helpText"
                                   [attr.aria-label]="'Information about ' + field.uiDisplayName">
-                                  <i class="info-icon">ℹ️</i>
+                                  <i class="info-icon">i</i>
                                 </span>
                               </label>
                               <input
@@ -540,11 +550,11 @@
                                 {{ field.uiDisplayName }}
                                 <span class="required-indicator" *ngIf="field.isRequired">*</span>
                                 <span 
-                                  *ngIf="field.placeholder || field.helpText" 
+                                  *ngIf="field.helpText" 
                                   class="field-info-icon"
-                                  [title]="field.placeholder || field.helpText"
+                                  [title]="field.helpText"
                                   [attr.aria-label]="'Information about ' + field.uiDisplayName">
-                                  <i class="info-icon">ℹ️</i>
+                                  <i class="info-icon">i</i>
                                 </span>
                               </label>
                               <input
@@ -569,11 +579,11 @@
                                 {{ field.uiDisplayName }}
                                 <span class="required-indicator" *ngIf="field.isRequired">*</span>
                                 <span 
-                                  *ngIf="field.placeholder || field.helpText" 
+                                  *ngIf="field.helpText" 
                                   class="field-info-icon"
-                                  [title]="field.placeholder || field.helpText"
+                                  [title]="field.helpText"
                                   [attr.aria-label]="'Information about ' + field.uiDisplayName">
-                                  <i class="info-icon">ℹ️</i>
+                                  <i class="info-icon">i</i>
                                 </span>
                               </label>
                               <input
@@ -601,11 +611,11 @@
                                 {{ field.uiDisplayName }}
                                 <span class="required-indicator" *ngIf="field.isRequired">*</span>
                                 <span 
-                                  *ngIf="field.placeholder || field.helpText" 
+                                  *ngIf="field.helpText" 
                                   class="field-info-icon"
-                                  [title]="field.placeholder || field.helpText"
+                                  [title]="field.helpText"
                                   [attr.aria-label]="'Information about ' + field.uiDisplayName">
-                                  <i class="info-icon">ℹ️</i>
+                                  <i class="info-icon">i</i>
                                 </span>
                               </label>
                               <div class="currency-input-wrapper">
@@ -639,11 +649,11 @@
                                 {{ field.uiDisplayName }}
                                 <span class="required-indicator" *ngIf="field.isRequired">*</span>
                                 <span 
-                                  *ngIf="field.placeholder || field.helpText" 
+                                  *ngIf="field.helpText" 
                                   class="field-info-icon"
-                                  [title]="field.placeholder || field.helpText"
+                                  [title]="field.helpText"
                                   [attr.aria-label]="'Information about ' + field.uiDisplayName">
-                                  <i class="info-icon">ℹ️</i>
+                                  <i class="info-icon">i</i>
                                 </span>
                               </label>
                               <textarea
@@ -669,11 +679,11 @@
                                 {{ field.uiDisplayName }}
                                 <span class="required-indicator" *ngIf="field.isRequired">*</span>
                                 <span 
-                                  *ngIf="field.placeholder || field.helpText" 
+                                  *ngIf="field.helpText" 
                                   class="field-info-icon"
-                                  [title]="field.placeholder || field.helpText"
+                                  [title]="field.helpText"
                                   [attr.aria-label]="'Information about ' + field.uiDisplayName">
-                                  <i class="info-icon">ℹ️</i>
+                                  <i class="info-icon">i</i>
                                 </span>
                               </label>
                               <select 
