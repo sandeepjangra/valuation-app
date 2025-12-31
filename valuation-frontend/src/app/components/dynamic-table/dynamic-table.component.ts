@@ -19,6 +19,7 @@ export class DynamicTableComponent implements OnInit, OnDestroy {
   @Input() fieldLabel!: string;
   @Input() isRequired: boolean = false;
   @Input() helpText?: string;
+  @Input() placeholder?: string;
   @Input() tableConfig?: DynamicTableConfig;
   @Input() initialData?: any;
   
@@ -369,5 +370,18 @@ export class DynamicTableComponent implements OnInit, OnDestroy {
   // Check if row can be removed
   canRemoveRow(rowIndex: number): boolean {
     return this.isRowDynamic && this.tableRows.length > 0;
+  }
+
+  // Get information text for tooltip (prioritizes placeholder over helpText)
+  getInfoText(): string {
+    if (this.placeholder && this.placeholder.trim()) {
+      return this.placeholder;
+    }
+    
+    if (this.helpText && this.helpText.trim()) {
+      return this.helpText;
+    }
+    
+    return '';
   }
 }

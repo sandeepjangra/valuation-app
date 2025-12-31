@@ -1888,19 +1888,31 @@ async def transform_flat_to_template_structure(
     field_count = 0
     
     def is_table_field(field_id: str, field_value: Any) -> bool:
-        """Check if field is a table"""
+        """Check if field is a table - enhanced detection"""
+        # Primary indicators: field name contains table-related keywords
         table_indicators = ['table', 'list', 'items', 'rows', 'entries', 'specifications', 'valuation_table', '_table']
-        if any(indicator in field_id.lower() for indicator in table_indicators):
-            if isinstance(field_value, (list, dict)):
-                return True
-        
-        if isinstance(field_value, list) and len(field_value) > 0:
-            first_item = field_value[0]
-            if isinstance(first_item, dict) and len(first_item) > 1:
-                return True
+        name_indicates_table = any(indicator in field_id.lower() for indicator in table_indicators)
         
         if isinstance(field_value, dict):
-            if 'rows' in field_value or 'columns' in field_value or 'tableData' in field_value:
+            # Check for table structure: has both rows and columns
+            has_rows_and_columns = 'rows' in field_value and 'columns' in field_value
+            # Check for other table-like structures
+            has_table_data = 'tableData' in field_value
+            # Check for dynamic table metadata
+            has_table_metadata = 'userAddedColumns' in field_value or 'nextColumnNumber' in field_value
+            
+            structure_indicates_table = has_rows_and_columns or has_table_data or has_table_metadata
+            
+            # If name indicates table OR structure indicates table, it's a table
+            if name_indicates_table or structure_indicates_table:
+                logger.info(f"🔍 Detected table field: {field_id} (name_match: {name_indicates_table}, structure_match: {structure_indicates_table})")
+                return True
+        
+        # Legacy check for array-based tables
+        if isinstance(field_value, list) and len(field_value) > 0:
+            first_item = field_value[0]
+            if isinstance(first_item, dict) and len(first_item) > 1 and name_indicates_table:
+                logger.info(f"🔍 Detected array table field: {field_id}")
                 return True
         
         return False
@@ -1973,15 +1985,15 @@ async def transform_flat_to_template_structure(
         if is_table_field(field_id, field_value):
             table_definition = create_table_def(field_id, field_value)
             result["tables"][field_id] = table_definition
-            
-            # Also save raw data in data section for backward compatibility
-            result["data"][field_id] = field_value
             table_count += 1
-            logger.info(f"📊 Table: {field_id} with {len(field_value) if isinstance(field_value, list) else 'object'} entries")
+            logger.info(f"📊 Table saved to tables section: {field_id}")
+            
+            # Store original table data structure in tables section 
+            result["tables"][field_id]["original_data"] = field_value
         else:
             # Regular field - save in data section
             result["data"][field_id] = field_value
-            logger.info(f"📄 Field: {field_id}")
+            logger.info(f"📄 Field saved to data section: {field_id}")
             
         field_count += 1
     

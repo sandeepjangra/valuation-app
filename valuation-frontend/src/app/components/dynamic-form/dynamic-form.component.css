@@ -118,6 +118,67 @@
   margin-left: 2px;
 }
 
+/* Field Information Icon */
+.field-info-icon {
+  margin-left: 8px;
+  display: inline-flex;
+  align-items: center;
+  cursor: help;
+  position: relative;
+}
+
+.info-icon {
+  font-size: 14px;
+  color: #17a2b8;
+  transition: color 0.2s ease;
+}
+
+.field-info-icon:hover .info-icon {
+  color: #138496;
+  transform: scale(1.1);
+}
+
+/* Enhanced tooltip styling */
+.field-info-icon[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #2c3e50;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: pre-wrap;
+  max-width: 300px;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  margin-bottom: 5px;
+  line-height: 1.4;
+}
+
+.field-info-icon[title]:hover::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #2c3e50;
+  margin-bottom: -5px;
+  z-index: 1001;
+}
+
+/* Sub-field specific info icon styling */
+.field-info-icon.sub-field-info {
+  font-size: 12px;
+}
+
+.field-info-icon.sub-field-info .info-icon {
+  font-size: 12px;
+}
+
 .field-help {
   display: flex;
   align-items: center;

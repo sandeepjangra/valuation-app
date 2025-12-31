@@ -2056,3 +2056,106 @@ fieldset:disabled .form-textarea {
   background-color: #f8f9fa;
   color: #495057;
 }
+
+/* =====================================
+   Information Icons Styling
+   ===================================== */
+
+/* Main information icon styling */
+.field-info-icon {
+  margin-left: 8px;
+  cursor: help;
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.field-info-icon .info-icon {
+  font-size: 14px;
+  opacity: 0.7;
+  transition: all 0.2s ease;
+}
+
+.field-info-icon:hover .info-icon {
+  opacity: 1;
+  color: #138496;
+  transform: scale(1.1);
+}
+
+/* Tooltip styling using title attribute */
+.field-info-icon[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #2c3e50;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: pre-wrap;
+  max-width: 300px;
+  z-index: 10000;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  line-height: 1.3;
+}
+
+/* Tooltip arrow */
+.field-info-icon[title]:hover::before {
+  content: '';
+  position: absolute;
+  bottom: calc(100% - 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #2c3e50;
+  z-index: 10001;
+}
+
+/* Sub-field specific styling */
+.field-info-icon.sub-field-info {
+  margin-left: 6px;
+}
+
+.field-info-icon.sub-field-info .info-icon {
+  font-size: 12px;
+}
+
+/* Table info styling */
+.field-info-icon.table-info {
+  margin-left: 6px;
+}
+
+.field-info-icon.table-info .info-icon {
+  font-size: 13px;
+}
+
+/* Responsive tooltip positioning */
+@media (max-width: 768px) {
+  .field-info-icon[title]:hover::after {
+    max-width: 250px;
+    font-size: 11px;
+    padding: 6px 10px;
+  }
+}
+
+/* Ensure tooltips don't interfere with form interactions */
+.field-info-icon {
+  pointer-events: auto;
+}
+
+.field-info-icon[title]:hover::after,
+.field-info-icon[title]:hover::before {
+  pointer-events: none;
+}
+
+/* Integration with existing form styling */
+.field-label .field-info-icon {
+  vertical-align: middle;
+}
+
+.group-legend .field-info-icon {
+  vertical-align: middle;
+}

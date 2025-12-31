@@ -39,8 +39,19 @@
                 [ngClass]="{ 'required': field.isRequired }">
                 {{ field.uiDisplayName }}
                 <span *ngIf="field.isRequired" class="required-indicator">*</span>
+                
+                <!-- Information Icon for Placeholder/Help Text -->
+                <span 
+                  *ngIf="field.placeholder || field.helpText" 
+                  class="field-info-icon"
+                  [title]="getFieldInfoText(field)"
+                  [attr.aria-label]="'Information about ' + field.uiDisplayName">
+                  <i class="info-icon">ℹ️</i>
+                </span>
               </label>
-              <div *ngIf="field.helpText" class="field-help">
+              
+              <!-- Legacy Help Text Display (kept for backward compatibility) -->
+              <div *ngIf="field.helpText && !field.placeholder" class="field-help legacy">
                 <i class="help-icon">?</i>
                 <span class="help-text">{{ field.helpText }}</span>
               </div>
@@ -140,6 +151,15 @@
                         [ngClass]="{ 'required': subField.isRequired }">
                         {{ subField.uiDisplayName }}
                         <span *ngIf="subField.isRequired" class="required-indicator">*</span>
+                        
+                        <!-- Information Icon for Sub-Fields -->
+                        <span 
+                          *ngIf="subField.placeholder || subField.helpText" 
+                          class="field-info-icon sub-field-info"
+                          [title]="getFieldInfoText(subField)"
+                          [attr.aria-label]="'Information about ' + subField.uiDisplayName">
+                          <i class="info-icon">ℹ️</i>
+                        </span>
                       </label>
 
                       <!-- Sub Field Input -->

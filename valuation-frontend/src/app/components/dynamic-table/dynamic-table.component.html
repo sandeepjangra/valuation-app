@@ -4,6 +4,15 @@
     <label class="field-label">
       {{ fieldLabel }}
       <span class="required-indicator" *ngIf="isRequired">*</span>
+      
+      <!-- Information Icon for Dynamic Tables -->
+      <span 
+        *ngIf="placeholder || helpText" 
+        class="field-info-icon table-info"
+        [title]="getInfoText()"
+        [attr.aria-label]="'Information about ' + fieldLabel">
+        <i class="info-icon">ℹ️</i>
+      </span>
     </label>
     <div class="column-info">
       <span class="column-count" *ngIf="isColumnDynamic">Columns: {{ allColumns.length }}</span>

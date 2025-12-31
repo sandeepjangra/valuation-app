@@ -15,6 +15,7 @@ import { TemplateAutofillModalComponent, AutoFillChoice } from '../custom-templa
 import { DynamicTableComponent } from '../dynamic-table/dynamic-table.component';
 import { ReportsService } from '../../services/reports.service';
 import { NotificationService } from '../../services/notification.service';
+import { DropdownValueMappingService } from '../../services/dropdown-value-mapping.service';
 
 @Component({
   selector: 'app-report-form',
@@ -27,6 +28,7 @@ export class ReportForm implements OnInit {
   // Dependency Injection
   private readonly authService = inject(AuthService);
   private readonly notificationService = inject(NotificationService);
+  private readonly dropdownMappingService = inject(DropdownValueMappingService);
   
   // Query parameters from navigation
   selectedBankCode: string = '';
@@ -472,10 +474,70 @@ export class ReportForm implements OnInit {
         const value = reportData.common_fields[fieldKey];
         const control = this.reportForm.get(fieldKey);
         if (control) {
-          control.setValue(value || '');
-          console.log(`✅ Mapped common_field ${fieldKey} = ${value}`);
+          // Find the field definition to check if it's a dropdown
+          const fieldDefinition = this.findFieldInTemplate(fieldKey);
+          let formValue = value;
+          
+          if (fieldDefinition) {
+            // Convert display label back to form value for dropdown fields
+            formValue = this.dropdownMappingService.convertLabelToValue(value, fieldDefinition);
+          }
+          
+          control.setValue(formValue || '');
+          console.log(`✅ Mapped common_field ${fieldKey}: "${value}" -> "${formValue}"`);
         } else {
           console.log(`⚠️ No form control found for common field: ${fieldKey}`);
+        }
+      });
+    }
+    
+    // Handle tables section specifically
+    if (reportData.tables && typeof reportData.tables === 'object') {
+      console.log('📝 Processing tables section:', reportData.tables);
+      Object.keys(reportData.tables).forEach(tableFieldId => {
+        const tableData = reportData.tables[tableFieldId];
+        console.log(`🔍 Processing table: ${tableFieldId}`, tableData);
+        
+        // Extract table data from different possible structures
+        let tableStructure = null;
+        
+        // Check if it has original_data (our new format)
+        if (tableData.original_data) {
+          tableStructure = tableData.original_data;
+          console.log(`📊 Found table original_data for: ${tableFieldId}`);
+        }
+        // Check if it has direct table structure
+        else if (tableData.columns || tableData.rows) {
+          tableStructure = tableData;
+          console.log(`📊 Found direct table structure for: ${tableFieldId}`);
+        }
+        // Check if it has structure.rows/columns (definition format)
+        else if (tableData.structure && (tableData.structure.columns || tableData.structure.rows)) {
+          tableStructure = tableData.structure;
+          console.log(`📊 Found table structure definition for: ${tableFieldId}`);
+        }
+        
+        if (tableStructure) {
+          // Store in dynamicTablesData for the dynamic table component
+          this.dynamicTablesData[tableFieldId] = tableStructure;
+          console.log(`✅ Loaded table data for dynamic table: ${tableFieldId}`);
+        } else {
+          console.log(`⚠️ Could not extract table structure from: ${tableFieldId}`, tableData);
+        }
+      });
+    }
+    
+    // Also check data section for backward compatibility (existing reports)
+    if (reportData.data && typeof reportData.data === 'object') {
+      console.log('📝 Checking data section for table fields...');
+      Object.keys(reportData.data).forEach(fieldKey => {
+        const value = reportData.data[fieldKey];
+        
+        // Check if this looks like table data
+        if (this.isTableData(fieldKey, value)) {
+          console.log(`📊 Found table in data section: ${fieldKey}`);
+          this.dynamicTablesData[fieldKey] = value;
+          console.log(`✅ Loaded table data from data section: ${fieldKey}`);
         }
       });
     }
@@ -485,12 +547,21 @@ export class ReportForm implements OnInit {
       Object.keys(data).forEach(key => {
         const value = data[key];
         
-        // Skip common_fields as we handled it above
-        if (key === 'common_fields') {
+        // Skip common_fields and tables as we handled them above
+        if (key === 'common_fields' || key === 'tables') {
+          return;
+        }
+        
+        // Skip table fields in data section as we handle them above
+        if (key === 'data' && this.isTableData(key, value)) {
           return;
         }
         
         if (value && typeof value === 'object' && !Array.isArray(value)) {
+          // Skip table-like objects in data section
+          if (this.isTableData(key, value)) {
+            return;
+          }
           // Recursively handle nested objects
           mapNestedData(value, prefix ? `${prefix}_${key}` : key);
         } else {
@@ -503,8 +574,17 @@ export class ReportForm implements OnInit {
           for (const controlName of possibleControlNames) {
             const control = this.reportForm.get(controlName);
             if (control) {
-              control.setValue(value);
-              console.log(`✅ Mapped nested ${prefix ? prefix + '.' + key : key} -> ${controlName} = ${value}`);
+              // Find field definition to check if it's a dropdown
+              const fieldDefinition = this.findFieldInTemplate(controlName) || this.findFieldInTemplate(key);
+              let formValue = value;
+              
+              if (fieldDefinition) {
+                // Convert display label back to form value for dropdown fields
+                formValue = this.dropdownMappingService.convertLabelToValue(value, fieldDefinition);
+              }
+              
+              control.setValue(formValue);
+              console.log(`✅ Mapped nested ${prefix ? prefix + '.' + key : key} -> ${controlName}: "${value}" -> "${formValue}"`);
               return; // Found and set, move to next
             }
           }
@@ -514,6 +594,85 @@ export class ReportForm implements OnInit {
     };
     
     mapNestedData(reportData);
+  }
+
+  /**
+   * Find field definition in template by field ID
+   */
+  private findFieldInTemplate(fieldId: string): TemplateField | BankSpecificField | null {
+    if (!this.templateData?.allFields) {
+      return null;
+    }
+
+    // Find field in allFields array
+    const field = this.templateData.allFields.find((f: TemplateField | BankSpecificField) => f.fieldId === fieldId);
+    return field || null;
+  }
+
+  /**
+   * Convert form data to storage format (convert dropdown values to labels)
+   */
+  private convertFormDataForStorage(formData: any): any {
+    if (!formData || typeof formData !== 'object') {
+      return formData;
+    }
+
+    const convertedData: any = {};
+
+    Object.keys(formData).forEach(fieldKey => {
+      const fieldValue = formData[fieldKey];
+      
+      // Find field definition
+      const fieldDefinition = this.findFieldInTemplate(fieldKey);
+      
+      if (fieldDefinition) {
+        // Convert form value to display label for dropdown fields
+        convertedData[fieldKey] = this.dropdownMappingService.convertFormValueToStorageLabel(fieldValue, fieldDefinition);
+      } else {
+        // Keep original value if no field definition found
+        convertedData[fieldKey] = fieldValue;
+      }
+    });
+
+    // Also include dynamic table data
+    Object.keys(this.dynamicTablesData).forEach(tableKey => {
+      convertedData[tableKey] = this.dynamicTablesData[tableKey];
+    });
+
+    console.log('🔄 Converted form data for storage:', {
+      original: Object.keys(formData).length,
+      converted: Object.keys(convertedData).length,
+      tables: Object.keys(this.dynamicTablesData).length
+    });
+
+    return convertedData;
+  }
+
+  /**
+   * Check if field data looks like table data
+   */
+  private isTableData(fieldKey: string, value: any): boolean {
+    // Check field name for table indicators
+    const tableIndicators = ['table', 'list', 'items', 'rows', 'entries', 'specifications', 'valuation_table', '_table'];
+    const nameIndicatesTable = tableIndicators.some(indicator => fieldKey.toLowerCase().includes(indicator));
+    
+    if (!nameIndicatesTable) {
+      return false;
+    }
+    
+    // Check if value has table-like structure
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      // Check for dynamic table structure (columns, rows, etc.)
+      if (value.columns && value.rows) {
+        return true;
+      }
+      // Check for other table metadata
+      if (value.userAddedColumns || value.nextColumnNumber) {
+        return true;
+      }
+    }
+    
+    return false;
   }
 
   /**
@@ -2328,13 +2487,16 @@ export class ReportForm implements OnInit {
 
     this.isLoading = true;
     
-    // Get form data without validation - include ALL fields even if empty
-    const formData = this.reportForm.getRawValue();
-    console.log('💾 Raw form data for draft:', formData);
+    // Get form data without validation and convert dropdown values
+    const rawFormData = this.reportForm.getRawValue();
+    console.log('💾 Raw form data for draft:', rawFormData);
+    
+    // Convert dropdown values to display labels
+    const processedFormData = this.convertFormDataForStorage(rawFormData);
     
     // CRITICAL: Merge dynamic table data with form data
     const completeFormData = {
-      ...formData,
+      ...processedFormData,
       ...this.dynamicTablesData
     };
     
@@ -2355,10 +2517,10 @@ export class ReportForm implements OnInit {
     // Create comprehensive draft data with template information
     const draftData = {
       // Core template information - essential for re-loading
-      bankCode: this.selectedBankCode || this.deriveBankCodeFromFormData(formData),
-      bankName: this.selectedBankName || this.deriveBankNameFromFormData(formData),
+      bankCode: this.selectedBankCode || this.deriveBankCodeFromFormData(rawFormData),
+      bankName: this.selectedBankName || this.deriveBankNameFromFormData(rawFormData),
       templateId: this.selectedTemplateId || 'land-property', // Default template ID
-      templateName: this.selectedTemplateName || this.deriveTemplateNameFromFormData(formData),
+      templateName: this.selectedTemplateName || this.deriveTemplateNameFromFormData(rawFormData),
       propertyType: this.selectedPropertyType,
       customTemplateId: this.customTemplateId,
       customTemplateName: this.customTemplateName,
@@ -2595,11 +2757,12 @@ export class ReportForm implements OnInit {
 
     this.isLoading = true;
     
-    // Get validated form data
-    const formData = this.reportForm.value;
+    // Get form data and convert dropdown values to display labels
+    const rawFormData = this.reportForm.value;
+    const processedFormData = this.convertFormDataForStorage(rawFormData);
     
     const reportData = {
-      ...formData,
+      ...processedFormData,
       bankCode: this.selectedBankCode,
       bankName: this.selectedBankName,
       templateId: this.selectedTemplateId,

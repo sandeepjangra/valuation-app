@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Table Data Extraction</title>
+</head>
+<body>
+    <h1>Testing Table Data Extraction Logic</h1>
+    
+    <script>
+        // Simulate the report data structures we found
+        const existingReportData = {
+            common_fields: {
+                valuation_date: "2024-01-01",
+                applicant_name: "Test User",
+                bank_branch: "SBI Branch"
+            },
+            data: {
+                // This is where tables are currently stored (wrong location)
+                building_specifications_table: {
+                    columns: [
+                        {columnId: "floor", columnName: "Floor"},
+                        {columnId: "area", columnName: "Area"}
+                    ],
+                    rows: [
+                        {floor: "Ground", area: "1000"},
+                        {floor: "First", area: "800"}
+                    ],
+                    userAddedColumns: [],
+                    nextColumnNumber: 1
+                },
+                floor_wise_valuation_table: {
+                    columns: [
+                        {columnId: "floor", columnName: "Floor"},
+                        {columnId: "value", columnName: "Value"}
+                    ],
+                    rows: [
+                        {floor: "Ground", value: "500000"},
+                        {floor: "First", value: "400000"}
+                    ]
+                },
+                regular_field: "Some regular data"
+            },
+            tables: {
+                // This should be where tables are stored (correct location)
+            }
+        };
+        
+        const newReportData = {
+            common_fields: {
+                valuation_date: "2024-01-01",
+                applicant_name: "Test User 2",
+                bank_branch: "SBI Branch 2"
+            },
+            data: {
+                regular_field: "Some regular data"
+                // No tables here in new format
+            },
+            tables: {
+                // This is where tables should be stored
+                simple_table: {
+                    columns: [{columnId: "col1", columnName: "Column 1"}],
+                    rows: [{col1: "value1"}]
+                }
+            }
+        };
+        
+        // Test the table detection logic from our frontend fix
+        function isTableData(value) {
+            if (typeof value !== 'object' || value === null) return false;
+            
+            const hasTableStructure = (
+                (Array.isArray(value.columns) || Array.isArray(value.rows)) ||
+                ('userAddedColumns' in value) ||
+                ('nextColumnNumber' in value)
+            );
+            
+            return hasTableStructure;
+        }
+        
+        function extractTableData(reportData) {
+            const extractedTables = {};
+            
+            console.log("🔍 Starting table extraction...");
+            
+            // Extract from tables section (new format)
+            if (reportData.tables) {
+                console.log("📊 Checking tables section...");
+                for (const [key, value] of Object.entries(reportData.tables)) {
+                    if (isTableData(value)) {
+                        extractedTables[key] = value;
+                        console.log(`✅ Found table '${key}' in tables section`);
+                    }
+                }
+            }
+            
+            // Extract from data section (backward compatibility)
+            if (reportData.data) {
+                console.log("📄 Checking data section for table data...");
+                for (const [key, value] of Object.entries(reportData.data)) {
+                    if (isTableData(value)) {
+                        extractedTables[key] = value;
+                        console.log(`✅ Found table '${key}' in data section (backward compatibility)`);
+                    }
+                }
+            }
+            
+            return extractedTables;
+        }
+        
+        console.log("🧪 TESTING EXISTING REPORT DATA:");
+        console.log("==================================");
+        const existingTables = extractTableData(existingReportData);
+        console.log("Extracted tables:", Object.keys(existingTables));
+        console.log("building_specifications_table found:", 'building_specifications_table' in existingTables);
+        console.log("floor_wise_valuation_table found:", 'floor_wise_valuation_table' in existingTables);
+        
+        console.log("\n🧪 TESTING NEW REPORT DATA:");
+        console.log("============================");
+        const newTables = extractTableData(newReportData);
+        console.log("Extracted tables:", Object.keys(newTables));
+        console.log("simple_table found:", 'simple_table' in newTables);
+        
+        // Verify table data structure
+        if (existingTables.building_specifications_table) {
+            const table = existingTables.building_specifications_table;
+            console.log("\n📋 Building Specifications Table Structure:");
+            console.log("Columns:", table.columns?.length || 0);
+            console.log("Rows:", table.rows?.length || 0);
+            console.log("Sample row:", table.rows?.[0] || "No rows");
+        }
+        
+        if (existingTables.floor_wise_valuation_table) {
+            const table = existingTables.floor_wise_valuation_table;
+            console.log("\n💰 Floor Wise Valuation Table Structure:");
+            console.log("Columns:", table.columns?.length || 0);
+            console.log("Rows:", table.rows?.length || 0);
+            console.log("Sample row:", table.rows?.[0] || "No rows");
+        }
+        
+        console.log("\n🎯 CONCLUSION:");
+        console.log("==============");
+        if (Object.keys(existingTables).length === 2 && Object.keys(newTables).length === 1) {
+            console.log("✅ Table extraction logic is working correctly!");
+            console.log("✅ Backward compatibility: extracts tables from data section");
+            console.log("✅ New format: extracts tables from tables section");
+            console.log("✅ Frontend should now display dynamic tables properly");
+        } else {
+            console.log("❌ Table extraction logic needs debugging");
+        }
+    </script>
+</body>
+</html>

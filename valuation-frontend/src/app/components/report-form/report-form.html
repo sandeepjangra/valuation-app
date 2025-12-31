@@ -104,6 +104,13 @@
                 <label [for]="field.fieldId" class="field-label">
                   {{ field.uiDisplayName }}
                   <span class="required-indicator" *ngIf="field.isRequired">*</span>
+                  <span 
+                    *ngIf="field.placeholder || field.helpText" 
+                    class="field-info-icon"
+                    [title]="field.placeholder || field.helpText"
+                    [attr.aria-label]="'Information about ' + field.uiDisplayName">
+                    <i class="info-icon">ℹ️</i>
+                  </span>
                 </label>
                 <input
                   [id]="field.fieldId"
@@ -125,6 +132,13 @@
                 <label [for]="field.fieldId" class="field-label">
                   {{ field.uiDisplayName }}
                   <span class="required-indicator" *ngIf="field.isRequired">*</span>
+                  <span 
+                    *ngIf="field.placeholder || field.helpText" 
+                    class="field-info-icon"
+                    [title]="field.placeholder || field.helpText"
+                    [attr.aria-label]="'Information about ' + field.uiDisplayName">
+                    <i class="info-icon">ℹ️</i>
+                  </span>
                 </label>
                 <input
                   [id]="field.fieldId"
@@ -143,6 +157,13 @@
                 <label [for]="field.fieldId" class="field-label">
                   {{ field.uiDisplayName }}
                   <span class="required-indicator" *ngIf="field.isRequired">*</span>
+                  <span 
+                    *ngIf="field.placeholder || field.helpText" 
+                    class="field-info-icon"
+                    [title]="field.placeholder || field.helpText"
+                    [attr.aria-label]="'Information about ' + field.uiDisplayName">
+                    <i class="info-icon">ℹ️</i>
+                  </span>
                 </label>
                 <input
                   [id]="field.fieldId"
@@ -164,6 +185,13 @@
                 <label [for]="field.fieldId" class="field-label">
                   {{ field.uiDisplayName }}
                   <span class="required-indicator" *ngIf="field.isRequired">*</span>
+                  <span 
+                    *ngIf="field.placeholder || field.helpText" 
+                    class="field-info-icon"
+                    [title]="field.placeholder || field.helpText"
+                    [attr.aria-label]="'Information about ' + field.uiDisplayName">
+                    <i class="info-icon">ℹ️</i>
+                  </span>
                 </label>
                 <textarea
                   [id]="field.fieldId"
@@ -183,6 +211,13 @@
                 <label [for]="field.fieldId" class="field-label">
                   {{ field.uiDisplayName }}
                   <span class="required-indicator" *ngIf="field.isRequired">*</span>
+                  <span 
+                    *ngIf="field.placeholder || field.helpText" 
+                    class="field-info-icon"
+                    [title]="field.placeholder || field.helpText"
+                    [attr.aria-label]="'Information about ' + field.uiDisplayName">
+                    <i class="info-icon">ℹ️</i>
+                  </span>
                 </label>
                 
                 <!-- Regular select options -->
@@ -300,6 +335,13 @@
                                 <legend class="group-legend">
                                   {{ field.uiDisplayName }}
                                   <span class="required-indicator" *ngIf="field.isRequired">*</span>
+                                  <span 
+                                    *ngIf="field.placeholder || field.helpText" 
+                                    class="field-info-icon"
+                                    [title]="field.placeholder || field.helpText"
+                                    [attr.aria-label]="'Information about ' + field.uiDisplayName">
+                                    <i class="info-icon">ℹ️</i>
+                                  </span>
                                 </legend>
                                 
                                 <div class="group-fields-grid" *ngIf="field.subFields">
@@ -313,6 +355,13 @@
                                       <label [for]="subField.fieldId" class="field-label">
                                         {{ subField.uiDisplayName }}
                                         <span class="required-indicator" *ngIf="subField.isRequired">*</span>
+                                        <span 
+                                          *ngIf="subField.placeholder || subField.helpText" 
+                                          class="field-info-icon sub-field-info"
+                                          [title]="subField.placeholder || subField.helpText"
+                                          [attr.aria-label]="'Information about ' + subField.uiDisplayName">
+                                          <i class="info-icon">ℹ️</i>
+                                        </span>
                                       </label>
                                       <input
                                         [id]="subField.fieldId"
@@ -336,6 +385,13 @@
                                       <label [for]="subField.fieldId" class="field-label">
                                         {{ subField.uiDisplayName }}
                                         <span class="required-indicator" *ngIf="subField.isRequired">*</span>
+                                        <span 
+                                          *ngIf="subField.placeholder || subField.helpText" 
+                                          class="field-info-icon sub-field-info"
+                                          [title]="subField.placeholder || subField.helpText"
+                                          [attr.aria-label]="'Information about ' + subField.uiDisplayName">
+                                          <i class="info-icon">ℹ️</i>
+                                        </span>
                                       </label>
                                       <input
                                         [id]="subField.fieldId"
@@ -359,6 +415,13 @@
                                       <label [for]="subField.fieldId" class="field-label">
                                         {{ subField.uiDisplayName }}
                                         <span class="required-indicator" *ngIf="subField.isRequired">*</span>
+                                        <span 
+                                          *ngIf="subField.placeholder || subField.helpText" 
+                                          class="field-info-icon sub-field-info"
+                                          [title]="subField.placeholder || subField.helpText"
+                                          [attr.aria-label]="'Information about ' + subField.uiDisplayName">
+                                          <i class="info-icon">ℹ️</i>
+                                        </span>
                                       </label>
                                       <select 
                                         [id]="subField.fieldId"
@@ -381,6 +444,13 @@
                                       <label [for]="subField.fieldId" class="field-label">
                                         {{ subField.uiDisplayName }}
                                         <span class="required-indicator" *ngIf="subField.isRequired">*</span>
+                                        <span 
+                                          *ngIf="subField.placeholder || subField.helpText" 
+                                          class="field-info-icon sub-field-info"
+                                          [title]="subField.placeholder || subField.helpText"
+                                          [attr.aria-label]="'Information about ' + subField.uiDisplayName">
+                                          <i class="info-icon">ℹ️</i>
+                                        </span>
                                       </label>
                                       <input
                                         [id]="subField.fieldId"
@@ -401,6 +471,13 @@
                                       <label [for]="subField.fieldId" class="field-label">
                                         {{ subField.uiDisplayName }}
                                         <span class="required-indicator" *ngIf="subField.isRequired">*</span>
+                                        <span 
+                                          *ngIf="subField.placeholder || subField.helpText" 
+                                          class="field-info-icon sub-field-info"
+                                          [title]="subField.placeholder || subField.helpText"
+                                          [attr.aria-label]="'Information about ' + subField.uiDisplayName">
+                                          <i class="info-icon">ℹ️</i>
+                                        </span>
                                       </label>
                                       <textarea
                                         [id]="subField.fieldId"
@@ -430,6 +507,13 @@
                               <label [for]="field.fieldId" class="field-label">
                                 {{ field.uiDisplayName }}
                                 <span class="required-indicator" *ngIf="field.isRequired">*</span>
+                                <span 
+                                  *ngIf="field.placeholder || field.helpText" 
+                                  class="field-info-icon"
+                                  [title]="field.placeholder || field.helpText"
+                                  [attr.aria-label]="'Information about ' + field.uiDisplayName">
+                                  <i class="info-icon">ℹ️</i>
+                                </span>
                               </label>
                               <input
                                 [id]="field.fieldId"
@@ -455,6 +539,13 @@
                               <label [for]="field.fieldId" class="field-label">
                                 {{ field.uiDisplayName }}
                                 <span class="required-indicator" *ngIf="field.isRequired">*</span>
+                                <span 
+                                  *ngIf="field.placeholder || field.helpText" 
+                                  class="field-info-icon"
+                                  [title]="field.placeholder || field.helpText"
+                                  [attr.aria-label]="'Information about ' + field.uiDisplayName">
+                                  <i class="info-icon">ℹ️</i>
+                                </span>
                               </label>
                               <input
                                 [id]="field.fieldId"
@@ -477,6 +568,13 @@
                               <label [for]="field.fieldId" class="field-label">
                                 {{ field.uiDisplayName }}
                                 <span class="required-indicator" *ngIf="field.isRequired">*</span>
+                                <span 
+                                  *ngIf="field.placeholder || field.helpText" 
+                                  class="field-info-icon"
+                                  [title]="field.placeholder || field.helpText"
+                                  [attr.aria-label]="'Information about ' + field.uiDisplayName">
+                                  <i class="info-icon">ℹ️</i>
+                                </span>
                               </label>
                               <input
                                 [id]="field.fieldId"
@@ -502,6 +600,13 @@
                               <label [for]="field.fieldId" class="field-label">
                                 {{ field.uiDisplayName }}
                                 <span class="required-indicator" *ngIf="field.isRequired">*</span>
+                                <span 
+                                  *ngIf="field.placeholder || field.helpText" 
+                                  class="field-info-icon"
+                                  [title]="field.placeholder || field.helpText"
+                                  [attr.aria-label]="'Information about ' + field.uiDisplayName">
+                                  <i class="info-icon">ℹ️</i>
+                                </span>
                               </label>
                               <div class="currency-input-wrapper">
                                 <span class="currency-prefix" *ngIf="field.prefix">{{ field.prefix }}</span>
@@ -533,6 +638,13 @@
                               <label [for]="field.fieldId" class="field-label">
                                 {{ field.uiDisplayName }}
                                 <span class="required-indicator" *ngIf="field.isRequired">*</span>
+                                <span 
+                                  *ngIf="field.placeholder || field.helpText" 
+                                  class="field-info-icon"
+                                  [title]="field.placeholder || field.helpText"
+                                  [attr.aria-label]="'Information about ' + field.uiDisplayName">
+                                  <i class="info-icon">ℹ️</i>
+                                </span>
                               </label>
                               <textarea
                                 [id]="field.fieldId"
@@ -556,6 +668,13 @@
                               <label [for]="field.fieldId" class="field-label">
                                 {{ field.uiDisplayName }}
                                 <span class="required-indicator" *ngIf="field.isRequired">*</span>
+                                <span 
+                                  *ngIf="field.placeholder || field.helpText" 
+                                  class="field-info-icon"
+                                  [title]="field.placeholder || field.helpText"
+                                  [attr.aria-label]="'Information about ' + field.uiDisplayName">
+                                  <i class="info-icon">ℹ️</i>
+                                </span>
                               </label>
                               <select 
                                 [id]="field.fieldId"
@@ -705,6 +824,7 @@
                                 [fieldLabel]="field.uiDisplayName"
                                 [isRequired]="field.isRequired"
                                 [helpText]="field.helpText"
+                                [placeholder]="field.placeholder"
                                 [tableConfig]="field.tableConfig"
                                 [initialData]="getDynamicTableInitialData(field.fieldId)"
                                 (dataChange)="onDynamicTableDataChange($event)">
@@ -1080,6 +1200,7 @@
                             [fieldLabel]="field.uiDisplayName"
                             [isRequired]="field.isRequired"
                             [helpText]="field.helpText"
+                            [placeholder]="field.placeholder"
                             [tableConfig]="field.tableConfig"
                             [initialData]="getDynamicTableInitialData(field.fieldId)"
                             (dataChange)="onDynamicTableDataChange($event)">
