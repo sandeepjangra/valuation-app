@@ -1,0 +1,13 @@
+/Users/sandeepjangra/Downloads/development/valuation-app/backend-dotnet/ValuationApp.Common/bin/Debug/net8.0/ValuationApp.Common.deps.json
+/Users/sandeepjangra/Downloads/development/valuation-app/backend-dotnet/ValuationApp.Common/bin/Debug/net8.0/ValuationApp.Common.dll
+/Users/sandeepjangra/Downloads/development/valuation-app/backend-dotnet/ValuationApp.Common/bin/Debug/net8.0/ValuationApp.Common.pdb
+/Users/sandeepjangra/Downloads/development/valuation-app/backend-dotnet/ValuationApp.Common/obj/Debug/net8.0/ValuationApp.Common.csproj.AssemblyReference.cache
+/Users/sandeepjangra/Downloads/development/valuation-app/backend-dotnet/ValuationApp.Common/obj/Debug/net8.0/ValuationApp.Common.GeneratedMSBuildEditorConfig.editorconfig
+/Users/sandeepjangra/Downloads/development/valuation-app/backend-dotnet/ValuationApp.Common/obj/Debug/net8.0/ValuationApp.Common.AssemblyInfoInputs.cache
+/Users/sandeepjangra/Downloads/development/valuation-app/backend-dotnet/ValuationApp.Common/obj/Debug/net8.0/ValuationApp.Common.AssemblyInfo.cs
+/Users/sandeepjangra/Downloads/development/valuation-app/backend-dotnet/ValuationApp.Common/obj/Debug/net8.0/ValuationApp.Common.csproj.CoreCompileInputs.cache
+/Users/sandeepjangra/Downloads/development/valuation-app/backend-dotnet/ValuationApp.Common/obj/Debug/net8.0/ValuationApp.Common.sourcelink.json
+/Users/sandeepjangra/Downloads/development/valuation-app/backend-dotnet/ValuationApp.Common/obj/Debug/net8.0/ValuationApp.Common.dll
+/Users/sandeepjangra/Downloads/development/valuation-app/backend-dotnet/ValuationApp.Common/obj/Debug/net8.0/refint/ValuationApp.Common.dll
+/Users/sandeepjangra/Downloads/development/valuation-app/backend-dotnet/ValuationApp.Common/obj/Debug/net8.0/ValuationApp.Common.pdb
+/Users/sandeepjangra/Downloads/development/valuation-app/backend-dotnet/ValuationApp.Common/obj/Debug/net8.0/ref/ValuationApp.Common.dll

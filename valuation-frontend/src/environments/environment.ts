@@ -1,7 +1,7 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:8000/api',
-  templateVersioningApiUrl: 'http://localhost:8000',
+  apiUrl: 'http://localhost:8000/api',  // .NET backend on port 8000
+  templateVersioningApiUrl: 'http://localhost:8000',  // .NET backend on port 8000
   developmentMode: true,
   amplify: {
     Auth: {

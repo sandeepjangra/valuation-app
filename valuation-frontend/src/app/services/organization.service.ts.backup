@@ -1,0 +1,633 @@
+/**
+ * Angular Organization Service
+ * Handles organization management API calls with automatic JWT headers and error handling
+ */
+
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpParams, HttpErrorResponse } from '@angular/common/http';
+import { Observable, throwError } from 'rxjs';
+import { map, catchError, shareReplay } from 'rxjs/operators';
+import {
+  Organization,
+  User,
+  AuditLog,
+  CreateUserRequest,
+  UpdateUserRequest,
+  CreateOrganizationRequest,
+  UpdateOrganizationRequest,
+  ApiResponse,
+  PaginatedResponse,
+  ErrorResponse,
+  OrganizationSettings
+} from '../models/organization.model';
+import { AuthService } from './auth.service';
+import { OrganizationContextService } from './organization-context.service';
+
+export interface GetUsersParams {
+  page?: number;
+  limit?: number;
+  role?: string;
+  search?: string;
+  is_active?: boolean;
+}
+
+export interface GetAuditLogsParams {
+  page?: number;
+  limit?: number;
+  user_id?: string;
+  action?: string;
+  resource_type?: string;
+  start_date?: Date;
+  end_date?: Date;
+}
+
+export interface GetReportsParams {
+  page?: number;
+  limit?: number;
+  created_by?: string;
+  start_date?: Date;
+  end_date?: Date;
+  status?: string;
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+export class OrganizationService {
+  private readonly http = inject(HttpClient);
+  private readonly authService = inject(AuthService);
+  private readonly orgContext = inject(OrganizationContextService);
+
+  constructor() {}
+
+  // Organization Management
+
+  /**
+   * Get current user's organization information
+   * Note: This is deprecated, use orgContext.getOrganization() instead
+   */
+  getCurrentOrganization(): Observable<Organization> {
+    const orgShortName = this.orgContext.getOrganization();
+    if (!orgShortName) {
+      return throwError(() => new Error('No organization context available'));
+    }
+    
+    return this.getOrganizationByShortName(orgShortName);
+  }
+
+  /**
+   * Get all organizations (system admin only)
+   * This is a shared endpoint, not org-scoped
+   */
+  getAllOrganizations(includeInactive = false, includeSystem = false): Observable<Organization[]> {
+    const url = this.orgContext.getSharedApiUrl('organizations');
+    
+    return this.http.get<any>(url)
+      .pipe(
+        map((response: any) => {
+          // Handle new .NET backend response format
+          if (response.success && response.data) {
+            return response.data;
+          }
+          // Handle legacy format
+          return response.data || [];
+        }),
+        catchError(this.handleError.bind(this))
+      );
+  }
+
+  /**
+   * Get organization by short name
+   * This is a shared endpoint
+   */
+  getOrganizationByShortName(shortName: string): Observable<Organization> {
+    const url = this.orgContext.getSharedApiUrl(`organizations/${shortName}`);
+    
+    return this.http.get<any>(url)
+      .pipe(
+        map(response => {
+          // Handle new .NET backend response format
+          if (response.success && response.data) {
+            return response.data;
+          }
+          // Handle legacy format
+          return response;
+        }),
+        catchError(this.handleError.bind(this))
+      );
+  }
+
+  /**
+   * Get organization by ID
+   * This is a shared endpoint
+   */
+  getOrganizationById(id: string): Observable<Organization> {
+    const url = this.orgContext.getSharedApiUrl(`organizations/${id}`);
+    
+    return this.http.get<any>(url)
+      .pipe(
+        map(response => {
+          if (response.success && response.data) {
+            return response.data;
+          }
+          return response;
+        }),
+        catchError(this.handleError.bind(this))
+      );
+  }
+
+  /**
+   * Create a new organization (system admin only)
+   * This is a shared endpoint
+   */
+  createOrganization(organizationData: CreateOrganizationRequest): Observable<string> {
+    const url = this.orgContext.getSharedApiUrl('organizations');
+    
+    return this.http.post<any>(url, organizationData)
+      .pipe(
+        map(response => {
+          if (!response.success || !response.data) {
+            throw new Error(response.message || 'Failed to create organization');
+          }
+          return response.data.organization_id || response.data.id;
+        }),
+        catchError(this.handleError.bind(this))
+      );
+  }
+
+  /**
+   * Update organization (system admin only)
+   * This is a shared endpoint
+   */
+  updateOrganization(organizationId: string, updates: UpdateOrganizationRequest): Observable<boolean> {
+    const url = this.orgContext.getSharedApiUrl(`organizations/${organizationId}`);
+    
+    return this.http.put<any>(url, updates)
+      .pipe(
+        map(response => response.success),
+        catchError(this.handleError.bind(this))
+      );
+  }
+
+  /**
+   * Delete organization (system admin only)
+   * This is a shared endpoint
+   */
+  deleteOrganization(organizationId: string): Observable<boolean> {
+    const url = this.orgContext.getSharedApiUrl(`organizations/${organizationId}`);
+    
+    return this.http.delete<any>(url)
+      .pipe(
+        map(response => response.success),
+        catchError(this.handleError.bind(this))
+      );
+  }
+
+  /**
+   * Get next reference number for reports (preview without incrementing)
+   * This is now an org-scoped endpoint
+   */
+  getNextReferenceNumber(orgShortName?: string): Observable<any> {
+    // Use provided orgShortName or get from context
+    const org = orgShortName || this.orgContext.getOrganization();
+    if (!org) {
+      return throwError(() => new Error('No organization context available'));
+    }
+    
+    const url = this.orgContext.getOrgApiUrl('next-reference-number');
+    if (!url) {
+      return throwError(() => new Error('Failed to build org URL'));
+    }
+    
+    return this.http.get<any>(url)
+      .pipe(
+        map(response => {
+          if (!response.success || !response.data) {
+            throw new Error(response.message || 'Failed to get reference number');
+          }
+          return response.data;
+        }),
+        catchError(this.handleError.bind(this))
+      );
+  }
+
+  // User Management - DEPRECATED: Use UserService instead
+
+  /**
+   * @deprecated Use UserService.getUsers() instead
+   * Get users in the organization
+   * 
+   * NOTE: All user management methods in this service are deprecated.
+   * Please use the dedicated UserService for user operations.
+   * These methods are kept for backward compatibility but point to old endpoints.
+   */
+  getOrganizationUsers(params: GetUsersParams = {}): Observable<PaginatedResponse<User>> {
+    console.warn('⚠️ OrganizationService.getOrganizationUsers() is deprecated. Use UserService.getUsers() instead.');
+    
+    // Return empty response - migrate to UserService
+    return throwError(() => new Error('This method is deprecated. Use UserService instead.'));
+  }
+
+  /**
+   * @deprecated Use UserService.getUserDetails() instead
+   * Get specific user details
+   */
+  getUser(userId: string): Observable<User> {
+    console.warn('⚠️ OrganizationService.getUser() is deprecated. Use UserService.getUserDetails() instead.');
+    return throwError(() => new Error('This method is deprecated. Use UserService instead.'));
+  }
+
+  /**
+   * @deprecated Use UserService.createUser() instead
+   * Create a new user in the organization
+   */
+  createUser(userData: CreateUserRequest): Observable<string> {
+    console.warn('⚠️ OrganizationService.createUser() is deprecated. Use UserService.createUser() instead.');
+    return throwError(() => new Error('This method is deprecated. Use UserService instead.'));
+  }
+
+  /**
+   * @deprecated Use UserService.updateUser() instead
+   * Update a user
+   */
+  updateUser(userId: string, updates: UpdateUserRequest): Observable<boolean> {
+    console.warn('⚠️ OrganizationService.updateUser() is deprecated. Use UserService.updateUser() instead.');
+    return throwError(() => new Error('This method is deprecated. Use UserService instead.'));
+  }
+
+  /**
+   * @deprecated Use UserService.deactivateUser() instead
+   * Delete a user (soft delete)
+   */
+  deleteUser(userId: string): Observable<boolean> {
+    console.warn('⚠️ OrganizationService.deleteUser() is deprecated. Use UserService.deactivateUser() instead.');
+    return throwError(() => new Error('This method is deprecated. Use UserService instead.'));
+  }
+
+  /**
+   * @deprecated Use UserService methods instead
+   * Toggle user active status
+   */
+  toggleUserStatus(userId: string, isActive: boolean): Observable<boolean> {
+    console.warn('⚠️ OrganizationService.toggleUserStatus() is deprecated. Use UserService instead.');
+    return throwError(() => new Error('This method is deprecated. Use UserService instead.'));
+  }
+
+  // Report Management - DEPRECATED: Use ReportsService instead
+
+  /**
+   * @deprecated Use ReportsService.getReports() instead
+   * Get reports for the organization
+   * 
+   * NOTE: All report management methods in this service are deprecated.
+   * Please use the dedicated ReportsService for report operations.
+   */
+  getOrganizationReports(params: GetReportsParams = {}): Observable<PaginatedResponse<any>> {
+    console.warn('⚠️ OrganizationService.getOrganizationReports() is deprecated. Use ReportsService.getReports() instead.');
+    return throwError(() => new Error('This method is deprecated. Use ReportsService instead.'));
+  }
+
+  /**
+   * @deprecated Use ReportsService.getReportById() instead
+   * Get specific report details
+   */
+  getReport(reportId: string): Observable<any> {
+    console.warn('⚠️ OrganizationService.getReport() is deprecated. Use ReportsService.getReportById() instead.');
+    return throwError(() => new Error('This method is deprecated. Use ReportsService instead.'));
+  }
+
+  /**
+   * @deprecated Use ReportsService methods instead
+   * Create a new report
+   */
+  createReport(reportData: any): Observable<string> {
+    console.warn('⚠️ OrganizationService.createReport() is deprecated. Use ReportsService instead.');
+    return throwError(() => new Error('This method is deprecated. Use ReportsService instead.'));
+  }
+
+  /**
+   * @deprecated Use ReportsService methods instead
+   * Update a report
+   */
+  updateReport(reportId: string, updates: any): Observable<boolean> {
+    console.warn('⚠️ OrganizationService.updateReport() is deprecated. Use ReportsService instead.');
+    return throwError(() => new Error('This method is deprecated. Use ReportsService instead.'));
+  }
+
+  /**
+   * @deprecated Use ReportsService.deleteReport() instead
+   * Delete a report
+   */
+  deleteReport(reportId: string): Observable<boolean> {
+    console.warn('⚠️ OrganizationService.deleteReport() is deprecated. Use ReportsService.deleteReport() instead.');
+    return throwError(() => new Error('This method is deprecated. Use ReportsService instead.'));
+  }
+
+  // Audit Logs
+
+  /**
+   * Get audit logs for the organization
+   * TODO: Update to use org-scoped endpoint when available
+   */
+  getAuditLogs(params: GetAuditLogsParams = {}): Observable<PaginatedResponse<AuditLog>> {
+          return response.data;
+        }),
+        catchError(this.handleError.bind(this))
+      );
+  }
+
+  /**
+   * Create a new user in the organization
+   */
+  createUser(userData: CreateUserRequest): Observable<string> {
+    return this.http.post<ApiResponse<{user_id: string}>>(`${this.API_BASE}/users`, userData)
+      .pipe(
+        map(response => {
+          if (!response.success || !response.data) {
+            throw new Error(response.message || 'Failed to create user');
+          }
+          return response.data.user_id;
+        }),
+        catchError(this.handleError.bind(this))
+      );
+  }
+
+  /**
+   * Update user information
+   */
+  updateUser(userId: string, updates: UpdateUserRequest): Observable<boolean> {
+    return this.http.put<ApiResponse>(`${this.API_BASE}/users/${userId}`, updates)
+      .pipe(
+        map(response => response.success),
+        catchError(this.handleError.bind(this))
+      );
+  }
+
+  /**
+   * Delete user (deactivate)
+   */
+  deleteUser(userId: string): Observable<boolean> {
+    return this.http.delete<ApiResponse>(`${this.API_BASE}/users/${userId}`)
+      .pipe(
+        map(response => response.success),
+        catchError(this.handleError.bind(this))
+      );
+  }
+
+  /**
+   * Activate/deactivate user
+   */
+  toggleUserStatus(userId: string, isActive: boolean): Observable<boolean> {
+    return this.http.patch<ApiResponse>(`${this.API_BASE}/users/${userId}/status`, { is_active: isActive })
+      .pipe(
+        map(response => response.success),
+        catchError(this.handleError.bind(this))
+      );
+  }
+
+  // Report Management
+
+  /**
+   * Get organization reports
+   */
+  getOrganizationReports(params: GetReportsParams = {}): Observable<PaginatedResponse<any>> {
+    let httpParams = new HttpParams();
+    
+    if (params.page) httpParams = httpParams.set('page', params.page.toString());
+    if (params.limit) httpParams = httpParams.set('limit', params.limit.toString());
+    if (params.created_by) httpParams = httpParams.set('created_by', params.created_by);
+    if (params.start_date) httpParams = httpParams.set('start_date', params.start_date.toISOString());
+    if (params.end_date) httpParams = httpParams.set('end_date', params.end_date.toISOString());
+    if (params.status) httpParams = httpParams.set('status', params.status);
+
+    return this.http.get<PaginatedResponse<any>>(`${this.API_BASE}/reports`, { params: httpParams })
+      .pipe(
+        map(response => {
+          if (!response.success) {
+            throw new Error(response.message || 'Failed to get reports');
+          }
+          return response;
+        }),
+        catchError(this.handleError.bind(this))
+      );
+  }
+
+  /**
+   * Get specific report
+   */
+  getReport(reportId: string): Observable<any> {
+    return this.http.get<ApiResponse<any>>(`${this.API_BASE}/reports/${reportId}`)
+      .pipe(
+        map(response => {
+          if (!response.success || !response.data) {
+            throw new Error(response.message || 'Failed to get report');
+          }
+          return response.data;
+        }),
+        catchError(this.handleError.bind(this))
+      );
+  }
+
+  /**
+   * Create a new report
+   */
+  createReport(reportData: any): Observable<string> {
+    return this.http.post<ApiResponse<{report_id: string}>>(`${this.API_BASE}/reports`, reportData)
+      .pipe(
+        map(response => {
+          if (!response.success || !response.data) {
+            throw new Error(response.message || 'Failed to create report');
+          }
+          return response.data.report_id;
+        }),
+        catchError(this.handleError.bind(this))
+      );
+  }
+
+  /**
+   * Update report
+   */
+  updateReport(reportId: string, updates: any): Observable<boolean> {
+    return this.http.put<ApiResponse>(`${this.API_BASE}/reports/${reportId}`, updates)
+      .pipe(
+        map(response => response.success),
+        catchError(this.handleError.bind(this))
+      );
+  }
+
+  /**
+   * Delete report
+   */
+  deleteReport(reportId: string): Observable<boolean> {
+    return this.http.delete<ApiResponse>(`${this.API_BASE}/reports/${reportId}`)
+      .pipe(
+        map(response => response.success),
+        catchError(this.handleError.bind(this))
+      );
+  }
+
+  // Audit Log Management
+
+  /**
+   * Get audit logs for the organization
+   */
+  getAuditLogs(params: GetAuditLogsParams = {}): Observable<PaginatedResponse<AuditLog>> {
+    let httpParams = new HttpParams();
+    
+    if (params.page) httpParams = httpParams.set('page', params.page.toString());
+    if (params.limit) httpParams = httpParams.set('limit', params.limit.toString());
+    if (params.user_id) httpParams = httpParams.set('user_id', params.user_id);
+    if (params.action) httpParams = httpParams.set('action', params.action);
+    if (params.resource_type) httpParams = httpParams.set('resource_type', params.resource_type);
+    if (params.start_date) httpParams = httpParams.set('start_date', params.start_date.toISOString());
+    if (params.end_date) httpParams = httpParams.set('end_date', params.end_date.toISOString());
+
+    return this.http.get<PaginatedResponse<AuditLog>>(`${this.API_BASE}/audit-logs`, { params: httpParams })
+      .pipe(
+        map(response => {
+          if (!response.success) {
+            throw new Error(response.message || 'Failed to get audit logs');
+          }
+          return response;
+        }),
+        catchError(this.handleError.bind(this))
+      );
+  }
+
+  // Organization Settings
+
+  /**
+   * Get organization settings
+   */
+  getOrganizationSettings(): Observable<OrganizationSettings> {
+    return this.http.get<ApiResponse<OrganizationSettings>>(`${this.API_BASE}/organization/settings`)
+      .pipe(
+        map(response => {
+          if (!response.success || !response.data) {
+            throw new Error(response.message || 'Failed to get organization settings');
+          }
+          return response.data;
+        }),
+        catchError(this.handleError.bind(this))
+      );
+  }
+
+  /**
+   * Update organization settings
+   */
+  updateOrganizationSettings(settings: Partial<OrganizationSettings>): Observable<boolean> {
+    return this.http.put<ApiResponse>(`${this.API_BASE}/organization/settings`, settings)
+      .pipe(
+        map(response => response.success),
+        catchError(this.handleError.bind(this))
+      );
+  }
+
+  // Statistics and Dashboard Data
+
+  /**
+   * Get organization dashboard statistics
+   */
+  getDashboardStats(): Observable<any> {
+    return this.http.get<ApiResponse<any>>(`${this.API_BASE}/organization/stats`)
+      .pipe(
+        map(response => {
+          if (!response.success || !response.data) {
+            throw new Error(response.message || 'Failed to get dashboard stats');
+          }
+          return response.data;
+        }),
+        catchError(this.handleError.bind(this))
+      );
+  }
+
+  /**
+   * Get user activity summary
+   */
+  getUserActivitySummary(days: number = 30): Observable<any> {
+    const params = new HttpParams().set('days', days.toString());
+    
+    return this.http.get<ApiResponse<any>>(`${this.API_BASE}/organization/user-activity`, { params })
+      .pipe(
+        map(response => {
+          if (!response.success || !response.data) {
+            throw new Error(response.message || 'Failed to get user activity');
+          }
+          return response.data;
+        }),
+        catchError(this.handleError.bind(this))
+      );
+  }
+
+  /**
+   * Get report statistics
+   */
+  getReportStats(period: 'week' | 'month' | 'year' = 'month'): Observable<any> {
+    const params = new HttpParams().set('period', period);
+    
+    return this.http.get<ApiResponse<any>>(`${this.API_BASE}/organization/report-stats`, { params })
+      .pipe(
+        map(response => {
+          if (!response.success || !response.data) {
+            throw new Error(response.message || 'Failed to get report statistics');
+          }
+          return response.data;
+        }),
+        catchError(this.handleError.bind(this))
+      );
+  }
+
+  // Utility Methods
+
+  /**
+   * Check if current user can perform action
+   */
+  canPerformAction(resource: string, action: string): boolean {
+    return this.authService.hasPermission(resource, action);
+  }
+
+  /**
+   * Get current user's organization context
+   */
+  getOrganizationContext() {
+    return this.authService.getOrganizationContext();
+  }
+
+  // Private helper methods
+
+  private handleError(error: HttpErrorResponse): Observable<never> {
+    let errorMessage = 'An error occurred';
+    
+    if (error.error instanceof ErrorEvent) {
+      // Client-side error
+      errorMessage = error.error.message;
+    } else {
+      // Server-side error
+      const errorResponse = error.error as ErrorResponse;
+      
+      if (errorResponse.error) {
+        errorMessage = errorResponse.error;
+      } else if (error.status === 401) {
+        errorMessage = 'Unauthorized access';
+        // Trigger logout for unauthorized requests
+        this.authService.logout();
+      } else if (error.status === 403) {
+        errorMessage = 'Access denied';
+      } else if (error.status === 404) {
+        errorMessage = 'Resource not found';
+      } else if (error.status >= 500) {
+        errorMessage = 'Server error occurred';
+      } else {
+        errorMessage = `HTTP ${error.status}: ${error.message}`;
+      }
+    }
+    
+    console.error('❌ Organization service error:', {
+      status: error.status,
+      message: errorMessage,
+      url: error.url
+    });
+    
+    return throwError(() => new Error(errorMessage));
+  }
+}

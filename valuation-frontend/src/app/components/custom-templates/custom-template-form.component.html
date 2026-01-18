@@ -86,17 +86,20 @@
           <p class="section-subtitle">All available fields for {{ bankCode() }} - {{ propertyType() }} template</p>
         </div>
         
-        <!-- Simple fields grid - only bank-specific fields -->
-        <div class="fields-grid">
-          <!-- Only Bank-Specific Fields (Common fields excluded by backend) -->
-
-          <!-- Bank-Specific Fields -->
+        <!-- Fields organized by Tabs and Sections like New Report -->
+        <div class="compact-field-groups">
           <ng-container *ngFor="let tab of getBankSpecificTabs()">
-            <!-- Tab fields (if no sections) -->
-            <ng-container *ngIf="!tabHasSections(tab)">
-              <div *ngFor="let field of tab.fields" 
-                   [class]="'field-container grid-' + field.gridSize"
-                   [class.field-error]="isFieldInvalid(field.fieldId)">
+            <div class="field-group">
+              <!-- Tab Title (if multiple tabs) -->
+              <h3 *ngIf="getBankSpecificTabs().length > 1" class="tab-group-title">
+                {{ tab.tabName }}
+              </h3>
+
+              <!-- Tab-level fields (if no sections) -->
+              <div *ngIf="!tabHasSections(tab)" class="fields-grid">
+                <div *ngFor="let field of tab.fields" 
+                     [class]="'field-container grid-' + field.gridSize"
+                     [class.field-error]="isFieldInvalid(field.fieldId)">
                 
                 <!-- Field rendering -->
                 <ng-container [ngSwitch]="field.fieldType">
@@ -203,6 +206,106 @@
                     <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
                   </div>
 
+                  <!-- Group Field with SubFields -->
+                  <div *ngSwitchCase="'group'" class="form-field field-group">
+                    <div class="group-header">
+                      <label class="field-label group-label">
+                        {{ field.uiDisplayName }}
+                        <span class="required-indicator" *ngIf="field.isRequired">*</span>
+                      </label>
+                      <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
+                    </div>
+                    <div class="group-fields">
+                      <ng-container *ngFor="let subField of field.subFields">
+                        <div class="subfield-container" [class]="'grid-' + (subField.gridSize || 3)">
+                          <ng-container [ngSwitch]="subField.fieldType">
+                            <!-- SubField Text Input -->
+                            <div *ngSwitchCase="'text'" class="form-field">
+                              <label [for]="subField.fieldId" class="field-label">
+                                {{ subField.uiDisplayName }}
+                                <span class="required-indicator" *ngIf="subField.isRequired">*</span>
+                              </label>
+                              <input
+                                [id]="subField.fieldId"
+                                type="text"
+                                [formControlName]="subField.fieldId"
+                                [placeholder]="subField.placeholder"
+                                [readonly]="!isFieldEditable(subField)"
+                                class="form-input"
+                              />
+                            </div>
+
+                            <!-- SubField Number Input -->
+                            <div *ngSwitchCase="'number'" class="form-field">
+                              <label [for]="subField.fieldId" class="field-label">
+                                {{ subField.uiDisplayName }}
+                                <span class="required-indicator" *ngIf="subField.isRequired">*</span>
+                              </label>
+                              <input
+                                [id]="subField.fieldId"
+                                type="number"
+                                [formControlName]="subField.fieldId"
+                                [placeholder]="subField.placeholder"
+                                [readonly]="!isFieldEditable(subField)"
+                                class="form-input"
+                              />
+                            </div>
+
+                            <!-- SubField Select -->
+                            <div *ngSwitchCase="'select'" class="form-field">
+                              <label [for]="subField.fieldId" class="field-label">
+                                {{ subField.uiDisplayName }}
+                                <span class="required-indicator" *ngIf="subField.isRequired">*</span>
+                              </label>
+                              <select 
+                                [id]="subField.fieldId"
+                                [formControlName]="subField.fieldId"
+                                [disabled]="!isFieldEditable(subField)"
+                                class="form-select">
+                                <option value="" hidden>{{ subField.placeholder || 'Select option' }}</option>
+                                <option *ngFor="let option of subField.options" [value]="option.value">
+                                  {{ option.label }}
+                                </option>
+                              </select>
+                            </div>
+
+                            <!-- SubField Textarea -->
+                            <div *ngSwitchCase="'textarea'" class="form-field">
+                              <label [for]="subField.fieldId" class="field-label">
+                                {{ subField.uiDisplayName }}
+                                <span class="required-indicator" *ngIf="subField.isRequired">*</span>
+                              </label>
+                              <textarea
+                                [id]="subField.fieldId"
+                                [formControlName]="subField.fieldId"
+                                [placeholder]="subField.placeholder"
+                                [readonly]="!isFieldEditable(subField)"
+                                class="form-textarea"
+                                rows="2"
+                              ></textarea>
+                            </div>
+
+                            <!-- SubField Default -->
+                            <div *ngSwitchDefault class="form-field">
+                              <label [for]="subField.fieldId" class="field-label">
+                                {{ subField.uiDisplayName }}
+                                <span class="required-indicator" *ngIf="subField.isRequired">*</span>
+                              </label>
+                              <input
+                                [id]="subField.fieldId"
+                                type="text"
+                                [formControlName]="subField.fieldId"
+                                [placeholder]="subField.placeholder"
+                                [readonly]="!isFieldEditable(subField)"
+                                class="form-input"
+                              />
+                            </div>
+                          </ng-container>
+                        </div>
+                      </ng-container>
+                    </div>
+                  </div>
+
                   <!-- Select Input -->
                   <div *ngSwitchCase="'select'" class="form-field">
                     <label [for]="field.fieldId" class="field-label">
@@ -245,16 +348,18 @@
                   </div>
                 </ng-container>
               </div>
-            </ng-container>
+              </div>
 
-            <!-- Section fields -->
-            <ng-container *ngIf="tabHasSections(tab)">
-              <ng-container *ngFor="let section of getTabSections(tab)">
-                <div *ngFor="let field of section.fields" 
-                     [class]="'field-container grid-' + field.gridSize"
-                     [class.field-error]="isFieldInvalid(field.fieldId)">
+              <!-- Section fields with section titles -->
+              <div *ngIf="tabHasSections(tab)">
+                <div *ngFor="let section of getTabSections(tab)" class="valuation-section">
+                  <h4 class="section-title">{{ section.sectionName }}</h4>
+                  <div class="fields-grid">
+                    <div *ngFor="let field of section.fields" 
+                         [class]="'field-container grid-' + field.gridSize"
+                         [class.field-error]="isFieldInvalid(field.fieldId)">
                   
-                  <!-- Field rendering -->
+                      <!-- Field rendering -->
                   <ng-container [ngSwitch]="field.fieldType">
                     <!-- Text Input -->
                     <div *ngSwitchCase="'text'" class="form-field">
@@ -359,6 +464,106 @@
                       <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
                     </div>
 
+                    <!-- Group Field with SubFields -->
+                    <div *ngSwitchCase="'group'" class="form-field field-group">
+                      <div class="group-header">
+                        <label class="field-label group-label">
+                          {{ field.uiDisplayName }}
+                          <span class="required-indicator" *ngIf="field.isRequired">*</span>
+                        </label>
+                        <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
+                      </div>
+                      <div class="group-fields">
+                        <ng-container *ngFor="let subField of field.subFields">
+                          <div class="subfield-container" [class]="'grid-' + (subField.gridSize || 3)">
+                            <ng-container [ngSwitch]="subField.fieldType">
+                              <!-- SubField Text Input -->
+                              <div *ngSwitchCase="'text'" class="form-field">
+                                <label [for]="subField.fieldId" class="field-label">
+                                  {{ subField.uiDisplayName }}
+                                  <span class="required-indicator" *ngIf="subField.isRequired">*</span>
+                                </label>
+                                <input
+                                  [id]="subField.fieldId"
+                                  type="text"
+                                  [formControlName]="subField.fieldId"
+                                  [placeholder]="subField.placeholder"
+                                  [readonly]="!isFieldEditable(subField)"
+                                  class="form-input"
+                                />
+                              </div>
+
+                              <!-- SubField Number Input -->
+                              <div *ngSwitchCase="'number'" class="form-field">
+                                <label [for]="subField.fieldId" class="field-label">
+                                  {{ subField.uiDisplayName }}
+                                  <span class="required-indicator" *ngIf="subField.isRequired">*</span>
+                                </label>
+                                <input
+                                  [id]="subField.fieldId"
+                                  type="number"
+                                  [formControlName]="subField.fieldId"
+                                  [placeholder]="subField.placeholder"
+                                  [readonly]="!isFieldEditable(subField)"
+                                  class="form-input"
+                                />
+                              </div>
+
+                              <!-- SubField Select -->
+                              <div *ngSwitchCase="'select'" class="form-field">
+                                <label [for]="subField.fieldId" class="field-label">
+                                  {{ subField.uiDisplayName }}
+                                  <span class="required-indicator" *ngIf="subField.isRequired">*</span>
+                                </label>
+                                <select 
+                                  [id]="subField.fieldId"
+                                  [formControlName]="subField.fieldId"
+                                  [disabled]="!isFieldEditable(subField)"
+                                  class="form-select">
+                                  <option value="" hidden>{{ subField.placeholder || 'Select option' }}</option>
+                                  <option *ngFor="let option of subField.options" [value]="option.value">
+                                    {{ option.label }}
+                                  </option>
+                                </select>
+                              </div>
+
+                              <!-- SubField Textarea -->
+                              <div *ngSwitchCase="'textarea'" class="form-field">
+                                <label [for]="subField.fieldId" class="field-label">
+                                  {{ subField.uiDisplayName }}
+                                  <span class="required-indicator" *ngIf="subField.isRequired">*</span>
+                                </label>
+                                <textarea
+                                  [id]="subField.fieldId"
+                                  [formControlName]="subField.fieldId"
+                                  [placeholder]="subField.placeholder"
+                                  [readonly]="!isFieldEditable(subField)"
+                                  class="form-textarea"
+                                  rows="2"
+                                ></textarea>
+                              </div>
+
+                              <!-- SubField Default -->
+                              <div *ngSwitchDefault class="form-field">
+                                <label [for]="subField.fieldId" class="field-label">
+                                  {{ subField.uiDisplayName }}
+                                  <span class="required-indicator" *ngIf="subField.isRequired">*</span>
+                                </label>
+                                <input
+                                  [id]="subField.fieldId"
+                                  type="text"
+                                  [formControlName]="subField.fieldId"
+                                  [placeholder]="subField.placeholder"
+                                  [readonly]="!isFieldEditable(subField)"
+                                  class="form-input"
+                                />
+                              </div>
+                            </ng-container>
+                          </div>
+                        </ng-container>
+                      </div>
+                    </div>
+
                     <!-- Select Input -->
                     <div *ngSwitchCase="'select'" class="form-field">
                       <label [for]="field.fieldId" class="field-label">
@@ -400,9 +605,13 @@
                       <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
                     </div>
                   </ng-container>
+                    </div>
+                  </div>
                 </div>
-              </ng-container>
-            </ng-container>
+              </div>
+
+              <!-- End of tab -->
+            </div>
           </ng-container>
         </div>
       </div>

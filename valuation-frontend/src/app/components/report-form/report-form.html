@@ -126,12 +126,10 @@
                   [id]="field.fieldId"
                   type="text"
                   [formControlName]="field.fieldId"
-                  [placeholder]="field.placeholder"
                   [readonly]="field.isReadonly"
                   [class.readonly-field]="field.isReadonly"
                   class="form-input"
                 />
-                <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
                 <div class="field-error-message" *ngIf="getFieldError(field.fieldId)">
                   {{ getFieldError(field.fieldId) }}
                 </div>
@@ -156,7 +154,6 @@
                   [formControlName]="field.fieldId"
                   class="form-input"
                 />
-                <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
                 <div class="field-error-message" *ngIf="getFieldError(field.fieldId)">
                   {{ getFieldError(field.fieldId) }}
                 </div>
@@ -179,12 +176,10 @@
                   [id]="field.fieldId"
                   type="number"
                   [formControlName]="field.fieldId"
-                  [placeholder]="field.placeholder"
                   [min]="field.validation?.min || null"
                   [max]="field.validation?.max || null"
                   class="form-input"
                 />
-                <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
                 <div class="field-error-message" *ngIf="getFieldError(field.fieldId)">
                   {{ getFieldError(field.fieldId) }}
                 </div>
@@ -206,11 +201,9 @@
                 <textarea
                   [id]="field.fieldId"
                   [formControlName]="field.fieldId"
-                  [placeholder]="field.placeholder"
                   class="form-textarea"
                   rows="3"
                 ></textarea>
-                <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
                 <div class="field-error-message" *ngIf="getFieldError(field.fieldId)">
                   {{ getFieldError(field.fieldId) }}
                 </div>
@@ -236,7 +229,7 @@
                   [id]="field.fieldId"
                   [formControlName]="field.fieldId"
                   [class]="'form-select' + (isFieldEmpty(field.fieldId) ? ' placeholder-active' : '')">
-                  <option value="" hidden>{{ field.placeholder || 'Select option' }}</option>
+                  <option value="" hidden>Select option</option>
                   <option *ngFor="let option of field.options" [value]="option.value">
                     {{ option.label }}
                   </option>
@@ -248,13 +241,12 @@
                   [id]="field.fieldId"
                   [formControlName]="field.fieldId"
                   [class]="'form-select' + (isFieldEmpty(field.fieldId) ? ' placeholder-active' : '')">
-                  <option value="" hidden>{{ field.placeholder || 'Select branch' }}</option>
+                  <option value="" hidden>Select branch</option>
                   <option *ngFor="let branch of availableBranches" [value]="branch.value">
                     {{ branch.label }}
                   </option>
                 </select>
                 
-                <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
                 <div class="field-error-message" *ngIf="getFieldError(field.fieldId)">
                   {{ getFieldError(field.fieldId) }}
                 </div>
@@ -377,14 +369,13 @@
                                         [id]="subField.fieldId"
                                         type="text"
                                         [formControlName]="subField.fieldId"
-                                        [placeholder]="subField.placeholder"
+                                        
                                         [readonly]="subField.isReadonly"
                                         [disabled]="isFieldDisabled(subField)"
                                         [class.readonly-field]="subField.isReadonly"
                                         [class.disabled-field]="isFieldDisabled(subField)"
                                         class="form-input"
                                       />
-                                      <div class="field-help" *ngIf="subField.helpText">{{ subField.helpText }}</div>
                                       <div class="field-error-message" *ngIf="getFieldError(subField.fieldId)">
                                         {{ getFieldError(subField.fieldId) }}
                                       </div>
@@ -407,14 +398,13 @@
                                         [id]="subField.fieldId"
                                         type="number"
                                         [formControlName]="subField.fieldId"
-                                        [placeholder]="subField.placeholder"
+                                        
                                         [min]="subField.validation?.min || null"
                                         [max]="subField.validation?.max || null"
                                         [disabled]="isFieldDisabled(subField)"
                                         [class.disabled-field]="isFieldDisabled(subField)"
                                         class="form-input"
                                       />
-                                      <div class="field-help" *ngIf="subField.helpText">{{ subField.helpText }}</div>
                                       <div class="field-error-message" *ngIf="getFieldError(subField.fieldId)">
                                         {{ getFieldError(subField.fieldId) }}
                                       </div>
@@ -443,7 +433,6 @@
                                           {{ option.label }}
                                         </option>
                                       </select>
-                                      <div class="field-help" *ngIf="subField.helpText">{{ subField.helpText }}</div>
                                       <div class="field-error-message" *ngIf="getFieldError(subField.fieldId)">
                                         {{ getFieldError(subField.fieldId) }}
                                       </div>
@@ -470,7 +459,6 @@
                                         [class.disabled-field]="isFieldDisabled(subField)"
                                         class="form-input"
                                       />
-                                      <div class="field-help" *ngIf="subField.helpText">{{ subField.helpText }}</div>
                                       <div class="field-error-message" *ngIf="getFieldError(subField.fieldId)">
                                         {{ getFieldError(subField.fieldId) }}
                                       </div>
@@ -492,13 +480,12 @@
                                       <textarea
                                         [id]="subField.fieldId"
                                         [formControlName]="subField.fieldId"
-                                        [placeholder]="subField.placeholder"
+                                        
                                         [disabled]="isFieldDisabled(subField)"
                                         [class.disabled-field]="isFieldDisabled(subField)"
                                         class="form-textarea"
                                         rows="3">
                                       </textarea>
-                                      <div class="field-help" *ngIf="subField.helpText">{{ subField.helpText }}</div>
                                       <div class="field-error-message" *ngIf="getFieldError(subField.fieldId)">
                                         {{ getFieldError(subField.fieldId) }}
                                       </div>
@@ -507,7 +494,6 @@
                                   </div>
                                 </div>
                               </fieldset>
-                              <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
                             </div>
                             
                             <!-- Text Input -->
@@ -529,14 +515,13 @@
                                 [id]="field.fieldId"
                                 type="text"
                                 [formControlName]="field.fieldId"
-                                [placeholder]="field.placeholder"
+                                
                                 [readonly]="field.isReadonly"
                                 [disabled]="isFieldDisabled(field)"
                                 [class.readonly-field]="field.isReadonly"
                                 [class.disabled-field]="isFieldDisabled(field)"
                                 class="form-input"
                               />
-                              <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
                               <div class="field-error-message" *ngIf="getFieldError(field.fieldId)">
                                 {{ getFieldError(field.fieldId) }}
                               </div>
@@ -565,7 +550,6 @@
                                 [class.disabled-field]="isFieldDisabled(field)"
                                 class="form-input"
                               />
-                              <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
                               <div class="field-error-message" *ngIf="getFieldError(field.fieldId)">
                                 {{ getFieldError(field.fieldId) }}
                               </div>
@@ -590,14 +574,13 @@
                                 [id]="field.fieldId"
                                 type="number"
                                 [formControlName]="field.fieldId"
-                                [placeholder]="field.placeholder"
+                                
                                 [min]="field.validation?.min || null"
                                 [max]="field.validation?.max || null"
                                 [disabled]="isFieldDisabled(field)"
                                 [class.disabled-field]="isFieldDisabled(field)"
                                 class="form-input"
                               />
-                              <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
                               <div class="field-error-message" *ngIf="getFieldError(field.fieldId)">
                                 {{ getFieldError(field.fieldId) }}
                               </div>
@@ -625,7 +608,7 @@
                                   type="number"
                                   step="0.01"
                                   [formControlName]="field.fieldId"
-                                  [placeholder]="field.placeholder"
+                                  
                                   [min]="field.validation?.min || null"
                                   [max]="field.validation?.max || null"
                                   [disabled]="isFieldDisabled(field)"
@@ -635,7 +618,6 @@
                                 />
                                 <span class="currency-suffix" *ngIf="field.suffix">{{ field.suffix }}</span>
                               </div>
-                              <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
                               <div class="field-error-message" *ngIf="getFieldError(field.fieldId)">
                                 {{ getFieldError(field.fieldId) }}
                               </div>
@@ -659,13 +641,12 @@
                               <textarea
                                 [id]="field.fieldId"
                                 [formControlName]="field.fieldId"
-                                [placeholder]="field.placeholder"
+                                
                                 [disabled]="isFieldDisabled(field)"
                                 [class.disabled-field]="isFieldDisabled(field)"
                                 class="form-textarea"
                                 rows="3"
                               ></textarea>
-                              <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
                               <div class="field-error-message" *ngIf="getFieldError(field.fieldId)">
                                 {{ getFieldError(field.fieldId) }}
                               </div>
@@ -696,7 +677,6 @@
                                   {{ option.label }}
                                 </option>
                               </select>
-                              <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
                               <div class="field-error-message" *ngIf="getFieldError(field.fieldId)">
                                 {{ getFieldError(field.fieldId) }}
                               </div>
@@ -717,7 +697,6 @@
                                   {{ option.label }}
                                 </option>
                               </select>
-                              <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
                               <div class="field-error-message" *ngIf="getFieldError(field.fieldId)">
                                 {{ getFieldError(field.fieldId) }}
                               </div>
@@ -737,7 +716,6 @@
                                   <span class="required-indicator" *ngIf="field.isRequired">*</span>
                                 </span>
                               </label>
-                              <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
                               <div class="field-error-message" *ngIf="getFieldError(field.fieldId)">
                                 {{ getFieldError(field.fieldId) }}
                               </div>
@@ -756,14 +734,13 @@
                                 type="number"
                                 step="0.01"
                                 [formControlName]="field.fieldId"
-                                [placeholder]="field.placeholder"
+                                
                                 [min]="field.validation?.min || null"
                                 [max]="field.validation?.max || null"
                                 [disabled]="isFieldDisabled(field)"
                                 [class.disabled-field]="isFieldDisabled(field)"
                                 class="form-input"
                               />
-                              <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
                               <div class="field-error-message" *ngIf="getFieldError(field.fieldId)">
                                 {{ getFieldError(field.fieldId) }}
                               </div>
@@ -785,8 +762,6 @@
                                 readonly
                                 class="form-input calculated-input"
                               />
-                              <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
-                              <div class="field-help" *ngIf="field.formula">Formula: {{ field.formula }}</div>
                             </div>
 
                             <!-- Table Field -->
@@ -822,7 +797,6 @@
                                   </tbody>
                                 </table>
                               </div>
-                              <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
                             </div>
 
                             <!-- Dynamic Table Field -->
@@ -834,7 +808,7 @@
                                 [fieldLabel]="field.uiDisplayName"
                                 [isRequired]="field.isRequired"
                                 [helpText]="field.helpText"
-                                [placeholder]="field.placeholder"
+                                
                                 [tableConfig]="field.tableConfig"
                                 [initialData]="getDynamicTableInitialData(field.fieldId)"
                                 (dataChange)="onDynamicTableDataChange($event)">
@@ -857,7 +831,6 @@
                                 [placeholder]="field.placeholder || 'Unsupported field type: ' + field.fieldType"
                                 class="form-input"
                               />
-                              <div class="field-help">Unsupported field type: {{ field.fieldType }}</div>
                             </div>
                           </ng-container>
                           
@@ -897,12 +870,11 @@
                                     [id]="subField.fieldId"
                                     type="text"
                                     [formControlName]="subField.fieldId"
-                                    [placeholder]="subField.placeholder"
+                                    
                                     [readonly]="subField.isReadonly"
                                     [class.readonly-field]="subField.isReadonly"
                                     class="form-input"
                                   />
-                                  <div class="field-help" *ngIf="subField.helpText">{{ subField.helpText }}</div>
                                   <div class="field-error-message" *ngIf="getFieldError(subField.fieldId)">
                                     {{ getFieldError(subField.fieldId) }}
                                   </div>
@@ -918,12 +890,11 @@
                                     [id]="subField.fieldId"
                                     type="number"
                                     [formControlName]="subField.fieldId"
-                                    [placeholder]="subField.placeholder"
+                                    
                                     [min]="subField.validation?.min || null"
                                     [max]="subField.validation?.max || null"
                                     class="form-input"
                                   />
-                                  <div class="field-help" *ngIf="subField.helpText">{{ subField.helpText }}</div>
                                   <div class="field-error-message" *ngIf="getFieldError(subField.fieldId)">
                                     {{ getFieldError(subField.fieldId) }}
                                   </div>
@@ -944,7 +915,6 @@
                                       {{ option.label }}
                                     </option>
                                   </select>
-                                  <div class="field-help" *ngIf="subField.helpText">{{ subField.helpText }}</div>
                                   <div class="field-error-message" *ngIf="getFieldError(subField.fieldId)">
                                     {{ getFieldError(subField.fieldId) }}
                                   </div>
@@ -953,7 +923,6 @@
                               </div>
                             </div>
                           </fieldset>
-                          <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
                         </div>
                         
                         <!-- Text Input -->
@@ -966,12 +935,11 @@
                             [id]="field.fieldId"
                             type="text"
                             [formControlName]="field.fieldId"
-                            [placeholder]="field.placeholder"
+                            
                             [readonly]="field.isReadonly"
                             [class.readonly-field]="field.isReadonly"
                             class="form-input"
                           />
-                          <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
                           <div class="field-error-message" *ngIf="getFieldError(field.fieldId)">
                             {{ getFieldError(field.fieldId) }}
                           </div>
@@ -989,7 +957,6 @@
                             [formControlName]="field.fieldId"
                             class="form-input"
                           />
-                          <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
                           <div class="field-error-message" *ngIf="getFieldError(field.fieldId)">
                             {{ getFieldError(field.fieldId) }}
                           </div>
@@ -1005,12 +972,11 @@
                             [id]="field.fieldId"
                             type="number"
                             [formControlName]="field.fieldId"
-                            [placeholder]="field.placeholder"
+                            
                             [min]="field.validation?.min || null"
                             [max]="field.validation?.max || null"
                             class="form-input"
                           />
-                          <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
                           <div class="field-error-message" *ngIf="getFieldError(field.fieldId)">
                             {{ getFieldError(field.fieldId) }}
                           </div>
@@ -1030,7 +996,7 @@
                               type="number"
                               step="0.01"
                               [formControlName]="field.fieldId"
-                              [placeholder]="field.placeholder"
+                              
                               [min]="field.validation?.min || null"
                               [max]="field.validation?.max || null"
                               [readonly]="field.isReadonly"
@@ -1038,7 +1004,6 @@
                             />
                             <span class="currency-suffix" *ngIf="field.suffix">{{ field.suffix }}</span>
                           </div>
-                          <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
                           <div class="field-error-message" *ngIf="getFieldError(field.fieldId)">
                             {{ getFieldError(field.fieldId) }}
                           </div>
@@ -1053,11 +1018,10 @@
                           <textarea
                             [id]="field.fieldId"
                             [formControlName]="field.fieldId"
-                            [placeholder]="field.placeholder"
+                            
                             class="form-textarea"
                             rows="3"
                           ></textarea>
-                          <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
                           <div class="field-error-message" *ngIf="getFieldError(field.fieldId)">
                             {{ getFieldError(field.fieldId) }}
                           </div>
@@ -1078,7 +1042,6 @@
                               {{ option.label }}
                             </option>
                           </select>
-                          <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
                           <div class="field-error-message" *ngIf="getFieldError(field.fieldId)">
                             {{ getFieldError(field.fieldId) }}
                           </div>
@@ -1099,7 +1062,6 @@
                               {{ option.label }}
                             </option>
                           </select>
-                          <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
                           <div class="field-error-message" *ngIf="getFieldError(field.fieldId)">
                             {{ getFieldError(field.fieldId) }}
                           </div>
@@ -1119,7 +1081,6 @@
                               <span class="required-indicator" *ngIf="field.isRequired">*</span>
                             </span>
                           </label>
-                          <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
                           <div class="field-error-message" *ngIf="getFieldError(field.fieldId)">
                             {{ getFieldError(field.fieldId) }}
                           </div>
@@ -1136,12 +1097,11 @@
                             type="number"
                             step="0.01"
                             [formControlName]="field.fieldId"
-                            [placeholder]="field.placeholder"
+                            
                             [min]="field.validation?.min || null"
                             [max]="field.validation?.max || null"
                             class="form-input"
                           />
-                          <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
                           <div class="field-error-message" *ngIf="getFieldError(field.fieldId)">
                             {{ getFieldError(field.fieldId) }}
                           </div>
@@ -1161,8 +1121,6 @@
                             readonly
                             class="form-input calculated-input"
                           />
-                          <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
-                          <div class="field-help" *ngIf="field.formula">Formula: {{ field.formula }}</div>
                         </div>
 
                         <!-- Table Field (for non-section tabs) -->
@@ -1198,7 +1156,6 @@
                               </tbody>
                             </table>
                           </div>
-                          <div class="field-help" *ngIf="field.helpText">{{ field.helpText }}</div>
                         </div>
 
                         <!-- Dynamic Table Field (for non-section tabs) -->
@@ -1210,7 +1167,7 @@
                             [fieldLabel]="field.uiDisplayName"
                             [isRequired]="field.isRequired"
                             [helpText]="field.helpText"
-                            [placeholder]="field.placeholder"
+                            
                             [tableConfig]="field.tableConfig"
                             [initialData]="getDynamicTableInitialData(field.fieldId)"
                             (dataChange)="onDynamicTableDataChange($event)">
@@ -1233,7 +1190,6 @@
                             [placeholder]="field.placeholder || 'Unsupported field type: ' + field.fieldType"
                             class="form-input"
                           />
-                          <div class="field-help">Unsupported field type: {{ field.fieldType }}</div>
                         </div>
                       </ng-container>
                       
@@ -1289,13 +1245,35 @@
 
         <!-- Attachments Tab -->
         <div *ngIf="activeTab === 'attachments'" class="tab-panel">
-          <div class="placeholder-content">
-            <div class="placeholder-icon">📎</div>
-            <h3 class="placeholder-title">Document Attachments</h3>
-            <p class="placeholder-text">
-              Upload property documents, photos, and supporting files here.
-              This section will be implemented in the next phase.
-            </p>
+          <div class="section">
+            <h3 class="section-title">Document Attachments</h3>
+            <p class="section-description">Upload and attach required documents for this property valuation</p>
+            
+            <!-- Document Types Grid -->
+            <div class="fields-grid" *ngIf="documentTypes && documentTypes.length > 0">
+              <div *ngFor="let docType of documentTypes" class="field-container grid-12">
+                <div class="form-field">
+                  <label class="field-label">
+                    {{ docType.documentName }}
+                    <span *ngIf="docType.isRequired" class="required-indicator">*</span>
+                    <span *ngIf="docType.helpText" class="info-icon" [title]="docType.helpText">ℹ️</span>
+                  </label>
+                  <textarea 
+                    [formControlName]="'doc_' + docType.documentId"
+                    [placeholder]="docType.description || 'Enter document details'"
+                    rows="3"
+                    class="form-control"
+                    [class.readonly]="isViewMode"></textarea>
+                  <small class="help-text" *ngIf="docType.description">{{ docType.description }}</small>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Empty state if no document types -->
+            <div *ngIf="!documentTypes || documentTypes.length === 0" class="placeholder-content">
+              <div class="placeholder-icon">📎</div>
+              <p class="placeholder-text">No document types configured for this bank and property type.</p>
+            </div>
           </div>
         </div>
 

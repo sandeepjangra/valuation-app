@@ -1141,13 +1141,35 @@
 
         <!-- Attachments Tab -->
         <div *ngIf="activeTab === 'attachments'" class="tab-panel">
-          <div class="placeholder-content">
-            <div class="placeholder-icon">📎</div>
-            <h3 class="placeholder-title">Document Attachments</h3>
-            <p class="placeholder-text">
-              Upload property documents, photos, and supporting files here.
-              This section will be implemented in the next phase.
-            </p>
+          <div class="section">
+            <h3 class="section-title">Document Attachments</h3>
+            <p class="section-description">Upload and attach required documents for this property valuation</p>
+            
+            <!-- Document Types Grid -->
+            <div class="fields-grid" *ngIf="documentTypes && documentTypes.length > 0">
+              <div *ngFor="let docType of documentTypes" class="field-container grid-12">
+                <div class="form-field">
+                  <label class="field-label">
+                    {{ docType.documentName }}
+                    <span *ngIf="docType.isRequired" class="required-indicator">*</span>
+                    <span *ngIf="docType.helpText" class="info-icon" [title]="docType.helpText">ℹ️</span>
+                  </label>
+                  <textarea 
+                    [formControlName]="'doc_' + docType.documentId"
+                    [placeholder]="docType.description || 'Enter document details'"
+                    rows="3"
+                    class="form-control"
+                    [class.readonly]="isViewMode"></textarea>
+                  <small class="help-text" *ngIf="docType.description">{{ docType.description }}</small>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Empty state if no document types -->
+            <div *ngIf="!documentTypes || documentTypes.length === 0" class="placeholder-content">
+              <div class="placeholder-icon">📎</div>
+              <p class="placeholder-text">No document types configured for this bank and property type.</p>
+            </div>
           </div>
         </div>
 

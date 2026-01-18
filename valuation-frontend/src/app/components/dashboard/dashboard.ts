@@ -143,7 +143,7 @@ export class Dashboard implements OnInit {
       // Load current organization data
       if (this.currentOrgShortName) {
         // Use organization service to get all organizations
-        this.orgService.getAllOrganizations(false, true).subscribe({
+        this.orgService.getAllOrganizations().subscribe({
           next: (organizations: Organization[]) => {
             // Find current organization by org_short_name
             this.currentOrg = organizations.find(org => org.org_short_name === this.currentOrgShortName) || null;

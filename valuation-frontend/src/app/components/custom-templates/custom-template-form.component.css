@@ -1026,6 +1026,20 @@
   margin-bottom: 0;
 }
 
+/* Tab Group Title (main tab heading) */
+.tab-group-title {
+  color: #1e293b;
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 20px 0;
+  padding: 12px 0;
+  border-bottom: 3px solid #3b82f6;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
 .section-title {
   color: #1e293b;
   font-size: 16px;
@@ -1733,5 +1747,49 @@ fieldset:disabled .form-textarea {
 
   .tab-button {
     padding: 6px 12px;
+  }
+}
+
+/* Group Field Styling for SubFields */
+.field-group .group-header {
+  margin-bottom: 16px;
+}
+
+.field-group .group-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.field-group .group-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.subfield-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.subfield-container.grid-3,
+.subfield-container.grid-4,
+.subfield-container.grid-6,
+.subfield-container.grid-12 {
+  width: 100%;
+  grid-column: auto;
+}
+
+/* Responsive for group fields */
+@media (max-width: 768px) {
+  .field-group .group-fields {
+    padding: 16px;
   }
 }

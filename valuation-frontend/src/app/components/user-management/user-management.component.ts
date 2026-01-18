@@ -18,6 +18,7 @@ import {
 } from '../../models/organization.model';
 import { AuthService } from '../../services/auth.service';
 import { OrganizationService } from '../../services/organization.service';
+import { UserService } from '../../services/user.service';
 
 interface UserFormData {
   email: string;
@@ -371,6 +372,7 @@ interface UserFormData {
 export class UserManagementComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly organizationService = inject(OrganizationService);
+  private readonly userService = inject(UserService);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
 
@@ -446,21 +448,16 @@ export class UserManagementComponent implements OnInit {
     this.isLoading.set(true);
     this.error.set(null);
 
-    const params = {
-      page,
-      limit: 20,
-      search: this.searchQuery || undefined,
-      role: this.roleFilter || undefined,
-      is_active: this.statusFilter ? this.statusFilter === 'true' : undefined
-    };
-
-    this.organizationService.getOrganizationUsers(params).subscribe({
+    this.isLoading.set(true);
+    this.error.set(null);
+    
+    this.userService.getUsers(page, 20).subscribe({
       next: (response) => {
-        this.users.set(response.data || []);
-        this.pagination.set(response.pagination);
+        this.users.set(response.data?.users as any || []);
+        this.pagination.set(response.data?.pagination as any || null);
         this.isLoading.set(false);
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error loading users:', error);
         this.error.set('Failed to load users');
         this.isLoading.set(false);
@@ -616,13 +613,13 @@ export class UserManagementComponent implements OnInit {
         roles: this.selectedRoles
       };
       
-      this.organizationService.updateUser(this.currentEditUser!.user_id, updateData).subscribe({
+      this.userService.updateUser(this.currentEditUser!.user_id, updateData).subscribe({
         next: () => {
           this.closeUserModal();
           this.refreshUsers();
           this.isSubmitting.set(false);
         },
-        error: (error) => {
+        error: (error: any) => {
           console.error('Error updating user:', error);
           this.error.set('Failed to update user');
           this.isSubmitting.set(false);
@@ -630,23 +627,22 @@ export class UserManagementComponent implements OnInit {
       });
     } else {
       // Create new user
-      const createData: CreateUserRequest = {
+      const createData: any = {
         email: formValue.email,
-        first_name: formValue.first_name,
-        last_name: formValue.last_name,
-        department: formValue.department,
-        phone_number: formValue.phone_number,
+        fullName: `${formValue.first_name} ${formValue.last_name}`,
+        password: 'Temp@123', // Temporary password - should be changed on first login
         roles: this.selectedRoles,
-        send_welcome_email: formValue.send_welcome_email
+        department: formValue.department,
+        phoneNumber: formValue.phone_number,
       };
       
-      this.organizationService.createUser(createData).subscribe({
+      this.userService.createUser(createData).subscribe({
         next: () => {
           this.closeUserModal();
           this.refreshUsers();
           this.isSubmitting.set(false);
         },
-        error: (error) => {
+        error: (error: any) => {
           console.error('Error creating user:', error);
           this.error.set('Failed to create user');
           this.isSubmitting.set(false);
@@ -663,19 +659,26 @@ export class UserManagementComponent implements OnInit {
     
     const newStatus = !user.is_active;
     
-    this.organizationService.toggleUserStatus(user.user_id, newStatus).subscribe({
-      next: () => {
-        // Update local user data
-        const updatedUsers = this.users().map(u => 
-          u.user_id === user.user_id ? { ...u, is_active: newStatus } : u
-        );
-        this.users.set(updatedUsers);
-      },
-      error: (error) => {
-        console.error('Error toggling user status:', error);
-        this.error.set('Failed to update user status');
-      }
-    });
+    // Use deactivateUser if setting to inactive
+    if (!newStatus && user.user_id) {
+      this.userService.deactivateUser(user.user_id).subscribe({
+        next: () => {
+          // Update local user data
+          const updatedUsers = this.users().map(u => 
+            u.user_id === user.user_id ? { ...u, is_active: newStatus } : u
+          );
+          this.users.set(updatedUsers);
+        },
+        error: (error: any) => {
+          console.error('Error deactivating user:', error);
+          this.error.set('Failed to update user status');
+        }
+      });
+    } else {
+      // For reactivation, we'd need an updateUser call
+      console.warn('User reactivation not yet implemented');
+      this.error.set('User reactivation not yet implemented');
+    }
   }
 
   /**

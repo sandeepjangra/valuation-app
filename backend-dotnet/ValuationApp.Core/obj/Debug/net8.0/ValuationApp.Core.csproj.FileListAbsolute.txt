@@ -1,0 +1,16 @@
+/Users/sandeepjangra/Downloads/development/valuation-app/backend-dotnet/ValuationApp.Core/obj/Debug/net8.0/ValuationApp.Core.csproj.AssemblyReference.cache
+/Users/sandeepjangra/Downloads/development/valuation-app/backend-dotnet/ValuationApp.Core/obj/Debug/net8.0/ValuationApp.Core.GeneratedMSBuildEditorConfig.editorconfig
+/Users/sandeepjangra/Downloads/development/valuation-app/backend-dotnet/ValuationApp.Core/obj/Debug/net8.0/ValuationApp.Core.AssemblyInfoInputs.cache
+/Users/sandeepjangra/Downloads/development/valuation-app/backend-dotnet/ValuationApp.Core/obj/Debug/net8.0/ValuationApp.Core.AssemblyInfo.cs
+/Users/sandeepjangra/Downloads/development/valuation-app/backend-dotnet/ValuationApp.Core/obj/Debug/net8.0/ValuationApp.Core.csproj.CoreCompileInputs.cache
+/Users/sandeepjangra/Downloads/development/valuation-app/backend-dotnet/ValuationApp.Core/obj/Debug/net8.0/ValuationApp.Core.sourcelink.json
+/Users/sandeepjangra/Downloads/development/valuation-app/backend-dotnet/ValuationApp.Core/bin/Debug/net8.0/ValuationApp.Core.deps.json
+/Users/sandeepjangra/Downloads/development/valuation-app/backend-dotnet/ValuationApp.Core/bin/Debug/net8.0/ValuationApp.Core.dll
+/Users/sandeepjangra/Downloads/development/valuation-app/backend-dotnet/ValuationApp.Core/bin/Debug/net8.0/ValuationApp.Core.pdb
+/Users/sandeepjangra/Downloads/development/valuation-app/backend-dotnet/ValuationApp.Core/bin/Debug/net8.0/ValuationApp.Common.dll
+/Users/sandeepjangra/Downloads/development/valuation-app/backend-dotnet/ValuationApp.Core/bin/Debug/net8.0/ValuationApp.Common.pdb
+/Users/sandeepjangra/Downloads/development/valuation-app/backend-dotnet/ValuationApp.Core/obj/Debug/net8.0/Valuatio.2FF46721.Up2Date
+/Users/sandeepjangra/Downloads/development/valuation-app/backend-dotnet/ValuationApp.Core/obj/Debug/net8.0/ValuationApp.Core.dll
+/Users/sandeepjangra/Downloads/development/valuation-app/backend-dotnet/ValuationApp.Core/obj/Debug/net8.0/refint/ValuationApp.Core.dll
+/Users/sandeepjangra/Downloads/development/valuation-app/backend-dotnet/ValuationApp.Core/obj/Debug/net8.0/ValuationApp.Core.pdb
+/Users/sandeepjangra/Downloads/development/valuation-app/backend-dotnet/ValuationApp.Core/obj/Debug/net8.0/ref/ValuationApp.Core.dll

@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, forkJoin, of, throwError, timer } from 'rxjs';
 import { map, catchError, timeout, timeoutWith } from 'rxjs/operators';
 import { AuthService } from './auth.service';
+import { environment } from '../../environments/environment';
 
 export interface DashboardReport {
   _id: string;
@@ -70,7 +71,7 @@ export interface DashboardData {
   providedIn: 'root'
 })
 export class DashboardService {
-  private baseUrl = 'http://localhost:8000/api';
+  private baseUrl = environment.apiUrl;
 
   constructor(
     private http: HttpClient,

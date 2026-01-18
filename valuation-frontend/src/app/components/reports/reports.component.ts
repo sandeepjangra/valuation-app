@@ -217,14 +217,14 @@ interface ReportFilters {
               <div class="report-title-section">
                 <h3 class="report-title">{{ report.reference_number }}</h3>
                 <div class="report-meta">
-                  <span class="report-type">{{ report.bank_code }}</span>
-                  <span class="report-date">{{ formatDate(report.created_at) }}</span>
+                  <span class="report-type">{{ report.bankCode }}</span>
+                  <span class="report-date">{{ report.created_at ? formatDate(report.created_at) : 'N/A' }}</span>
                 </div>
               </div>
               
               <div class="report-status">
-                <span [class]="'status-badge status-' + report.status">
-                  {{ getStatusLabel(report.status) }}
+                <span [class]="'status-badge status-' + (report.status || 'draft')">
+                  {{ report.status ? getStatusLabel(report.status) : 'Draft' }}
                 </span>
               </div>
             </div>
@@ -240,7 +240,7 @@ interface ReportFilters {
                 
                 <div class="detail-item">
                   <span class="detail-label">🏦 Bank:</span>
-                  <span class="detail-value">{{ report.bank_code }}</span>
+                  <span class="detail-value">{{ report.bankCode }}</span>
                 </div>
                 
                 <div *ngIf="report.bank_branch_name" class="detail-item">
@@ -255,7 +255,7 @@ interface ReportFilters {
                 
                 <div class="detail-item">
                   <span class="detail-label">� Created:</span>
-                  <span class="detail-value">{{ formatDate(report.created_at) }}</span>
+                  <span class="detail-value">{{ report.created_at ? formatDate(report.created_at) : 'N/A' }}</span>
                 </div>
               </div>
             </div>
@@ -943,9 +943,9 @@ export class ReportsComponent implements OnInit {
     if (this.searchTerm.trim()) {
       const search = this.searchTerm.toLowerCase();
       reports = reports.filter(report =>
-        report.reference_number.toLowerCase().includes(search) ||
+        report.reference_number?.toLowerCase().includes(search) ||
         (report.property_address && report.property_address.toLowerCase().includes(search)) ||
-        report.bank_code.toLowerCase().includes(search)
+        report.bankCode?.toLowerCase().includes(search)
       );
     }
     
@@ -978,7 +978,7 @@ export class ReportsComponent implements OnInit {
           break;
       }
       
-      reports = reports.filter(report => new Date(report.created_at) >= filterDate);
+      reports = reports.filter(report => report.created_at && new Date(report.created_at) >= filterDate);
     }
     
     // Apply pagination
@@ -1026,8 +1026,8 @@ export class ReportsComponent implements OnInit {
     this.reportsService.getReports().subscribe({
       next: (response) => {
         console.log('✅ Reports loaded successfully:', response);
-        console.log('📊 Number of reports found:', response.data.length);
-        this.allReports.set(response.data);
+        console.log('📊 Number of reports found:', response.data?.reports?.length || 0);
+        this.allReports.set(response.data?.reports || []);
         this.isLoading.set(false);
         this.error.set(null);
       },
@@ -1198,7 +1198,7 @@ export class ReportsComponent implements OnInit {
    * Utility methods
    */
   trackByReportId(index: number, report: ApiReport): string {
-    return report._id;
+    return report._id || report.id || `report-${index}`;
   }
 
   getTypeLabel(type: string): string {

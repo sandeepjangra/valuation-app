@@ -9,30 +9,45 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { environment } from '../../../../environments/environment';
+import { OrganizationService } from '../../../services/organization.service';
 
+// Local interface that matches backend response format for organizations list
 interface Organization {
   _id: string;
-  organization_id: string;
   org_short_name: string;
   name: string;
-  status: string;
+  type?: string;
+  description?: string;
+  contact_email?: string;
+  phone_number?: string;
+  address?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    postal_code?: string;
+    country?: string;
+  };
+  subscription_plan?: string;
+  max_users?: number;
+  max_reports?: number;
+  is_active: boolean;
+  created_at: string | Date;
+  updated_at: string | Date;
+  total_users?: number;
+  total_reports?: number;
+  user_count?: number;
+  status?: string;
+  settings?: {
+    subscription_plan?: string;
+    max_users?: number;
+    max_reports_per_month?: number;
+    max_storage_gb?: number;
+  };
   contact_info?: {
     email?: string;
     phone?: string;
     address?: string;
   };
-  subscription?: {
-    plan: string;
-    max_reports_per_month: number;
-  };
-  settings?: {
-    subscription_plan: string;
-    max_users: number;
-    max_reports_per_month: number;
-    max_storage_gb: number;
-  };
-  user_count: number;
-  created_at: string;
 }
 
 @Component({
@@ -67,15 +82,15 @@ interface Organization {
             <div class="org-card">
               <div class="org-header">
                 <h3>{{ org.name }}</h3>
-                <span class="org-status" [class.active]="org.status === 'active'">
-                  {{ org.status }}
+                <span class="org-status" [class.active]="org.status === 'active' || org.is_active">
+                  {{ org.status || (org.is_active ? 'active' : 'inactive') }}
                 </span>
               </div>
 
               <div class="org-details">
                 <div class="detail-row">
                   <span class="label">ID:</span>
-                  <span class="value">{{ org.organization_id }}</span>
+                  <span class="value">{{ org._id }}</span>
                 </div>
                 <div class="detail-row">
                   <span class="label">Plan:</span>
@@ -83,11 +98,11 @@ interface Organization {
                 </div>
                 <div class="detail-row">
                   <span class="label">Users:</span>
-                  <span class="value">{{ org.user_count }} / {{ org.settings?.max_users || 25 }}</span>
+                  <span class="value">{{ org.total_users || org.user_count || 0 }} / {{ org.max_users || org.settings?.max_users || 25 }}</span>
                 </div>
                 <div class="detail-row">
                   <span class="label">Email:</span>
-                  <span class="value">{{ org.contact_info?.email || 'N/A' }}</span>
+                  <span class="value">{{ org.contact_info?.email || org.contact_email || 'N/A' }}</span>
                 </div>
                 <div class="detail-row">
                   <span class="label">Created:</span>
@@ -99,10 +114,10 @@ interface Organization {
                 <button class="btn btn-success" (click)="switchToOrganization(org)">
                   🔄 Switch to Organization
                 </button>
-                <button class="btn btn-primary" (click)="viewOrganization(org.organization_id)">
+                <button class="btn btn-primary" (click)="viewOrganization(org._id)">
                   👁️ View Details
                 </button>
-                <button class="btn btn-secondary" (click)="manageUsers(org.organization_id)">
+                <button class="btn btn-secondary" (click)="manageUsers(org._id)">
                   👥 Manage Users
                 </button>
               </div>
@@ -478,7 +493,7 @@ interface Organization {
 export class OrganizationsListComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
-  private readonly API_BASE = environment.apiUrl || 'http://localhost:8000/api';
+  private readonly organizationService = inject(OrganizationService);
 
   organizations = signal<Organization[]>([]);
   loading = signal(false);
@@ -508,14 +523,10 @@ export class OrganizationsListComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
 
-    this.http.get<any>(`${this.API_BASE}/admin/organizations?include_system=true`).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.organizations.set(response.data);
-        } else {
-          console.error('Server returned success=false:', response);
-          this.error.set(response.error || 'Failed to load organizations. Please try again.');
-        }
+    this.organizationService.getAllOrganizations().subscribe({
+      next: (organizations: any[]) => {
+        console.log('✅ Organizations loaded:', organizations);
+        this.organizations.set(organizations as Organization[]);
         this.loading.set(false);
       },
       error: (err) => {
@@ -527,7 +538,7 @@ export class OrganizationsListComponent implements OnInit {
         let errorMessage = 'Failed to load organizations. Please try again.';
         
         if (err.status === 0) {
-          errorMessage = 'Cannot connect to server. Please ensure the backend is running on port 8000.';
+          errorMessage = 'Cannot connect to server. Please ensure the backend is running on port 3000.';
         } else if (err.status === 500) {
           errorMessage = `Server error: ${err.error?.error || 'Internal server error'}`;
         } else if (err.error?.detail) {
@@ -586,13 +597,22 @@ export class OrganizationsListComponent implements OnInit {
   createOrganization() {
     this.creating.set(true);
 
-    this.http.post<any>(`${this.API_BASE}/admin/organizations`, this.newOrg).subscribe({
-      next: (response) => {
-        if (response.success) {
-          console.log('✅ Organization created:', response.data);
-          this.loadOrganizations();
-          this.closeDialog();
-        }
+    // Transform the form data to match CreateOrganizationRequest format
+    const createRequest: any = {
+      name: this.newOrg.name,
+      contact_email: this.newOrg.contact_email,
+      phone_number: this.newOrg.contact_phone,
+      address: this.newOrg.address,
+      max_users: this.newOrg.max_users,
+      subscription_plan: this.newOrg.plan,
+      report_reference_initials: this.newOrg.report_reference_initials
+    };
+
+    this.organizationService.createOrganization(createRequest).subscribe({
+      next: (organizationId) => {
+        console.log('✅ Organization created with ID:', organizationId);
+        this.loadOrganizations();
+        this.closeDialog();
         this.creating.set(false);
       },
       error: (err) => {
@@ -609,14 +629,26 @@ export class OrganizationsListComponent implements OnInit {
   }
 
   viewOrganization(orgId: string) {
-    this.router.navigate(['/admin/organizations', orgId]);
+    // Find the organization to get its short name
+    const org = this.organizations().find(o => o._id === orgId);
+    if (org) {
+      this.router.navigate(['/admin/organizations', org.org_short_name]);
+    }
   }
 
   manageUsers(orgId: string) {
-    this.router.navigate(['/admin/organizations', orgId, 'users']);
+    // Find the organization to get its short name
+    const org = this.organizations().find(o => o._id === orgId);
+    if (org) {
+      this.router.navigate(['/admin/organizations', org.org_short_name, 'users']);
+    }
   }
 
-  formatDate(dateString: string): string {
+  formatDate(dateString: string | Date): string {
+    if (!dateString) return 'N/A';
+    if (dateString instanceof Date) {
+      return dateString.toLocaleDateString();
+    }
     return new Date(dateString).toLocaleDateString();
   }
 

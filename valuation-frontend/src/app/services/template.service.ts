@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, throwError } from 'rxjs';
 import { AggregatedTemplateResponse, ProcessedTemplateData, FieldGroup, TemplateField, BankSpecificField, BankSpecificTab, BankSpecificSection } from '../models';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class TemplateService {
-  private readonly API_BASE_URL = 'http://localhost:8000/api';
+  private readonly API_BASE_URL = environment.apiUrl;
 
   constructor(private http: HttpClient) {}
 
@@ -62,26 +63,28 @@ export class TemplateService {
     console.log('🔥 Bank-specific tabs received:', bankSpecificTabs.length);
 
     // Combine all fields for form building (flatten tabs and sections)
-    const allFields: (TemplateField | BankSpecificField)[] = [...response.commonFields];
-    
+    const allFields: (TemplateField | BankSpecificField)[] = [...(response.commonFields || [])];
+
     // Extract all fields from tabs and sections, including sub-fields from group fields
-    bankSpecificTabs.forEach(tab => {
-      // Add tab-level fields
-      tab.fields.forEach(field => {
+    (bankSpecificTabs || []).forEach(tab => {
+      // Add tab-level fields (guard against null/undefined)
+      const tabFields = Array.isArray(tab.fields) ? tab.fields : [];
+      tabFields.forEach(field => {
         allFields.push(field);
         // If it's a group field, also add its sub-fields
-        if (field.fieldType === 'group' && field.subFields) {
+        if (field && field.fieldType === 'group' && Array.isArray(field.subFields)) {
           allFields.push(...field.subFields);
         }
       });
-      
-      // Add section-level fields
-      if (tab.sections) {
+
+      // Add section-level fields (guard against missing sections)
+      if (Array.isArray(tab.sections)) {
         tab.sections.forEach(section => {
-          section.fields.forEach(field => {
+          const sectionFields = Array.isArray(section.fields) ? section.fields : [];
+          sectionFields.forEach(field => {
             allFields.push(field);
             // If it's a group field, also add its sub-fields
-            if (field.fieldType === 'group' && field.subFields) {
+            if (field && field.fieldType === 'group' && Array.isArray(field.subFields)) {
               allFields.push(...field.subFields);
             }
           });
@@ -99,14 +102,14 @@ export class TemplateService {
 
     console.log('🔥 ProcessedTemplateData result:', {
       commonGroups: commonFieldGroups.length,
-      bankSpecificTabs: bankSpecificTabs.length,
+      bankSpecificTabs: (bankSpecificTabs || []).length,
       totalFields: processedData.totalFieldCount,
-      tabDetails: bankSpecificTabs.map(tab => ({
-        tabId: tab.tabId,
-        tabName: tab.tabName,
-        fieldsCount: tab.fields.length,
-        sectionsCount: tab.sections?.length || 0,
-        hasSections: tab.hasSections
+      tabDetails: (bankSpecificTabs || []).map(tab => ({
+        tabId: tab?.tabId,
+        tabName: tab?.tabName,
+        fieldsCount: Array.isArray(tab?.fields) ? tab.fields.length : 0,
+        sectionsCount: Array.isArray(tab?.sections) ? tab.sections.length : 0,
+        hasSections: !!tab?.hasSections
       }))
     });
 

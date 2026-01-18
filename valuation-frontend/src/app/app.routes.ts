@@ -34,7 +34,7 @@ export const routes: Routes = [
       },
       {
         path: 'dashboard',
-        loadComponent: () => import('./components/dashboard/dashboard').then(m => m.Dashboard),
+        loadComponent: () => import('./components/organization-dashboard/organization-dashboard.component').then(m => m.OrganizationDashboardComponent),
         title: 'Dashboard'
       },
       {

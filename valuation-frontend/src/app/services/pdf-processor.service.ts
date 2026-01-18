@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface PDFUploadResult {
   success: boolean;
@@ -54,7 +55,7 @@ export interface SupportedFieldsResult {
   providedIn: 'root'
 })
 export class PdfProcessorService {
-  private apiUrl = 'http://localhost:8000/api/pdf';
+  private apiUrl = `${environment.apiUrl}/pdf`;
 
   constructor(private http: HttpClient) { }
 

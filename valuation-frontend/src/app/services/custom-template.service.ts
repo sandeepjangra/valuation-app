@@ -8,6 +8,7 @@ import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { map, catchError, tap } from 'rxjs/operators';
 import { AuthService } from './auth.service';
+import { OrganizationContextService } from './organization-context.service';
 import {
   CustomTemplate,
   CustomTemplateListItem,
@@ -19,7 +20,6 @@ import {
   CustomTemplateResponse,
   CustomTemplateCreateResponse
 } from '../models/custom-template.model';
-import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -27,7 +27,7 @@ import { environment } from '../../environments/environment';
 export class CustomTemplateService {
   private readonly http = inject(HttpClient);
   private readonly authService = inject(AuthService);
-  private readonly API_BASE_URL = environment.apiUrl || 'http://localhost:8000/api';
+  private readonly orgContext = inject(OrganizationContextService);
 
   private getAuthHeaders(): HttpHeaders {
     const token = this.authService.getToken();
@@ -65,8 +65,13 @@ export class CustomTemplateService {
 
     console.log(`🌐 CustomTemplateService: Fetching fields for ${bankCode}/${propertyType}`);
 
+    const url = this.orgContext.getOrgApiUrl('custom-templates/fields');
+    if (!url) {
+      return throwError(() => new Error('No organization context available'));
+    }
+
     return this.http.get<CustomTemplateFieldsResponse>(
-      `${this.API_BASE_URL}/custom-templates/fields`,
+      url,
       { params, headers: this.getAuthHeaders() }
     ).pipe(
       tap(response => {
@@ -96,25 +101,40 @@ export class CustomTemplateService {
     }
 
     const headers = this.getAuthHeaders();
-    console.log('🌐 CustomTemplateService: Listing templates', { bankCode, propertyType });
-    console.log('🔑 CustomTemplateService: Using token:', headers.get('Authorization')?.substring(0, 50) + '...');
-    console.log('🏢 CustomTemplateService: Token org context:', this.extractOrgFromToken(headers.get('Authorization') || ''));
+    const url = this.orgContext.getOrgApiUrl('custom-templates');
+    
+    if (!url) {
+      console.error('❌ No organization context available');
+      return throwError(() => new Error('No organization context'));
+    }
+    
+    console.log('� CustomTemplateService: Listing templates', { bankCode, propertyType, url });
 
-    return this.http.get<CustomTemplatesListResponse>(
-      `${this.API_BASE_URL}/custom-templates`,
-      { params, headers }
-    ).pipe(
-      tap(response => {
-        console.log('✅ Templates fetched:', {
-          total: response.data?.length || 0,
-          data: response.data
-        });
-      }),
-      catchError(error => {
-        console.error('❌ Failed to fetch templates:', error);
-        return throwError(() => error);
-      })
-    );
+    return this.http.get<any>(url, { params, headers })
+      .pipe(
+        map(response => {
+          // Transform backend 'id' to frontend '_id' for all templates
+          const transformedData = (response.data || []).map((template: any) => ({
+            ...template,
+            _id: template.id || template._id
+          }));
+          
+          return {
+            ...response,
+            data: transformedData
+          } as CustomTemplatesListResponse;
+        }),
+        tap(response => {
+          console.log('✅ Templates fetched:', {
+            total: response.data?.length || 0,
+            data: response.data
+          });
+        }),
+        catchError(error => {
+          console.error('❌ Failed to fetch templates:', error);
+          return throwError(() => error);
+        })
+      );
   }
 
   /**
@@ -124,21 +144,30 @@ export class CustomTemplateService {
   getTemplate(templateId: string): Observable<CustomTemplate> {
     console.log(`🌐 CustomTemplateService: Fetching template ${templateId}`);
     const headers = this.getAuthHeaders();
-    console.log('🔑 CustomTemplateService.getTemplate: Using token:', headers.get('Authorization')?.substring(0, 50) + '...');
+    const url = this.orgContext.getOrgApiUrl(`custom-templates/${templateId}`);
+    
+    if (!url) {
+      return throwError(() => new Error('No organization context'));
+    }
 
-    return this.http.get<CustomTemplateResponse>(
-      `${this.API_BASE_URL}/custom-templates/${templateId}`,
-      { headers }
-    ).pipe(
-      map(response => response.data),
-      tap(template => {
-        console.log('✅ Template fetched:', template.templateName);
-      }),
-      catchError(error => {
-        console.error('❌ Failed to fetch template:', error);
-        return throwError(() => error);
-      })
-    );
+    return this.http.get<CustomTemplateResponse>(url, { headers })
+      .pipe(
+        map(response => {
+          // Transform backend 'id' to frontend '_id'
+          const template = response.data as any;
+          return {
+            ...template,
+            _id: template.id || template._id
+          } as CustomTemplate;
+        }),
+        tap(template => {
+          console.log('✅ Template fetched:', template.templateName);
+        }),
+        catchError(error => {
+          console.error('❌ Failed to fetch template:', error);
+          return throwError(() => error);
+        })
+      );
   }
 
   /**
@@ -149,7 +178,11 @@ export class CustomTemplateService {
   createTemplate(request: CreateCustomTemplateRequest): Observable<CustomTemplate> {
     console.log('🌐 CustomTemplateService: Creating template', request.templateName);
 
-    const endpoint = `${this.API_BASE_URL}/custom-templates`;
+    const url = this.orgContext.getOrgApiUrl('custom-templates');
+    if (!url) {
+      return throwError(() => new Error('No organization context'));
+    }
+    
     const transformedRequest = {
       templateName: request.templateName,
       description: request.description,
@@ -159,11 +192,18 @@ export class CustomTemplateService {
     };
 
     return this.http.post<CustomTemplateCreateResponse>(
-      endpoint,
+      url,
       transformedRequest,
       { headers: this.getAuthHeaders() }
     ).pipe(
-      map(response => response.data.template || response.data),
+      map(response => {
+        const template = response.data.template as any;
+        // Transform backend 'id' to frontend '_id'
+        return {
+          ...template,
+          _id: template.id || template._id
+        } as CustomTemplate;
+      }),
       tap(template => {
         console.log('✅ Template created:', template._id || template.templateName);
       }),
@@ -207,20 +247,29 @@ export class CustomTemplateService {
   updateTemplate(templateId: string, request: UpdateCustomTemplateRequest): Observable<CustomTemplate> {
     console.log(`🌐 CustomTemplateService: Updating template ${templateId}`);
 
-    return this.http.put<CustomTemplateResponse>(
-      `${this.API_BASE_URL}/custom-templates/${templateId}`,
-      request,
-      { headers: this.getAuthHeaders() }
-    ).pipe(
-      map(response => response.data),
-      tap(template => {
-        console.log('✅ Template updated:', template.templateName);
-      }),
-      catchError(error => {
-        console.error('❌ Failed to update template:', error);
-        return throwError(() => error);
-      })
-    );
+    const url = this.orgContext.getOrgApiUrl(`custom-templates/${templateId}`);
+    if (!url) {
+      return throwError(() => new Error('No organization context'));
+    }
+
+    return this.http.put<CustomTemplateResponse>(url, request, { headers: this.getAuthHeaders() })
+      .pipe(
+        map(response => {
+          const template = response.data as any;
+          // Transform backend 'id' to frontend '_id'
+          return {
+            ...template,
+            _id: template.id || template._id
+          } as CustomTemplate;
+        }),
+        tap(template => {
+          console.log('✅ Template updated:', template.templateName);
+        }),
+        catchError(error => {
+          console.error('❌ Failed to update template:', error);
+          return throwError(() => error);
+        })
+      );
   }
 
   /**
@@ -230,12 +279,15 @@ export class CustomTemplateService {
   deleteTemplate(templateId: string): Observable<void> {
     console.log(`🌐 CustomTemplateService: Deleting template ${templateId}`);
 
-    return this.http.delete<CustomTemplateResponse>(
-      `${this.API_BASE_URL}/custom-templates/${templateId}`,
-      { headers: this.getAuthHeaders() }
-    ).pipe(
-      map(() => void 0),
-      tap(() => {
+    const url = this.orgContext.getOrgApiUrl(`custom-templates/${templateId}`);
+    if (!url) {
+      return throwError(() => new Error('No organization context'));
+    }
+
+    return this.http.delete<CustomTemplateResponse>(url, { headers: this.getAuthHeaders() })
+      .pipe(
+        map(() => void 0),
+        tap(() => {
         console.log('✅ Template deleted');
       }),
       catchError(error => {
@@ -253,20 +305,22 @@ export class CustomTemplateService {
   cloneTemplate(templateId: string, request: CloneCustomTemplateRequest): Observable<CustomTemplate> {
     console.log(`🌐 CustomTemplateService: Cloning template ${templateId}`);
 
-    return this.http.post<CustomTemplateCreateResponse>(
-      `${this.API_BASE_URL}/custom-templates/${templateId}/clone`,
-      request,
-      { headers: this.getAuthHeaders() }
-    ).pipe(
-      map(response => response.data.template),
-      tap(template => {
-        console.log('✅ Template cloned:', template._id);
-      }),
-      catchError(error => {
-        console.error('❌ Failed to clone template:', error);
-        return throwError(() => error);
-      })
-    );
+    const url = this.orgContext.getOrgApiUrl(`custom-templates/${templateId}/clone`);
+    if (!url) {
+      return throwError(() => new Error('No organization context'));
+    }
+
+    return this.http.post<CustomTemplateCreateResponse>(url, request, { headers: this.getAuthHeaders() })
+      .pipe(
+        map(response => response.data.template),
+        tap(template => {
+          console.log('✅ Template cloned:', template._id);
+        }),
+        catchError(error => {
+          console.error('❌ Failed to clone template:', error);
+          return throwError(() => error);
+        })
+      );
   }
 
   /**

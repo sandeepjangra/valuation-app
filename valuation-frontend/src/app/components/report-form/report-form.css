@@ -252,14 +252,78 @@
   margin: 0;
 }
 
-/* Fields Grid */
+/* Fields Grid - 12 column system like Bootstrap */
 .fields-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(12, 1fr); /* 12-column grid system */
   gap: 20px;
   align-items: start;
   width: 100%;
   max-width: 100%;
+}
+
+/* Responsive grid - adjust based on screen size */
+@media (max-width: 1024px) {
+  .fields-grid {
+    grid-template-columns: repeat(6, 1fr); /* 6 columns on tablets */
+  }
+}
+
+@media (max-width: 768px) {
+  .fields-grid {
+    grid-template-columns: 1fr; /* 1 column on mobile */
+  }
+}
+
+/* Field container sizes based on 12-column grid */
+.field-container {
+  grid-column: span 3; /* Default: 3/12 = 4 fields per row */
+}
+
+.field-container.grid-3 {
+  grid-column: span 3; /* 3/12 = 4 fields per row */
+}
+
+.field-container.grid-6 {
+  grid-column: span 6; /* 6/12 = half width, 2 fields per row */
+}
+
+.field-container.grid-8 {
+  grid-column: span 8; /* 8/12 = 2/3 width */
+}
+
+.field-container.grid-12,
+.field-container.grid-full {
+  grid-column: 1 / -1; /* Full width */
+}
+
+/* On smaller screens (tablets), adjust span for 6-column grid */
+@media (max-width: 1024px) {
+  .field-container {
+    grid-column: span 2; /* 2/6 = 3 fields per row on tablets */
+  }
+  
+  .field-container.grid-3 {
+    grid-column: span 2; /* 2/6 = 3 fields per row */
+  }
+  
+  .field-container.grid-6 {
+    grid-column: span 3; /* 3/6 = half width */
+  }
+  
+  .field-container.grid-8 {
+    grid-column: span 4; /* 4/6 = 2/3 width */
+  }
+}
+
+/* On mobile, all fields take full width */
+@media (max-width: 768px) {
+  .field-container,
+  .field-container.grid-3,
+  .field-container.grid-6,
+  .field-container.grid-8 {
+    grid-column: span 1; /* All fields full width on mobile */
+  }
 }
 
 /* Loading Indicator */
@@ -284,25 +348,7 @@
   100% { transform: rotate(360deg); }
 }
 
-.field-container.grid-3 {
-  min-width: 300px;
-  flex: 1;
-}
-
-.field-container.grid-4 {
-  min-width: 400px;
-  flex: 1;
-}
-
-.field-container.grid-6 {
-  min-width: 500px;
-  flex: 1;
-}
-
-.field-container.grid-12 {
-  width: 100%;
-  grid-column: 1 / -1;
-}
+/* Old flex-based grid classes removed - using CSS Grid system above instead */
 
 .form-field {
   display: flex;
@@ -635,28 +681,46 @@
   margin-bottom: 16px;
 }
 
+/* Group fields display vertically (stacked, not in a row) */
 .group-fields-grid {
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
+  display: flex !important; /* Override any grid display */
+  flex-direction: column !important; /* Stack sub-fields vertically */
   gap: 16px;
-  align-items: start;
+  padding: 16px;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  margin-top: 12px;
 }
 
-.group-fields-grid .field-container.grid-3 {
-  grid-column: span 3;
+/* Group field containers - each takes full width, remove grid properties */
+.group-fields-grid .field-container {
+  width: 100% !important; /* Full width for vertical stacking */
+  grid-column: unset !important; /* Remove grid column spanning */
+  flex: none !important; /* Don't flex grow/shrink */
 }
 
-.group-fields-grid .field-container.grid-4 {
-  grid-column: span 4;
-}
-
-.group-fields-grid .field-container.grid-6 {
-  grid-column: span 6;
-}
-
+.group-fields-grid .field-container.grid-3,
+.group-fields-grid .field-container.grid-4,
+.group-fields-grid .field-container.grid-6,
+.group-fields-grid .field-container.grid-8,
 .group-fields-grid .field-container.grid-12,
 .group-fields-grid .field-container.grid-full {
-  grid-column: span 12;
+  width: 100% !important; /* All sub-fields take full width and stack vertically */
+  grid-column: unset !important; /* Remove grid column spanning */
+}
+
+/* Responsive adjustments for group fields */
+@media (max-width: 1024px) {
+  .group-fields-grid {
+    gap: 12px; /* Slightly smaller gap on tablets */
+  }
+}
+
+@media (max-width: 768px) {
+  .group-fields-grid {
+    gap: 12px; /* Maintain vertical stacking on mobile */
+    padding: 12px;
+  }
 }
 
 /* Form Textarea */

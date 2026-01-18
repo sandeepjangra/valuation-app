@@ -8,7 +8,8 @@
   border: 1px solid #e0e7ff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   box-sizing: border-box;
-  overflow: hidden; /* Ensure content doesn't overflow container */
+  overflow-x: auto; /* Allow horizontal scrolling if table exceeds container */
+  overflow-y: visible;
 }
 
 /* Ensure proper containment within form groups */
@@ -117,24 +118,25 @@
 
 /* Table Wrapper */
 .table-wrapper {
-  overflow-x: auto;
+  overflow-x: auto; /* Allow horizontal scrolling if table exceeds container */
   overflow-y: visible;
   border: 1px solid #e5e7eb;
   border-radius: 6px;
   margin-bottom: 12px;
-  max-width: 100%;
+  max-width: 100%; /* Don't exceed parent container */
   box-sizing: border-box;
-  /* Ensure table stays within container bounds */
-  width: fit-content;
-  max-width: 100%;
+  /* Display will expand with table content, scroll if needed */
+  display: block;
 }
 
 /* Dynamic Table */
 .dynamic-table {
-  width: 100%;
+  width: auto; /* Changed from 100% to auto - allows table to grow/shrink with columns */
+  min-width: 100%; /* Ensure table fills wrapper when few columns */
   border-collapse: collapse;
   font-size: 13px;
   background: white;
+  table-layout: auto; /* Allow columns to size based on content */
 }
 
 .dynamic-table th,

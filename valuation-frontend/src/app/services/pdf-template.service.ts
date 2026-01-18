@@ -2,13 +2,14 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { PDFTemplate, PDFTemplateListItem } from '../models/pdf-template.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class PDFTemplateService {
   private readonly http = inject(HttpClient);
-  private readonly API_BASE_URL = 'http://localhost:8000/api';
+  private readonly API_BASE_URL = environment.apiUrl;
 
   /**
    * Get all PDF templates for an organization

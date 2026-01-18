@@ -3,7 +3,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { CommonField, BankBranch, ProcessedTemplateData, FieldGroup, TemplateField, BankSpecificField, BankSpecificTab, BankSpecificSection, CalculatedFieldConfig } from '../../models';
+import { CommonField, BankBranch, ProcessedTemplateData, FieldGroup, TemplateField, BankSpecificField, BankSpecificTab, BankSpecificSection, CalculatedFieldConfig, DocumentType } from '../../models';
 import { TemplateService } from '../../services/template.service';
 import { CustomTemplateService } from '../../services/custom-template.service';
 import { TemplateVersioningService } from '../../services/template-versioning.service';
@@ -44,6 +44,7 @@ export class ReportForm implements OnInit {
   // Form data - Updated for new structure
   reportForm: FormGroup;
   templateData: ProcessedTemplateData | null = null;
+  documentTypes: DocumentType[] = [];
   availableBranches: Array<{value: string, label: string}> = [];
   isLoading = false;
   
@@ -165,6 +166,10 @@ export class ReportForm implements OnInit {
           console.log('✅ API Response type:', typeof response);
           console.log('✅ API Response keys:', Object.keys(response));
           
+          // Extract document types from response
+          this.documentTypes = response.documentTypes || [];
+          console.log(`📄 Document Types loaded: ${this.documentTypes.length}`, this.documentTypes);
+          
           // Process the response into organized field groups
           this.templateData = this.templateService.processTemplateData(response);
           
@@ -172,6 +177,7 @@ export class ReportForm implements OnInit {
             commonFieldGroups: this.templateData.commonFieldGroups.length,
             bankSpecificTabs: this.templateData.bankSpecificTabs.length,
             totalFields: this.templateData.totalFieldCount,
+            documentTypes: this.documentTypes.length,
             templateData: this.templateData
           });
           
@@ -275,15 +281,22 @@ export class ReportForm implements OnInit {
         if (reportData) {
           
           // Extract template information from the report
-          this.selectedBankCode = reportData.bank_code || '';
-          this.selectedTemplateId = reportData.template_id || '';
-          this.selectedPropertyType = reportData.property_type || '';
-          this.reportReferenceNumber = reportData.reference_number || '';
+          this.selectedBankCode = reportData.bankCode || (reportData as any).bank_code || '';
+          this.selectedTemplateId = reportData.templateId || (reportData as any).template_id || '';
+          this.selectedPropertyType = reportData.propertyType || (reportData as any).property_type || '';
+          this.reportReferenceNumber = reportData.referenceNumber || (reportData as any).reference_number || '';
           
           // Set report status (map to form status values)
-          this.reportStatus = reportData.status === 'in_progress' ? 'draft' : 
-                             reportData.status === 'completed' ? 'saved' : 
-                             reportData.status || 'draft';
+          const status = reportData.status || 'draft';
+          if (status === 'in_progress') {
+            this.reportStatus = 'draft';
+          } else if (status === 'completed') {
+            this.reportStatus = 'saved';
+          } else if (status === 'draft' || status === 'submitted') {
+            this.reportStatus = status as 'draft' | 'submitted';
+          } else {
+            this.reportStatus = 'draft';
+          }
           
           console.log('📋 Report template info extracted:', {
             bankCode: this.selectedBankCode,
@@ -298,9 +311,9 @@ export class ReportForm implements OnInit {
           if (reportDataAny.templateStructure || reportDataAny.report_data?.templateStructure) {
             console.log('📋 Report has stored template structure, using it');
             const templateInfo = reportDataAny.templateStructure || reportDataAny.report_data?.templateStructure;
-            this.selectedTemplateId = reportDataAny.templateId || reportData.template_id || 'land-property';
-            this.selectedBankCode = reportDataAny.bankCode || reportData.bank_code || this.selectedBankCode;
-            this.selectedPropertyType = reportDataAny.propertyType || reportData.property_type || '';
+            this.selectedTemplateId = reportDataAny.templateId || (reportData as any).template_id || 'land-property';
+            this.selectedBankCode = reportDataAny.bankCode || (reportData as any).bank_code || this.selectedBankCode;
+            this.selectedPropertyType = reportDataAny.propertyType || (reportData as any).property_type || '';
             console.log('📋 Using stored template info:', {
               templateId: this.selectedTemplateId,
               bankCode: this.selectedBankCode,
@@ -1405,6 +1418,17 @@ export class ReportForm implements OnInit {
         });
       }
     });
+    
+    // Add form controls for document types
+    if (this.documentTypes && this.documentTypes.length > 0) {
+      console.log(`📄 Adding ${this.documentTypes.length} document type controls`);
+      this.documentTypes.forEach(docType => {
+        const controlName = `doc_${docType.documentId}`;
+        const validators = docType.isRequired ? [Validators.required] : [];
+        formControls[controlName] = ['', validators];
+        console.log(`  ✅ ${controlName}: ${docType.documentName}${docType.isRequired ? ' (required)' : ''}`);
+      });
+    }
     
     this.reportForm = this.fb.group(formControls);
     

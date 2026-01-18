@@ -9,6 +9,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router, ActivatedRoute } from '@angular/router';
 import { environment } from '../../../../environments/environment';
+import { OrganizationService } from '../../../services/organization.service';
 
 interface User {
   _id: string;
@@ -22,30 +23,42 @@ interface User {
 
 interface Organization {
   _id: string;
-  organization_id: string;
   org_short_name: string;
   name: string;
-  status: string;
-  contact_info: {
+  type?: string;
+  description?: string;
+  contact_email?: string;
+  phone_number?: string;
+  address?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    postal_code?: string;
+    country?: string;
+  };
+  subscription_plan?: string;
+  max_users?: number;
+  max_reports?: number;
+  is_active: boolean;
+  created_at: string | Date;
+  updated_at: string | Date;
+  total_users?: number;
+  total_reports?: number;
+  user_count?: number;
+  status?: string;
+  settings?: {
+    subscription_plan?: string;
+    max_users?: number;
+    max_reports_per_month?: number;
+    max_storage_gb?: number;
+    report_reference_initials?: string;
+  };
+  contact_info?: {
     email?: string;
     phone?: string;
     address?: string;
   };
-  settings: {
-    subscription_plan: string;
-    max_users: number;
-    max_reports_per_month: number;
-    max_storage_gb: number;
-    report_reference_initials?: string;  // NEW: Report reference initials
-  };
-  subscription: {
-    plan: string;
-    max_reports_per_month: number;
-    storage_limit_gb: number;
-  };
-  user_count: number;
-  users: User[];
-  created_at: string;
+  users?: User[];
 }
 
 @Component({
@@ -100,7 +113,7 @@ interface Organization {
             <div class="card-content">
               <div class="detail-row">
                 <span class="label">Organization ID:</span>
-                <span class="value">{{ organization()!.organization_id }}</span>
+                <span class="value">{{ organization()!._id }}</span>
               </div>
               <div class="detail-row">
                 <span class="label">Short Name:</span>
@@ -155,7 +168,7 @@ interface Organization {
               @if (organization()!.settings?.report_reference_initials) {
                 <div class="detail-row">
                   <span class="label">Next Report Number:</span>
-                  <span class="value">{{ organization()!.settings.report_reference_initials }}/0001/{{ getCurrentDate() }}</span>
+                  <span class="value">{{ organization()!.settings!.report_reference_initials }}/0001/{{ getCurrentDate() }}</span>
                 </div>
               }
             </div>
@@ -192,7 +205,7 @@ interface Organization {
             </button>
           </div>
           <div class="card-content">
-            @if (organization()!.users.length > 0) {
+            @if (organization()!.users && organization()!.users!.length > 0) {
               <div class="table-container">
                 <table class="users-table">
                   <thead>
@@ -387,10 +400,17 @@ interface Organization {
             </div>
 
             <div class="form-group">
+              <label>Department</label>
+              <input type="text" [(ngModel)]="newUser.department" name="department"
+                     placeholder="e.g., Engineering, Sales, HR">
+            </div>
+
+            <div class="form-group">
               <label>Role *</label>
               <select [(ngModel)]="newUser.role" name="role" required>
                 <option value="employee">Employee</option>
                 <option value="manager">Manager</option>
+                <option value="org_admin">Organization Admin</option>
               </select>
             </div>
 
@@ -900,6 +920,7 @@ export class OrganizationDetailsComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly organizationService = inject(OrganizationService);
   private readonly API_BASE = environment.apiUrl || 'http://localhost:8000/api';
 
   organization = signal<Organization | null>(null);
@@ -922,7 +943,8 @@ export class OrganizationDetailsComponent implements OnInit {
     email: '',
     password: '',
     phone: '',
-    role: 'employee'
+    role: 'employee',
+    department: ''
   };
 
   editForm = {
@@ -942,27 +964,98 @@ export class OrganizationDetailsComponent implements OnInit {
   };
 
   ngOnInit() {
-    const orgId = this.route.snapshot.paramMap.get('orgId');
-    if (orgId) {
-      this.loadOrganization(orgId);
+    const orgShortName = this.route.snapshot.paramMap.get('orgId');
+    if (orgShortName) {
+      this.loadOrganization(orgShortName);
     }
   }
 
-  loadOrganization(orgId: string) {
+  loadOrganization(orgShortName: string) {
     this.loading.set(true);
     this.error.set(null);
 
-    this.http.get<any>(`${this.API_BASE}/admin/organizations/${orgId}`).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.organization.set(response.data);
-        }
+    this.organizationService.getOrganizationByShortName(orgShortName).subscribe({
+      next: (org) => {
+        console.log('📥 Loaded organization from service:', org);
+        
+        // Transform to include contact_info and users array
+        const transformedOrg: Organization = {
+          ...org,
+          contact_info: {
+            email: org.contact_email,
+            phone: org.phone_number,
+            address: org.address ? `${org.address.street}, ${org.address.city}, ${org.address.state}` : undefined
+          },
+          user_count: org.total_users || 0,
+          users: [] as User[], // Will be populated separately
+          status: org.is_active ? 'active' : 'inactive',
+          settings: {
+            subscription_plan: org.subscription_plan,
+            max_users: org.max_users,
+            max_reports_per_month: org.max_reports,
+            max_storage_gb: 100, // Default value
+            report_reference_initials: (org as any).reportReferenceInitials
+          }
+        };
+        
+        console.log('✅ Transformed organization:', transformedOrg);
+        this.organization.set(transformedOrg);
+        
+        // Load users for this organization
+        this.loadUsers(org.org_short_name);
+        
         this.loading.set(false);
       },
       error: (err) => {
         console.error('Failed to load organization:', err);
         this.error.set('Failed to load organization details. Please try again.');
         this.loading.set(false);
+      }
+    });
+  }
+
+  loadUsers(orgShortName: string) {
+    console.log('📥 Loading users for organization:', orgShortName);
+    
+    this.http.get<any>(`${this.API_BASE}/org/${orgShortName}/users`).subscribe({
+      next: (response) => {
+        if (response.success && response.data?.users) {
+          console.log('✅ Loaded users:', response.data.users);
+          
+          // Transform backend user format to frontend format
+          const users: User[] = response.data.users.map((u: any) => ({
+            _id: u.id,
+            user_id: u.userId,
+            organization_id: u.organizationId || u.orgShortName,
+            email: u.email,
+            full_name: u.fullName,
+            first_name: u.firstName,
+            last_name: u.lastName,
+            role: u.role,
+            roles: u.roles || [],
+            status: u.status || (u.isActive ? 'active' : 'inactive'),
+            is_active: u.isActive,
+            phone_number: u.phone,
+            department: u.department,
+            created_at: u.createdAt,
+            last_login: u.lastLogin
+          }));
+          
+          // Update organization with users
+          const org = this.organization();
+          if (org) {
+            this.organization.set({
+              ...org,
+              users,
+              user_count: users.length,
+              total_users: users.length
+            });
+          }
+        }
+      },
+      error: (err) => {
+        console.error('Failed to load users:', err);
+        // Don't show error to user - users section will just show empty
       }
     });
   }
@@ -1014,22 +1107,34 @@ export class OrganizationDetailsComponent implements OnInit {
 
     this.addingUser.set(true);
 
+    // Transform frontend format to backend format (camelCase)
+    const userPayload = {
+      email: this.newUser.email,
+      fullName: this.newUser.full_name,
+      password: this.newUser.password,
+      phone: this.newUser.phone,
+      role: this.newUser.role,
+      department: this.newUser.department || 'General'
+    };
+
+    console.log('📤 Creating user with payload:', userPayload);
+
     this.http.post<any>(
-      `${this.API_BASE}/admin/organizations/${org.organization_id}/users`,
-      this.newUser
+      `${this.API_BASE}/org/${org.org_short_name}/users`,
+      userPayload
     ).subscribe({
       next: (response) => {
         if (response.success) {
           console.log('✅ User added:', response.data);
           alert(`User "${this.newUser.email}" has been added successfully.`);
           this.closeUserDialog();
-          this.loadOrganization(org.organization_id);
+          this.loadUsers(org.org_short_name);
         }
         this.addingUser.set(false);
       },
       error: (err) => {
         console.error('Failed to add user:', err);
-        const errorMessage = err.error?.detail || err.error?.error || 'Failed to add user. Please try again.';
+        const errorMessage = err.error?.message || 'Failed to add user. Please try again.';
         alert(errorMessage);
         this.addingUser.set(false);
       }
@@ -1087,30 +1192,42 @@ export class OrganizationDetailsComponent implements OnInit {
 
     this.saving.set(true);
 
-    // Prepare update payload
-    const updatePayload = {
-      org_name: this.editForm.org_name,
-      contact_info: this.editForm.contact_info,
-      settings: this.editForm.settings
-    };
+    // Prepare update payload matching backend DTO (camelCase)
+    const updatePayload: any = {};
+    
+    // Map frontend fields to backend DTO fields
+    if (this.editForm.org_name !== org.name) {
+      updatePayload.fullName = this.editForm.org_name;
+    }
+    
+    if (this.editForm.contact_info?.email !== org.contact_email) {
+      updatePayload.contactEmail = this.editForm.contact_info?.email;
+    }
+    
+    if (this.editForm.contact_info?.phone !== org.phone_number) {
+      updatePayload.contactPhone = this.editForm.contact_info?.phone;
+    }
+
+    if (this.editForm.settings?.report_reference_initials !== org.settings?.report_reference_initials) {
+      updatePayload.reportReferenceInitials = this.editForm.settings?.report_reference_initials;
+    }
 
     this.http.patch<any>(
-      `${this.API_BASE}/admin/organizations/${org.organization_id}`,
+      `${this.API_BASE}/organizations/${org.org_short_name}`,
       updatePayload
     ).subscribe({
       next: (response) => {
         if (response.success) {
           console.log('✅ Organization updated:', response.data);
-          const changesCount = response.changes_applied?.length || 0;
-          alert(`Organization updated successfully!\n${changesCount} field(s) changed.`);
+          alert('Organization updated successfully!');
           this.closeEditDialog();
-          this.loadOrganization(org.organization_id);
+          this.loadOrganization(org.org_short_name);
         }
         this.saving.set(false);
       },
       error: (err) => {
         console.error('Failed to update organization:', err);
-        const errorMessage = err.error?.detail || err.error?.error || 'Failed to update organization. Please try again.';
+        const errorMessage = err.error?.message || 'Failed to update organization. Please try again.';
         alert(errorMessage);
         this.saving.set(false);
       }
@@ -1133,14 +1250,14 @@ export class OrganizationDetailsComponent implements OnInit {
     }
 
     this.http.patch<any>(
-      `${this.API_BASE}/admin/organizations/${org.organization_id}/status`,
+      `${this.API_BASE}/organizations/${org.org_short_name}/status`,
       { status: newStatus }
     ).subscribe({
       next: (response) => {
         if (response.success) {
           console.log('✅ Organization status updated:', response);
           alert(`Organization "${org.name}" has been ${newStatus === 'active' ? 'activated' : 'deactivated'}.`);
-          this.loadOrganization(org.organization_id);
+          this.loadOrganization(org.org_short_name);
         }
       },
       error: (err) => {
@@ -1166,7 +1283,7 @@ export class OrganizationDetailsComponent implements OnInit {
 
     this.deleting.set(true);
 
-    this.http.delete<any>(`${this.API_BASE}/admin/organizations/${org.organization_id}`).subscribe({
+    this.http.delete<any>(`${this.API_BASE}/organizations/${org.org_short_name}`).subscribe({
       next: (response) => {
         if (response.success) {
           console.log('✅ Organization deleted:', response);
@@ -1187,7 +1304,11 @@ export class OrganizationDetailsComponent implements OnInit {
     this.router.navigate(['/admin/organizations']);
   }
 
-  formatDate(dateString: string): string {
+  formatDate(dateString: string | Date): string {
+    if (!dateString) return 'N/A';
+    if (dateString instanceof Date) {
+      return dateString.toLocaleDateString();
+    }
     return new Date(dateString).toLocaleDateString();
   }
 
@@ -1219,7 +1340,8 @@ export class OrganizationDetailsComponent implements OnInit {
       email: '',
       password: '',
       phone: '',
-      role: 'employee'
+      role: 'employee',
+      department: ''
     };
   }
 }

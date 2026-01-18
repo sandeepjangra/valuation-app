@@ -17,6 +17,8 @@ import {
 } from '../../models/organization.model';
 import { AuthService } from '../../services/auth.service';
 import { OrganizationService } from '../../services/organization.service';
+import { ActivityLoggingService } from '../../services/activity-logging.service';
+import { ActivityLogEntry } from '../../models/activity-log.model';
 
 @Component({
   selector: 'app-organization-dashboard',
@@ -142,10 +144,10 @@ import { OrganizationService } from '../../services/organization.service';
               No recent activity
             </div>
             <div *ngFor="let activity of recentActivity()" class="activity-item">
-              <div class="activity-icon">📋</div>
+              <div class="activity-icon">{{ getActivityIcon(activity.actionType) }}</div>
               <div class="activity-content">
-                <p><strong>{{ activity.user_email }}</strong> {{ activity.action }} {{ activity.resource_type }}</p>
-                <small>{{ formatDate(activity.timestamp) }}</small>
+                <p><strong>{{ activity.description }}</strong></p>
+                <small>{{ activity.action }} • {{ formatActivityDate(activity.timestamp!) }}</small>
               </div>
             </div>
           </div>
@@ -158,6 +160,7 @@ import { OrganizationService } from '../../services/organization.service';
 export class OrganizationDashboardComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly organizationService = inject(OrganizationService);
+  private readonly activityLoggingService = inject(ActivityLoggingService);
   private readonly router = inject(Router);
 
   // Component state
@@ -165,7 +168,7 @@ export class OrganizationDashboardComponent implements OnInit {
   readonly error = signal<string | null>(null);
   readonly organization = signal<Organization | null>(null);
   readonly dashboardStats = signal<any>(null);
-  readonly recentActivity = signal<any[]>([]);
+  readonly recentActivity = signal<ActivityLogEntry[]>([]);
 
   // Auth state
   readonly currentUser = this.authService.currentUser;
@@ -196,34 +199,30 @@ export class OrganizationDashboardComponent implements OnInit {
           console.error('Error loading organization:', error);
           return of(null);
         })
-      ),
-      this.organizationService.getDashboardStats().pipe(
-        catchError(error => {
-          console.error('Error loading dashboard stats:', error);
-          return of({});
-        })
       )
     ];
 
-    // Add audit logs for managers and admins
+    // Add activity logs for managers and admins
     if (this.canViewAuditLogs()) {
-      requests.push(
-        this.organizationService.getAuditLogs({ limit: 5 }).pipe(
-          map(response => response.data || []),
-          catchError(error => {
-            console.error('Error loading recent activity:', error);
-            return of([]);
-          })
-        )
-      );
+      const orgShortName = this.organizationContext()?.orgShortName;
+      if (orgShortName) {
+        requests.push(
+          this.activityLoggingService.getOrgActivity(orgShortName, 10).pipe(
+            map((response) => response.data as ActivityLogEntry[]),
+            catchError(error => {
+              console.error('Error loading recent activity:', error);
+              return of([]);
+            })
+          )
+        );
+      }
     }
 
     forkJoin(requests).subscribe({
-      next: ([organization, stats, activity]) => {
-        this.organization.set(organization);
-        this.dashboardStats.set(stats);
-        if (activity) {
-          this.recentActivity.set(activity);
+      next: (results) => {
+        this.organization.set(results[0]);
+        if (results[1]) {
+          this.recentActivity.set(results[1]);
         }
         this.isLoading.set(false);
       },
@@ -319,6 +318,43 @@ export class OrganizationDashboardComponent implements OnInit {
   formatDate(date: Date | string): string {
     const d = new Date(date);
     return d.toLocaleString();
+  }
+
+  /**
+   * Format activity timestamp for display
+   */
+  formatActivityDate(timestamp: string): string {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffInMs = now.getTime() - date.getTime();
+    const diffInMinutes = Math.floor(diffInMs / 60000);
+    const diffInHours = Math.floor(diffInMs / 3600000);
+    const diffInDays = Math.floor(diffInMs / 86400000);
+
+    if (diffInMinutes < 1) return 'Just now';
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    if (diffInHours < 24) return `${diffInHours}h ago`;
+    if (diffInDays < 7) return `${diffInDays}d ago`;
+    
+    return date.toLocaleDateString();
+  }
+
+  /**
+   * Get icon for activity type
+   */
+  getActivityIcon(actionType: string): string {
+    const icons: Record<string, string> = {
+      'authentication': '🔐',
+      'organization': '🏢',
+      'user_management': '👤',
+      'report': '📄',
+      'template': '📋',
+      'draft': '✏️',
+      'settings': '⚙️',
+      'analytics': '📊'
+    };
+    
+    return icons[actionType] || '📋';
   }
 
   // Private helper methods

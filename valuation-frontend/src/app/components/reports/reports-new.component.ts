@@ -126,16 +126,16 @@ export class ReportsNewComponent implements OnInit {
           
           if (response.success && response.data) {
             // Store all reports
-            this.allReports = response.data;
+            this.allReports = response.data.reports;
             console.log('📊 Total reports loaded:', this.allReports.length);
             
             // Apply current tab filter
             this.applyTabFilter();
             
             // Update pagination info
-            this.totalReports = response.pagination.total;
-            this.currentPage = response.pagination.page;
-            this.totalPages = response.pagination.total_pages;
+            this.totalReports = response.pagination?.total || 0;
+            this.currentPage = response.pagination?.page || 1;
+            this.totalPages = response.pagination?.total_pages || 1;
             
             console.log('📊 Pagination:', {
               total: this.totalReports,
@@ -230,28 +230,28 @@ export class ReportsNewComponent implements OnInit {
         console.log('📊 Response data array:', response.data);
         
         // Debug: Log first report data for analysis
-        if (response.data && response.data.length > 0) {
-          const firstReport = response.data[0];
+        if (response.data && response.data.reports && response.data.reports.length > 0) {
+          const firstReport = response.data.reports[0];
           console.log('🔍 First report data:', {
             reference: firstReport.reference_number,
-            bank_code: firstReport.bank_code,
-            template_id: firstReport.template_id,
+            bank_code: firstReport.bankCode,
+            template_id: firstReport.templateId,
             report_data_keys: firstReport.report_data ? Object.keys(firstReport.report_data) : 'No report_data'
           });
         }
-        console.log('📊 Data array length:', response.data?.length);
-        console.log('📊 First report:', response.data?.[0]);
-        console.log('📊 All report statuses:', response.data?.map(r => r.status));
+        console.log('📊 Data array length:', response.data?.reports?.length);
+        console.log('📊 First report:', response.data?.reports?.[0]);
+        console.log('📊 All report statuses:', response.data?.reports?.map((r: Report) => r.status));
         clearTimeout(timeoutId); // Clear timeout on success
         console.log('🎯 API SUCCESS - about to update loading state and data');
         console.log('🎯 Current selected tab:', this.selectedTab);
         console.log('🎯 Should this response be applied to current tab?');
         
         if (response.success) {
-          this.reports = response.data;
-          this.currentPage = response.pagination.page;
-          this.totalPages = response.pagination.total_pages;
-          this.totalReports = response.pagination.total;
+          this.reports = response.data?.reports || [];
+          this.currentPage = response.data?.pagination?.page || 1;
+          this.totalPages = response.data?.pagination?.totalPages || 1;
+          this.totalReports = response.data?.pagination?.totalCount || 0;
           
           console.log('📋 Component reports array set:', this.reports);
           console.log('📋 Component reports length:', this.reports.length);
@@ -345,13 +345,13 @@ export class ReportsNewComponent implements OnInit {
       
       // Apply bank filter
       if (this.filterBank) {
-        filtered = filtered.filter(report => report.bank_code === this.filterBank);
+        filtered = filtered.filter(report => report.bankCode === this.filterBank);
       }
       
       // Apply property type filter
       if (this.filterPropertyType) {
         filtered = filtered.filter(report => 
-          report.template_id === this.filterPropertyType ||
+          report.templateId === this.filterPropertyType ||
           (report.report_data && report.report_data.property_type === this.filterPropertyType)
         );
       }
@@ -360,7 +360,7 @@ export class ReportsNewComponent implements OnInit {
       if (this.filterCreatedBy) {
         const searchTerm = this.filterCreatedBy.toLowerCase();
         filtered = filtered.filter(report => 
-          report.created_by_email.toLowerCase().includes(searchTerm)
+          report.created_by_email?.toLowerCase().includes(searchTerm)
         );
       }
       
@@ -369,7 +369,7 @@ export class ReportsNewComponent implements OnInit {
         const searchTerm = this.filterReference.toLowerCase();
         filtered = filtered.filter(report => 
           (report.reference_number && report.reference_number.toLowerCase().includes(searchTerm)) ||
-          report.report_id.toLowerCase().includes(searchTerm)
+          report.report_id?.toLowerCase().includes(searchTerm)
         );
       }
       
@@ -478,9 +478,14 @@ export class ReportsNewComponent implements OnInit {
     
     const confirmMessage = `Are you sure you want to delete the report for "${report.property_address}"?`;
     if (confirm(confirmMessage)) {
-      console.log('🗑️ Deleting report:', report.report_id);
+      const reportId = report.report_id || report.reportId || report.id;
+      if (!reportId) {
+        alert('Cannot delete report: Invalid report ID');
+        return;
+      }
+      console.log('🗑️ Deleting report:', reportId);
       
-      this.reportsService.deleteReport(report.report_id).subscribe({
+      this.reportsService.deleteReport(reportId).subscribe({
         next: (success) => {
           if (success) {
             console.log('✅ Report deleted successfully');
@@ -715,14 +720,14 @@ export class ReportsNewComponent implements OnInit {
       'apartment': 'Apartment'
     };
     
-    const mappedType = templateMap[report.template_id];
-    if (mappedType) {
-      return mappedType;
-    }
-    
-    // If template_id exists but not in map, use it as-is (cleaned up)
-    if (report.template_id) {
-      return report.template_id.replace(/-/g, ' ')
+    const templateId = report.template_id || report.templateId;
+    if (templateId) {
+      const mappedType = templateMap[templateId];
+      if (mappedType) {
+        return mappedType;
+      }
+      // If template_id exists but not in map, use it as-is (cleaned up)
+      return templateId.replace(/-/g, ' ')
                                .replace(/([a-z])([A-Z])/g, '$1 $2')
                                .replace(/^\w/, c => c.toUpperCase());
     }

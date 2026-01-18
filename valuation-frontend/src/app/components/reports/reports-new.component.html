@@ -160,7 +160,7 @@
           </div>
           
           <div class="col-bank">
-            <span class="bank-code">{{ report.bank_code }}</span>
+            <span class="bank-code">{{ report.bankCode }}</span>
           </div>
           
           <div class="col-property-type">
@@ -168,8 +168,8 @@
           </div>
           
           <div class="col-status">
-            <span class="status-badge" [class]="getStatusClass(report.status)">
-              {{ getStatusDisplayName(report.status) }}
+            <span class="status-badge" [class]="report.status ? getStatusClass(report.status) : 'status-draft'">
+              {{ report.status ? getStatusDisplayName(report.status) : 'Draft' }}
             </span>
           </div>
           
@@ -178,11 +178,11 @@
           </div>
           
           <div class="col-created">
-            <div class="date">{{ formatDate(report.created_at) }}</div>
+            <div class="date">{{ report.created_at ? formatDate(report.created_at) : 'N/A' }}</div>
           </div>
           
           <div class="col-updated">
-            <div class="date">{{ formatDate(report.updated_at) }}</div>
+            <div class="date">{{ report.updated_at ? formatDate(report.updated_at) : 'N/A' }}</div>
           </div>
           
           <div class="col-actions">

@@ -192,6 +192,21 @@ export interface BankSpecificTab {
   sections?: BankSpecificSection[];
 }
 
+export interface DocumentType {
+  documentId: string;
+  documentName: string;
+  technicalName: string;
+  fieldType: string;
+  description: string;
+  applicablePropertyTypes: string[];
+  applicableBanks: string[];
+  isRequired: boolean;
+  isActive: boolean;
+  sortOrder: number;
+  validation?: any;
+  helpText?: string;
+}
+
 export interface AggregatedTemplateResponse {
   templateInfo: {
     templateId: string;
@@ -203,6 +218,7 @@ export interface AggregatedTemplateResponse {
   };
   commonFields: TemplateField[];
   bankSpecificTabs: BankSpecificTab[];
+  documentTypes: DocumentType[];
   aggregatedAt: string;
 }
 

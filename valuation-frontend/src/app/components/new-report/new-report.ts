@@ -252,7 +252,18 @@ export class NewReport implements OnInit, OnDestroy {
   }
 
   continueFromStep2() {
+    console.log('🔵 continueFromStep2() called');
+    console.log('📊 Current state:', {
+      step: this.step,
+      selectedStartOption: this.selectedStartOption,
+      selectedPropertyType: this.selectedPropertyType,
+      selectedBank: this.selectedBank?.bankCode,
+      selectedTemplate: this.selectedTemplate?.templateCode,
+      currentOrgShortName: this.currentOrgShortName
+    });
+    
     if (!this.canProceedFromStep2()) {
+      console.warn('⚠️ Cannot proceed - canProceedFromStep2() returned false');
       return;
     }
 
@@ -262,12 +273,24 @@ export class NewReport implements OnInit, OnDestroy {
       this.selectedTemplate = this.availableTemplates.find(
         t => t.propertyType === this.selectedPropertyType
       ) || null;
+      console.log('📋 Auto-selected template for property type:', this.selectedTemplate?.templateCode);
     }
 
     if (this.selectedStartOption === 'pdf') {
+      console.log('➡️ PDF option - going to step 3');
       this.step = 3; // Go to PDF upload step
+    } else if (this.selectedStartOption === 'blank') {
+      // For blank template, go directly to form (skip confirmation step)
+      console.log('➡️ Blank template selected - going directly to form');
+      console.log('🔍 Before calling proceedToForm:');
+      console.log('  - selectedBank:', this.selectedBank);
+      console.log('  - currentOrgShortName:', this.currentOrgShortName);
+      this.proceedToForm();
+      console.log('✅ proceedToForm() completed');
+      return;
     } else {
-      this.step = 4; // Skip PDF upload and go directly to final step
+      console.log('➡️ Template option - going to step 4');
+      this.step = 4; // Go to final confirmation step (for custom template)
     }
     
     console.log('➡️ Continuing from step 2 to step:', this.step);
@@ -353,7 +376,13 @@ export class NewReport implements OnInit, OnDestroy {
   }
 
   proceedToForm() {
+    console.log('🔵 proceedToForm() called');
+    console.log('🔍 Validation check:');
+    console.log('  - selectedBank:', this.selectedBank);
+    console.log('  - currentOrgShortName:', this.currentOrgShortName);
+    
     if (this.selectedBank && this.currentOrgShortName) {
+      console.log('✅ Validation passed - proceeding with navigation');
       console.log('🚀 Proceeding to form with bank:', this.selectedBank.bankCode);
       console.log('📍 Organization:', this.currentOrgShortName);
       
@@ -366,6 +395,7 @@ export class NewReport implements OnInit, OnDestroy {
       // Add property type from our selection
       if (this.selectedPropertyType) {
         queryParams.propertyType = this.selectedPropertyType;
+        console.log('🏠 Property type:', this.selectedPropertyType);
       }
       
       if (this.selectedTemplate) {
@@ -403,6 +433,7 @@ export class NewReport implements OnInit, OnDestroy {
       // Add start option for form initialization
       if (this.selectedStartOption) {
         queryParams.startOption = this.selectedStartOption;
+        console.log('🎯 Start option:', this.selectedStartOption);
       }
 
       // Add extracted PDF fields if available
@@ -416,9 +447,15 @@ export class NewReport implements OnInit, OnDestroy {
       console.log('🔗 Navigating to organization-aware route:', createRoute);
       console.log('📋 Query params:', queryParams);
       
-      this.router.navigate([createRoute], { queryParams });
+      this.router.navigate([createRoute], { queryParams })
+        .then(success => {
+          console.log('✅ Navigation result:', success);
+        })
+        .catch(error => {
+          console.error('❌ Navigation error:', error);
+        });
     } else {
-      console.error('❌ No bank selected or organization context missing - cannot proceed');
+      console.error('❌ Validation failed - cannot proceed');
       console.error('Bank:', this.selectedBank);
       console.error('Organization:', this.currentOrgShortName);
     }

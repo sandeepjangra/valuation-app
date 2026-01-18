@@ -3,6 +3,10 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { map, catchError, tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
+import { environment } from '../../environments/environment';
+import { PermissionsService } from './permissions.service';
+import { ActivityLoggingService } from './activity-logging.service';
+import { CommonActions } from '../models/activity-log.model';
 
 export interface User {
   _id?: string;
@@ -51,7 +55,7 @@ export interface LoginResponse {
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://localhost:8000/api/auth';
+  private apiUrl = `${environment.apiUrl}/auth`;
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   private tokenSubject = new BehaviorSubject<string | null>(null);
 
@@ -60,7 +64,9 @@ export class AuthService {
 
   constructor(
     private http: HttpClient,
-    private router: Router
+    private router: Router,
+    private permissionsService: PermissionsService,
+    private activityLoggingService: ActivityLoggingService
   ) {
     // Load user and token from localStorage on service initialization
     this.loadStoredAuth();
@@ -75,6 +81,9 @@ export class AuthService {
         const user = JSON.parse(userStr);
         this.tokenSubject.next(token);
         this.currentUserSubject.next(user);
+        
+        // Load permissions for this user
+        this.permissionsService.setUserPermissions(user);
       } catch (error) {
         console.error('Error parsing stored user data:', error);
         this.clearStoredAuth();
@@ -89,6 +98,9 @@ export class AuthService {
     localStorage.removeItem('current_user');
     this.tokenSubject.next(null);
     this.currentUserSubject.next(null);
+    
+    // Clear permissions
+    this.permissionsService.clearPermissions();
   }
 
   login(credentials: LoginRequest): Observable<LoginResponse> {
@@ -105,6 +117,20 @@ export class AuthService {
             // Update subjects
             this.tokenSubject.next(response.data.access_token);
             this.currentUserSubject.next(response.data.user);
+            
+            // Load user permissions
+            this.permissionsService.setUserPermissions(response.data.user);
+            
+            // Log login activity
+            this.activityLoggingService.logAuthActivity(
+              response.data.user.user_id || response.data.user._id || 'unknown',
+              response.data.user.org_short_name || 'UNKNOWN',
+              CommonActions.AUTHENTICATION.LOGIN,
+              `User ${response.data.user.email} logged in successfully`,
+              { role: response.data.user.role, email: response.data.user.email }
+            );
+            
+            console.log('✅ User logged in:', response.data.user.email, 'Role:', response.data.user.role);
           }
         }),
         catchError(error => {
@@ -116,6 +142,18 @@ export class AuthService {
 
   logout(): Observable<any> {
     const headers = this.getAuthHeaders();
+    const currentUser = this.currentUserSubject.value;
+    
+    // Log logout activity before clearing auth
+    if (currentUser) {
+      this.activityLoggingService.logAuthActivity(
+        currentUser.user_id || currentUser._id!,
+        currentUser.org_short_name || 'UNKNOWN',
+        CommonActions.AUTHENTICATION.LOGOUT,
+        `User ${currentUser.email} logged out`,
+        { role: currentUser.role, email: currentUser.email }
+      );
+    }
     
     return this.http.post(`${this.apiUrl}/logout`, {}, { headers })
       .pipe(
@@ -141,6 +179,9 @@ export class AuthService {
         tap(user => {
           localStorage.setItem('current_user', JSON.stringify(user));
           this.currentUserSubject.next(user);
+          
+          // Reload permissions
+          this.permissionsService.setUserPermissions(user);
         }),
         catchError(error => {
           if (error.status === 401) {

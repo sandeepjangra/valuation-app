@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Valuation App - Enhanced Start Servers Script with Health Checks
-# This script starts both backend and frontend with proper health monitoring
+# This script starts both .NET backend and Angular frontend with proper health monitoring
 
 set -e  # Exit on error
 
@@ -76,25 +76,16 @@ kill_port() {
     fi
 }
 
-# Function to check Python virtual environment
-check_venv() {
-    if [ ! -d "${PROJECT_ROOT}/valuation_env" ]; then
-        print_error "Virtual environment not found at ${PROJECT_ROOT}/valuation_env"
-        print_info "Please create it first: python3 -m venv valuation_env"
+# Function to check .NET SDK
+check_dotnet() {
+    if ! command -v dotnet &> /dev/null; then
+        print_error ".NET SDK not found"
+        print_info "Please install .NET 8.0 SDK from https://dotnet.microsoft.com/download"
         return 1
     fi
     
-    # Check if required packages are installed
-    if ! source "${PROJECT_ROOT}/valuation_env/bin/activate" 2>/dev/null; then
-        print_error "Failed to activate virtual environment"
-        return 1
-    fi
-    
-    if ! python -c "import fastapi" 2>/dev/null; then
-        print_warning "FastAPI not found in venv. Installing dependencies..."
-        pip install -r "${PROJECT_ROOT}/requirements.txt" > /dev/null 2>&1 || true
-    fi
-    
+    local dotnet_version=$(dotnet --version)
+    print_success ".NET SDK version: $dotnet_version"
     return 0
 }
 
@@ -118,8 +109,8 @@ echo ""
 print_header "Step 1: Cleanup"
 print_info "Stopping any existing servers..."
 pkill -f "ng serve" 2>/dev/null || true
-pkill -f "uvicorn" 2>/dev/null || true
-pkill -f "python.*main.py" 2>/dev/null || true
+pkill -f "dotnet run" 2>/dev/null || true
+pkill -f "ValuationApp.API" 2>/dev/null || true
 kill_port $BACKEND_PORT
 kill_port $FRONTEND_PORT
 print_success "Cleanup complete"
@@ -129,18 +120,17 @@ echo ""
 print_header "Step 2: Pre-flight Checks"
 
 # Verify we're in the correct directory
-if [ ! -f "backend/main.py" ]; then
-    print_error "Cannot find backend/main.py - are you in the correct directory?"
+if [ ! -d "backend-dotnet/ValuationApp.API" ]; then
+    print_error "Cannot find backend-dotnet/ValuationApp.API - are you in the correct directory?"
     print_info "Current directory: $(pwd)"
-    print_info "Expected directory: Project root with backend/ and valuation-frontend/ folders"
+    print_info "Expected directory: Project root with backend-dotnet/ and valuation-frontend/ folders"
     exit 1
 fi
 print_success "Project directory verified"
 
-if ! check_venv; then
+if ! check_dotnet; then
     exit 1
 fi
-print_success "Python virtual environment OK"
 
 if ! check_node_modules; then
     exit 1
@@ -149,7 +139,7 @@ print_success "Node modules OK"
 echo ""
 
 # Step 3: Start Backend
-print_header "Step 3: Starting Backend Server"
+print_header "Step 3: Starting .NET Backend Server"
 print_info "Port: $BACKEND_PORT"
 print_info "Log:  $BACKEND_LOG"
 
@@ -165,14 +155,13 @@ else
     exit 1
 fi
 
-source valuation_env/bin/activate
-cd backend
+cd backend-dotnet/ValuationApp.API
 
 # Clear old log
 > "$BACKEND_LOG"
 
-# Start backend with uvicorn
-nohup uvicorn main:app --host 0.0.0.0 --port $BACKEND_PORT --reload > "$BACKEND_LOG" 2>&1 &
+# Start backend with dotnet run
+nohup dotnet run --urls "http://localhost:$BACKEND_PORT" > "$BACKEND_LOG" 2>&1 &
 BACKEND_PID=$!
 
 print_info "Backend PID: $BACKEND_PID"
@@ -184,7 +173,7 @@ print_info "Check startup: tail -f $BACKEND_LOG"
 echo ""
 
 # Quick check - wait up to 5 seconds for initial startup
-sleep 2
+sleep 3
 if ! kill -0 $BACKEND_PID 2>/dev/null; then
     print_error "Backend process died immediately! Check logs:"
     tail -20 "$BACKEND_LOG"
@@ -193,7 +182,7 @@ fi
 
 # Try a quick health check (don't wait long)
 QUICK_CHECK=0
-for i in {1..3}; do
+for i in {1..5}; do
     if curl -s -f "$BACKEND_HEALTH_URL" > /dev/null 2>&1; then
         print_success "Backend is responding!"
         QUICK_CHECK=1
@@ -204,7 +193,7 @@ done
 
 if [ $QUICK_CHECK -eq 0 ]; then
     print_warning "Backend is still starting up (this is normal)"
-    print_info "It may take 5-10 seconds to be fully ready"
+    print_info "It may take 10-15 seconds to be fully ready"
 fi
 
 echo ""
@@ -269,11 +258,11 @@ echo "  Frontend: tail -f $FRONTEND_LOG"
 echo ""
 
 print_info "🛑 Stop Servers:"
-echo "  ./scripts/server/stop-servers.sh"
+echo "  ./stop.sh or ./scripts/server/stop-servers.sh"
 echo ""
 
 print_info "🔍 Check Status:"
-echo "  ps aux | grep -E '(uvicorn|ng serve)' | grep -v grep"
+echo "  ps aux | grep -E '(dotnet run|ng serve)' | grep -v grep"
 echo ""
 
 # Wait a few seconds and do a final health check
@@ -286,7 +275,8 @@ if curl -s -f "$BACKEND_HEALTH_URL" > /dev/null 2>&1; then
     print_info "🌐 API Endpoints Available:"
     echo "  - Health:           http://localhost:$BACKEND_PORT/api/health"
     echo "  - Banks:            http://localhost:$BACKEND_PORT/api/banks"
-    echo "  - Custom Templates: http://localhost:$BACKEND_PORT/api/custom-templates"
+    echo "  - Templates:        http://localhost:$BACKEND_PORT/api/templates"
+    echo "  - Organizations:    http://localhost:$BACKEND_PORT/api/organizations"
 else
     print_warning "⚠️  Backend is still initializing (check logs)"
 fi
