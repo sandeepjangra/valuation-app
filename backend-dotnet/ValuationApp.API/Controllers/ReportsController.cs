@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using ValuationApp.Common.Models;
 using ValuationApp.Core.Entities;
 using ValuationApp.Core.Interfaces;
+using System.Text.Json;
+using MongoDB.Bson;
 
 namespace ValuationApp.API.Controllers;
 
@@ -335,6 +337,199 @@ public class ReportsController : ControllerBase
                 "Failed to retrieve assigned reports. Please try again later."
             ));
         }
+    }
+
+    /// <summary>
+    /// Save report as draft (NO VALIDATION)
+    /// POST /api/org/{orgShortName}/reports/draft
+    /// Allows saving incomplete data, no field validation
+    /// </summary>
+    [HttpPost("draft")]
+    public async Task<IActionResult> SaveDraft(string orgShortName, [FromBody] Report report)
+    {
+        try
+        {
+            _logger.LogInformation("Saving draft report for organization {OrgShortName}", orgShortName);
+
+            // Get organization ID
+            var organization = await _organizationService.GetByShortNameAsync(orgShortName);
+            if (organization == null)
+            {
+                return NotFound(ApiResponse<object>.ErrorResponse(
+                    $"Organization '{orgShortName}' not found"
+                ));
+            }
+
+            // Set required fields for draft
+            report.OrganizationId = organization.Id!;
+            report.OrgShortName = orgShortName;
+            report.Status = "draft"; // Force draft status
+            report.CreatedAt = DateTime.UtcNow;
+            report.UpdatedAt = DateTime.UtcNow;
+            
+            // Convert JsonElement dictionaries to proper objects for MongoDB serialization
+            report.ReportData = ConvertJsonElementDictionary(report.ReportData);
+            report.FormData = ConvertJsonElementDictionary(report.FormData);
+
+            // No validation - accept any data
+            var reportId = await _reportService.CreateReportAsync(orgShortName, report);
+
+            _logger.LogInformation("Draft report {ReportId} saved successfully", reportId);
+
+            return CreatedAtAction(
+                nameof(GetReport),
+                new { orgShortName, reportId },
+                ApiResponse<object>.SuccessResponse(
+                    new { report_id = reportId, status = "draft" },
+                    "Draft saved successfully"
+                )
+            );
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error saving draft report for organization {OrgShortName}", orgShortName);
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(
+                "Failed to save draft. Please try again later."
+            ));
+        }
+    }
+
+    /// <summary>
+    /// Update existing draft report (NO VALIDATION)
+    /// PUT /api/org/{orgShortName}/reports/draft/{reportId}
+    /// </summary>
+    [HttpPut("draft/{reportId}")]
+    public async Task<IActionResult> UpdateDraft(
+        string orgShortName, 
+        string reportId, 
+        [FromBody] Report report)
+    {
+        try
+        {
+            _logger.LogInformation("Updating draft report {ReportId} for organization {OrgShortName}", 
+                reportId, orgShortName);
+
+            // Verify report exists and is a draft
+            var existingReport = await _reportService.GetReportByIdAsync(orgShortName, reportId);
+            if (existingReport == null)
+            {
+                return NotFound(ApiResponse<object>.ErrorResponse(
+                    $"Report '{reportId}' not found"
+                ));
+            }
+
+            // Merge new data into existing report to preserve _id and other system fields
+            existingReport.BankCode = report.BankCode;
+            existingReport.PropertyType = report.PropertyType;
+            existingReport.ApplicantName = report.ApplicantName;
+            
+            // Convert JsonElement dictionaries to proper objects for MongoDB serialization
+            existingReport.ReportData = ConvertJsonElementDictionary(report.ReportData);
+            existingReport.FormData = ConvertJsonElementDictionary(report.FormData);
+            
+            existingReport.Status = "draft"; // Keep as draft
+            existingReport.UpdatedAt = DateTime.UtcNow;
+
+            // No validation - accept any data
+            var success = await _reportService.UpdateReportAsync(orgShortName, reportId, existingReport);
+
+            if (!success)
+            {
+                return NotFound(ApiResponse<object>.ErrorResponse(
+                    $"Failed to update report '{reportId}'"
+                ));
+            }
+
+            return Ok(ApiResponse<object>.SuccessResponse(
+                new { report_id = reportId, status = "draft" },
+                "Draft updated successfully"
+            ));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating draft report {ReportId}", reportId);
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(
+                "Failed to update draft. Please try again later."
+            ));
+        }
+    }
+
+    /// <summary>
+    /// Get all draft reports for current user
+    /// GET /api/org/{orgShortName}/reports/drafts
+    /// </summary>
+    [HttpGet("drafts")]
+    public async Task<IActionResult> GetDrafts(
+        string orgShortName,
+        [FromQuery] string? userEmail = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 50)
+    {
+        try
+        {
+            _logger.LogInformation("Getting draft reports for organization {OrgShortName}", orgShortName);
+
+            var (reports, totalCount) = await _reportService.GetReportsAsync(
+                orgShortName, "draft", null, page, pageSize);
+
+            // Filter by user if email provided
+            if (!string.IsNullOrEmpty(userEmail))
+            {
+                reports = reports.Where(r => r.CreatedByEmail == userEmail).ToList();
+            }
+
+            return Ok(ApiResponse<object>.SuccessResponse(
+                new { reports, total_count = totalCount },
+                $"Retrieved {reports.Count} draft reports"
+            ));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting draft reports for organization {OrgShortName}", orgShortName);
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(
+                "Failed to retrieve drafts. Please try again later."
+            ));
+        }
+    }
+
+    /// <summary>
+    /// Convert Dictionary<string, object> with JsonElement values to proper objects
+    /// This handles ASP.NET Core's JSON deserialization which creates JsonElement objects
+    /// </summary>
+    private Dictionary<string, object>? ConvertJsonElementDictionary(Dictionary<string, object>? dict)
+    {
+        if (dict == null) return null;
+
+        var result = new Dictionary<string, object>();
+        foreach (var (key, value) in dict)
+        {
+            result[key] = ConvertJsonElement(value);
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Recursively convert JsonElement to proper .NET types
+    /// </summary>
+    private object ConvertJsonElement(object value)
+    {
+        if (value is JsonElement element)
+        {
+            return element.ValueKind switch
+            {
+                JsonValueKind.String => element.GetString() ?? string.Empty,
+                JsonValueKind.Number => element.TryGetInt64(out var longValue) ? longValue : element.GetDouble(),
+                JsonValueKind.True => true,
+                JsonValueKind.False => false,
+                JsonValueKind.Null => BsonNull.Value,
+                JsonValueKind.Array => element.EnumerateArray().Select(e => ConvertJsonElement(e)).ToList(),
+                JsonValueKind.Object => element.EnumerateObject().ToDictionary(
+                    prop => prop.Name,
+                    prop => ConvertJsonElement(prop.Value)),
+                _ => value
+            };
+        }
+        return value;
     }
 }
 

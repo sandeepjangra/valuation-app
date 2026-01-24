@@ -41,6 +41,8 @@ export class OrganizationService {
       description: backendOrg.description,
       contact_email: backendOrg.contactEmail || backendOrg.contact_email,
       phone_number: backendOrg.contactPhone || backendOrg.phone_number,
+      report_reference_initials: backendOrg.reportReferenceInitials || backendOrg.report_reference_initials,
+      last_reference_number: backendOrg.lastReferenceNumber || backendOrg.last_reference_number || 0,
       subscription_plan: 'basic',
       max_users: 25,
       max_reports: 100,

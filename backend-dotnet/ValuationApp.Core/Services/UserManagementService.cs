@@ -11,15 +11,18 @@ public class UserManagementService : IUserManagementService
 {
     private readonly IUserRepository _userRepository;
     private readonly IUserProfileRepository _userProfileRepository;
+    private readonly IOrganizationRepository _organizationRepository;
     private readonly ILogger<UserManagementService> _logger;
 
     public UserManagementService(
         IUserRepository userRepository,
         IUserProfileRepository userProfileRepository,
+        IOrganizationRepository organizationRepository,
         ILogger<UserManagementService> logger)
     {
         _userRepository = userRepository;
         _userProfileRepository = userProfileRepository;
+        _organizationRepository = organizationRepository;
         _logger = logger;
     }
 
@@ -75,9 +78,17 @@ public class UserManagementService : IUserManagementService
                 throw new InvalidOperationException($"User with email {user.Email} already exists in organization {orgShortName}");
             }
 
-            // Generate user ID
+            // Get organization to populate OrganizationId
+            var organization = await _organizationRepository.GetByShortNameAsync(orgShortName);
+            if (organization == null)
+            {
+                throw new InvalidOperationException($"Organization {orgShortName} not found");
+            }
+
+            // Generate user ID and populate fields
             user.UserId = GenerateUserId(orgShortName);
             user.OrgShortName = orgShortName;
+            user.OrganizationId = organization.Id ?? string.Empty; // Populate OrganizationId
             user.Email = user.Email.ToLower();
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
             user.CreatedAt = DateTime.UtcNow;

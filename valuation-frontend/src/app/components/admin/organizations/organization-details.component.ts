@@ -23,41 +23,18 @@ interface User {
 
 interface Organization {
   _id: string;
-  org_short_name: string;
-  name: string;
-  type?: string;
+  org_short_name: string; // maps to shortName in backend
+  name: string; // maps to fullName in backend
   description?: string;
-  contact_email?: string;
-  phone_number?: string;
-  address?: {
-    street?: string;
-    city?: string;
-    state?: string;
-    postal_code?: string;
-    country?: string;
-  };
-  subscription_plan?: string;
-  max_users?: number;
-  max_reports?: number;
-  is_active: boolean;
-  created_at: string | Date;
-  updated_at: string | Date;
-  total_users?: number;
-  total_reports?: number;
+  contact_email?: string; // maps to contactEmail
+  phone_number?: string; // maps to contactPhone
+  report_reference_initials?: string; // maps to reportReferenceInitials
+  is_active: boolean; // maps to isActive
+  created_at: string | Date; // maps to createdAt
+  updated_at: string | Date; // maps to updatedAt
+  last_reference_number?: number; // maps to lastReferenceNumber
   user_count?: number;
   status?: string;
-  settings?: {
-    subscription_plan?: string;
-    max_users?: number;
-    max_reports_per_month?: number;
-    max_storage_gb?: number;
-    report_reference_initials?: string;
-  };
-  contact_info?: {
-    email?: string;
-    phone?: string;
-    address?: string;
-  };
   users?: User[];
 }
 
@@ -120,12 +97,12 @@ interface Organization {
                 <span class="value">{{ organization()!.org_short_name }}</span>
               </div>
               <div class="detail-row">
-                <span class="label">Plan:</span>
-                <span class="value">{{ formatPlan(organization()!.settings?.subscription_plan) }}</span>
+                <span class="label">Description:</span>
+                <span class="value">{{ organization()!.description || 'N/A' }}</span>
               </div>
               <div class="detail-row">
                 <span class="label">Users:</span>
-                <span class="value">{{ organization()!.user_count }} / {{ organization()!.settings?.max_users || 25 }}</span>
+                <span class="value">{{ organization()!.user_count || 0 }}</span>
               </div>
               <div class="detail-row">
                 <span class="label">Created:</span>
@@ -142,15 +119,11 @@ interface Organization {
             <div class="card-content">
               <div class="detail-row">
                 <span class="label">Email:</span>
-                <span class="value">{{ organization()!.contact_info?.email || 'N/A' }}</span>
+                <span class="value">{{ organization()!.contact_email || 'N/A' }}</span>
               </div>
               <div class="detail-row">
                 <span class="label">Phone:</span>
-                <span class="value">{{ organization()!.contact_info?.phone || 'N/A' }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="label">Address:</span>
-                <span class="value">{{ organization()!.contact_info?.address || 'N/A' }}</span>
+                <span class="value">{{ organization()!.phone_number || 'N/A' }}</span>
               </div>
             </div>
           </div>
@@ -163,35 +136,18 @@ interface Organization {
             <div class="card-content">
               <div class="detail-row">
                 <span class="label">Reference Initials:</span>
-                <span class="value">{{ organization()!.settings?.report_reference_initials || 'Not configured' }}</span>
+                <span class="value">{{ organization()!.report_reference_initials || 'Not configured' }}</span>
               </div>
-              @if (organization()!.settings?.report_reference_initials) {
+              @if (organization()!.report_reference_initials) {
+                <div class="detail-row">
+                  <span class="label">Last Report Number:</span>
+                  <span class="value">{{ organization()!.last_reference_number || 0 }}</span>
+                </div>
                 <div class="detail-row">
                   <span class="label">Next Report Number:</span>
-                  <span class="value">{{ organization()!.settings!.report_reference_initials }}/0001/{{ getCurrentDate() }}</span>
+                  <span class="value">{{ organization()!.report_reference_initials }}/{{ formatReportNumber((organization()!.last_reference_number || 0) + 1) }}/{{ getCurrentDate() }}</span>
                 </div>
               }
-            </div>
-          </div>
-
-          <!-- Subscription Details -->
-          <div class="card">
-            <div class="card-header">
-              <h2>💳 Subscription Details</h2>
-            </div>
-            <div class="card-content">
-              <div class="detail-row">
-                <span class="label">Plan:</span>
-                <span class="value">{{ formatPlan(organization()!.settings?.subscription_plan) }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="label">Reports/Month:</span>
-                <span class="value">{{ organization()!.settings?.max_reports_per_month || 100 }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="label">Storage:</span>
-                <span class="value">{{ organization()!.settings?.max_storage_gb || 10 }} GB</span>
-              </div>
             </div>
           </div>
         </div>
@@ -272,7 +228,7 @@ interface Organization {
             <div class="form-group">
               <label>Organization Name *</label>
               <input type="text" [(ngModel)]="editForm.org_name" name="org_name" required
-                     placeholder="e.g., SK Tindwal Properties">
+                     placeholder="e.g., System Administration">
               <small class="field-note">Display name for the organization</small>
             </div>
 
@@ -283,71 +239,37 @@ interface Organization {
               <small class="field-note">Used for database and URLs - cannot be modified</small>
             </div>
 
+            <div class="form-group">
+              <label>Description</label>
+              <textarea [(ngModel)]="editForm.description" name="description" rows="3"
+                        placeholder="Brief description of the organization"></textarea>
+            </div>
+
             <h3 class="section-title">Contact Information</h3>
 
             <div class="form-group">
-              <label>Contact Email *</label>
-              <input type="email" [(ngModel)]="editForm.contact_info.email" name="email" required
+              <label>Contact Email</label>
+              <input type="email" [(ngModel)]="editForm.contact_email" name="contact_email"
                      placeholder="contact@organization.com">
             </div>
 
             <div class="form-group">
               <label>Contact Phone</label>
-              <input type="tel" [(ngModel)]="editForm.contact_info.phone" name="phone"
+              <input type="tel" [(ngModel)]="editForm.contact_phone" name="contact_phone"
                      placeholder="+91-1234567890">
-            </div>
-
-            <div class="form-group">
-              <label>Address</label>
-              <textarea [(ngModel)]="editForm.contact_info.address" name="address" rows="3"
-                        placeholder="Street, City, State, ZIP"></textarea>
             </div>
 
             <h3 class="section-title">Report Reference Configuration</h3>
 
             <div class="form-group">
               <label>Report Reference Initials</label>
-              <input type="text" [(ngModel)]="editForm.settings.report_reference_initials" 
+              <input type="text" [(ngModel)]="editForm.report_reference_initials" 
                      name="report_reference_initials"
                      placeholder="e.g., CEV/RVO"
                      maxlength="50">
               <small class="field-note">
                 Prefix for report reference numbers. Example: "CEV/RVO" will generate reports like "CEV/RVO/0001/02122025"
               </small>
-            </div>
-
-            <h3 class="section-title">Subscription Settings</h3>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label>Max Users *</label>
-                <input type="number" [(ngModel)]="editForm.settings.max_users" name="max_users" 
-                       required min="1" placeholder="50">
-              </div>
-
-              <div class="form-group">
-                <label>Subscription Plan *</label>
-                <select [(ngModel)]="editForm.settings.subscription_plan" name="plan" required>
-                  <option value="basic">Basic</option>
-                  <option value="premium">Premium</option>
-                  <option value="professional">Professional</option>
-                  <option value="enterprise">Enterprise</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label>Max Reports/Month *</label>
-                <input type="number" [(ngModel)]="editForm.settings.max_reports_per_month" 
-                       name="max_reports" required min="1" placeholder="500">
-              </div>
-
-              <div class="form-group">
-                <label>Max Storage (GB) *</label>
-                <input type="number" [(ngModel)]="editForm.settings.max_storage_gb" 
-                       name="max_storage" required min="1" placeholder="50">
-              </div>
             </div>
 
             <div class="dialog-actions">
@@ -949,18 +871,10 @@ export class OrganizationDetailsComponent implements OnInit {
 
   editForm = {
     org_name: '',
-    contact_info: {
-      email: '',
-      phone: '',
-      address: ''
-    },
-    settings: {
-      subscription_plan: 'basic',
-      max_users: 10,
-      max_reports_per_month: 100,
-      max_storage_gb: 10,
-      report_reference_initials: ''  // NEW: Report reference initials
-    }
+    description: '',
+    contact_email: '',
+    contact_phone: '',
+    report_reference_initials: ''
   };
 
   ngOnInit() {
@@ -978,24 +892,12 @@ export class OrganizationDetailsComponent implements OnInit {
       next: (org) => {
         console.log('📥 Loaded organization from service:', org);
         
-        // Transform to include contact_info and users array
+        // Organization is already transformed by the service
         const transformedOrg: Organization = {
           ...org,
-          contact_info: {
-            email: org.contact_email,
-            phone: org.phone_number,
-            address: org.address ? `${org.address.street}, ${org.address.city}, ${org.address.state}` : undefined
-          },
-          user_count: org.total_users || 0,
-          users: [] as User[], // Will be populated separately
-          status: org.is_active ? 'active' : 'inactive',
-          settings: {
-            subscription_plan: org.subscription_plan,
-            max_users: org.max_users,
-            max_reports_per_month: org.max_reports,
-            max_storage_gb: 100, // Default value
-            report_reference_initials: (org as any).reportReferenceInitials
-          }
+          user_count: 0,
+          users: [],
+          status: org.is_active ? 'active' : 'inactive'
         };
         
         console.log('✅ Transformed organization:', transformedOrg);
@@ -1047,8 +949,7 @@ export class OrganizationDetailsComponent implements OnInit {
             this.organization.set({
               ...org,
               users,
-              user_count: users.length,
-              total_users: users.length
+              user_count: users.length
             });
           }
         }
@@ -1145,23 +1046,16 @@ export class OrganizationDetailsComponent implements OnInit {
     const org = this.organization();
     if (!org) return;
 
-    // Pre-populate form with current values
+    // Pre-populate form with current values from organization
     this.editForm = {
       org_name: org.name,
-      contact_info: {
-        email: org.contact_info?.email || '',
-        phone: org.contact_info?.phone || '',
-        address: org.contact_info?.address || ''
-      },
-      settings: {
-        subscription_plan: org.settings?.subscription_plan || 'basic',
-        max_users: org.settings?.max_users || 10,
-        max_reports_per_month: org.settings?.max_reports_per_month || 100,
-        max_storage_gb: org.settings?.max_storage_gb || 10,
-        report_reference_initials: org.settings?.report_reference_initials || ''  // NEW
-      }
+      description: org.description || '',
+      contact_email: org.contact_email || '',
+      contact_phone: org.phone_number || '',
+      report_reference_initials: org.report_reference_initials || ''
     };
 
+    console.log('📝 Edit form initialized:', this.editForm);
     this.showEdit.set(true);
   }
 
@@ -1200,17 +1094,23 @@ export class OrganizationDetailsComponent implements OnInit {
       updatePayload.fullName = this.editForm.org_name;
     }
     
-    if (this.editForm.contact_info?.email !== org.contact_email) {
-      updatePayload.contactEmail = this.editForm.contact_info?.email;
+    if (this.editForm.description !== org.description) {
+      updatePayload.description = this.editForm.description;
     }
     
-    if (this.editForm.contact_info?.phone !== org.phone_number) {
-      updatePayload.contactPhone = this.editForm.contact_info?.phone;
+    if (this.editForm.contact_email !== org.contact_email) {
+      updatePayload.contactEmail = this.editForm.contact_email;
+    }
+    
+    if (this.editForm.contact_phone !== org.phone_number) {
+      updatePayload.contactPhone = this.editForm.contact_phone;
     }
 
-    if (this.editForm.settings?.report_reference_initials !== org.settings?.report_reference_initials) {
-      updatePayload.reportReferenceInitials = this.editForm.settings?.report_reference_initials;
+    if (this.editForm.report_reference_initials !== org.report_reference_initials) {
+      updatePayload.reportReferenceInitials = this.editForm.report_reference_initials;
     }
+
+    console.log('💾 Saving organization with payload:', updatePayload);
 
     this.http.patch<any>(
       `${this.API_BASE}/organizations/${org.org_short_name}`,
@@ -1319,6 +1219,11 @@ export class OrganizationDetailsComponent implements OnInit {
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const year = now.getFullYear();
     return `${day}${month}${year}`;
+  }
+
+  formatReportNumber(num: number): string {
+    // Format number with leading zeros (e.g., 4 -> 0004)
+    return String(num).padStart(4, '0');
   }
 
   formatPlan(plan: string | undefined): string {

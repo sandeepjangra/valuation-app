@@ -295,7 +295,7 @@ export class OrganizationDashboardComponent implements OnInit {
       'enterprise': 'Enterprise'
     };
 
-    return labels[org.type] || org.type;
+    return org.type ? (labels[org.type] || org.type) : 'N/A';
   }
 
   /**

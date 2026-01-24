@@ -6,19 +6,14 @@
 // Core Organization Models
 export interface Organization {
   _id: string;
-  org_short_name: string; // New: organization short name identifier (e.g., "sk-tindwal")
-  name: string;
-  type: 'valuation_company' | 'system' | 'enterprise';
+  org_short_name: string; // organization short name identifier (e.g., "system-administration")
+  name: string; // Full organization name
+  type?: 'valuation_company' | 'system' | 'enterprise';
   description?: string;
   contact_email?: string;
   phone_number?: string;
-  address?: {
-    street?: string;
-    city?: string;
-    state?: string;
-    postal_code?: string;
-    country?: string;
-  };
+  report_reference_initials?: string; // Reference initials for report numbering
+  last_reference_number?: number; // Last used reference number
   subscription_plan?: 'basic' | 'premium' | 'enterprise';
   max_users?: number;
   max_reports?: number;
@@ -222,11 +217,11 @@ export interface UpdateUserRequest {
 
 export interface CreateOrganizationRequest {
   name: string;
-  type: 'valuation_company' | 'enterprise';
+  type?: 'valuation_company' | 'enterprise';
   description?: string;
   contact_email?: string;
   phone_number?: string;
-  address?: Organization['address'];
+  report_reference_initials?: string;
   subscription_plan?: 'basic' | 'premium' | 'enterprise';
   max_users?: number;
   max_reports?: number;
@@ -237,7 +232,7 @@ export interface UpdateOrganizationRequest {
   description?: string;
   contact_email?: string;
   phone_number?: string;
-  address?: Organization['address'];
+  report_reference_initials?: string;
   subscription_plan?: 'basic' | 'premium' | 'enterprise';
   max_users?: number;
   max_reports?: number;

@@ -258,4 +258,115 @@ export class ReportsService {
       default: return 'status-default';
     }
   }
+
+  /**
+   * Save a new draft report (NO VALIDATION)
+   * Accepts any data - incomplete, "NA" values, empty fields, etc.
+   */
+  saveDraft(reportData: any): Observable<any> {
+    console.log('💾 ReportsService.saveDraft called with:', reportData);
+    const headers = this.getHeaders();
+    const url = this.orgContext.getOrgApiUrl('reports/draft');
+    
+    if (!url) {
+      console.error('❌ No organization context available');
+      return throwError(() => new Error('Organization context not available'));
+    }
+
+    // Get current user info
+    const currentUser = this.authService.getCurrentUser();
+    
+    // Prepare draft payload
+    const draftPayload = {
+      bankCode: reportData.bankCode || reportData.bank_code || '',
+      propertyType: reportData.propertyType || reportData.property_type || '',
+      applicantName: reportData.applicantName || reportData.applicant_name || '',
+      templateId: reportData.templateId || reportData.template_id || '',
+      createdBy: currentUser?.user_id || '',
+      createdByEmail: currentUser?.email || '',
+      reportData: reportData.reportData || reportData.report_data || reportData,
+      formData: reportData.formData || reportData.form_data || null
+    };
+
+    console.log('📤 Sending draft to backend:', url);
+    
+    return this.http.post<any>(url, draftPayload, { headers })
+      .pipe(
+        timeout(15000),
+        catchError(error => {
+          console.error('❌ Error saving draft:', {
+            status: error.status,
+            message: error.message,
+            error: error.error
+          });
+          return throwError(() => error);
+        })
+      );
+  }
+
+  /**
+   * Update an existing draft report (NO VALIDATION)
+   */
+  updateDraft(reportId: string, reportData: any): Observable<any> {
+    console.log('🔄 ReportsService.updateDraft called for:', reportId);
+    const headers = this.getHeaders();
+    const url = this.orgContext.getOrgApiUrl(`reports/draft/${reportId}`);
+    
+    if (!url) {
+      console.error('❌ No organization context available');
+      return throwError(() => new Error('Organization context not available'));
+    }
+
+    // Prepare update payload
+    const updatePayload = {
+      bankCode: reportData.bankCode || reportData.bank_code || '',
+      propertyType: reportData.propertyType || reportData.property_type || '',
+      applicantName: reportData.applicantName || reportData.applicant_name || '',
+      templateId: reportData.templateId || reportData.template_id || '',
+      reportData: reportData.reportData || reportData.report_data || reportData,
+      formData: reportData.formData || reportData.form_data || null
+    };
+
+    console.log('📤 Updating draft:', url);
+    
+    return this.http.put<any>(url, updatePayload, { headers })
+      .pipe(
+        timeout(15000),
+        catchError(error => {
+          console.error('❌ Error updating draft:', error);
+          return throwError(() => error);
+        })
+      );
+  }
+
+  /**
+   * Get all draft reports for current user
+   */
+  getDrafts(page: number = 1, pageSize: number = 50): Observable<any> {
+    console.log('📋 ReportsService.getDrafts called');
+    const headers = this.getHeaders();
+    const url = this.orgContext.getOrgApiUrl('reports/drafts');
+    
+    if (!url) {
+      return of({ success: false, data: { reports: [], total_count: 0 } });
+    }
+
+    const currentUser = this.authService.getCurrentUser();
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('pageSize', pageSize.toString());
+    
+    if (currentUser?.email) {
+      params = params.set('userEmail', currentUser.email);
+    }
+
+    return this.http.get<any>(url, { headers, params })
+      .pipe(
+        timeout(10000),
+        catchError(error => {
+          console.error('❌ Error fetching drafts:', error);
+          return of({ success: false, data: { reports: [], total_count: 0 } });
+        })
+      );
+  }
 }

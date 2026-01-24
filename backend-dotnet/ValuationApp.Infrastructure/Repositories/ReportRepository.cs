@@ -23,6 +23,7 @@ public class ReportRepository : IReportRepository
 
     /// <summary>
     /// Get the reports collection for a specific organization
+    /// Each organization has its own database, reports stored in "reports" collection
     /// </summary>
     private IMongoCollection<Report> GetCollection(string orgShortName)
     {
