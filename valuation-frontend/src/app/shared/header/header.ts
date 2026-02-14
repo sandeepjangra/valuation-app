@@ -122,7 +122,20 @@ export class Header implements OnInit {
    * Get current organization short name for routing
    */
   getCurrentOrgShortName(): string {
-    return this.currentOrgShortName();
+    // Try to get from organization context first (most reliable)
+    const context = this.orgContext();
+    if (context?.orgShortName) {
+      return context.orgShortName;
+    }
+    
+    // Fallback to route-based org short name
+    const routeOrgName = this.currentOrgShortName();
+    if (routeOrgName) {
+      return routeOrgName;
+    }
+    
+    // Final fallback to default
+    return 'system-administration';
   }
 
   /**

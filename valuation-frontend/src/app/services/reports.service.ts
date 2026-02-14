@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
-import { map, catchError, timeout } from 'rxjs/operators';
+import { map, catchError, timeout, tap } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 import { OrganizationContextService } from './organization-context.service';
 
@@ -14,8 +14,11 @@ export interface Report {
   bankCode?: string;
   templateId?: string;
   propertyType?: string;
+  propertyAddress?: string;
+  applicantName?: string;
   status?: 'draft' | 'in_progress' | 'under_review' | 'approved' | 'rejected' | 'submitted' | 'completed';
   createdBy?: string;
+  createdByEmail?: string;
   assignedTo?: string;
   reportData?: any;
   formData?: any;
@@ -33,12 +36,14 @@ export interface Report {
   bank_branch_name?: string;
   template_id?: string;
   property_type?: string;
+  org_short_name?: string;
   created_by_email?: string;
   created_at?: string;
   updated_at?: string;
   submitted_at?: string;
   version?: number;
   report_data?: any;
+  form_data?: any;  // Legacy snake_case field for backward compatibility
 }
 
 export interface ReportFilters {
@@ -274,7 +279,7 @@ export class ReportsService {
     }
 
     // Get current user info
-    const currentUser = this.authService.getCurrentUser();
+    const currentUser = this.authService.currentUserValue;
     
     // Prepare draft payload
     const draftPayload = {
@@ -309,6 +314,7 @@ export class ReportsService {
    */
   updateDraft(reportId: string, reportData: any): Observable<any> {
     console.log('🔄 ReportsService.updateDraft called for:', reportId);
+    console.log('🔄 Update data received:', reportData);
     const headers = this.getHeaders();
     const url = this.orgContext.getOrgApiUrl(`reports/draft/${reportId}`);
     
@@ -317,17 +323,35 @@ export class ReportsService {
       return throwError(() => new Error('Organization context not available'));
     }
 
-    // Prepare update payload
-    const updatePayload = {
-      bankCode: reportData.bankCode || reportData.bank_code || '',
-      propertyType: reportData.propertyType || reportData.property_type || '',
-      applicantName: reportData.applicantName || reportData.applicant_name || '',
-      templateId: reportData.templateId || reportData.template_id || '',
+    // Prepare update payload - only include fields that have values
+    const updatePayload: any = {
       reportData: reportData.reportData || reportData.report_data || reportData,
       formData: reportData.formData || reportData.form_data || null
     };
+    
+    // Only include optional fields if they have non-empty values
+    const bankCode = reportData.bankCode || reportData.bank_code;
+    if (bankCode) {
+      updatePayload.bankCode = bankCode;
+    }
+    
+    const propertyType = reportData.propertyType || reportData.property_type;
+    if (propertyType) {
+      updatePayload.propertyType = propertyType;
+    }
+    
+    const applicantName = reportData.applicantName || reportData.applicant_name;
+    if (applicantName) {
+      updatePayload.applicantName = applicantName;
+    }
+    
+    const templateId = reportData.templateId || reportData.template_id;
+    if (templateId) {
+      updatePayload.templateId = templateId;
+    }
 
     console.log('📤 Updating draft:', url);
+    console.log('📤 Payload:', updatePayload);
     
     return this.http.put<any>(url, updatePayload, { headers })
       .pipe(
@@ -351,7 +375,7 @@ export class ReportsService {
       return of({ success: false, data: { reports: [], total_count: 0 } });
     }
 
-    const currentUser = this.authService.getCurrentUser();
+    const currentUser = this.authService.currentUserValue;
     let params = new HttpParams()
       .set('page', page.toString())
       .set('pageSize', pageSize.toString());
@@ -363,6 +387,14 @@ export class ReportsService {
     return this.http.get<any>(url, { headers, params })
       .pipe(
         timeout(10000),
+        tap(response => {
+          console.log('📋 getDrafts API Response:', response);
+          if (response?.data?.reports && response.data.reports.length > 0) {
+            console.log('📋 First report sample:', response.data.reports[0]);
+            console.log('📋 First report applicant_name:', response.data.reports[0].applicant_name);
+            console.log('📋 First report report_data.applicant_name:', response.data.reports[0].report_data?.applicant_name);
+          }
+        }),
         catchError(error => {
           console.error('❌ Error fetching drafts:', error);
           return of({ success: false, data: { reports: [], total_count: 0 } });

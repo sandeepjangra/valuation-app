@@ -782,7 +782,7 @@
                                     <tr *ngFor="let row of field.rows; let i = index">
                                       <td *ngFor="let column of field.columns">
                                         <input
-                                          *ngIf="column.isEditable && !row.isReadonly; else readonlyCell"
+                                          *ngIf="!isViewMode && column.isEditable !== false && !column.isReadonly && !row.isReadonly; else readonlyCell"
                                           [type]="getTableCellInputType(column.fieldType)"
                                           [value]="row[column.columnId]"
                                           (input)="updateTableCell(field.fieldId, i, column.columnId, $event)"
@@ -1141,7 +1141,7 @@
                                 <tr *ngFor="let row of field.rows; let i = index">
                                   <td *ngFor="let column of field.columns">
                                     <input
-                                      *ngIf="column.isEditable && !row.isReadonly; else readonlyCell"
+                                      *ngIf="!isViewMode && column.isEditable !== false && !column.isReadonly && !row.isReadonly; else readonlyCell"
                                       [type]="getTableCellInputType(column.fieldType)"
                                       [value]="row[column.columnId]"
                                       (input)="updateTableCell(field.fieldId, i, column.columnId, $event)"

@@ -446,9 +446,27 @@ export class ReportsNewComponent implements OnInit {
 
   // Report actions
   viewReport(report: Report) {
-    console.log('📄 Viewing report:', report.report_id);
+    console.log('📄 Viewing report - full object:', report);
+    console.log('📋 Report ID fields:', {
+      report_id: report.report_id,
+      reportId: report.reportId,
+      id: report.id,
+      _id: (report as any)._id
+    });
+    
+    const reportId = report.report_id || report.reportId || report.id || (report as any)._id;
+    
+    if (!reportId) {
+      console.error('❌ No report ID found');
+      console.error('Available keys:', Object.keys(report));
+      alert('Cannot view report: Report ID is missing');
+      return;
+    }
+    
+    console.log('✅ Navigating to view with ID:', reportId);
+    
     // Navigate to report view/edit page using the report ID route
-    this.router.navigate(['/org', this.currentOrgShortName, 'reports', report.report_id], {
+    this.router.navigate(['/org', this.currentOrgShortName, 'reports', reportId], {
       queryParams: {
         mode: 'view'
       }
@@ -457,7 +475,23 @@ export class ReportsNewComponent implements OnInit {
 
   editReport(report: Report, event: Event) {
     event.stopPropagation(); // Prevent triggering viewReport
-    console.log('✏️ Editing report:', report.report_id);
+    
+    console.log('✏️ Editing report - full object:', report);
+    console.log('📋 Report ID fields:', {
+      report_id: report.report_id,
+      reportId: report.reportId,
+      id: report.id,
+      _id: (report as any)._id
+    });
+    
+    const reportId = report.report_id || report.reportId || report.id || (report as any)._id;
+    
+    if (!reportId) {
+      console.error('❌ No report ID found');
+      console.error('Available keys:', Object.keys(report));
+      alert('Cannot edit report: Report ID is missing');
+      return;
+    }
     
     // Only allow editing of non-submitted reports
     if (report.status === 'submitted' || report.status === 'completed') {
@@ -465,8 +499,10 @@ export class ReportsNewComponent implements OnInit {
       return;
     }
     
+    console.log('✅ Navigating to edit with ID:', reportId);
+    
     // Navigate to report edit page using the report ID route
-    this.router.navigate(['/org', this.currentOrgShortName, 'reports', report.report_id], {
+    this.router.navigate(['/org', this.currentOrgShortName, 'reports', reportId], {
       queryParams: {
         mode: 'edit'
       }
@@ -538,23 +574,124 @@ export class ReportsNewComponent implements OnInit {
     return report.status === 'draft';
   }
 
+  // Helper method to get reference number with fallbacks
+  getReferenceNumber(report: Report): string {
+    // Check camelCase first (backend JSON serialization)
+    const camelRef = (report as any).referenceNumber;
+    if (camelRef && camelRef.trim()) {
+      return camelRef;
+    }
+    
+    // Check PascalCase
+    const pascalRef = (report as any).ReferenceNumber;
+    if (pascalRef && pascalRef.trim()) {
+      return pascalRef;
+    }
+    
+    // Check snake_case (database field)
+    if (report.reference_number && report.reference_number.trim()) {
+      return report.reference_number;
+    }
+    
+    // Fallback to report ID
+    return report.report_id || report.reportId || (report as any).ReportId || 'N/A';
+  }
+  
+  // Helper method to get created by email with fallbacks
+  getCreatedByEmail(report: Report): string {
+    // Check camelCase first
+    const camelEmail = (report as any).createdByEmail;
+    if (camelEmail && camelEmail.trim()) {
+      return camelEmail;
+    }
+    
+    // Check PascalCase
+    const pascalEmail = (report as any).CreatedByEmail;
+    if (pascalEmail && pascalEmail.trim()) {
+      return pascalEmail;
+    }
+    
+    // Check snake_case
+    if (report.created_by_email && report.created_by_email.trim()) {
+      return report.created_by_email;
+    }
+    
+    return 'N/A';
+  }
+  
+  // Helper method to get created date with fallbacks
+  getCreatedDate(report: Report): string {
+    // Check camelCase first
+    const camelDate = (report as any).createdAt;
+    if (camelDate) {
+      return this.formatDate(camelDate);
+    }
+    
+    // Check PascalCase
+    const pascalDate = (report as any).CreatedAt;
+    if (pascalDate) {
+      return this.formatDate(pascalDate);
+    }
+    
+    // Check snake_case
+    if (report.created_at) {
+      return this.formatDate(report.created_at);
+    }
+    
+    return 'N/A';
+  }
+  
+  // Helper method to get updated date with fallbacks
+  getUpdatedDate(report: Report): string {
+    // Check camelCase first
+    const camelDate = (report as any).updatedAt;
+    if (camelDate) {
+      return this.formatDate(camelDate);
+    }
+    
+    // Check PascalCase
+    const pascalDate = (report as any).UpdatedAt;
+    if (pascalDate) {
+      return this.formatDate(pascalDate);
+    }
+    
+    // Check snake_case
+    if (report.updated_at) {
+      return this.formatDate(report.updated_at);
+    }
+    
+    return 'N/A';
+  }
+
   // New methods for enhanced table display
   getApplicantName(report: Report): string {
-    // PRIORITY 1: Use the applicant_name extracted by backend (NEW)
+    console.log('🔍 getApplicantName called for report:', report.report_id || report.reportId);
+    console.log('🔍 report.applicant_name =', report.applicant_name);
+    console.log('🔍 report.applicantName =', (report as any).applicantName);
+    console.log('🔍 report.ApplicantName =', (report as any).ApplicantName);
+    console.log('🔍 report.report_data?.applicant_name =', report.report_data?.applicant_name);
+    
+    // PRIORITY 1: Check camelCase (backend JSON serialization)
+    const camelName = (report as any).applicantName;
+    if (camelName && camelName !== 'N/A') {
+      console.log('✅ Using camelCase applicantName:', camelName);
+      return camelName;
+    }
+    
+    // PRIORITY 2: Check PascalCase (just in case)
+    const pascalName = (report as any).ApplicantName;
+    if (pascalName && pascalName !== 'N/A') {
+      console.log('✅ Using PascalCase ApplicantName:', pascalName);
+      return pascalName;
+    }
+    
+    // PRIORITY 3: Check snake_case (database field)
     if (report.applicant_name && report.applicant_name !== 'N/A') {
+      console.log('✅ Using snake_case applicant_name:', report.applicant_name);
       return report.applicant_name;
     }
 
-    // PRIORITY 2: Fallback to searching in report_data (OLD FORMAT)
-    // Debug: Log the entire report for the one with address
-    if (report.reference_number === 'CEV/RVO/299/0003/13122025') {
-      console.log('🔍 FULL REPORT DEBUG:', report);
-      if (report.report_data) {
-        console.log('🔍 REPORT_DATA KEYS:', Object.keys(report.report_data));
-        console.log('🔍 REPORT_DATA SAMPLE:', report.report_data);
-      }
-    }
-    
+    // PRIORITY 4: Fallback to searching in report_data
     // Try to extract applicant name from report data
     if (report.report_data) {
       const data = report.report_data;
@@ -570,7 +707,7 @@ export class ReportsNewComponent implements OnInit {
       for (const field of possibleNameFields) {
         const value = data[field];
         if (value && typeof value === 'string' && value.trim() && value !== 'N/A') {
-          console.log(`🔍 Found name in field "${field}": ${value}`);
+          console.log(`✅ Found name in report_data["${field}"]: ${value}`);
           return value.trim();
         }
       }
@@ -590,7 +727,7 @@ export class ReportsNewComponent implements OnInit {
             value !== 'N/A' &&
             value.length > 2 &&
             value.length < 100) {
-          console.log(`🔍 Found potential name in "${key}": ${value}`);
+          console.log(`✅ Found potential name in "${key}": ${value}`);
           return value.trim();
         }
       }
@@ -600,9 +737,29 @@ export class ReportsNewComponent implements OnInit {
   }
 
   getPostalAddress(report: Report): string {
-    // Try to extract postal address from report data
-    if (report.report_data) {
-      const data = report.report_data;
+    // Check camelCase property first (backend JSON serialization)
+    const camelAddress = (report as any).propertyAddress;
+    if (camelAddress && camelAddress !== 'Property Address TBD' && camelAddress !== 'N/A') {
+      return camelAddress;
+    }
+    
+    // Check PascalCase property
+    const pascalAddress = (report as any).PropertyAddress;
+    if (pascalAddress && pascalAddress !== 'Property Address TBD' && pascalAddress !== 'N/A') {
+      return pascalAddress;
+    }
+    
+    // Check snake_case property (database field)
+    if (report.property_address && 
+        report.property_address !== 'Property Address TBD' && 
+        report.property_address !== 'N/A') {
+      return report.property_address;
+    }
+    
+    // Try to extract postal address from form data (single source of truth)
+    if (report.form_data || (report as any).formData || report.report_data || (report as any).reportData) {
+      // Prefer formData, fallback to reportData for backward compatibility
+      const data = report.form_data || (report as any).formData || report.report_data || (report as any).reportData;
       
       // Check all possible address field names
       const possibleAddressFields = [

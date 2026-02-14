@@ -5,6 +5,7 @@
 
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { OrganizationService } from '../../services/organization.service';
@@ -233,14 +234,19 @@ interface ReportFilters {
               <p class="report-description">Report ID: {{ report.report_id }}</p>
               
               <div class="report-details">
-                <div *ngIf="report.property_address" class="detail-item">
+                <div class="detail-item">
+                  <span class="detail-label">👤 Applicant:</span>
+                  <span class="detail-value">{{ getApplicantName(report) }}</span>
+                </div>
+                
+                <div class="detail-item">
                   <span class="detail-label">📍 Property:</span>
-                  <span class="detail-value">{{ report.property_address }}</span>
+                  <span class="detail-value">{{ getPropertyAddress(report) }}</span>
                 </div>
                 
                 <div class="detail-item">
                   <span class="detail-label">🏦 Bank:</span>
-                  <span class="detail-value">{{ report.bankCode }}</span>
+                  <span class="detail-value">{{ report.bankCode || 'N/A' }}</span>
                 </div>
                 
                 <div *ngIf="report.bank_branch_name" class="detail-item">
@@ -249,13 +255,18 @@ interface ReportFilters {
                 </div>
                 
                 <div class="detail-item">
-                  <span class="detail-label">� Created by:</span>
-                  <span class="detail-value">{{ report.created_by_email }}</span>
+                  <span class="detail-label">✍️ Created by:</span>
+                  <span class="detail-value">{{ report.created_by_email || 'N/A' }}</span>
                 </div>
                 
                 <div class="detail-item">
-                  <span class="detail-label">� Created:</span>
+                  <span class="detail-label">📅 Created:</span>
                   <span class="detail-value">{{ report.created_at ? formatDate(report.created_at) : 'N/A' }}</span>
+                </div>
+                
+                <div class="detail-item">
+                  <span class="detail-label">🔄 Updated:</span>
+                  <span class="detail-value">{{ report.updated_at ? formatDate(report.updated_at) : 'N/A' }}</span>
                 </div>
               </div>
             </div>
@@ -913,6 +924,7 @@ export class ReportsComponent implements OnInit {
   private readonly organizationService = inject(OrganizationService);
   private readonly reportsService = inject(ReportsService);
   private readonly fb = inject(FormBuilder);
+  private readonly router = inject(Router);
 
   // Component state
   readonly isLoading = signal<boolean>(true);
@@ -1175,13 +1187,125 @@ export class ReportsComponent implements OnInit {
   }
 
   viewReport(report: ApiReport): void {
-    console.log('Viewing report:', report);
-    // TODO: Navigate to report details view
+    console.log('📄 Viewing report:', report);
+    console.log('📋 Report structure:', {
+      report_id: report.report_id,
+      reportId: report.reportId,
+      _id: report._id,
+      id: report.id,
+      orgShortName: report.orgShortName,
+      org_short_name: report.org_short_name,
+      fullReport: JSON.stringify(report)
+    });
+    
+    const reportId = report.report_id || report.reportId || report._id || report.id;
+    const orgShortName = report.orgShortName || report.org_short_name || 'system-administration';
+    
+    if (!reportId) {
+      console.error('❌ No report ID found in report object');
+      console.error('Available keys:', Object.keys(report));
+      alert('Unable to view report: Report ID is missing');
+      return;
+    }
+    
+    if (!orgShortName) {
+      console.error('❌ No organization short name found');
+      alert('Unable to view report: Organization context is missing');
+      return;
+    }
+    
+    console.log('✅ Navigating to view with:', { reportId, orgShortName });
+    
+    // Navigate to report page with view mode
+    this.router.navigate([`/org/${orgShortName}/reports`, reportId], {
+      queryParams: { mode: 'view' }
+    });
   }
 
   editReport(report: ApiReport): void {
-    console.log('Editing report:', report);
-    // Open edit modal or navigate to edit view
+    console.log('✏️ Editing report:', report);
+    console.log('📋 Report structure:', {
+      report_id: report.report_id,
+      reportId: report.reportId,
+      _id: report._id,
+      id: report.id,
+      orgShortName: report.orgShortName,
+      org_short_name: report.org_short_name,
+      fullReport: JSON.stringify(report)
+    });
+    
+    const reportId = report.report_id || report.reportId || report._id || report.id;
+    const orgShortName = report.orgShortName || report.org_short_name || 'system-administration';
+    
+    if (!reportId) {
+      console.error('❌ No report ID found in report object');
+      console.error('Available keys:', Object.keys(report));
+      alert('Unable to edit report: Report ID is missing');
+      return;
+    }
+    
+    if (!orgShortName) {
+      console.error('❌ No organization short name found');
+      alert('Unable to edit report: Organization context is missing');
+      return;
+    }
+    
+    console.log('✅ Navigating to edit with:', { reportId, orgShortName });
+    
+    // Navigate to report page with edit mode
+    this.router.navigate([`/org/${orgShortName}/reports`, reportId], {
+      queryParams: { mode: 'edit' }
+    });
+  }
+
+  /**
+   * Extract applicant name from report data
+   */
+  getApplicantName(report: ApiReport): string {
+    // Try direct field first
+    if (report.applicant_name) {
+      return report.applicant_name;
+    }
+    
+    // Try to extract from report_data
+    const reportData = report.report_data || report.reportData;
+    if (reportData) {
+      // Check common field names
+      return reportData.applicant_name || 
+             reportData.applicantName || 
+             reportData.borrower_name ||
+             reportData.borrowerName ||
+             reportData.owner_details ||
+             reportData.ownerDetails ||
+             'N/A';
+    }
+    
+    return 'N/A';
+  }
+
+  /**
+   * Extract property address from report data
+   */
+  getPropertyAddress(report: ApiReport): string {
+    // Try direct field first
+    if (report.property_address) {
+      return report.property_address;
+    }
+    
+    // Try to extract from report_data
+    const reportData = report.report_data || report.reportData;
+    if (reportData) {
+      // Check common field names
+      return reportData.property_address ||
+             reportData.propertyAddress ||
+             reportData.postal_address ||
+             reportData.postalAddress ||
+             reportData.property_location ||
+             reportData.propertyLocation ||
+             'N/A';
+    }
+    
+    return 'N/A';
   }
 
   // Temporarily commented out - needs API integration

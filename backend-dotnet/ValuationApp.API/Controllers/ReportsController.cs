@@ -367,9 +367,29 @@ public class ReportsController : ControllerBase
             report.CreatedAt = DateTime.UtcNow;
             report.UpdatedAt = DateTime.UtcNow;
             
+            // Generate reference number if not already set
+            if (string.IsNullOrEmpty(report.ReferenceNumber))
+            {
+                report.ReferenceNumber = await _organizationService.GetNextReferenceNumberAsync(orgShortName);
+                _logger.LogInformation("Generated reference number: {ReferenceNumber}", report.ReferenceNumber);
+            }
+            
             // Convert JsonElement dictionaries to proper objects for MongoDB serialization
-            report.ReportData = ConvertJsonElementDictionary(report.ReportData);
-            report.FormData = ConvertJsonElementDictionary(report.FormData);
+            // Use FormData as single source of truth - if both exist, prefer FormData
+            if (report.FormData != null && report.FormData.Count > 0)
+            {
+                report.FormData = ConvertJsonElementDictionary(report.FormData);
+                // Clear ReportData to avoid duplication - it's deprecated
+                report.ReportData = null;
+                _logger.LogInformation("Using FormData as single source of truth, cleared ReportData");
+            }
+            else if (report.ReportData != null && report.ReportData.Count > 0)
+            {
+                // Fallback: if only ReportData exists (backward compatibility), use it
+                report.FormData = ConvertJsonElementDictionary(report.ReportData);
+                report.ReportData = null;
+                _logger.LogWarning("Migrated ReportData to FormData for backward compatibility");
+            }
 
             // No validation - accept any data
             var reportId = await _reportService.CreateReportAsync(orgShortName, report);
@@ -380,7 +400,7 @@ public class ReportsController : ControllerBase
                 nameof(GetReport),
                 new { orgShortName, reportId },
                 ApiResponse<object>.SuccessResponse(
-                    new { report_id = reportId, status = "draft" },
+                    new { report_id = reportId, reference_number = report.ReferenceNumber, status = "draft" },
                     "Draft saved successfully"
                 )
             );
@@ -424,8 +444,21 @@ public class ReportsController : ControllerBase
             existingReport.ApplicantName = report.ApplicantName;
             
             // Convert JsonElement dictionaries to proper objects for MongoDB serialization
-            existingReport.ReportData = ConvertJsonElementDictionary(report.ReportData);
-            existingReport.FormData = ConvertJsonElementDictionary(report.FormData);
+            // Use FormData as single source of truth - if both exist, prefer FormData
+            if (report.FormData != null && report.FormData.Count > 0)
+            {
+                existingReport.FormData = ConvertJsonElementDictionary(report.FormData);
+                // Clear ReportData to avoid duplication - it's deprecated
+                existingReport.ReportData = null;
+                _logger.LogInformation("Updated FormData as single source of truth, cleared ReportData");
+            }
+            else if (report.ReportData != null && report.ReportData.Count > 0)
+            {
+                // Fallback: if only ReportData exists (backward compatibility), migrate to FormData
+                existingReport.FormData = ConvertJsonElementDictionary(report.ReportData);
+                existingReport.ReportData = null;
+                _logger.LogWarning("Migrated ReportData to FormData during update for backward compatibility");
+            }
             
             existingReport.Status = "draft"; // Keep as draft
             existingReport.UpdatedAt = DateTime.UtcNow;

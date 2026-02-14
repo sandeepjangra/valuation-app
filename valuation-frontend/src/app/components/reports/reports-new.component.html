@@ -148,7 +148,7 @@
           [class]="'status-' + report.status">
           
           <div class="col-ref">
-            <div class="ref-number">{{ report.reference_number || report.report_id }}</div>
+            <div class="ref-number">{{ getReferenceNumber(report) }}</div>
           </div>
           
           <div class="col-applicant">
@@ -174,15 +174,15 @@
           </div>
           
           <div class="col-created-by">
-            <span class="created-by">{{ report.created_by_email }}</span>
+            <span class="created-by">{{ getCreatedByEmail(report) }}</span>
           </div>
           
           <div class="col-created">
-            <div class="date">{{ report.created_at ? formatDate(report.created_at) : 'N/A' }}</div>
+            <div class="date">{{ getCreatedDate(report) }}</div>
           </div>
           
           <div class="col-updated">
-            <div class="date">{{ report.updated_at ? formatDate(report.updated_at) : 'N/A' }}</div>
+            <div class="date">{{ getUpdatedDate(report) }}</div>
           </div>
           
           <div class="col-actions">

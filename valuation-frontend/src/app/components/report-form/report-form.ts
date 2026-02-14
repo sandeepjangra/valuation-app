@@ -286,6 +286,25 @@ export class ReportForm implements OnInit {
           this.selectedPropertyType = reportData.propertyType || (reportData as any).property_type || '';
           this.reportReferenceNumber = reportData.referenceNumber || (reportData as any).reference_number || '';
           
+          // Fallback: If bankCode is empty, try to derive it from form data or use default
+          if (!this.selectedBankCode && (reportData.formData || reportData.form_data)) {
+            const formData = reportData.formData || reportData.form_data || {};
+            this.selectedBankCode = this.deriveBankCodeFromFormData(formData);
+            console.log('📋 Derived bank code from form data:', this.selectedBankCode);
+          }
+          
+          // If still no bank code, use a safe default
+          if (!this.selectedBankCode) {
+            this.selectedBankCode = 'SBI'; // Default to SBI as most reports are SBI
+            console.log('⚠️ No bank code found, defaulting to SBI');
+          }
+          
+          // Load bank branches after setting bank code
+          if (this.selectedBankCode) {
+            console.log('🏦 Loading branches for loaded report bank:', this.selectedBankCode);
+            this.loadBankBranches();
+          }
+          
           // Set report status (map to form status values)
           const status = reportData.status || 'draft';
           if (status === 'in_progress') {
@@ -369,29 +388,46 @@ export class ReportForm implements OnInit {
   }
 
   populateFormWithReportData(reportData: any) {
-    console.log('📝 Populating form with report data:', reportData);
-    console.log('📝 Report data structure:', JSON.stringify(reportData.report_data, null, 2));
-    console.log('📝 Available form controls:', Object.keys(this.reportForm.controls));
+    console.log('� populateFormWithReportData CALLED');
+    console.log('�📝 Populating form with report data:', reportData);
+    console.log('📝 Report data type:', typeof reportData);
+    console.log('📝 Report data is null/undefined:', reportData === null || reportData === undefined);
+    
+    // Use formData as single source of truth (contains form values like "mortgage_loan")
+    // Check both camelCase and snake_case for backward compatibility
+    const actualReportData = reportData.formData || reportData.form_data || reportData.reportData || reportData.report_data;
+    
+    if (actualReportData) {
+      console.log('📝 Found form data:', Object.keys(actualReportData).slice(0, 10));
+      console.log('📝 Form data structure (first 500 chars):', JSON.stringify(actualReportData, null, 2).substring(0, 500));
+    } else {
+      console.log('⚠️ WARNING: No formData, form_data, reportData, or report_data found!');
+      console.log('📝 Available keys:', Object.keys(reportData || {}));
+    }
+    console.log('📝 Available form controls:', Object.keys(this.reportForm?.controls || {}));
+    console.log('📝 Form exists:', !!this.reportForm);
     
     if (this.reportForm && reportData) {
       
       // STEP 1: Handle top-level fields that should map to form controls
       console.log('📝 Step 1: Mapping top-level fields...');
       
-      // Map top-level reference_number to report_reference_number form field
-      if (reportData.reference_number) {
+      // Map top-level referenceNumber (camelCase) or reference_number (snake_case) to report_reference_number form field
+      const referenceNumber = reportData.referenceNumber || reportData.reference_number;
+      if (referenceNumber) {
         const refControl = this.reportForm.get('report_reference_number');
         if (refControl) {
-          refControl.setValue(reportData.reference_number);
-          console.log(`✅ Mapped reference_number -> report_reference_number: ${reportData.reference_number}`);
+          refControl.setValue(referenceNumber);
+          console.log(`✅ Mapped referenceNumber -> report_reference_number: ${referenceNumber}`);
         } else {
-          console.log(`⚠️ No report_reference_number control found for reference_number: ${reportData.reference_number}`);
+          console.log(`⚠️ No report_reference_number control found for referenceNumber: ${referenceNumber}`);
         }
       }
       
       // Map other top-level fields as needed
       const topLevelFieldMappings = {
         'reference_number': 'report_reference_number',
+        'referenceNumber': 'report_reference_number',
         'status': 'status',
         'bank_code': 'bank_code',
         'template_id': 'template_id'
@@ -407,10 +443,10 @@ export class ReportForm implements OnInit {
         }
       });
       
-      // STEP 2: Handle report_data structure
-      if (reportData.report_data) {
+      // STEP 2: Handle report_data/reportData structure
+      if (actualReportData) {
         // Detect format: check if we have nested structure (new format) or flat structure (old format)
-        const reportDataObj = reportData.report_data;
+        const reportDataObj = actualReportData;
         const hasNestedStructure = this.hasNestedStructure(reportDataObj);
         
         console.log('📝 Step 2: Detected report format:', hasNestedStructure ? 'NESTED (new)' : 'FLAT (old)');
@@ -463,6 +499,17 @@ export class ReportForm implements OnInit {
       
       // Recalculate all calculated fields after populating with existing data
       this.recalculateAllFields();
+      
+      // Final step: Ensure reference number is set from the loaded report
+      if (this.reportReferenceNumber) {
+        const refControl = this.reportForm.get('report_reference_number');
+        if (refControl) {
+          refControl.setValue(this.reportReferenceNumber);
+          console.log(`✅ Final: Set reference number field to: ${this.reportReferenceNumber}`);
+        } else {
+          console.log(`⚠️ Final: report_reference_number control not found, but value exists: ${this.reportReferenceNumber}`);
+        }
+      }
     } else {
       console.log('📝 No report_data found or form not ready, fields will remain empty for draft');
     }
@@ -588,8 +635,12 @@ export class ReportForm implements OnInit {
         if (value !== undefined && value !== null && value !== '') {
           const control = this.reportForm.get(fieldName);
           if (control) {
-            control.setValue(value);
-            console.log(`✅ Mapped calculated field ${fieldName}: ${value}`);
+            // Convert display label back to value if needed (for dropdowns)
+            const fieldDefinition = this.findFieldInTemplate(fieldName);
+            const valueToSet = this.convertStorageLabelToFormValue(value, fieldDefinition);
+            
+            control.setValue(valueToSet);
+            console.log(`✅ Mapped calculated field ${fieldName}: ${valueToSet}`);
           } else {
             console.log(`⚠️ No form control found for calculated field: ${fieldName}`);
           }
@@ -755,6 +806,35 @@ export class ReportForm implements OnInit {
   }
 
   /**
+   * Convert storage label back to form value (reverse of convertFormDataForStorage)
+   * When loading data, we need to convert display labels like "Mortgage Loan" back to values like "mortgage_loan"
+   */
+  private convertStorageLabelToFormValue(storageValue: any, fieldDefinition: any): any {
+    // If no field definition or not a dropdown, return as-is
+    if (!fieldDefinition || fieldDefinition.fieldType !== 'select' || !fieldDefinition.options) {
+      return storageValue;
+    }
+    
+    // If value is empty/null, return as-is
+    if (!storageValue) {
+      return storageValue;
+    }
+    
+    // Check if storageValue matches a label (display text)
+    const matchingOption = fieldDefinition.options.find((opt: any) => 
+      opt.label === storageValue || opt.displayLabel === storageValue
+    );
+    
+    if (matchingOption) {
+      console.log(`🔄 Converting label "${storageValue}" to value "${matchingOption.value}"`);
+      return matchingOption.value;
+    }
+    
+    // If no match found, assume it's already a value
+    return storageValue;
+  }
+
+  /**
    * Check if field data looks like table data
    */
   private isTableData(fieldKey: string, value: any): boolean {
@@ -804,6 +884,67 @@ export class ReportForm implements OnInit {
         return;
       }
       
+      // Check if this is a table field (has columns and rows structure)
+      if (value && typeof value === 'object' && value.columns && value.rows) {
+        console.log(`📊 Found table data for field: ${fieldKey}`);
+        
+        // Find the field definition in template
+        let fieldDefinition: any = null;
+        if (this.templateData) {
+          fieldDefinition = this.templateData.allFields.find((f: any) => f.fieldId === fieldKey);
+        }
+        
+        if (fieldDefinition) {
+          if (fieldDefinition.fieldType === 'table') {
+            // Static table - update field.rows directly
+            fieldDefinition.rows = value.rows;
+            
+            // Merge columns: keep template's fieldType, isEditable, isReadonly but allow other properties from saved data
+            if (value.columns && fieldDefinition.columns) {
+              fieldDefinition.columns = fieldDefinition.columns.map((templateCol: any) => {
+                const savedCol = value.columns.find((c: any) => c.columnId === templateCol.columnId);
+                return {
+                  ...templateCol, // Keep template properties (fieldType, isEditable, isReadonly)
+                  ...savedCol,    // Override with saved properties if any
+                  fieldType: templateCol.fieldType,       // Force template fieldType
+                  isEditable: templateCol.isEditable,     // Force template isEditable
+                  isReadonly: templateCol.isReadonly      // Force template isReadonly
+                };
+              });
+            }
+            
+            console.log(`✅ Loaded STATIC table data for ${fieldKey}: ${value.rows.length} rows`);
+          } else if (fieldDefinition.fieldType === 'dynamic_table') {
+            // Dynamic table - store in dynamicTablesData
+            if (!this.dynamicTablesData) {
+              this.dynamicTablesData = {};
+            }
+            this.dynamicTablesData[fieldKey] = {
+              columns: value.columns,
+              rows: value.rows,
+              userAddedColumns: value.userAddedColumns || [],
+              nextColumnNumber: value.nextColumnNumber || 1
+            };
+            console.log(`✅ Loaded DYNAMIC table data for ${fieldKey}: ${value.rows.length} rows`);
+          }
+        } else {
+          // Field not found in template, try storing as dynamic table
+          console.log(`⚠️ Field ${fieldKey} not found in template, storing as dynamic table`);
+          if (!this.dynamicTablesData) {
+            this.dynamicTablesData = {};
+          }
+          this.dynamicTablesData[fieldKey] = {
+            columns: value.columns,
+            rows: value.rows,
+            userAddedColumns: value.userAddedColumns || [],
+            nextColumnNumber: value.nextColumnNumber || 1
+          };
+        }
+        
+        populatedCount++;
+        return;
+      }
+      
       // Try multiple possible form control names
       const possibleControlNames = [
         fieldKey,                           // exact match
@@ -816,8 +957,17 @@ export class ReportForm implements OnInit {
       for (const controlName of possibleControlNames) {
         const control = this.reportForm.get(controlName);
         if (control) {
-          control.setValue(value || '');
-          console.log(`✅ Mapped flat field ${fieldKey} -> ${controlName} = ${value}`);
+          // Find field definition to check if it's a dropdown
+          const fieldDefinition = this.findFieldInTemplate(controlName) || this.findFieldInTemplate(fieldKey);
+          let formValue = value;
+          
+          if (fieldDefinition) {
+            // Convert display label back to form value for dropdown fields
+            formValue = this.dropdownMappingService.convertLabelToValue(value, fieldDefinition);
+          }
+          
+          control.setValue(formValue || '');
+          console.log(`✅ Mapped flat field ${fieldKey} -> ${controlName}: "${value}" -> "${formValue}"`);
           populatedCount++;
           controlFound = true;
           break;
@@ -920,6 +1070,7 @@ export class ReportForm implements OnInit {
   // Handle successful template response
   handleTemplateResponse(response: any) {
     console.log('✅ Template response received:', response);
+    console.log('🔍 Current pendingReportData status:', !!this.pendingReportData);
     
     // Check if response has the expected template structure
     if (response && response.templateInfo && response.commonFields) {
@@ -935,6 +1086,11 @@ export class ReportForm implements OnInit {
         });
         
         console.log('🏗️ Building form controls with report data...');
+        console.log('🏗️ pendingReportData exists:', !!this.pendingReportData);
+        if (this.pendingReportData) {
+          console.log('🏗️ pendingReportData keys:', Object.keys(this.pendingReportData));
+          console.log('🏗️ pendingReportData.report_data exists:', !!this.pendingReportData.report_data);
+        }
         this.buildFormControlsWithReportData(this.pendingReportData);
         
         console.log('🔧 Initializing bank specific tabs...');
@@ -945,10 +1101,15 @@ export class ReportForm implements OnInit {
         
         // Now populate with report data if available
         if (this.pendingReportData) {
-          console.log('📝 Template loaded, populating with existing report data');
+          console.log('📝 Template loaded, now calling populateFormWithReportData');
+          console.log('📝 Form controls exist:', !!this.reportForm);
+          console.log('📝 Form controls count:', Object.keys(this.reportForm?.controls || {}).length);
+          console.log('📝 About to call populateFormWithReportData with:', this.pendingReportData);
           this.populateFormWithReportData(this.pendingReportData);
           this.pendingReportData = null;
+          console.log('✅ populateFormWithReportData call completed, cleared pendingReportData');
         } else {
+          console.log('⚠️ WARNING: No pendingReportData available after template load!');
           console.log('📝 Template loaded for new report');
         }
         
@@ -1199,9 +1360,17 @@ export class ReportForm implements OnInit {
     });
     
     if (this.reportForm && this.isViewMode) {
-      // Disable all form controls for view mode
-      this.reportForm.disable();
-      console.log('🔒 Form disabled for view mode');
+      // Disable all form controls for view mode EXCEPT bank_branch
+      Object.keys(this.reportForm.controls).forEach(controlName => {
+        const control = this.reportForm.get(controlName);
+        if (control && controlName !== 'bank_branch') {
+          control.disable();
+        } else if (controlName === 'bank_branch') {
+          control?.enable();
+          console.log('🔓 Keeping bank_branch enabled in view mode');
+        }
+      });
+      console.log('🔒 Form disabled for view mode (except bank_branch)');
       console.log('🔍 Form status after disable:', {
         formEnabled: this.reportForm.enabled,
         controlCount: Object.keys(this.reportForm.controls).length,
@@ -2574,13 +2743,47 @@ export class ReportForm implements OnInit {
     // Convert dropdown values to display labels
     const processedFormData = this.convertFormDataForStorage(rawFormData);
     
-    // Merge dynamic table data with form data
+    // Format table data for storage (both dynamic and static tables)
+    const formattedTableData: any = {};
+    
+    // 1. Extract dynamic table data
+    if (this.dynamicTablesData) {
+      Object.keys(this.dynamicTablesData).forEach(fieldId => {
+        const tableData = this.dynamicTablesData[fieldId];
+        formattedTableData[fieldId] = {
+          columns: tableData.columns,
+          rows: tableData.rows
+        };
+        console.log(`📊 Formatted DYNAMIC table data for ${fieldId}:`, formattedTableData[fieldId]);
+      });
+    }
+    
+    // 2. Extract static table data from template fields
+    if (this.templateData && this.templateData.allFields) {
+      this.templateData.allFields.forEach((field: any) => {
+        if (field.fieldType === 'table' && field.rows && field.rows.length > 0) {
+          formattedTableData[field.fieldId] = {
+            columns: field.columns,
+            rows: field.rows
+          };
+          console.log(`📊 Formatted STATIC table data for ${field.fieldId}:`, formattedTableData[field.fieldId]);
+        }
+      });
+    }
+    
+    // Merge formatted table data with form data
     const completeFormData = {
       ...processedFormData,
-      ...this.dynamicTablesData
+      ...formattedTableData
     };
     
     console.log('📊 Complete form data (with tables):', completeFormData);
+    
+    // Prepare formData with raw values + table data (single source of truth)
+    const formDataWithTables = {
+      ...rawFormData,
+      ...formattedTableData
+    };
     
     // Prepare draft payload for backend
     const draftPayload = {
@@ -2592,10 +2795,10 @@ export class ReportForm implements OnInit {
       applicant_name: completeFormData['applicant_name'] || completeFormData['Applicant Name'] || '',
       templateId: this.selectedTemplateId || this.customTemplateId || '',
       template_id: this.selectedTemplateId || this.customTemplateId || '',
-      reportData: completeFormData,
+      reportData: completeFormData,  // Keep for backward compatibility
       report_data: completeFormData,
-      formData: this.reportForm.value,
-      form_data: this.reportForm.value
+      formData: formDataWithTables,  // Single source of truth with raw form values + tables
+      form_data: formDataWithTables
     };
 
     console.log('📤 Draft payload:', draftPayload);
@@ -2663,8 +2866,41 @@ export class ReportForm implements OnInit {
     const rawFormData = this.reportForm.value;
     const processedFormData = this.convertFormDataForStorage(rawFormData);
     
+    // Format table data for storage (both dynamic and static tables)
+    const formattedTableData: any = {};
+    
+    // 1. Extract dynamic table data
+    if (this.dynamicTablesData) {
+      Object.keys(this.dynamicTablesData).forEach(fieldId => {
+        const tableData = this.dynamicTablesData[fieldId];
+        formattedTableData[fieldId] = {
+          columns: tableData.columns,
+          rows: tableData.rows
+        };
+      });
+    }
+    
+    // 2. Extract static table data from template fields
+    if (this.templateData && this.templateData.allFields) {
+      this.templateData.allFields.forEach((field: any) => {
+        if (field.fieldType === 'table' && field.rows && field.rows.length > 0) {
+          formattedTableData[field.fieldId] = {
+            columns: field.columns,
+            rows: field.rows
+          };
+        }
+      });
+    }
+    
+    // Prepare formData with raw values + table data
+    const formDataWithTables = {
+      ...rawFormData,
+      ...formattedTableData
+    };
+    
     const reportData = {
       ...processedFormData,
+      ...formattedTableData,
       bankCode: this.selectedBankCode,
       bankName: this.selectedBankName,
       templateId: this.selectedTemplateId,
@@ -2689,12 +2925,20 @@ export class ReportForm implements OnInit {
     if (this.currentReportId) {
       // UPDATE existing report with saved status
       console.log('📝 Updating existing report with saved status:', this.currentReportId);
+      
+      // Get current org short name
+      const orgShortName = this.route.snapshot.paramMap.get('orgShortName') || 'system-administration';
+      
       const updateRequest = {
         report_data: reportData,
+        form_data: formDataWithTables,  // Include formData with tables
         status: 'saved'
       };
       
-      this.http.put<any>(`http://localhost:8000/api/reports/${this.currentReportId}`, updateRequest, { headers }).subscribe({
+      const updateUrl = `http://localhost:8000/api/org/${orgShortName}/reports/draft/${this.currentReportId}`;
+      console.log('📝 Update URL:', updateUrl);
+      
+      this.http.put<any>(updateUrl, updateRequest, { headers }).subscribe({
         next: (response) => {
           console.log('✅ Report saved successfully:', response);
           this.reportStatus = 'saved';
@@ -2703,8 +2947,8 @@ export class ReportForm implements OnInit {
           // Show success notification
           this.notificationService.success(`Report saved successfully! Report ID: ${this.currentReportId}`);
           
-          // Refresh form data to prevent blank form after save
-          this.refreshFormDataAfterSave();
+          // Don't reload - just update the status
+          console.log('✅ Report saved, staying on current page');
         },
         error: (error) => {
           console.error('❌ Error saving report:', error);
@@ -2721,6 +2965,10 @@ export class ReportForm implements OnInit {
     } else {
       // CREATE new report with saved status
       console.log('🆕 Creating new report with saved status');
+      
+      // Get current org short name
+      const orgShortName = this.route.snapshot.paramMap.get('orgShortName') || 'system-administration';
+      
       const createRequest = {
         bank_code: this.selectedBankCode,
         template_id: this.selectedTemplateId || this.customTemplateId || '',
@@ -2728,7 +2976,10 @@ export class ReportForm implements OnInit {
         report_data: reportData
       };
       
-      this.http.post<any>('http://localhost:8000/api/reports', createRequest, { headers }).subscribe({
+      const createUrl = `http://localhost:8000/api/org/${orgShortName}/reports`;
+      console.log('📝 Create URL:', createUrl);
+      
+      this.http.post<any>(createUrl, createRequest, { headers }).subscribe({
         next: (response) => {
           console.log('✅ Report created and saved successfully:', response);
           this.reportStatus = 'saved';
@@ -2807,7 +3058,12 @@ export class ReportForm implements OnInit {
       return;
     }
     
-    this.http.post<any>(`http://localhost:8000/api/reports/${this.currentReportId}/submit`, {}, { headers }).subscribe({
+    // Get current org short name
+    const orgShortName = this.route.snapshot.paramMap.get('orgShortName') || 'system-administration';
+    const submitUrl = `http://localhost:8000/api/org/${orgShortName}/reports/${this.currentReportId}/submit`;
+    console.log('📝 Submit URL:', submitUrl);
+    
+    this.http.post<any>(submitUrl, {}, { headers }).subscribe({
       next: (response) => {
         console.log('✅ Report submitted successfully:', response);
         this.reportStatus = 'submitted';

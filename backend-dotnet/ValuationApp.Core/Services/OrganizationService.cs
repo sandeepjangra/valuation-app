@@ -55,8 +55,18 @@ public class OrganizationService : IOrganizationService
             throw new InvalidOperationException($"Failed to fetch updated organization '{shortName}'");
         }
 
-        // Generate reference number in format: INITIALS-YYYYMMDD-####
-        var referenceNumber = $"{organization.ReportReferenceInitials}-{DateTime.UtcNow:yyyyMMdd}-{organization.LastReferenceNumber:D4}";
+        // Generate reference number in format: {Initials}/ADMIN/999/{Increment}/{Date}
+        // Example: CEV/ADMIN/999/0014/08022026
+        var dateString = DateTime.UtcNow.ToString("ddMMyyyy");
+        
+        // Extract only the first part of initials if it contains slashes
+        var initials = organization.ReportReferenceInitials ?? "ORG";
+        if (initials.Contains('/'))
+        {
+            initials = initials.Split('/')[0];
+        }
+        
+        var referenceNumber = $"{initials}/ADMIN/999/{organization.LastReferenceNumber:D4}/{dateString}";
         
         _logger.LogInformation("Generated reference number: {ReferenceNumber} for organization: {ShortName}", 
             referenceNumber, shortName);

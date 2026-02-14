@@ -472,14 +472,14 @@
                 {
                   "columnId": "dimensions_per_documents",
                   "columnName": "Dimensions As Per Documents",
-                  "fieldType": "number",
+                  "fieldType": "text",
                   "isRequired": false,
                   "isEditable": true
                 },
                 {
                   "columnId": "dimensions_actuals",
                   "columnName": "Dimensions Actuals",
-                  "fieldType": "number",
+                  "fieldType": "text",
                   "isRequired": false,
                   "isEditable": true
                 }
