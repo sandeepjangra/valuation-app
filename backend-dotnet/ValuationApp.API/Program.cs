@@ -2,13 +2,20 @@ using System.Text;
 using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using MongoDB.Bson.Serialization;
 using ValuationApp.API.Middleware;
 using ValuationApp.Common.Helpers;
+using ValuationApp.Core.Entities;
 using ValuationApp.Core.Interfaces;
 using ValuationApp.Core.Services;
 using ValuationApp.Infrastructure.Data;
 using ValuationApp.Infrastructure.Repositories;
+using ValuationApp.Infrastructure.Serialization;
 using ValuationApp.Infrastructure.Services;
+
+// Configure MongoDB to use custom discriminator convention with "$type" field
+var discriminatorConvention = new CustomDiscriminatorConvention("$type");
+BsonSerializer.RegisterDiscriminatorConvention(typeof(TemplateElement), discriminatorConvention);
 
 // Load .env file from root directory
 var envPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", ".env");
@@ -82,6 +89,9 @@ builder.Services.AddScoped<IUserProfileRepository, UserProfileRepository>();
 builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 builder.Services.AddScoped<IPermissionsService, PermissionsService>();
 builder.Services.AddScoped<IActivityLoggingService, ActivityLoggingService>();
+
+// Add AutoMapper
+builder.Services.AddAutoMapper(typeof(ValuationApp.Core.Mappings.TemplateProfile));
 
 // Add controllers
 builder.Services.AddControllers();

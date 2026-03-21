@@ -31,4 +31,14 @@ public class BankService : IBankService
 
         return await _bankRepository.GetBankByCodeAsync(bankCode);
     }
+
+    public async Task<Bank?> GetBankByIdAsync(string bankId)
+    {
+        if (string.IsNullOrWhiteSpace(bankId))
+        {
+            return null;
+        }
+
+        return await _bankRepository.GetBankByIdAsync(bankId);
+    }
 }

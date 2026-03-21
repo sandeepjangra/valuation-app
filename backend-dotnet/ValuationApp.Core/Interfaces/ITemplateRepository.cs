@@ -1,21 +1,41 @@
-using ValuationApp.Core.DTOs;
+using ValuationApp.Core.Entities;
 
 namespace ValuationApp.Core.Interfaces;
 
 public interface ITemplateRepository
 {
     /// <summary>
-    /// Get template structure from bank-specific collection (e.g., sbi_land_property_details)
+    /// Get template by template ID
     /// </summary>
-    Task<object?> GetTemplateStructureAsync(string collectionName);
+    /// <param name="templateId">The unique template identifier</param>
+    /// <returns>Template entity or null if not found</returns>
+    Task<Template?> GetTemplateByIdAsync(string templateId);
     
     /// <summary>
-    /// Get common form fields
+    /// Get template by bank code and property type
     /// </summary>
-    Task<object?> GetCommonFieldsAsync();
+    /// <param name="bankCode">The bank code (e.g., "SBI", "HDFC")</param>
+    /// <param name="propertyType">The property type (e.g., "Land", "Residential")</param>
+    /// <returns>Template entity or null if not found</returns>
+    Task<Template?> GetTemplateByBankAndPropertyAsync(string bankCode, string propertyType);
     
     /// <summary>
-    /// Get document types filtered by bank and property type
+    /// Get all templates
     /// </summary>
-    Task<List<object>> GetDocumentTypesAsync(string bankCode, string propertyType);
+    /// <returns>List of all template entities</returns>
+    Task<List<Template>> GetAllTemplatesAsync();
+    
+    /// <summary>
+    /// Get all templates for a specific bank
+    /// </summary>
+    /// <param name="bankCode">The bank code</param>
+    /// <returns>List of template entities for the bank</returns>
+    Task<List<Template>> GetTemplatesByBankCodeAsync(string bankCode);
+    
+    /// <summary>
+    /// Get all active templates
+    /// </summary>
+    /// <returns>List of active template entities</returns>
+    Task<List<Template>> GetActiveTemplatesAsync();
 }
+

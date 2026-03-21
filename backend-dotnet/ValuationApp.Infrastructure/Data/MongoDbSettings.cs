@@ -8,4 +8,5 @@ public class MongoDbSettings
     public string ConnectionString { get; set; } = string.Empty;
     public string AdminDatabaseName { get; set; } = "valuation_admin";
     public string ReportsDatabaseName { get; set; } = "valuation_reports";
+    public string TemplatesDatabaseName { get; set; } = "valuation_templates";
 }

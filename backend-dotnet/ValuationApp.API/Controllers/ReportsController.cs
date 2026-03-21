@@ -132,7 +132,7 @@ public class ReportsController : ControllerBase
                 ));
             }
 
-            report.OrganizationId = organization.Id!;
+            report.OrganizationId = organization.OrganizationId!;
             report.OrgShortName = orgShortName;
 
             var reportId = await _reportService.CreateReportAsync(orgShortName, report);
@@ -361,7 +361,7 @@ public class ReportsController : ControllerBase
             }
 
             // Set required fields for draft
-            report.OrganizationId = organization.Id!;
+            report.OrganizationId = organization.OrganizationId!;
             report.OrgShortName = orgShortName;
             report.Status = "draft"; // Force draft status
             report.CreatedAt = DateTime.UtcNow;

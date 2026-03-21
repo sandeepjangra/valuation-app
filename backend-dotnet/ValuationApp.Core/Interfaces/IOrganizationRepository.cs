@@ -4,10 +4,38 @@ namespace ValuationApp.Core.Interfaces;
 
 public interface IOrganizationRepository
 {
-    Task<Organization?> GetByShortNameAsync(string shortName);
-    Task<Organization?> GetByIdAsync(string id);
+    /// <summary>
+    /// Get all organizations (individual documents)
+    /// </summary>
+    Task<List<Organization>> GetAllOrganizationsAsync();
+    
+    /// <summary>
+    /// Get only active organizations (individual documents)
+    /// </summary>
+    Task<List<Organization>> GetActiveOrganizationsAsync();
+    
+    /// <summary>
+    /// Alias for GetActiveOrganizationsAsync (for backward compatibility)
+    /// </summary>
     Task<List<Organization>> GetAllActiveAsync();
-    Task<Organization> CreateAsync(Organization organization);
-    Task<Organization> UpdateAsync(Organization organization);
-    Task<bool> IncrementReferenceNumberAsync(string shortName);
+    
+    /// <summary>
+    /// Get organization by short name
+    /// </summary>
+    Task<Organization?> GetByShortNameAsync(string shortName);
+    
+    /// <summary>
+    /// Get organization by ID
+    /// </summary>
+    Task<Organization?> GetByIdAsync(string id);
+    
+    /// <summary>
+    /// Increment the last reference number for an organization
+    /// </summary>
+    Task IncrementReferenceNumberAsync(string shortName);
+    
+    /// <summary>
+    /// Update an organization
+    /// </summary>
+    Task<Organization?> UpdateAsync(Organization organization);
 }

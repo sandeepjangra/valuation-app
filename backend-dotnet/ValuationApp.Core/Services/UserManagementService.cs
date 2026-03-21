@@ -88,7 +88,7 @@ public class UserManagementService : IUserManagementService
             // Generate user ID and populate fields
             user.UserId = GenerateUserId(orgShortName);
             user.OrgShortName = orgShortName;
-            user.OrganizationId = organization.Id ?? string.Empty; // Populate OrganizationId
+            user.OrganizationId = organization.OrganizationId ?? string.Empty; // Populate OrganizationId
             user.Email = user.Email.ToLower();
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
             user.CreatedAt = DateTime.UtcNow;

@@ -1,5 +1,7 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using ValuationApp.Common.Models;
+using ValuationApp.Core.DTOs;
 using ValuationApp.Core.Interfaces;
 
 namespace ValuationApp.API.Controllers;
@@ -13,13 +15,16 @@ namespace ValuationApp.API.Controllers;
 public class OrganizationsController : ControllerBase
 {
     private readonly IOrganizationService _organizationService;
+    private readonly IMapper _mapper;
     private readonly ILogger<OrganizationsController> _logger;
 
     public OrganizationsController(
         IOrganizationService organizationService,
+        IMapper mapper,
         ILogger<OrganizationsController> logger)
     {
         _organizationService = organizationService;
+        _mapper = mapper;
         _logger = logger;
     }
 
@@ -35,10 +40,13 @@ public class OrganizationsController : ControllerBase
         {
             _logger.LogInformation("Getting all active organizations");
             
-            var organizations = await _organizationService.GetAllActiveOrganizationsAsync();
+            var organizationsEntities = await _organizationService.GetAllActiveOrganizationsAsync();
             
-            return Ok(ApiResponse<object>.SuccessResponse(
-                organizations,
+            // Map entities to DTOs
+            var organizationsDtos = _mapper.Map<List<OrganizationResponseDto>>(organizationsEntities);
+            
+            return Ok(ApiResponse<List<OrganizationResponseDto>>.SuccessResponse(
+                organizationsDtos,
                 "Organizations retrieved successfully"
             ));
         }
@@ -65,9 +73,9 @@ public class OrganizationsController : ControllerBase
         {
             _logger.LogInformation("Getting organization details: {OrgShortName}", orgShortName);
             
-            var organization = await _organizationService.GetByShortNameAsync(orgShortName);
+            var organizationEntity = await _organizationService.GetByShortNameAsync(orgShortName);
             
-            if (organization == null)
+            if (organizationEntity == null)
             {
                 _logger.LogWarning("Organization not found: {OrgShortName}", orgShortName);
                 return NotFound(ApiResponse<object>.ErrorResponse(
@@ -75,8 +83,11 @@ public class OrganizationsController : ControllerBase
                 ));
             }
             
-            return Ok(ApiResponse<object>.SuccessResponse(
-                organization,
+            // Map entity to DTO
+            var organizationDto = _mapper.Map<OrganizationResponseDto>(organizationEntity);
+            
+            return Ok(ApiResponse<OrganizationResponseDto>.SuccessResponse(
+                organizationDto,
                 "Organization retrieved successfully"
             ));
         }

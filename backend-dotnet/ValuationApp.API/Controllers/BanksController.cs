@@ -1,5 +1,7 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using ValuationApp.Common.Models;
+using ValuationApp.Core.DTOs;
 using ValuationApp.Core.Interfaces;
 
 namespace ValuationApp.API.Controllers;
@@ -9,11 +11,16 @@ namespace ValuationApp.API.Controllers;
 public class BanksController : ControllerBase
 {
     private readonly IBankService _bankService;
+    private readonly IMapper _mapper;
     private readonly ILogger<BanksController> _logger;
 
-    public BanksController(IBankService bankService, ILogger<BanksController> logger)
+    public BanksController(
+        IBankService bankService,
+        IMapper mapper,
+        ILogger<BanksController> logger)
     {
         _bankService = bankService;
+        _mapper = mapper;
         _logger = logger;
     }
 
@@ -28,11 +35,17 @@ public class BanksController : ControllerBase
         {
             _logger.LogInformation("Fetching all active banks");
             
-            var banks = await _bankService.GetActiveBanksAsync();
+            var banksEntities = await _bankService.GetActiveBanksAsync();
             
-            _logger.LogInformation("Successfully retrieved {Count} active banks", banks.Count);
+            // Map entities to DTOs
+            var banksDtos = _mapper.Map<List<BankResponseDto>>(banksEntities);
             
-            return Ok(banks);
+            _logger.LogInformation("Successfully retrieved {Count} active banks", banksDtos.Count);
+            
+            return Ok(ApiResponse<List<BankResponseDto>>.SuccessResponse(
+                banksDtos,
+                "Banks retrieved successfully"
+            ));
         }
         catch (Exception ex)
         {
@@ -56,9 +69,9 @@ public class BanksController : ControllerBase
         {
             _logger.LogInformation("Fetching bank with code: {BankCode}", bankCode);
             
-            var bank = await _bankService.GetBankByCodeAsync(bankCode);
+            var bankEntity = await _bankService.GetBankByCodeAsync(bankCode);
             
-            if (bank == null)
+            if (bankEntity == null)
             {
                 _logger.LogWarning("Bank not found: {BankCode}", bankCode);
                 return NotFound(ApiResponse<object>.ErrorResponse(
@@ -66,10 +79,13 @@ public class BanksController : ControllerBase
                 ));
             }
 
-            _logger.LogInformation("Successfully retrieved bank: {BankName}", bank.BankName);
+            // Map entity to DTO
+            var bankDto = _mapper.Map<BankResponseDto>(bankEntity);
+
+            _logger.LogInformation("Successfully retrieved bank: {BankName}", bankDto.BankName);
             
-            return Ok(ApiResponse<object>.SuccessResponse(
-                bank,
+            return Ok(ApiResponse<BankResponseDto>.SuccessResponse(
+                bankDto,
                 "Bank retrieved successfully"
             ));
         }
@@ -94,11 +110,14 @@ public class BanksController : ControllerBase
         {
             _logger.LogInformation("Fetching all banks (including inactive)");
             
-            var banks = await _bankService.GetAllBanksAsync();
+            var banksEntities = await _bankService.GetAllBanksAsync();
             
-            _logger.LogInformation("Successfully retrieved {Count} banks", banks.Count);
+            // Map entities to DTOs
+            var banksDtos = _mapper.Map<List<BankResponseDto>>(banksEntities);
             
-            return Ok(banks);
+            _logger.LogInformation("Successfully retrieved {Count} banks", banksDtos.Count);
+            
+            return Ok(banksDtos);
         }
         catch (Exception ex)
         {
@@ -145,7 +164,7 @@ public class BanksController : ControllerBase
             }
 
             // Return branches if available, otherwise empty list
-            var branches = bank.BankBranches ?? new List<ValuationApp.Core.Entities.BankBranch>();
+            var branches = bank.Branches ?? new List<ValuationApp.Core.Entities.BranchEntity>();
             
             _logger.LogInformation("Successfully retrieved {Count} branches for bank {BankName}", 
                 branches.Count, bank.BankName);

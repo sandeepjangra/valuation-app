@@ -7,4 +7,5 @@ public interface IBankService
     Task<List<Bank>> GetAllBanksAsync();
     Task<List<Bank>> GetActiveBanksAsync();
     Task<Bank?> GetBankByCodeAsync(string bankCode);
+    Task<Bank?> GetBankByIdAsync(string bankId);
 }

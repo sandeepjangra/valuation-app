@@ -11,12 +11,14 @@ public class MongoDbContext
     private readonly IMongoClient _client;
     private readonly IMongoDatabase _adminDatabase;
     private readonly IMongoDatabase _reportsDatabase;
+    private readonly IMongoDatabase _templatesDatabase;
 
     public MongoDbContext(MongoDbSettings settings)
     {
         _client = new MongoClient(settings.ConnectionString);
         _adminDatabase = _client.GetDatabase(settings.AdminDatabaseName);
         _reportsDatabase = _client.GetDatabase(settings.ReportsDatabaseName);
+        _templatesDatabase = _client.GetDatabase(settings.TemplatesDatabaseName);
     }
 
     /// <summary>
@@ -33,6 +35,11 @@ public class MongoDbContext
     /// Get reports database (contains valuation reports)
     /// </summary>
     public IMongoDatabase ReportsDatabase => _reportsDatabase;
+
+    /// <summary>
+    /// Get templates database (contains banks, organizations, templates)
+    /// </summary>
+    public IMongoDatabase TemplatesDatabase => _templatesDatabase;
 
     /// <summary>
     /// Organizations collection

@@ -76,10 +76,10 @@ public class OrganizationContextMiddleware
         // Add organization to HttpContext.Items for downstream use
         context.Items["Organization"] = organization;
         context.Items["OrganizationShortName"] = orgShortName;
-        context.Items["OrganizationId"] = organization.Id;
+        context.Items["OrganizationId"] = organization.OrganizationId;
 
         _logger.LogInformation("Organization validated successfully: {OrgShortName} ({OrgId})", 
-            orgShortName, organization.Id);
+            orgShortName, organization.OrganizationId);
 
         await _next(context);
     }

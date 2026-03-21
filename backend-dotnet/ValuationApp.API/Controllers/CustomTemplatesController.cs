@@ -41,56 +41,28 @@ public class CustomTemplatesController : ControllerBase
                 return BadRequest(ApiResponse<object>.ErrorResponse("bank_code and property_type are required"));
             }
 
-            // Use the same service as regular templates
-            var aggregatedData = await _templateService.GetAggregatedTemplateAsync(bankCode, propertyType);
+            // Use the template service to get complete template
+            var template = await _templateService.GetTemplateAsync(bankCode, propertyType);
             
-            if (aggregatedData == null)
+            if (template == null)
             {
                 _logger.LogWarning("Template not found for {BankCode}/{PropertyType}", bankCode, propertyType);
                 return NotFound(ApiResponse<object>.ErrorResponse($"Template not found for {bankCode}/{propertyType}"));
             }
 
             _logger.LogInformation(
-                "✅ Retrieved template for {BankCode}/{PropertyType}. Common fields: {CommonFieldsCount}, Tabs: {TabsCount}",
+                "✅ Retrieved template for {BankCode}/{PropertyType}. Elements: {ElementCount}",
                 bankCode, propertyType,
-                aggregatedData.CommonFields.Fields.Count,
-                aggregatedData.TemplateStructure.Tabs?.Count ?? 0
+                template.Elements?.Count ?? 0
             );
 
             // Filter fields to only include those with includeInCustomTemplate = true
-            var filteredCommonFields = FilterFieldsByCustomTemplate(aggregatedData.CommonFields.Fields);
-            var filteredTabs = FilterTabsByCustomTemplate(aggregatedData.TemplateStructure.Tabs);
-
-            _logger.LogInformation(
-                "🔍 Filtered fields: Common {Filtered}/{Total}, Tabs: {TabCount}",
-                filteredCommonFields.Count, aggregatedData.CommonFields.Fields.Count, filteredTabs.Count
-            );
-
-            // Transform filtered fields to frontend format
-            var transformedCommonFields = TransformFieldsToFrontendFormat(filteredCommonFields);
-            var transformedTabs = TransformTabsToFrontendFormat(filteredTabs);
-
-            // Transform to frontend format (same as TemplatesController)
-            var response = new
-            {
-                success = true,
-                bankCode = bankCode,
-                propertyType = propertyType,
-                templateInfo = new
-                {
-                    templateId = aggregatedData.Template.TemplateId,
-                    templateName = aggregatedData.Template.TemplateName,
-                    propertyType = aggregatedData.Template.PropertyType,
-                    bankCode = aggregatedData.Bank.BankCode,
-                    bankName = aggregatedData.Bank.BankName,
-                    version = aggregatedData.Template.Version
-                },
-                commonFields = transformedCommonFields,
-                bankSpecificTabs = transformedTabs
-            };
+            // TODO: Implement custom template filtering logic with new Template structure
             
-            _logger.LogInformation("✅ CustomTemplates: Successfully returned fields for {BankCode}/{PropertyType}", bankCode, propertyType);
-            return Ok(response);
+            _logger.LogError("Custom templates not yet implemented for new template structure");
+            return StatusCode(501, ApiResponse<object>.ErrorResponse(
+                "Custom templates not yet implemented for new template structure. Please use regular templates for now."
+            ));
         }
         catch (Exception ex)
         {

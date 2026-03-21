@@ -56,3 +56,5 @@
 /Users/sandeepjangra/Downloads/development/valuation-app/backend-dotnet/ValuationApp.API/obj/Debug/net8.0/ValuationApp.API.genruntimeconfig.cache
 /Users/sandeepjangra/Downloads/development/valuation-app/backend-dotnet/ValuationApp.API/obj/Debug/net8.0/ref/ValuationApp.API.dll
 /Users/sandeepjangra/Downloads/development/valuation-app/backend-dotnet/ValuationApp.API/bin/Debug/net8.0/Newtonsoft.Json.dll
+/Users/sandeepjangra/Downloads/development/valuation-app/backend-dotnet/ValuationApp.API/bin/Debug/net8.0/AutoMapper.dll
+/Users/sandeepjangra/Downloads/development/valuation-app/backend-dotnet/ValuationApp.API/bin/Debug/net8.0/AutoMapper.Extensions.Microsoft.DependencyInjection.dll

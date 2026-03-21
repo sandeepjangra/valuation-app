@@ -111,8 +111,6 @@ public class OrganizationService : IOrganizationService
         if (request.IsActive.HasValue)
             organization.IsActive = request.IsActive.Value;
 
-        organization.UpdatedAt = DateTime.UtcNow;
-
         var updatedOrg = await _organizationRepository.UpdateAsync(organization);
         
         _logger.LogInformation("Organization updated successfully: {ShortName}", shortName);

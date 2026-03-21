@@ -7,63 +7,63 @@ namespace ValuationApp.Infrastructure.Repositories;
 
 public class OrganizationRepository : IOrganizationRepository
 {
-    private readonly IMongoCollection<Organization> _organizations;
+    private readonly IMongoCollection<Organization> _organizationsCollection;
 
     public OrganizationRepository(MongoDbContext context)
     {
-        _organizations = context.Organizations;
+        // Individual documents - one per organization (like templates)
+        _organizationsCollection = context.TemplatesDatabase.GetCollection<Organization>("organizations");
     }
 
     public async Task<Organization?> GetByShortNameAsync(string shortName)
     {
-        return await _organizations
-            .Find(o => o.ShortName == shortName)
+        return await _organizationsCollection
+            .Find(org => org.ShortName == shortName)
             .FirstOrDefaultAsync();
     }
 
     public async Task<Organization?> GetByIdAsync(string id)
     {
-        return await _organizations
-            .Find(o => o.Id == id)
+        return await _organizationsCollection
+            .Find(org => org.OrganizationId == id)
             .FirstOrDefaultAsync();
+    }
+
+    public async Task<List<Organization>> GetAllOrganizationsAsync()
+    {
+        return await _organizationsCollection.Find(_ => true).ToListAsync();
+    }
+
+    public async Task<List<Organization>> GetActiveOrganizationsAsync()
+    {
+        return await _organizationsCollection
+            .Find(org => org.IsActive)
+            .ToListAsync();
     }
 
     public async Task<List<Organization>> GetAllActiveAsync()
     {
-        return await _organizations
-            .Find(o => o.IsActive)
-            .ToListAsync();
+        return await GetActiveOrganizationsAsync();
     }
 
-    public async Task<Organization> CreateAsync(Organization organization)
+    public async Task IncrementReferenceNumberAsync(string shortName)
     {
-        organization.CreatedAt = DateTime.UtcNow;
-        organization.UpdatedAt = DateTime.UtcNow;
-        await _organizations.InsertOneAsync(organization);
-        return organization;
-    }
-
-    public async Task<Organization> UpdateAsync(Organization organization)
-    {
-        organization.UpdatedAt = DateTime.UtcNow;
-        await _organizations.ReplaceOneAsync(
-            o => o.Id == organization.Id,
-            organization
-        );
-        return organization;
-    }
-
-    public async Task<bool> IncrementReferenceNumberAsync(string shortName)
-    {
+        var filter = Builders<Organization>.Filter.Eq(org => org.ShortName, shortName);
         var update = Builders<Organization>.Update
-            .Inc(o => o.LastReferenceNumber, 1)
-            .Set(o => o.UpdatedAt, DateTime.UtcNow);
+            .Inc(org => org.LastReferenceNumber, 1)
+            .Set(org => org.UpdatedAt, DateTime.UtcNow);
 
-        var result = await _organizations.UpdateOneAsync(
-            o => o.ShortName == shortName,
-            update
-        );
+        await _organizationsCollection.UpdateOneAsync(filter, update);
+    }
 
-        return result.ModifiedCount > 0;
+    public async Task<Organization?> UpdateAsync(Organization organization)
+    {
+        organization.UpdatedAt = DateTime.UtcNow;
+
+        var filter = Builders<Organization>.Filter.Eq(org => org.ShortName, organization.ShortName);
+        
+        await _organizationsCollection.ReplaceOneAsync(filter, organization);
+
+        return await GetByShortNameAsync(organization.ShortName);
     }
 }
