@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, catchError, throwError } from 'rxjs';
+import { Observable, catchError, throwError, map } from 'rxjs';
 import { AggregatedTemplateResponse, ProcessedTemplateData, FieldGroup, TemplateField, BankSpecificField, BankSpecificTab, BankSpecificSection } from '../models';
 import { environment } from '../../environments/environment';
 
@@ -16,19 +16,380 @@ export class TemplateService {
    * Get aggregated template fields (common + bank-specific) for a specific bank and template
    */
   getAggregatedTemplateFields(bankCode: string, templateCode: string): Observable<AggregatedTemplateResponse> {
-    const url = `${this.API_BASE_URL}/templates/${bankCode}/${templateCode}/aggregated-fields`;
+    // Capitalize first letter of propertyType to match backend format (land -> Land, apartment -> Apartment)
+    const propertyType = templateCode.charAt(0).toUpperCase() + templateCode.slice(1).toLowerCase();
     
-    console.log(`🌐 TemplateService: Making API call to ${url}`);
+    // Backend endpoint: /api/templates/{bankCode}/{propertyType}
+    const url = `${this.API_BASE_URL}/templates/${bankCode}/${propertyType}`;
     
-    return this.http.get<AggregatedTemplateResponse>(url).pipe(
+    console.log(`🌐 TemplateService: Making API call to ${url} (templateCode: ${templateCode} -> propertyType: ${propertyType})`);
+    
+    return this.http.get<any>(url).pipe(
+      map((apiResponse: any) => {
+        console.log('📦 Backend API Response:', apiResponse);
+        
+        // Extract template data from ApiResponse wrapper
+        const templateData = apiResponse.data || apiResponse;
+        console.log('📦 Extracted template data:', {
+          templateId: templateData.templateId,
+          elementCount: templateData.elements?.length || 0
+        });
+        
+        // Transform new backend DTO format to frontend expected format
+        return this.transformBackendDtoToFrontend(templateData, bankCode);
+      }),
       catchError(error => {
-        console.error(`❌ TemplateService: API call failed for ${bankCode}/${templateCode}:`, error);
+        console.error(`❌ TemplateService: API call failed for ${bankCode}/${propertyType}:`, error);
         if (error.status === 0) {
           console.error('❌ Network error - check if backend is running and CORS is configured');
+        } else if (error.status === 404) {
+          console.error('❌ Template not found - check if template exists in database');
         }
         return throwError(() => error);
       })
     );
+  }
+
+  /**
+   * Transform new backend DTO format to frontend expected format
+   */
+  private transformBackendDtoToFrontend(templateDto: any, bankCode: string): AggregatedTemplateResponse {
+    console.log('🔄 Transforming backend DTO to frontend format');
+    
+    const elements = templateDto.elements || [];
+    
+    // Separate root-level elements into common fields and bank-specific tabs
+    const commonFields: any[] = [];
+    const bankSpecificTabs: any[] = [];
+    
+    elements.forEach((element: any) => {
+      if (element.$type === 'container' && element.container === 0) {
+        // Container type 0 = Tab (bank-specific tab)
+        const tab = this.transformContainerToTab(element);
+        bankSpecificTabs.push(tab);
+      } else if (element.$type === 'container') {
+        // Other container types at root should not exist
+        console.warn('⚠️ Unexpected non-Tab container at root level:', element);
+      } else {
+        // Non-container at root level = Common field (Basic Information)
+        const field = this.transformElementToField(element, true); // true = isCommonField, no grouping
+        commonFields.push(field);
+      }
+    });
+    
+    console.log(`✅ Transformed ${commonFields.length} common fields (no grouping) and ${bankSpecificTabs.length} bank-specific tabs`);
+    
+    return {
+      templateInfo: {
+        templateId: templateDto.templateId,
+        templateName: templateDto.templateName,
+        propertyType: this.mapBackendPropertyTypeToFrontend(templateDto.propertyType),
+        bankCode: bankCode,
+        bankName: templateDto.bankDetails?.bankName || bankCode,
+        version: '1.0'
+      },
+      commonFields: commonFields,
+      bankSpecificTabs: bankSpecificTabs,
+      documentTypes: [], // Document types not in current response
+      aggregatedAt: new Date().toISOString()
+    };
+  }
+
+  /**
+   * Transform a backend element to frontend field format
+   */
+  private transformElementToField(element: any, isCommonField: boolean = false): any {
+    const fieldLabel = element.label || this.formatFieldName(element.fieldId);
+    
+    return {
+      fieldId: element.fieldId,
+      label: fieldLabel,
+      uiDisplayName: fieldLabel,
+      fieldType: this.mapBackendFieldTypeToFrontend(element.fieldType, element.$type),
+      displayOrder: element.displayOrder || 0,
+      sortOrder: element.displayOrder || 0,
+      isRequired: element.isRequired || false,
+      isReadonly: element.isReadonly || false,
+      helpText: element.helpText || '',
+      placeholderText: element.placeholderText || '',
+      defaultValue: element.defaultValue || null,
+      options: this.transformOptions(element.options),
+      validationRules: element.validationRules || null,
+      validation: element.validationRules || null,
+      isVisible: element.isVisible !== false,
+      // Only set group/fieldGroup for non-common fields
+      group: isCommonField ? undefined : this.determineFieldGroup(element.fieldId),
+      fieldGroup: isCommonField ? undefined : this.determineFieldGroup(element.fieldId),
+      gridSize: this.determineGridSize(element.fieldType, element.$type),
+      
+      // Table-specific fields
+      columns: element.columns || undefined,
+      rows: element.rows || undefined,
+      minRows: element.minRows || undefined,
+      maxRows: element.maxRows || undefined,
+      
+      // Container-specific fields
+      containerType: element.containerType || undefined,
+      subFields: element.children ? element.children.map((child: any) => this.transformElementToField(child, false)) : undefined
+    };
+  }
+
+  /**
+   * Transform a container element to a bank-specific tab
+   * Container enum: 0 = Tab, 1 = Group, 2 = Section
+   */
+  private transformContainerToTab(container: any): any {
+    const children = container.children || [];
+    
+    // Separate direct fields from sections/groups
+    const directFields: any[] = [];
+    const sections: any[] = [];
+    
+    children.forEach((child: any) => {
+      if (child.$type === 'container') {
+        // Nested container = Section or Group
+        if (child.container === 2) {
+          // Section
+          sections.push(this.transformContainerToSection(child));
+        } else if (child.container === 1) {
+          // Group - treat as section for now
+          sections.push(this.transformContainerToSection(child));
+        } else {
+          console.warn('⚠️ Unexpected nested tab container:', child);
+        }
+      } else {
+        // Direct field in tab
+        directFields.push(this.transformElementToField(child, false));
+      }
+    });
+    
+    return {
+      tabId: container.fieldId,
+      tabName: container.label || this.formatFieldName(container.fieldId),
+      displayOrder: container.displayOrder || 0,
+      fields: directFields,
+      sections: sections,
+      hasSections: sections.length > 0
+    };
+  }
+
+  /**
+   * Transform a container element to a section within a tab
+   * Handles both Section (2) and Group (1) containers
+   */
+  private transformContainerToSection(container: any): any {
+    const children = container.children || [];
+    
+    // If this is a Group container, transform it as a group field (not a section)
+    if (container.container === 1) {
+      return this.transformGroupToField(container);
+    }
+    
+    // This is a Section - process children
+    const fields: any[] = [];
+    const nestedSections: any[] = [];
+    
+    children.forEach((child: any) => {
+      if (child.$type === 'container') {
+        if (child.container === 1) {
+          // Group within Section - transform as group field
+          fields.push(this.transformGroupToField(child));
+        } else if (child.container === 2) {
+          // Nested Section - rare but possible
+          nestedSections.push(this.transformContainerToSection(child));
+        }
+      } else if (child.$type === 'table') {
+        // Table element
+        fields.push(this.transformTableToField(child));
+      } else {
+        // Regular field
+        fields.push(this.transformElementToField(child, false));
+      }
+    });
+    
+    return {
+      sectionId: container.fieldId,
+      sectionName: container.label || this.formatFieldName(container.fieldId),
+      displayOrder: container.displayOrder || 0,
+      fields: fields,
+      sections: nestedSections.length > 0 ? nestedSections : undefined,
+      isCollapsible: container.isCollapsible || false,
+      isCollapsed: container.isCollapsed || false
+    };
+  }
+
+  /**
+   * Transform a Group container to a group field with subFields
+   */
+  private transformGroupToField(container: any): any {
+    const children = container.children || [];
+    const subFields = children.map((child: any) => {
+      if (child.$type === 'container') {
+        // Nested group - recursive
+        return this.transformGroupToField(child);
+      } else {
+        return this.transformElementToField(child, false);
+      }
+    });
+    
+    const fieldLabel = container.label || this.formatFieldName(container.fieldId);
+    
+    // Determine grid size based on number of subfields
+    // Default to grid-3 (4 fields per row) to align with regular input fields
+    let gridSize = '3'; // grid-3 = 4 fields per row (12/3 = 4)
+    
+    // If there are many subfields (5+), use full width for better layout
+    if (subFields.length >= 5) {
+      gridSize = 'full';
+    }
+    
+    return {
+      fieldId: container.fieldId,
+      label: fieldLabel,
+      uiDisplayName: fieldLabel,
+      fieldType: 'group',
+      displayOrder: container.displayOrder || 0,
+      sortOrder: container.displayOrder || 0,
+      isRequired: false,
+      isReadonly: false,
+      isVisible: container.isVisible !== false,
+      subFields: subFields,
+      gridSize: gridSize
+    };
+  }
+
+  /**
+   * Transform a table element to a field
+   */
+  private transformTableToField(table: any): any {
+    const fieldLabel = table.label || this.formatFieldName(table.fieldId);
+    
+    return {
+      fieldId: table.fieldId,
+      label: fieldLabel,
+      uiDisplayName: fieldLabel,
+      fieldType: 'table',
+      displayOrder: table.displayOrder || 0,
+      sortOrder: table.displayOrder || 0,
+      isRequired: false,
+      isReadonly: false,
+      isVisible: table.isVisible !== false,
+      columns: table.columns || [],
+      rows: table.rows || [],
+      minRows: table.minRows || 1,
+      maxRows: table.maxRows || undefined,
+      gridSize: 'full'
+    };
+  }
+
+  /**
+   * Transform backend options array
+   */
+  private transformOptions(options: any): any[] {
+    if (!options || !Array.isArray(options)) {
+      return [];
+    }
+    
+    // If options are already in {value, label} format, return as-is
+    if (options.length > 0 && typeof options[0] === 'object' && options[0].value !== undefined) {
+      return options;
+    }
+    
+    // If options are strings like "ValuationApp.Core.Entities.FieldOption", they need to be fetched from backend
+    // For now, return empty array - these should come from backend properly
+    return [];
+  }
+
+  /**
+   * Map backend field type enum to frontend string
+   */
+  private mapBackendFieldTypeToFrontend(backendFieldType: number, discriminator: string): string {
+    // Use $type discriminator for base type
+    if (discriminator === 'table') return 'table';
+    if (discriminator === 'container') return 'container';
+    if (discriminator === 'attachment') return 'attachment';
+    
+    // Map input field types (fieldType enum from backend)
+    const fieldTypeMap: { [key: number]: string } = {
+      0: 'text',       // Text
+      1: 'number',     // Number  
+      2: 'date',       // Date
+      3: 'dropdown',   // Dropdown
+      4: 'textarea',   // TextArea
+      5: 'currency',   // Currency
+      6: 'checkbox',   // Checkbox
+      7: 'radio',      // Radio
+      8: 'email',      // Email
+      9: 'phone',      // Phone
+      10: 'url',       // Url
+      11: 'file'       // File
+    };
+    
+    return fieldTypeMap[backendFieldType] || 'text';
+  }
+
+  /**
+   * Map backend property type enum to frontend string
+   */
+  private mapBackendPropertyTypeToFrontend(propertyType: number): string {
+    const propertyTypeMap: { [key: number]: string } = {
+      1: 'house',
+      2: 'apartment',
+      3: 'land',
+      4: 'commercial'
+    };
+    
+    return propertyTypeMap[propertyType] || 'land';
+  }
+
+  /**
+   * Determine field group based on field ID
+   */
+  private determineFieldGroup(fieldId: string): string {
+    if (fieldId.includes('applicant') || fieldId.includes('name') || fieldId.includes('contact')) {
+      return 'basic_information';
+    }
+    if (fieldId.includes('property') || fieldId.includes('location') || fieldId.includes('address')) {
+      return 'property_details';
+    }
+    if (fieldId.includes('document') || fieldId.includes('title') || fieldId.includes('legal')) {
+      return 'document_details';
+    }
+    if (fieldId.includes('boundary') || fieldId.includes('measurement') || fieldId.includes('dimension')) {
+      return 'property_measurements';
+    }
+    if (fieldId.includes('valuation') || fieldId.includes('rate') || fieldId.includes('value') || fieldId.includes('market')) {
+      return 'valuation';
+    }
+    
+    return 'basic_information'; // Default group
+  }
+
+  /**
+   * Format field name from fieldId (convert snake_case to Title Case)
+   */
+  private formatFieldName(fieldId: string): string {
+    return fieldId
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, l => l.toUpperCase());
+  }
+
+  /**
+   * Determine grid size for field layout
+   */
+  private determineGridSize(fieldType: number, discriminator: string): string {
+    // Tables and containers take full width
+    if (discriminator === 'table' || discriminator === 'container') {
+      return 'full';
+    }
+    
+    // Textareas take full width
+    if (fieldType === 4) { // TextArea
+      return 'full';
+    }
+    
+    // Default to grid-3 (4 fields per row: 12/3 = 4)
+    return '3';
   }
 
   /**
