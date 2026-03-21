@@ -83,14 +83,20 @@ export class NewReport implements OnInit, OnDestroy {
         }
         return response.json();
       })
-      .then(banksData => {
-        console.log('📊 Raw banks data received:', banksData.length);
+      .then(apiResponse => {
+        console.log('📊 Raw API response received:', apiResponse);
+        
+        // Extract data from ApiResponse wrapper
+        const banksData = apiResponse.data || apiResponse;
+        console.log('📊 Banks data extracted:', Array.isArray(banksData) ? banksData.length : 'Not an array');
         
         // Run in NgZone to ensure change detection
         this.ngZone.run(() => {
-          // Filter only active banks
-          this.banks = banksData.filter((bank: Bank) => bank.isActive);
-          console.log('✅ Banks loaded from API:', this.banks.length);
+          // Filter only active banks with templates
+          this.banks = banksData.filter((bank: any) => 
+            bank.isActive && bank.templates && bank.templates.length > 0
+          );
+          console.log('✅ Banks with templates loaded from API:', this.banks.length);
           console.log('🏦 Available banks:', this.banks.map(b => `${b.bankCode} (${b.templates?.length || 0} templates)`));
           this.isLoading = false;
           

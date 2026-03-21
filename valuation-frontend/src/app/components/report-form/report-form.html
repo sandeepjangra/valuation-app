@@ -382,7 +382,7 @@
                                     </div>
 
                                     <!-- Sub-field Number Input -->
-                                    <div *ngIf="subField.fieldType === 'number' || subField.fieldType === 'currency'" class="form-field">
+                                    <div *ngIf="subField.fieldType === 'number'" class="form-field">
                                       <label [for]="subField.fieldId" class="field-label">
                                         {{ subField.uiDisplayName }}
                                         <span class="required-indicator" *ngIf="subField.isRequired">*</span>
@@ -405,6 +405,58 @@
                                         [class.disabled-field]="isFieldDisabled(subField)"
                                         class="form-input"
                                       />
+                                      <div class="field-error-message" *ngIf="getFieldError(subField.fieldId)">
+                                        {{ getFieldError(subField.fieldId) }}
+                                      </div>
+                                    </div>
+
+                                    <!-- Sub-field Currency Input (with formula support) -->
+                                    <div *ngIf="subField.fieldType === 'currency'" 
+                                         class="form-field currency-field"
+                                         [class.calculated-field]="subField.formula">
+                                      <!-- DEBUG: Log subField properties -->
+                                      {{ debugSubField(subField) }}
+                                      <label [for]="subField.fieldId" class="field-label">
+                                        {{ subField.uiDisplayName }}
+                                        <span class="required-indicator" *ngIf="subField.isRequired">*</span>
+                                        <span class="calculated-indicator" *ngIf="subField.formula">🧮</span>
+                                        <span 
+                                          *ngIf="subField.placeholder || subField.helpText" 
+                                          class="field-info-icon sub-field-info"
+                                          [title]="subField.placeholder || subField.helpText"
+                                          [attr.aria-label]="'Information about ' + subField.uiDisplayName">
+                                          <i class="info-icon">i</i>
+                                        </span>
+                                      </label>
+                                      <div class="currency-input-wrapper">
+                                        <span class="currency-prefix" *ngIf="subField.prefix">{{ subField.prefix }}</span>
+                                        
+                                        <!-- Formula-based currency field (readonly, calculated) -->
+                                        <input *ngIf="subField.formula"
+                                          [id]="subField.fieldId"
+                                          type="text"
+                                          [value]="getCalculatedValue(subField)"
+                                          readonly
+                                          disabled
+                                          class="form-input currency-input calculated-input"
+                                        />
+                                        
+                                        <!-- Regular currency field (editable) -->
+                                        <input *ngIf="!subField.formula"
+                                          [id]="subField.fieldId"
+                                          type="number"
+                                          step="0.01"
+                                          [formControlName]="subField.fieldId"
+                                          
+                                          [min]="subField.validation?.min || null"
+                                          [max]="subField.validation?.max || null"
+                                          [readonly]="subField.isReadonly"
+                                          [disabled]="isFieldDisabled(subField)"
+                                          [class.disabled-field]="isFieldDisabled(subField)"
+                                          class="form-input currency-input"
+                                        />
+                                        <span class="currency-suffix" *ngIf="subField.suffix">{{ subField.suffix }}</span>
+                                      </div>
                                       <div class="field-error-message" *ngIf="getFieldError(subField.fieldId)">
                                         {{ getFieldError(subField.fieldId) }}
                                       </div>
@@ -589,10 +641,12 @@
                             <!-- Currency Input -->
                             <div *ngSwitchCase="'currency'" 
                                  class="form-field currency-field"
-                                 [class.disabled-field]="isFieldDisabled(field)">
+                                 [class.disabled-field]="isFieldDisabled(field)"
+                                 [class.calculated-field]="field.formula">
                               <label [for]="field.fieldId" class="field-label">
                                 {{ field.uiDisplayName }}
                                 <span class="required-indicator" *ngIf="field.isRequired">*</span>
+                                <span class="calculated-indicator" *ngIf="field.formula">🧮</span>
                                 <span 
                                   *ngIf="field.helpText" 
                                   class="field-info-icon"
@@ -603,7 +657,19 @@
                               </label>
                               <div class="currency-input-wrapper">
                                 <span class="currency-prefix" *ngIf="field.prefix">{{ field.prefix }}</span>
-                                <input
+                                
+                                <!-- Formula-based currency field (readonly, calculated) -->
+                                <input *ngIf="field.formula"
+                                  [id]="field.fieldId"
+                                  type="text"
+                                  [value]="getCalculatedValue(field)"
+                                  readonly
+                                  disabled
+                                  class="form-input currency-input calculated-input"
+                                />
+                                
+                                <!-- Regular currency field (editable) -->
+                                <input *ngIf="!field.formula"
                                   [id]="field.fieldId"
                                   type="number"
                                   step="0.01"
@@ -881,7 +947,7 @@
                                 </div>
 
                                 <!-- Sub-field Number Input -->
-                                <div *ngIf="subField.fieldType === 'number' || subField.fieldType === 'currency'" class="form-field">
+                                <div *ngIf="subField.fieldType === 'number'" class="form-field">
                                   <label [for]="subField.fieldId" class="field-label">
                                     {{ subField.uiDisplayName }}
                                     <span class="required-indicator" *ngIf="subField.isRequired">*</span>
@@ -895,6 +961,49 @@
                                     [max]="subField.validation?.max || null"
                                     class="form-input"
                                   />
+                                  <div class="field-error-message" *ngIf="getFieldError(subField.fieldId)">
+                                    {{ getFieldError(subField.fieldId) }}
+                                  </div>
+                                </div>
+
+                                <!-- Sub-field Currency Input (with formula support) -->
+                                <div *ngIf="subField.fieldType === 'currency'" 
+                                     class="form-field currency-field"
+                                     [class.calculated-field]="subField.formula">
+                                  <!-- DEBUG: Log subField properties -->
+                                  {{ debugSubField(subField) }}
+                                  <label [for]="subField.fieldId" class="field-label">
+                                    {{ subField.uiDisplayName }}
+                                    <span class="required-indicator" *ngIf="subField.isRequired">*</span>
+                                    <span class="calculated-indicator" *ngIf="subField.formula">🧮</span>
+                                  </label>
+                                  <div class="currency-input-wrapper">
+                                    <span class="currency-prefix" *ngIf="subField.prefix">{{ subField.prefix }}</span>
+                                    
+                                    <!-- Formula-based currency field (readonly, calculated) -->
+                                    <input *ngIf="subField.formula"
+                                      [id]="subField.fieldId"
+                                      type="text"
+                                      [value]="getCalculatedValue(subField)"
+                                      readonly
+                                      disabled
+                                      class="form-input currency-input calculated-input"
+                                    />
+                                    
+                                    <!-- Regular currency field (editable) -->
+                                    <input *ngIf="!subField.formula"
+                                      [id]="subField.fieldId"
+                                      type="number"
+                                      step="0.01"
+                                      [formControlName]="subField.fieldId"
+                                      
+                                      [min]="subField.validation?.min || null"
+                                      [max]="subField.validation?.max || null"
+                                      [readonly]="subField.isReadonly"
+                                      class="form-input currency-input"
+                                    />
+                                    <span class="currency-suffix" *ngIf="subField.suffix">{{ subField.suffix }}</span>
+                                  </div>
                                   <div class="field-error-message" *ngIf="getFieldError(subField.fieldId)">
                                     {{ getFieldError(subField.fieldId) }}
                                   </div>
@@ -984,14 +1093,27 @@
 
                         <!-- Currency Input -->
                         <!-- Currency Input -->
-                        <div *ngSwitchCase="'currency'" class="form-field currency-field">
+                        <div *ngSwitchCase="'currency'" class="form-field currency-field" [class.calculated-field]="field.formula">
                           <label [for]="field.fieldId" class="field-label">
                             {{ field.uiDisplayName }}
                             <span class="required-indicator" *ngIf="field.isRequired">*</span>
+                            <span class="calculated-indicator" *ngIf="field.formula">🧮</span>
                           </label>
                           <div class="currency-input-wrapper">
                             <span class="currency-prefix" *ngIf="field.prefix">{{ field.prefix }}</span>
-                            <input
+                            
+                            <!-- Formula-based currency field (readonly, calculated) -->
+                            <input *ngIf="field.formula"
+                              [id]="field.fieldId"
+                              type="text"
+                              [value]="getCalculatedValue(field)"
+                              readonly
+                              disabled
+                              class="form-input currency-input calculated-input"
+                            />
+                            
+                            <!-- Regular currency field (editable) -->
+                            <input *ngIf="!field.formula"
                               [id]="field.fieldId"
                               type="number"
                               step="0.01"

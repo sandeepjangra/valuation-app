@@ -1,0 +1,23 @@
+{
+  "CollectionName": "Organizations",
+  "Description": "Organizations collection for the valuation application",
+  "Version": "2.0",
+  "MigrationDate": "2026-03-15T21:11:57.469953",
+  "CreatedAt": "2026-03-15T21:11:57.469959",
+  "UpdatedAt": "2026-03-15T21:11:57.469962",
+  "Organizations": [
+    {
+      "OrganizationId": "69618d3b1fd498a4ef610612",
+      "ShortName": "system-administration",
+      "FullName": "System Administration Updated",
+      "Description": "Test update",
+      "ReportReferenceInitials": "CEV/ADMIN/999",
+      "LastReferenceNumber": 27,
+      "ContactEmail": "admin@valuation-app.com",
+      "ContactPhone": "+91-2345678900",
+      "IsActive": true,
+      "CreatedAt": "2026-01-09T23:20:25.878000",
+      "UpdatedAt": "2026-02-21T17:10:31.860000"
+    }
+  ]
+}

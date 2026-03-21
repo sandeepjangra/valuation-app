@@ -1,0 +1,76 @@
+{
+  "templateMetadata": {
+    "templateId": "SBI_LAND_TEMPLATE_V1",
+    "templateName": "SBI Land Property Valuation",
+    "bankCode": "SBI",
+    "propertyType": "Land",
+    "version": "2.0",
+    "tabs": [
+      {
+        "tabId": "property_details",
+        "tabName": "sbi_land_property_details",
+        "templateId": null,
+        "hasSections": false,
+        "sections": [],
+        "fields": [
+          {
+            "id": "BankBranch",
+            "label": "Bank Branch - State Bank of India",
+            "type": "select",
+            "required": true,
+            "validation": {
+              "required": true,
+              "message": "Please select a State Bank of India branch"
+            },
+            "options": [
+              {
+                "value": "sbi_mumbai_main",
+                "label": "Mumbai Main Branch (SBI001) - SBIN0000001",
+                "branchCode": "SBI001",
+                "branchName": "Mumbai Main Branch",
+                "ifscCode": "SBIN0000001",
+                "branchAddress": {
+                  "street": "Nariman Point",
+                  "city": "Mumbai",
+                  "state": "Maharashtra",
+                  "pincode": "400001",
+                  "country": "India"
+                },
+                "contactDetails": {
+                  "phone": "+91-22-22661602",
+                  "email": "mumbai.main@sbi.co.in"
+                }
+              },
+              {
+                "value": "sbi_delhi_cp",
+                "label": "Delhi Connaught Place Branch (SBI002) - SBIN0000002",
+                "branchCode": "SBI002",
+                "branchName": "Delhi Connaught Place Branch",
+                "ifscCode": "SBIN0000002",
+                "branchAddress": {
+                  "street": "Connaught Place",
+                  "city": "New Delhi",
+                  "state": "Delhi",
+                  "pincode": "110001",
+                  "country": "India"
+                },
+                "contactDetails": {
+                  "phone": "+91-11-23417821",
+                  "email": "delhi.cp@sbi.co.in"
+                }
+              }
+            ],
+            "placeholder": "Select State Bank of India branch...",
+            "metadata": {
+              "bankCode": "SBI",
+              "bankName": "State Bank of India",
+              "totalBranches": 2,
+              "addedBy": "refresh_templates_from_mongodb.py",
+              "addedDate": "2025-12-21T17:12:04.305821"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

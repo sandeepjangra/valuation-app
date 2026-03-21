@@ -1,0 +1,41 @@
+{
+  "template_id": "SBI_LAND_TEMPLATE_V1",
+  "template_name": "SBI Land Property Valuation",
+  "bank_code": "SBI",
+  "property_type": "Land",
+  "tabs": [
+    {
+      "tabId": "property_details",
+      "tabName": "sbi_land_property_details",
+      "hasSections": false,
+      "sections": [],
+      "field_stats": {
+        "total_fields": 1,
+        "field_types": {
+          "unknown": 1
+        },
+        "has_formula": 0,
+        "has_subfields": 0,
+        "max_nesting_level": 1,
+        "field_details": [
+          {
+            "fieldId": null,
+            "fieldType": "unknown",
+            "level": 1,
+            "path": null,
+            "hasFormula": false,
+            "hasSubFields": false,
+            "hasCalculationMetadata": false
+          }
+        ]
+      }
+    }
+  ],
+  "total_fields": 1,
+  "field_types_summary": {
+    "unknown": 1
+  },
+  "formula_fields": [],
+  "group_fields": [],
+  "table_fields": []
+}

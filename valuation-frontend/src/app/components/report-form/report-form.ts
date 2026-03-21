@@ -1456,7 +1456,13 @@ export class ReportForm implements OnInit {
         }
       }
       
-      console.log('�🔥 Processed Report Form Params:', {
+      // If no templateId but we have propertyType, derive templateId from propertyType
+      if (!this.selectedTemplateId && this.selectedPropertyType) {
+        this.selectedTemplateId = this.selectedPropertyType.toLowerCase();
+        console.log('📋 Derived templateId from propertyType:', this.selectedTemplateId);
+      }
+
+      console.log('🔥 Processed Report Form Params:', {
         bankCode: this.selectedBankCode,
         bankName: this.selectedBankName,
         templateId: this.selectedTemplateId,
@@ -2361,13 +2367,55 @@ export class ReportForm implements OnInit {
     this.templateData.allFields.forEach(field => {
       this.updateFieldConditionalState(field, formValues);
       
+      // Handle calculated fields with formulas (deferred to avoid ExpressionChangedAfterItHasBeenCheckedError)
+      if (field.formula) {
+        setTimeout(() => this.updateCalculatedField(field), 0);
+      }
+      
       // Handle sub-fields for group fields
       if (field.fieldType === 'group' && field.subFields) {
         field.subFields.forEach(subField => {
           this.updateFieldConditionalState(subField, formValues);
+          
+          // Handle calculated sub-fields (deferred)
+          if (subField.formula) {
+            setTimeout(() => this.updateCalculatedField(subField), 0);
+          }
         });
       }
     });
+  }
+
+  /**
+   * Update calculated field value based on formula
+   */
+  private updateCalculatedField(field: any): void {
+    const control = this.reportForm?.get(field.fieldId);
+    if (!control) {
+      return;
+    }
+
+    // Calculate new value
+    const calculatedValue = this.getCalculatedValue(field);
+    
+    // Get current value (works even if control is disabled)
+    const currentValue = control.value;
+    
+    // Only update if value changed to avoid infinite loops
+    if (currentValue !== calculatedValue) {
+      // Use patchValue instead of setValue to avoid triggering validation
+      // and set emitEvent to false to prevent circular updates
+      if (control.disabled) {
+        // For disabled controls, we need to enable temporarily
+        control.enable({ emitEvent: false });
+        control.patchValue(calculatedValue, { emitEvent: false, onlySelf: true });
+        control.disable({ emitEvent: false });
+      } else {
+        control.patchValue(calculatedValue, { emitEvent: false, onlySelf: true });
+      }
+      
+      console.log(`📊 Calculated field '${field.fieldId}' updated:`, calculatedValue);
+    }
   }
 
   /**
@@ -2398,6 +2446,11 @@ export class ReportForm implements OnInit {
       return true;
     }
     
+    // Formula fields should always be disabled (readonly)
+    if (field.formula || field.isReadonly) {
+      return true;
+    }
+    
     // In edit mode, check if field has conditional logic that makes it disabled
     if (!field.conditionalLogic) {
       return false;
@@ -2408,29 +2461,129 @@ export class ReportForm implements OnInit {
   }
 
   /**
-   * Get calculated value for calculated fields
+   * Extract field dependencies from formula string
+   */
+  private extractFormulaDependencies(formula: string): string[] {
+    // Extract all field IDs (alphanumeric + underscore) from formula
+    const matches = formula.match(/[a-zA-Z_][a-zA-Z0-9_]*/g) || [];
+    // Filter out JavaScript keywords and operators
+    const jsKeywords = ['return', 'function', 'if', 'else', 'for', 'while', 'do', 'switch', 'case', 'break', 'continue', 'true', 'false', 'null', 'undefined'];
+    return matches.filter(match => !jsKeywords.includes(match));
+  }
+
+  /**
+   * Get calculated value for calculated fields with enhanced logic
    */
   getCalculatedValue(field: any): string {
     if (!field.formula) return '';
     
     try {
-      // Simple formula evaluation - can be enhanced with a proper expression parser
-      let formula = field.formula;
-      const formControls = this.reportForm.controls;
+      const formula = field.formula;
+      const formControls = this.reportForm?.controls;
       
-      // Replace field references with actual values
-      Object.keys(formControls).forEach(fieldId => {
-        const value = formControls[fieldId].value || 0;
-        formula = formula.replace(new RegExp(fieldId, 'g'), value.toString());
+      if (!formControls) {
+        console.warn('No form controls available for calculation');
+        return '';
+      }
+      
+      // Extract dependencies from formula
+      const dependencies = this.extractFormulaDependencies(formula);
+      
+      console.log(`🧮 Calculating field '${field.fieldId}' with formula: ${formula}`);
+      console.log(`🧮 Dependencies:`, dependencies);
+      
+      // Get values for all dependencies
+      const values: { [key: string]: any } = {};
+      const hasValue: { [key: string]: boolean } = {};
+      let filledCount = 0;
+      let totalDependencies = dependencies.length;
+      
+      dependencies.forEach(fieldId => {
+        const control = formControls[fieldId];
+        const rawValue = control ? control.value : null;
+        
+        // Check if field has a value (not empty, not null, not undefined)
+        hasValue[fieldId] = rawValue !== null && rawValue !== '' && rawValue !== undefined;
+        
+        if (hasValue[fieldId]) {
+          values[fieldId] = parseFloat(rawValue) || 0;
+          filledCount++;
+        } else {
+          values[fieldId] = 0;
+        }
+        
+        console.log(`  📊 ${fieldId}: raw=${rawValue}, parsed=${values[fieldId]}, hasValue=${hasValue[fieldId]}`);
       });
       
-      // Evaluate simple mathematical expressions
-      // Note: In production, use a proper expression parser for security
-      const result = Function('"use strict"; return (' + formula + ')')();
-      return isNaN(result) ? '' : result.toString();
+      console.log(`  📊 Filled count: ${filledCount}/${totalDependencies}`);
+      
+      // Apply default logic:
+      // - If no values filled → return 0
+      // - If some values filled → use 1 for empty fields
+      // - If all values filled → use actual formula
+      let calculationFormula = formula;
+      
+      if (filledCount === 0) {
+        // No values filled - return 0
+        console.log(`  ✅ No values filled, returning 0`);
+        return '0';
+      } else if (filledCount < totalDependencies) {
+        // Partial values - replace empty fields with 1, filled fields with actual values
+        dependencies.forEach(fieldId => {
+          const value = hasValue[fieldId] ? values[fieldId] : 1;
+          calculationFormula = calculationFormula.replace(new RegExp(`\\b${fieldId}\\b`, 'g'), value.toString());
+        });
+        console.log(`  ✅ Partial values, using formula with defaults: ${calculationFormula}`);
+      } else {
+        // All values filled - use actual values
+        dependencies.forEach(fieldId => {
+          calculationFormula = calculationFormula.replace(new RegExp(`\\b${fieldId}\\b`, 'g'), values[fieldId].toString());
+        });
+        console.log(`  ✅ All values filled, using formula: ${calculationFormula}`);
+      }
+      
+      // Evaluate the formula
+      // Note: Using Function() for evaluation - in production consider using a safer expression parser
+      const result = Function('"use strict"; return (' + calculationFormula + ')')();
+      
+      console.log(`  ✅ Result: ${result}`);
+      
+      // Handle special cases
+      if (!isFinite(result)) {
+        // Division by zero or other infinity
+        console.warn('Formula resulted in infinity or NaN:', field.formula);
+        return '0';
+      }
+      
+      if (isNaN(result)) {
+        return '';
+      }
+      
+      // Round to 2 decimal places for currency fields
+      if (field.fieldType === 'currency' || field.displayFormat === 'currency') {
+        return result.toFixed(2);
+      }
+      
+      return result.toString();
     } catch (error) {
       console.warn('Error calculating formula:', field.formula, error);
       return '';
+    }
+  }
+
+  /**
+   * Debug: Log subField properties (temporary for debugging)
+   */
+  debugSubField(subField: any): void {
+    if (subField.fieldType === 'currency') {
+      console.log('🔍 Currency SubField Debug:', {
+        fieldId: subField.fieldId,
+        uiDisplayName: subField.uiDisplayName,
+        fieldType: subField.fieldType,
+        formula: subField.formula,
+        hasFormula: !!subField.formula,
+        allProperties: Object.keys(subField)
+      });
     }
   }
 
@@ -2624,21 +2777,77 @@ export class ReportForm implements OnInit {
     }
 
     console.log('🧮 Initializing calculated fields system...');
+    console.log('🧮 Total allFields:', this.templateData.allFields.length);
 
-    // Extract all calculated fields from template data
+    // Find all fields with formulas and set them as readonly
+    const formulaFields: any[] = [];
+    
+    this.templateData.allFields.forEach(field => {
+      // Log all group fields to see their structure
+      if (field.fieldType === 'group') {
+        console.log(`🔍 Group field: ${field.fieldId}`, {
+          hasSubFields: !!field.subFields,
+          subFieldsCount: field.subFields?.length || 0,
+          subFields: field.subFields?.map(sf => ({
+            fieldId: sf.fieldId,
+            fieldType: sf.fieldType,
+            hasFormula: !!sf.formula,
+            formula: sf.formula
+          }))
+        });
+      }
+      
+      if (field.formula) {
+        formulaFields.push(field);
+        console.log(`✅ Top-level formula field: ${field.fieldId}`);
+        
+        // Set field as readonly
+        const control = this.reportForm.get(field.fieldId);
+        if (control) {
+          control.disable({ emitEvent: false });
+        }
+      }
+      
+      // Check subFields in groups
+      if (field.fieldType === 'group' && field.subFields) {
+        field.subFields.forEach(subField => {
+          if (subField.formula) {
+            formulaFields.push(subField);
+            console.log(`✅ SubField formula field: ${subField.fieldId} (formula: ${subField.formula})`);
+            
+            // Set field as readonly
+            const control = this.reportForm.get(subField.fieldId);
+            if (control) {
+              control.disable({ emitEvent: false });
+            }
+          }
+        });
+      }
+    });
+
+    console.log(`🧮 Found ${formulaFields.length} formula-based calculated fields:`, 
+      formulaFields.map(f => ({ id: f.fieldId, formula: f.formula }))
+    );
+
+    // Extract all calculated fields from template data (old calculation service)
     this.calculatedFieldsMap = this.calculationService.getCalculatedFields(this.templateData.allFields);
     
-    console.log(`🧮 Found ${this.calculatedFieldsMap.size} calculated fields:`, 
+    console.log(`🧮 Found ${this.calculatedFieldsMap.size} calculation service fields:`, 
       Array.from(this.calculatedFieldsMap.keys())
     );
 
-    // Set up listeners for each calculated field
+    // Set up listeners for each calculated field (old system)
     this.calculatedFieldsMap.forEach((config, fieldId) => {
       this.setupCalculatedFieldListener(fieldId, config);
     });
 
     // Perform initial calculation for all calculated fields
     this.recalculateAllFields();
+    
+    // Perform initial calculation for formula fields
+    formulaFields.forEach(field => {
+      this.updateCalculatedField(field);
+    });
   }
 
   /**

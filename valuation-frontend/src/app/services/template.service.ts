@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, throwError, map } from 'rxjs';
-import { AggregatedTemplateResponse, ProcessedTemplateData, FieldGroup, TemplateField, BankSpecificField, BankSpecificTab, BankSpecificSection } from '../models';
+import { AggregatedTemplateResponse, ProcessedTemplateData, FieldGroup, TemplateField, BankSpecificField, BankSpecificTab, BankSpecificSection, FieldType, FieldOption } from '../models';
 import { environment } from '../../environments/environment';
 
 @Injectable({
@@ -59,8 +59,8 @@ export class TemplateService {
     const elements = templateDto.elements || [];
     
     // Separate root-level elements into common fields and bank-specific tabs
-    const commonFields: any[] = [];
-    const bankSpecificTabs: any[] = [];
+    const commonFields: TemplateField[] = [];
+    const bankSpecificTabs: BankSpecificTab[] = [];
     
     elements.forEach((element: any) => {
       if (element.$type === 'container' && element.container === 0) {
@@ -98,52 +98,48 @@ export class TemplateService {
   /**
    * Transform a backend element to frontend field format
    */
-  private transformElementToField(element: any, isCommonField: boolean = false): any {
+  private transformElementToField(element: any, isCommonField: boolean = false): TemplateField {
     const fieldLabel = element.label || this.formatFieldName(element.fieldId);
     
     return {
+      _id: element._id || '',
       fieldId: element.fieldId,
-      label: fieldLabel,
+      technicalName: element.fieldId,
       uiDisplayName: fieldLabel,
-      fieldType: this.mapBackendFieldTypeToFrontend(element.fieldType, element.$type),
+      fieldType: this.mapBackendFieldTypeToFrontend(element.fieldType, element.$type) as FieldType,
       displayOrder: element.displayOrder || 0,
       sortOrder: element.displayOrder || 0,
       isRequired: element.isRequired || false,
       isReadonly: element.isReadonly || false,
       helpText: element.helpText || '',
-      placeholderText: element.placeholderText || '',
+      placeholder: element.placeholderText || '',
       defaultValue: element.defaultValue || null,
       options: this.transformOptions(element.options),
-      validationRules: element.validationRules || null,
-      validation: element.validationRules || null,
-      isVisible: element.isVisible !== false,
-      // Only set group/fieldGroup for non-common fields
-      group: isCommonField ? undefined : this.determineFieldGroup(element.fieldId),
+      validation: element.validationRules || undefined,
+      isActive: element.isVisible !== false,
+      // Only set fieldGroup for non-common fields
       fieldGroup: isCommonField ? undefined : this.determineFieldGroup(element.fieldId),
-      gridSize: this.determineGridSize(element.fieldType, element.$type),
+      gridSize: this.parseGridSize(this.determineGridSize(element.fieldType, element.$type)),
       
       // Table-specific fields
       columns: element.columns || undefined,
       rows: element.rows || undefined,
-      minRows: element.minRows || undefined,
-      maxRows: element.maxRows || undefined,
       
-      // Container-specific fields
-      containerType: element.containerType || undefined,
+      // Container-specific fields (for groups)
       subFields: element.children ? element.children.map((child: any) => this.transformElementToField(child, false)) : undefined
-    };
+    } as TemplateField;
   }
 
   /**
    * Transform a container element to a bank-specific tab
    * Container enum: 0 = Tab, 1 = Group, 2 = Section
    */
-  private transformContainerToTab(container: any): any {
+  private transformContainerToTab(container: any): BankSpecificTab {
     const children = container.children || [];
     
     // Separate direct fields from sections/groups
-    const directFields: any[] = [];
-    const sections: any[] = [];
+    const directFields: TemplateField[] = [];
+    const sections: BankSpecificSection[] = [];
     
     children.forEach((child: any) => {
       if (child.$type === 'container') {
@@ -166,7 +162,7 @@ export class TemplateService {
     return {
       tabId: container.fieldId,
       tabName: container.label || this.formatFieldName(container.fieldId),
-      displayOrder: container.displayOrder || 0,
+      sortOrder: container.displayOrder || 0,
       fields: directFields,
       sections: sections,
       hasSections: sections.length > 0
@@ -177,7 +173,7 @@ export class TemplateService {
    * Transform a container element to a section within a tab
    * Handles both Section (2) and Group (1) containers
    */
-  private transformContainerToSection(container: any): any {
+  private transformContainerToSection(container: any): BankSpecificSection {
     const children = container.children || [];
     
     // If this is a Group container, transform it as a group field (not a section)
@@ -390,6 +386,17 @@ export class TemplateService {
     
     // Default to grid-3 (4 fields per row: 12/3 = 4)
     return '3';
+  }
+
+  /**
+   * Parse grid size string to number for TemplateField interface
+   */
+  private parseGridSize(gridSize: string): number {
+    if (gridSize === 'full' || gridSize === '12') {
+      return 12;
+    }
+    const parsed = parseInt(gridSize, 10);
+    return isNaN(parsed) ? 3 : parsed;
   }
 
   /**
