@@ -1,3 +1,7 @@
+# .NET
+bin/
+obj/
+
 # Python
 __pycache__/
 *.py[cod]
