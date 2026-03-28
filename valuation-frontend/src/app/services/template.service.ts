@@ -62,22 +62,30 @@ export class TemplateService {
     const commonFields: TemplateField[] = [];
     const bankSpecificTabs: BankSpecificTab[] = [];
     
-    elements.forEach((element: any) => {
-      if (element.$type === 'container' && element.container === 0) {
-        // Container type 0 = Tab (bank-specific tab)
+    elements.forEach((element: any, index: number) => {
+      console.log(`🔍 Element ${index}: $type=${element.$type}, container=${element.container}, fieldId=${element.fieldId}`);
+      
+      if (element.$type === 'tab') {
+        // Tab element = bank-specific tab (colleague's refactor uses $type: 'tab')
+        console.log(`📁 Found tab: ${element.fieldId} - ${element.label}`);
         const tab = this.transformContainerToTab(element);
         bankSpecificTabs.push(tab);
-      } else if (element.$type === 'container') {
-        // Other container types at root should not exist
-        console.warn('⚠️ Unexpected non-Tab container at root level:', element);
-      } else {
+      } else if (element.$type === 'tabgroup') {
+        // TabGroup element = bank-specific tab group (older structure)
+        console.log(`📂 Found tabgroup: ${element.fieldId} - ${element.label}`);
+        const tab = this.transformContainerToTab(element);
+        bankSpecificTabs.push(tab);
+      } else if (element.$type === 'input' || element.$type === 'group' || element.$type === 'table' || element.$type === 'attachment') {
         // Non-container at root level = Common field (Basic Information)
+        console.log(`📄 Found common field: ${element.fieldId} - ${element.label}`);
         const field = this.transformElementToField(element, true); // true = isCommonField, no grouping
         commonFields.push(field);
+      } else {
+        console.warn('⚠️ Unknown element type at root level:', element.$type, element);
       }
     });
     
-    console.log(`✅ Transformed ${commonFields.length} common fields (no grouping) and ${bankSpecificTabs.length} bank-specific tabs`);
+    console.log(`✅ Transformed ${commonFields.length} common fields and ${bankSpecificTabs.length} bank-specific tabs`);
     
     return {
       templateInfo: {
@@ -142,22 +150,39 @@ export class TemplateService {
     const sections: BankSpecificSection[] = [];
     
     children.forEach((child: any) => {
-      if (child.$type === 'container') {
-        // Nested container = Section or Group
-        if (child.container === 2) {
-          // Section
+      console.log(`  🔍 Tab child: $type=${child.$type}, container=${child.container}, fieldId=${child.fieldId}`);
+      
+      if (child.$type === 'section') {
+        // Section element (colleague's refactor)
+        console.log(`    📑 Processing section: ${child.fieldId}`);
+        sections.push(this.transformContainerToSection(child));
+      } else if (child.$type === 'group') {
+        // Group element at tab level - treat as a section
+        console.log(`    📦 Processing group as section: ${child.fieldId}`);
+        sections.push(this.transformGroupToField(child));
+      } else if (child.$type === 'container') {
+        // Legacy container format
+        if (child.container === 3) {
+          // Container type 3 = Section
           sections.push(this.transformContainerToSection(child));
-        } else if (child.container === 1) {
-          // Group - treat as section for now
-          sections.push(this.transformContainerToSection(child));
+        } else if (child.container === 2) {
+          // Container type 2 = Group - treat as section for now
+          sections.push(this.transformGroupToField(child));
         } else {
-          console.warn('⚠️ Unexpected nested tab container:', child);
+          console.warn('⚠️ Unexpected nested container:', child);
         }
+      } else if (child.$type === 'table') {
+        // Table element - add as direct field
+        console.log(`    📊 Processing table: ${child.fieldId}`);
+        directFields.push(this.transformTableToField(child));
       } else {
-        // Direct field in tab
+        // Direct field in tab (input, attachment, etc.)
+        console.log(`    📄 Processing direct field: ${child.fieldId}`);
         directFields.push(this.transformElementToField(child, false));
       }
     });
+    
+    console.log(`  ✅ Tab ${container.fieldId}: ${directFields.length} direct fields, ${sections.length} sections`);
     
     return {
       tabId: container.fieldId,
@@ -171,37 +196,48 @@ export class TemplateService {
 
   /**
    * Transform a container element to a section within a tab
-   * Handles both Section (2) and Group (1) containers
+   * Handles both Section and Group elements
    */
   private transformContainerToSection(container: any): BankSpecificSection {
     const children = container.children || [];
     
-    // If this is a Group container, transform it as a group field (not a section)
-    if (container.container === 1) {
-      return this.transformGroupToField(container);
-    }
-    
-    // This is a Section - process children
+    // Process children
     const fields: any[] = [];
-    const nestedSections: any[] = [];
     
     children.forEach((child: any) => {
-      if (child.$type === 'container') {
-        if (child.container === 1) {
-          // Group within Section - transform as group field
-          fields.push(this.transformGroupToField(child));
-        } else if (child.container === 2) {
-          // Nested Section - rare but possible
-          nestedSections.push(this.transformContainerToSection(child));
-        }
+      console.log(`      🔍 Section child: $type=${child.$type}, fieldId=${child.fieldId}`);
+      
+      if (child.$type === 'group') {
+        // Group within Section - transform as group field
+        console.log(`        📦 Processing group: ${child.fieldId}`);
+        fields.push(this.transformGroupToField(child));
+      } else if (child.$type === 'section') {
+        // Nested Section - recursively process
+        console.log(`        📑 Processing nested section: ${child.fieldId}`);
+        const nestedSection = this.transformContainerToSection(child);
+        fields.push(nestedSection);
       } else if (child.$type === 'table') {
         // Table element
+        console.log(`        📊 Processing table: ${child.fieldId}`);
         fields.push(this.transformTableToField(child));
+      } else if (child.$type === 'container') {
+        // Legacy container format
+        if (child.container === 2) {
+          // Container type 2 = Group
+          fields.push(this.transformGroupToField(child));
+        } else if (child.container === 3) {
+          // Container type 3 = Section
+          const nestedSection = this.transformContainerToSection(child);
+          fields.push(nestedSection);
+        }
       } else {
-        // Regular field
+        // Regular field (input, attachment, etc.)
+        console.log(`        📄 Processing field: ${child.fieldId}`);
         fields.push(this.transformElementToField(child, false));
       }
     });
+    
+    console.log(`      ✅ Section ${container.fieldId}: ${fields.length} fields`);
     
     return {
       sectionId: container.fieldId,
@@ -217,7 +253,7 @@ export class TemplateService {
   private transformGroupToField(container: any): any {
     const children = container.children || [];
     const subFields = children.map((child: any) => {
-      if (child.$type === 'container') {
+      if (child.$type === 'group') {
         // Nested group - recursive
         return this.transformGroupToField(child);
       } else {
@@ -227,14 +263,9 @@ export class TemplateService {
     
     const fieldLabel = container.label || this.formatFieldName(container.fieldId);
     
-    // Determine grid size based on number of subfields
-    // Default to grid-3 (4 fields per row) to align with regular input fields
-    let gridSize = '3'; // grid-3 = 4 fields per row (12/3 = 4)
-    
-    // If there are many subfields (5+), use full width for better layout
-    if (subFields.length >= 5) {
-      gridSize = 'full';
-    }
+    // Groups should use grid-3 (which means 4 fields per row: 12/3 = 4)
+    // This ensures group fields align with regular input fields
+    const gridSize = 3;
     
     return {
       fieldId: container.fieldId,
@@ -247,7 +278,7 @@ export class TemplateService {
       isReadonly: false,
       isVisible: container.isVisible !== false,
       subFields: subFields,
-      gridSize: gridSize
+      gridSize: gridSize  // Return as number, not string
     };
   }
 
@@ -256,6 +287,45 @@ export class TemplateService {
    */
   private transformTableToField(table: any): any {
     const fieldLabel = table.label || this.formatFieldName(table.fieldId);
+    
+    // Transform columns to ensure they have proper field types
+    const columns = (table.columns || []).map((col: any) => ({
+      fieldId: col.fieldId,
+      label: col.label,
+      fieldType: this.mapBackendFieldTypeToFrontend(col.fieldType, 'input'),
+      width: col.width || null,
+      isReadonly: col.isReadonly || false,
+      options: col.options ? this.transformOptions(col.options) : null,
+      validationRules: col.validationRules || null
+    }));
+    
+    // Initialize rows based on minRows if no rows provided
+    let rows = table.rows || [];
+    const minRows = table.minRows || 1;
+    
+    if (rows.length === 0) {
+      // Special handling for boundaries/direction tables - always create 4 rows
+      const hasDirectionColumn = columns.some((col: any) => col.fieldId === 'direction');
+      const rowCount = hasDirectionColumn ? 4 : minRows;
+      
+      if (rowCount > 0) {
+        // Create empty rows with default values
+        rows = Array.from({ length: rowCount }, (_, index) => {
+          const row: any = {};
+          columns.forEach((col: any) => {
+            // Set default values - readonly columns get pre-filled values
+            if (col.isReadonly && col.fieldId === 'direction') {
+              // For direction column, set directional values
+              const directions = ['North', 'South', 'East', 'West'];
+              row[col.fieldId] = directions[index] || '';
+            } else {
+              row[col.fieldId] = '';
+            }
+          });
+          return row;
+        });
+      }
+    }
     
     return {
       fieldId: table.fieldId,
@@ -267,11 +337,14 @@ export class TemplateService {
       isRequired: false,
       isReadonly: false,
       isVisible: table.isVisible !== false,
-      columns: table.columns || [],
-      rows: table.rows || [],
-      minRows: table.minRows || 1,
+      columns: columns,
+      rows: rows,
+      minRows: minRows,
       maxRows: table.maxRows || undefined,
-      gridSize: 'full'
+      allowAddRows: table.allowAddRows !== false,
+      allowDeleteRows: table.allowDeleteRows !== false,
+      showFooter: table.showFooter !== false,
+      gridSize: 12  // Full width as number, not string
     };
   }
 
@@ -288,9 +361,28 @@ export class TemplateService {
       return options;
     }
     
-    // If options are strings like "ValuationApp.Core.Entities.FieldOption", they need to be fetched from backend
-    // For now, return empty array - these should come from backend properly
+    // If options are strings (from C# backend which returns List<string>), 
+    // transform them to {value, label} format
+    if (options.length > 0 && typeof options[0] === 'string') {
+      return options.map((opt: string) => ({
+        value: this.stringToValue(opt),
+        label: opt
+      }));
+    }
+    
+    // Empty or invalid format
     return [];
+  }
+
+  /**
+   * Convert a label string to a valid value format
+   * Example: "Home Loan" -> "home_loan"
+   */
+  private stringToValue(label: string): string {
+    return label
+      .toLowerCase()
+      .replace(/\s+/g, '_')
+      .replace(/[^\w_]/g, '');
   }
 
   /**
@@ -307,7 +399,7 @@ export class TemplateService {
       0: 'text',       // Text
       1: 'number',     // Number  
       2: 'date',       // Date
-      3: 'dropdown',   // Dropdown
+      3: 'select',     // Dropdown (mapped to 'select' for frontend compatibility)
       4: 'textarea',   // TextArea
       5: 'currency',   // Currency
       6: 'checkbox',   // Checkbox

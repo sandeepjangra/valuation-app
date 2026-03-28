@@ -841,7 +841,7 @@
                                 <table class="valuation-table">
                                   <thead>
                                     <tr>
-                                      <th *ngFor="let column of field.columns">{{ column.columnName }}</th>
+                                      <th *ngFor="let column of field.columns">{{ column.label }}</th>
                                     </tr>
                                   </thead>
                                   <tbody>
@@ -850,13 +850,13 @@
                                         <input
                                           *ngIf="!isViewMode && column.isEditable !== false && !column.isReadonly && !row.isReadonly; else readonlyCell"
                                           [type]="getTableCellInputType(column.fieldType)"
-                                          [value]="row[column.columnId]"
-                                          (input)="updateTableCell(field.fieldId, i, column.columnId, $event)"
+                                          [value]="row[column.fieldId]"
+                                          (input)="updateTableCell(field.fieldId, i, column.fieldId, $event)"
                                           class="table-input"
                                           [placeholder]="column.placeholder || ''"
                                         />
                                         <ng-template #readonlyCell>
-                                          <span class="table-cell-readonly">{{ row[column.columnId] || '-' }}</span>
+                                          <span class="table-cell-readonly">{{ row[column.fieldId] || '-' }}</span>
                                         </ng-template>
                                       </td>
                                     </tr>
@@ -1256,7 +1256,7 @@
                             <table class="valuation-table">
                               <thead>
                                 <tr>
-                                  <th *ngFor="let column of field.columns">{{ column.columnName }}</th>
+                                  <th *ngFor="let column of field.columns">{{ column.label }}</th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -1265,13 +1265,13 @@
                                     <input
                                       *ngIf="!isViewMode && column.isEditable !== false && !column.isReadonly && !row.isReadonly; else readonlyCell"
                                       [type]="getTableCellInputType(column.fieldType)"
-                                      [value]="row[column.columnId]"
-                                      (input)="updateTableCell(field.fieldId, i, column.columnId, $event)"
+                                      [value]="row[column.fieldId]"
+                                      (input)="updateTableCell(field.fieldId, i, column.fieldId, $event)"
                                       class="table-input"
                                       [placeholder]="column.placeholder || ''"
                                     />
                                     <ng-template #readonlyCell>
-                                      <span class="table-cell-readonly">{{ row[column.columnId] || '-' }}</span>
+                                      <span class="table-cell-readonly">{{ row[column.fieldId] || '-' }}</span>
                                     </ng-template>
                                   </td>
                                 </tr>

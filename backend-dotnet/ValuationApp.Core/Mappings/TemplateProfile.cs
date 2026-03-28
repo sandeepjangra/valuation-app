@@ -247,6 +247,7 @@ public class TemplateProfile : Profile
     private static List<string>? MapOptions(List<Entities.FieldOption>? options)
     {
         if (options is null || options.Count == 0) return null;
+        
         return options.Select(o => string.IsNullOrWhiteSpace(o.Label) ? o.Value : o.Label).ToList();
     }
 

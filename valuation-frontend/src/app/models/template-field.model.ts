@@ -13,8 +13,8 @@ export interface CalculatedFieldConfig {
 
 // Table field interfaces
 export interface TableColumn {
-  columnId: string;
-  columnName: string;
+  fieldId: string;      // Changed from columnId to match backend
+  label: string;        // Changed from columnName to match backend
   fieldType: string;
   isRequired?: boolean;
   isEditable?: boolean;
@@ -29,8 +29,8 @@ export interface TableRow {
 
 // Dynamic Table field interfaces
 export interface DynamicTableColumn {
-  columnId: string;
-  columnName: string;
+  fieldId: string;      // Changed from columnId for consistency
+  label: string;        // Changed from columnName for consistency
   fieldType: string;
   isRequired?: boolean;
   isEditable?: boolean;

@@ -270,13 +270,9 @@ public class InputValidationRules
 [BsonIgnoreExtraElements]
 public class FieldOption
 {
-    [BsonElement("Value")]
+    // No [BsonElement] attributes - using BsonClassMap in Program.cs instead
     public string Value { get; set; } = string.Empty;
-
-    [BsonElement("Label")]
     public string Label { get; set; } = string.Empty;
-
-    [BsonElement("IsDefault")]
     public bool IsDefault { get; set; }
 }
 

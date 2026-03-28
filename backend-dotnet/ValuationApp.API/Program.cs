@@ -3,15 +3,25 @@ using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Bson.Serialization;
+using MongoDB.Bson.Serialization.Conventions;
 using ValuationApp.API.Middleware;
 using ValuationApp.Common.Helpers;
 using ValuationApp.Core.Entities;
 using ValuationApp.Core.Interfaces;
 using ValuationApp.Core.Services;
+using ValuationApp.Core.Serialization;
 using ValuationApp.Infrastructure.Data;
 using ValuationApp.Infrastructure.Repositories;
 using ValuationApp.Infrastructure.Serialization;
 using ValuationApp.Infrastructure.Services;
+
+// Configure MongoDB BSON serialization BEFORE any MongoDB operations
+// Register custom serializer for FieldOption
+BsonSerializer.RegisterSerializer(new FieldOptionSerializer());
+
+// Use CamelCase convention for all serialization
+var camelCaseConventionPack = new ConventionPack { new CamelCaseElementNameConvention() };
+ConventionRegistry.Register("CamelCase", camelCaseConventionPack, t => true);
 
 // Configure MongoDB to use custom discriminator convention with "$type" field
 var discriminatorConvention = new CustomDiscriminatorConvention("$type");

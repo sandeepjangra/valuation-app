@@ -902,7 +902,7 @@ export class ReportForm implements OnInit {
             // Merge columns: keep template's fieldType, isEditable, isReadonly but allow other properties from saved data
             if (value.columns && fieldDefinition.columns) {
               fieldDefinition.columns = fieldDefinition.columns.map((templateCol: any) => {
-                const savedCol = value.columns.find((c: any) => c.columnId === templateCol.columnId);
+                const savedCol = value.columns.find((c: any) => c.fieldId === templateCol.fieldId);
                 return {
                   ...templateCol, // Keep template properties (fieldType, isEditable, isReadonly)
                   ...savedCol,    // Override with saved properties if any

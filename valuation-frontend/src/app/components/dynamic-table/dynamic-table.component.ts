@@ -169,18 +169,18 @@ export class DynamicTableComponent implements OnInit, OnDestroy {
     }
 
     const config = this.tableConfig.dynamicColumns.addColumnConfig;
-    const newColumnName = config.columnNamePattern.replace('{number}', this.nextColumnNumber.toString());
+    const newColumnLabel = config.columnNamePattern.replace('{number}', this.nextColumnNumber.toString());
     
     const newColumn: DynamicTableColumn = {
-      columnId: `user_column_${Date.now()}`, // Unique ID
-      columnName: newColumnName,
+      fieldId: `user_column_${Date.now()}`, // Unique ID
+      label: newColumnLabel,
       fieldType: 'textarea',
       isRequired: false,
       isEditable: true,
       isReadonly: false,
       isUserAdded: true,
       canDelete: true,
-      placeholder: `Enter ${newColumnName.toLowerCase()} details`
+      placeholder: `Enter ${newColumnLabel.toLowerCase()} details`
     };
 
     // Add column to arrays
@@ -189,7 +189,7 @@ export class DynamicTableComponent implements OnInit, OnDestroy {
 
     // Initialize column data in all rows
     this.tableRows.forEach(row => {
-      row[newColumn.columnId] = '';
+      row[newColumn.fieldId] = '';
     });
 
     // Update counter
@@ -198,7 +198,7 @@ export class DynamicTableComponent implements OnInit, OnDestroy {
     // Emit data change
     this.emitDataChange();
 
-    console.log('➕ Column added:', newColumn.columnName, 'Total columns:', this.allColumns.length);
+    console.log('➕ Column added:', newColumn.label, 'Total columns:', this.allColumns.length);
   }
 
   addRow() {
@@ -216,12 +216,12 @@ export class DynamicTableComponent implements OnInit, OnDestroy {
     } else {
       // Initialize with empty values for all columns
       this.allColumns.forEach(column => {
-        newRow[column.columnId] = '';
+        newRow[column.fieldId] = '';
       });
     }
 
     // Set row number if sr_no column exists
-    const srNoColumn = this.allColumns.find(col => col.columnId === 'sr_no');
+    const srNoColumn = this.allColumns.find(col => col.fieldId === 'sr_no');
     if (srNoColumn) {
       newRow['sr_no'] = `${this.nextRowNumber}.`;
     }
@@ -240,7 +240,7 @@ export class DynamicTableComponent implements OnInit, OnDestroy {
     const column = this.allColumns[columnIndex];
     
     if (!column.canDelete) {
-      console.warn('⚠️ Cannot delete fixed column:', column.columnName);
+      console.warn('⚠️ Cannot delete fixed column:', column.label);
       return;
     }
 
@@ -248,20 +248,20 @@ export class DynamicTableComponent implements OnInit, OnDestroy {
     this.allColumns.splice(columnIndex, 1);
     
     // Remove from user added columns
-    const userColumnIndex = this.userAddedColumns.findIndex(col => col.columnId === column.columnId);
+    const userColumnIndex = this.userAddedColumns.findIndex(col => col.fieldId === column.fieldId);
     if (userColumnIndex > -1) {
       this.userAddedColumns.splice(userColumnIndex, 1);
     }
 
     // Remove column data from all rows
     this.tableRows.forEach(row => {
-      delete row[column.columnId];
+      delete row[column.fieldId];
     });
 
     // Emit data change
     this.emitDataChange();
 
-    console.log('➖ Column removed:', column.columnName, 'Remaining columns:', this.allColumns.length);
+    console.log('➖ Column removed:', column.label, 'Remaining columns:', this.allColumns.length);
   }
 
   removeRow(rowIndex: number) {
@@ -274,7 +274,7 @@ export class DynamicTableComponent implements OnInit, OnDestroy {
     this.tableRows.splice(rowIndex, 1);
 
     // Update row numbers in remaining rows if sr_no column exists
-    const srNoColumn = this.allColumns.find(col => col.columnId === 'sr_no');
+    const srNoColumn = this.allColumns.find(col => col.fieldId === 'sr_no');
     if (srNoColumn) {
       this.tableRows.forEach((row, index) => {
         row['sr_no'] = `${index + 1}.`;
@@ -291,9 +291,9 @@ export class DynamicTableComponent implements OnInit, OnDestroy {
   updateColumnName(columnIndex: number, event: any) {
     const newName = event.target.value;
     if (newName && newName.trim()) {
-      this.allColumns[columnIndex].columnName = newName.trim();
+      this.allColumns[columnIndex].label = newName.trim();
       this.emitDataChange();
-      console.log('✏️ Column renamed:', this.allColumns[columnIndex].columnId, 'to:', newName);
+      console.log('✏️ Column renamed:', this.allColumns[columnIndex].fieldId, 'to:', newName);
     }
   }
 

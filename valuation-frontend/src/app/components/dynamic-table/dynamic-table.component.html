@@ -78,7 +78,7 @@
             
             <!-- Fixed Column Header -->
             <div *ngIf="!column.isUserAdded" class="fixed-header">
-              {{ column.columnName }}
+              {{ column.label }}
               <span class="required-indicator" *ngIf="isColumnRequired(column)">*</span>
             </div>
 
@@ -87,7 +87,7 @@
               <input 
                 type="text"
                 class="column-name-input"
-                [value]="column.columnName"
+                [value]="column.label"
                 (blur)="updateColumnName(colIndex, $event)"
                 (keyup.enter)="updateColumnName(colIndex, $event)"
                 placeholder="Column name"
@@ -129,8 +129,8 @@
             <textarea
               *ngIf="isColumnEditable(column) && column.fieldType === 'textarea'; else inputCell"
               class="cell-textarea"
-              [value]="getCellValue(rowIndex, column.columnId)"
-              (input)="updateCellValue(rowIndex, column.columnId, $event)"
+              [value]="getCellValue(rowIndex, column.fieldId)"
+              (input)="updateCellValue(rowIndex, column.fieldId, $event)"
               [placeholder]="column.placeholder || ''"
               [required]="isColumnRequired(column)"
               rows="2">
@@ -142,8 +142,8 @@
                 *ngIf="isColumnEditable(column); else readonlyCell"
                 class="cell-input"
                 [type]="getCellInputType(column.fieldType)"
-                [value]="getCellValue(rowIndex, column.columnId)"
-                (input)="updateCellValue(rowIndex, column.columnId, $event)"
+                [value]="getCellValue(rowIndex, column.fieldId)"
+                (input)="updateCellValue(rowIndex, column.fieldId, $event)"
                 [placeholder]="column.placeholder || ''"
                 [required]="isColumnRequired(column)">
             </ng-template>
@@ -151,7 +151,7 @@
             <!-- Readonly Cell -->
             <ng-template #readonlyCell>
               <span class="cell-readonly">
-                {{ getCellValue(rowIndex, column.columnId) || '-' }}
+                {{ getCellValue(rowIndex, column.fieldId) || '-' }}
               </span>
             </ng-template>
           </td>

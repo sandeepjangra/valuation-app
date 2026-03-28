@@ -186,9 +186,9 @@ export class DynamicFormComponent implements OnInit, OnDestroy {
         const rowGroup: Record<string, FormControl> = {};
         
         field.columns!.forEach((column: any) => {
-          const value = row[column.columnId] || '';
+          const value = row[column.fieldId] || '';
           const disabled = column.isReadonly || this.mode === 'view';
-          rowGroup[column.columnId] = new FormControl({ value, disabled });
+          rowGroup[column.fieldId] = new FormControl({ value, disabled });
         });
         
         formArray.push(this.fb.group(rowGroup) as any);
@@ -210,9 +210,9 @@ export class DynamicFormComponent implements OnInit, OnDestroy {
         
         // Add fixed columns
         field.tableConfig!.fixedColumns?.forEach((column: any) => {
-          const value = row[column.columnId] || '';
+          const value = row[column.fieldId] || '';
           const disabled = column.isReadonly || this.mode === 'view';
-          rowGroup[column.columnId] = new FormControl({ value, disabled });
+          rowGroup[column.fieldId] = new FormControl({ value, disabled });
         });
         
         // Add dynamic columns if they exist in the row
@@ -402,7 +402,7 @@ export class DynamicFormComponent implements OnInit, OnDestroy {
     
     // Add controls for fixed columns
     field.tableConfig?.fixedColumns?.forEach((column: any) => {
-      rowGroup[column.columnId] = new FormControl('');
+      rowGroup[column.fieldId] = new FormControl('');
     });
     
     formArray.push(this.fb.group(rowGroup));

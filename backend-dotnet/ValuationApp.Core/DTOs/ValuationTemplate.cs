@@ -127,6 +127,9 @@ public class TableField : BaseField
     // Define the columns (Name, Area, Rate, etc.)
     public List<TableColumnDto> Columns { get; set; } = new();
 
+    // Initial row data (optional - for pre-filled tables like boundaries)
+    public List<Dictionary<string, object>>? Rows { get; set; }
+
     // Summary configuration for the footer
     public List<TableSummary> Summaries { get; set; } = new();
 
