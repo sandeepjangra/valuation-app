@@ -206,11 +206,8 @@ export class TemplateService {
     return {
       sectionId: container.fieldId,
       sectionName: container.label || this.formatFieldName(container.fieldId),
-      displayOrder: container.displayOrder || 0,
-      fields: fields,
-      sections: nestedSections.length > 0 ? nestedSections : undefined,
-      isCollapsible: container.isCollapsible || false,
-      isCollapsed: container.isCollapsed || false
+      sortOrder: container.displayOrder || 0,
+      fields: fields
     };
   }
 

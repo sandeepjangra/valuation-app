@@ -33,7 +33,10 @@ public class ValuationTemplate
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
 [JsonDerivedType(typeof(InputField), "input")]
 [JsonDerivedType(typeof(TableField), "table")]
-[JsonDerivedType(typeof(ContainerField), "container")]
+[JsonDerivedType(typeof(TabGroupField), "tabgroup")]
+[JsonDerivedType(typeof(SectionField), "section")]
+[JsonDerivedType(typeof(GroupField), "group")]
+[JsonDerivedType(typeof(TabField), "tab")]
 [JsonDerivedType(typeof(AttachmentField), "attachment")]
 public abstract class BaseField
 {
@@ -67,23 +70,51 @@ public class InputField : BaseField
 /// <summary>
 /// Containers (Tabs, Groups, Sections)
 /// </summary>
-public class ContainerField : BaseField
+public abstract class ContainerField : BaseField
 {
-    public ContainerTypeDto Container { get; set; }
-    
+    public abstract ContainerTypeDto Container { get; }
+
     // Logic: Map ContainerType back to FieldType
-    public override FieldTypeDto FieldType => Container switch 
-    {
-        ContainerTypeDto.Tab => FieldTypeDto.Tab,
-        ContainerTypeDto.Group => FieldTypeDto.Group,
-        _ => FieldTypeDto.Section
-    };
-    
-    // This is the recursive part: a container holds other BaseFields
+    public override FieldTypeDto FieldType => FieldTypeDto.Container;
+}
+
+public class SectionField : ContainerField
+{
+    public override ContainerTypeDto Container => ContainerTypeDto.Section;
+
     public List<BaseField> Children { get; set; } = new();
-    
     public bool IsCollapsible { get; set; }
     public bool IsCollapsed { get; set; }
+}
+
+public class GroupField : ContainerField
+{
+    public override ContainerTypeDto Container => ContainerTypeDto.Group;
+
+    public List<BaseField> Children { get; set; } = new();
+
+    public bool IsCollapsible { get; set; }
+    public bool IsCollapsed { get; set; }
+}
+
+/// <summary>
+    /// Tabs container
+    /// </summary>
+    public class TabGroupField : ContainerField
+    {
+        public override ContainerTypeDto Container => ContainerTypeDto.TabGroup;
+
+        // Children are the actual tabs (which are containers)
+        public List<TabField> Children { get; set; } = new();
+
+        public string[]? TabNames() => Children.Select(c => c.Label).ToArray();
+    }
+
+public class TabField : ContainerField
+{
+    public override ContainerTypeDto Container => ContainerTypeDto.Tab;
+
+    public List<BaseField> Children { get; set; } = new();
 }
 
 /// <summary>
@@ -238,7 +269,8 @@ public enum OperatorTypeDto
 
 public enum ContainerTypeDto 
 { 
-    Tab, 
+    TabGroup, 
+    Tab,
     Group, 
     Section 
 }
@@ -255,11 +287,9 @@ public enum FieldTypeDto
     Textarea,
     Checkbox,
     Radio,
-    
+
     // Structure
-    Tab, 
-    Group, 
-    Section,
+    Container,
     
     // Complex/Logic
     Table

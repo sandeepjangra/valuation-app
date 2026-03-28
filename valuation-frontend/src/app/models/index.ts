@@ -5,3 +5,4 @@ export * from './report.model';
 export * from './template-field.model';
 export * from './organization.model';
 export * from './custom-template.model';
+export * from './valuation-template.model';

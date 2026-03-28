@@ -56,6 +56,11 @@ export const routes: Routes = [
             title: 'Create Report'
           },
           {
+            path: 'new-form',
+            loadComponent: () => import('./components/new-report-form/new-report-form').then(m => m.NewReportForm),
+            title: 'New Report Form'
+          },
+          {
             path: ':id',
             loadComponent: () => import('./components/report-form/report-form').then(m => m.ReportForm),
             title: 'Edit Report'

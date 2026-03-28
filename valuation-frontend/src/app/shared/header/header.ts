@@ -147,6 +147,7 @@ export class Header implements OnInit {
       dashboard: `/org/${orgShortName}/dashboard`,
       newReport: `/org/${orgShortName}/reports/new`,
       reports: `/org/${orgShortName}/reports`,
+      newReportForm: `/org/${orgShortName}/reports/new-form`,
       banks: `/org/${orgShortName}/banks`,
       templates: `/org/${orgShortName}/custom-templates`,
       pdfTemplates: `/org/${orgShortName}/pdf-templates`,

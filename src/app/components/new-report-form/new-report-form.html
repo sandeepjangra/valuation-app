@@ -1,1 +1,27 @@
 <p>new-report-form works!</p>
+<div class="report-form-container">
+    <!-- Header Section -->
+    <div class="page-header">
+      <div class="header-content">
+        <div class="left-section">
+          <div class="template-name" *ngIf="selectedTemplateName">
+            <span class="template-label">{{ selectedTemplateName }}</span>
+          </div>
+        </div>
+        <div class="header-info">
+          <h1 class="page-title">Property Valuation for {{ selectedBankName }}</h1>
+        </div>
+        <div class="right-section">
+          <button class="test-calculation-button" (click)="triggerCalculation()" title="Test Calculations">
+            🧮 Test Calc
+          </button>
+          <button class="back-button" (click)="goBackToSelection()">
+            ← Back to Selection
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <form [formGroup]="reportForm" (ngSubmit)="onSubmit()" class="report-form">
+        
+    </form>

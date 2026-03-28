@@ -1,1 +1,328 @@
-<p>new-report-form works!</p>
+<div class="report-form-container">
+
+  <!-- Header -->
+  <div class="form-header">
+    <div class="header-meta">
+      <span class="bank-badge">{{ template.bankDetails.bankCode }}</span>
+      <span class="template-name">{{ template.templateName }}</span>
+    </div>
+    <button class="submit-btn" (click)="onSubmit()">Submit Report</button>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+
+    <ng-container *ngFor="let element of template.elements">
+      <ng-container *ngTemplateOutlet="fieldRenderer; context: { $implicit: element }"></ng-container>
+    </ng-container>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         FIELD RENDERER — dispatches by $type
+         ═══════════════════════════════════════════════════════════════════ -->
+    <ng-template #fieldRenderer let-field>
+      <ng-container [ngSwitch]="field.$type">
+
+        <ng-container *ngSwitchCase="'input'">
+          <ng-container *ngTemplateOutlet="inputRenderer; context: { $implicit: asInput(field) }"></ng-container>
+        </ng-container>
+
+        <ng-container *ngSwitchCase="'container'">
+          <ng-container *ngTemplateOutlet="containerRenderer; context: { $implicit: field }"></ng-container>
+        </ng-container>
+
+        <ng-container *ngSwitchCase="'table'">
+          <ng-container *ngTemplateOutlet="tableRenderer; context: { $implicit: asTable(field) }"></ng-container>
+        </ng-container>
+
+        <ng-container *ngSwitchCase="'attachment'">
+          <ng-container *ngTemplateOutlet="attachmentRenderer; context: { $implicit: asAttachment(field) }"></ng-container>
+        </ng-container>
+
+      </ng-container>
+    </ng-template>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         CONTAINER RENDERER — TabGroup | Tab | Section | Group
+         ═══════════════════════════════════════════════════════════════════ -->
+    <ng-template #containerRenderer let-field>
+      <ng-container [ngSwitch]="field.container">
+
+        <!-- TabGroup: renders tab bar + active panel -->
+        <ng-container *ngSwitchCase="ContainerTypeDto.TabGroup">
+          <div class="tabs-wrapper">
+            <div class="tab-bar">
+              <button
+                *ngFor="let tab of asTabsField(field).children; let i = index"
+                type="button"
+                class="tab-btn"
+                [class.active]="(activeTabMap[field.fieldId] ?? 0) === i"
+                (click)="setActiveTab(field.fieldId, i)">
+                {{ tab.label }}
+              </button>
+            </div>
+            <div class="tab-panels">
+              <ng-container *ngFor="let tab of asTabsField(field).children; let i = index">
+                <div class="tab-panel" *ngIf="(activeTabMap[field.fieldId] ?? 0) === i">
+                  <ng-container *ngFor="let child of tab.children">
+                    <ng-container *ngTemplateOutlet="fieldRenderer; context: { $implicit: child }"></ng-container>
+                  </ng-container>
+                </div>
+              </ng-container>
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- Tab: renders children directly (standalone tab panel) -->
+        <ng-container *ngSwitchCase="ContainerTypeDto.Tab">
+          <ng-container *ngFor="let child of asTabField(field).children">
+            <ng-container *ngTemplateOutlet="fieldRenderer; context: { $implicit: child }"></ng-container>
+          </ng-container>
+        </ng-container>
+
+        <!-- Section: titled collapsible card -->
+        <ng-container *ngSwitchCase="ContainerTypeDto.Section">
+          <div class="section-block">
+            <div class="section-header"
+                 [class.clickable]="asSection(field).isCollapsible"
+                 (click)="asSection(field).isCollapsible && toggleCollapse(field.fieldId)">
+              <h3 class="section-title">{{ field.label }}</h3>
+              <span class="collapse-icon" *ngIf="asSection(field).isCollapsible">
+                {{ isCollapsed(field.fieldId) ? '▶' : '▼' }}
+              </span>
+            </div>
+            <div class="section-body fields-grid" *ngIf="!isCollapsed(field.fieldId)">
+              <ng-container *ngFor="let child of asSection(field).children">
+                <ng-container *ngTemplateOutlet="fieldRenderer; context: { $implicit: child }"></ng-container>
+              </ng-container>
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- Group: dashed collapsible card -->
+        <ng-container *ngSwitchCase="ContainerTypeDto.Group">
+          <div class="group-block">
+            <div class="group-header"
+                 [class.clickable]="asGroup(field).isCollapsible"
+                 (click)="asGroup(field).isCollapsible && toggleCollapse(field.fieldId)">
+              <h4 class="group-title">{{ field.label }}</h4>
+              <span class="collapse-icon" *ngIf="asGroup(field).isCollapsible">
+                {{ isCollapsed(field.fieldId) ? '▶' : '▼' }}
+              </span>
+            </div>
+            <div class="group-body fields-grid" *ngIf="!isCollapsed(field.fieldId)">
+              <ng-container *ngFor="let child of asGroup(field).children">
+                <ng-container *ngTemplateOutlet="fieldRenderer; context: { $implicit: child }"></ng-container>
+              </ng-container>
+            </div>
+          </div>
+        </ng-container>
+
+      </ng-container>
+    </ng-template>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         INPUT RENDERER — dispatches by specificType
+         ═══════════════════════════════════════════════════════════════════ -->
+    <ng-template #inputRenderer let-field>
+      <div class="field-wrapper" [class.full-width]="field.specificType === FieldTypeDto.Textarea">
+
+        <label class="field-label">
+          {{ field.label }}
+          <span class="required-star" *ngIf="field.isRequired">*</span>
+        </label>
+
+        <ng-container [ngSwitch]="field.specificType">
+
+          <ng-container *ngSwitchCase="FieldTypeDto.Text">
+            <input type="text" class="field-input"
+                   [formControlName]="field.fieldId"
+                   [placeholder]="field.placeholderText || ''"
+                   [readonly]="field.isReadonly"
+                   [class.readonly]="field.isReadonly"
+                   [class.error]="hasError(field.fieldId)">
+          </ng-container>
+
+          <ng-container *ngSwitchCase="FieldTypeDto.Number">
+            <input type="number" class="field-input"
+                   [formControlName]="field.fieldId"
+                   [placeholder]="field.placeholderText || ''"
+                   [readonly]="field.isReadonly"
+                   [class.readonly]="field.isReadonly"
+                   [class.error]="hasError(field.fieldId)">
+          </ng-container>
+
+          <ng-container *ngSwitchCase="FieldTypeDto.Currency">
+            <div class="input-prefix-wrapper" [class.error]="hasError(field.fieldId)">
+              <span class="input-prefix">₹</span>
+              <input type="number" class="field-input with-prefix"
+                     [formControlName]="field.fieldId"
+                     [placeholder]="field.placeholderText || '0.00'"
+                     [readonly]="field.isReadonly"
+                     [class.readonly]="field.isReadonly">
+            </div>
+          </ng-container>
+
+          <ng-container *ngSwitchCase="FieldTypeDto.Date">
+            <input type="date" class="field-input"
+                   [formControlName]="field.fieldId"
+                   [readonly]="field.isReadonly"
+                   [class.readonly]="field.isReadonly"
+                   [class.error]="hasError(field.fieldId)">
+          </ng-container>
+
+          <ng-container *ngSwitchCase="FieldTypeDto.Dropdown">
+            <select class="field-input field-select"
+                    [formControlName]="field.fieldId"
+                    [class.error]="hasError(field.fieldId)">
+              <option value="">-- Select --</option>
+              <option *ngFor="let opt of field.options" [value]="opt">{{ opt }}</option>
+            </select>
+          </ng-container>
+
+          <ng-container *ngSwitchCase="FieldTypeDto.Textarea">
+            <textarea class="field-input field-textarea"
+                      [formControlName]="field.fieldId"
+                      [placeholder]="field.placeholderText || ''"
+                      [readonly]="field.isReadonly"
+                      [class.readonly]="field.isReadonly"
+                      [class.error]="hasError(field.fieldId)"
+                      rows="3"></textarea>
+          </ng-container>
+
+          <ng-container *ngSwitchCase="FieldTypeDto.Checkbox">
+            <label class="checkbox-label">
+              <input type="checkbox" class="field-checkbox"
+                     [formControlName]="field.fieldId"
+                     [attr.disabled]="field.isReadonly ? true : null">
+              <span>{{ field.placeholderText || 'Yes' }}</span>
+            </label>
+          </ng-container>
+
+          <ng-container *ngSwitchCase="FieldTypeDto.Radio">
+            <div class="radio-group">
+              <label class="radio-label" *ngFor="let opt of field.options">
+                <input type="radio"
+                       [formControlName]="field.fieldId"
+                       [value]="opt"
+                       [attr.disabled]="field.isReadonly ? true : null">
+                <span>{{ opt }}</span>
+              </label>
+            </div>
+          </ng-container>
+
+          <ng-container *ngSwitchDefault>
+            <input type="text" class="field-input"
+                   [formControlName]="field.fieldId"
+                   [placeholder]="field.placeholderText || ''"
+                   [class.error]="hasError(field.fieldId)">
+          </ng-container>
+
+        </ng-container>
+
+        <p class="help-text"  *ngIf="field.helpText">{{ field.helpText }}</p>
+        <p class="error-text" *ngIf="hasError(field.fieldId)">{{ getErrorMessage(field.fieldId, field) }}</p>
+
+      </div>
+    </ng-template>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         TABLE RENDERER
+         ═══════════════════════════════════════════════════════════════════ -->
+    <ng-template #tableRenderer let-table>
+      <div class="table-block">
+        <div class="table-header">
+          <h4 class="table-title">{{ table.label }}</h4>
+          <button type="button" class="add-row-btn"
+                  *ngIf="table.allowAddRows"
+                  (click)="addRow(table.fieldId, table)">
+            + Add Row
+          </button>
+        </div>
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th *ngFor="let col of table.columns">{{ col.label }}</th>
+                <th *ngIf="table.allowDeleteRows" class="action-col"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of tableRows[table.fieldId]; let ri = index">
+                <td *ngFor="let col of table.columns">
+                  <ng-container [ngSwitch]="col.fieldType">
+
+                    <select *ngSwitchCase="FieldTypeDto.Dropdown"
+                            class="table-input"
+                            [(ngModel)]="row[col.fieldId]"
+                            [ngModelOptions]="{standalone: true}"
+                            [disabled]="col.isReadonly">
+                      <option value="">--</option>
+                      <option *ngFor="let opt of col.options" [value]="opt">{{ opt }}</option>
+                    </select>
+
+                    <input *ngSwitchCase="FieldTypeDto.Number"
+                           type="number" class="table-input"
+                           [(ngModel)]="row[col.fieldId]"
+                           [ngModelOptions]="{standalone: true}"
+                           [readonly]="col.isReadonly">
+
+                    <input *ngSwitchCase="FieldTypeDto.Currency"
+                           type="number" class="table-input"
+                           [(ngModel)]="row[col.fieldId]"
+                           [ngModelOptions]="{standalone: true}"
+                           [readonly]="col.isReadonly">
+
+                    <input *ngSwitchDefault
+                           type="text" class="table-input"
+                           [(ngModel)]="row[col.fieldId]"
+                           [ngModelOptions]="{standalone: true}"
+                           [readonly]="col.isReadonly">
+
+                  </ng-container>
+                </td>
+                <td *ngIf="table.allowDeleteRows" class="action-col">
+                  <button type="button" class="remove-row-btn" (click)="removeRow(table.fieldId, ri)">✕</button>
+                </td>
+              </tr>
+            </tbody>
+            <tfoot *ngIf="table.showFooter && table.summaries.length > 0">
+              <tr>
+                <td *ngFor="let col of table.columns">
+                  <ng-container *ngFor="let summary of table.summaries">
+                    <span *ngIf="summary.columnFieldId === col.fieldId" class="summary-cell">
+                      {{ summary.label }}: {{ getColumnSum(table.fieldId, col.fieldId) | number:'1.0-2' }}
+                    </span>
+                  </ng-container>
+                </td>
+                <td *ngIf="table.allowDeleteRows"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </ng-template>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         ATTACHMENT RENDERER
+         ═══════════════════════════════════════════════════════════════════ -->
+    <ng-template #attachmentRenderer let-field>
+      <div class="attachment-block">
+        <label class="field-label">{{ field.label }}</label>
+        <div class="upload-zone">
+          <input type="file"
+                 class="file-input-hidden"
+                 [id]="'file_' + field.fieldId"
+                 [multiple]="field.allowMultiple"
+                 [accept]="field.allowedExtensions?.join(',')">
+          <label [for]="'file_' + field.fieldId" class="upload-label">
+            <span class="upload-icon">📎</span>
+            <span class="upload-text">{{ field.allowMultiple ? 'Choose files' : 'Choose file' }}</span>
+            <span class="upload-hint">
+              {{ field.allowedExtensions?.join(', ') }} · Max {{ formatFileSize(field.maxFileSize) }}
+            </span>
+          </label>
+        </div>
+      </div>
+    </ng-template>
+
+  </form>
+</div>
