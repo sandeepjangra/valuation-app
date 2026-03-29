@@ -1,0 +1,25 @@
+<div class="tabs-wrapper">
+  <div class="tab-bar">
+    <button
+      *ngFor="let tab of field.children; let i = index"
+      type="button"
+      class="tab-btn"
+      [class.active]="activeTab === i"
+      (click)="activeTab = i">
+      {{ tab.label }}
+    </button>
+  </div>
+  <div class="tab-panels">
+    <ng-container *ngFor="let tab of field.children; let i = index">
+      <div class="tab-panel" *ngIf="activeTab === i">
+        <app-form-field
+          *ngFor="let child of tab.children"
+          [field]="child"
+          [form]="form"
+          [tableRows]="tableRows"
+          [collapsedMap]="collapsedMap">
+        </app-form-field>
+      </div>
+    </ng-container>
+  </div>
+</div>

@@ -1,0 +1,17 @@
+<div class="attachment-block">
+  <label class="field-label">{{ field.label }}</label>
+  <div class="upload-zone">
+    <input type="file"
+           class="file-input-hidden"
+           [id]="'file_' + field.fieldId"
+           [multiple]="field.allowMultiple"
+           [accept]="field.allowedExtensions?.join(',')">
+    <label [for]="'file_' + field.fieldId" class="upload-label">
+      <span class="upload-icon">📎</span>
+      <span class="upload-text">{{ field.allowMultiple ? 'Choose files' : 'Choose file' }}</span>
+      <span class="upload-hint">
+        {{ field.allowedExtensions?.join(', ') }} · Max {{ formatFileSize(field.maxFileSize) }}
+      </span>
+    </label>
+  </div>
+</div>

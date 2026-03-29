@@ -1,0 +1,19 @@
+<div class="group-block">
+  <div class="group-header"
+       [class.clickable]="field.isCollapsible"
+       (click)="toggle()">
+    <h4 class="group-title">{{ field.label }}</h4>
+    <span class="collapse-icon" *ngIf="field.isCollapsible">
+      {{ collapsed ? '▶' : '▼' }}
+    </span>
+  </div>
+  <div class="group-body fields-grid" *ngIf="!collapsed">
+    <app-form-field
+      *ngFor="let child of field.children"
+      [field]="child"
+      [form]="form"
+      [tableRows]="tableRows"
+      [collapsedMap]="collapsedMap">
+    </app-form-field>
+  </div>
+</div>

@@ -1,0 +1,69 @@
+<div class="table-block">
+  <div class="table-header">
+    <h4 class="table-title">{{ table.label }}</h4>
+    <button type="button" class="add-row-btn" *ngIf="table.allowAddRows" (click)="addRow()">
+      + Add Row
+    </button>
+  </div>
+  <div class="table-scroll">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th *ngFor="let col of table.columns">{{ col.label }}</th>
+          <th *ngIf="table.allowDeleteRows" class="action-col"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of rows; let ri = index">
+          <td *ngFor="let col of table.columns">
+            <ng-container [ngSwitch]="col.fieldType">
+
+              <select *ngSwitchCase="FieldTypeDto.Dropdown"
+                      class="table-input"
+                      [(ngModel)]="row[col.fieldId]"
+                      [ngModelOptions]="{standalone: true}"
+                      [disabled]="col.isReadonly">
+                <option value="">--</option>
+                <option *ngFor="let opt of col.options" [value]="opt">{{ opt }}</option>
+              </select>
+
+              <input *ngSwitchCase="FieldTypeDto.Number"
+                     type="number" class="table-input"
+                     [(ngModel)]="row[col.fieldId]"
+                     [ngModelOptions]="{standalone: true}"
+                     [readonly]="col.isReadonly">
+
+              <input *ngSwitchCase="FieldTypeDto.Currency"
+                     type="number" class="table-input"
+                     [(ngModel)]="row[col.fieldId]"
+                     [ngModelOptions]="{standalone: true}"
+                     [readonly]="col.isReadonly">
+
+              <input *ngSwitchDefault
+                     type="text" class="table-input"
+                     [(ngModel)]="row[col.fieldId]"
+                     [ngModelOptions]="{standalone: true}"
+                     [readonly]="col.isReadonly">
+
+            </ng-container>
+          </td>
+          <td *ngIf="table.allowDeleteRows" class="action-col">
+            <button type="button" class="remove-row-btn" (click)="removeRow(ri)">✕</button>
+          </td>
+        </tr>
+      </tbody>
+      <tfoot *ngIf="table.showFooter && table.summaries.length > 0">
+        <tr>
+          <td *ngFor="let col of table.columns">
+            <ng-container *ngFor="let summary of table.summaries">
+              <span *ngIf="summary.columnFieldId === col.fieldId" class="summary-cell">
+                {{ summary.label }}: {{ getColumnSum(col.fieldId) | number:'1.0-2' }}
+              </span>
+            </ng-container>
+          </td>
+          <td *ngIf="table.allowDeleteRows"></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
