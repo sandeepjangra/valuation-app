@@ -157,3 +157,5 @@ docs/templates/INDEX.md
 *.doc
 *.pdf
 
+git_public_private_keypair
+git_public_private_keypair.pub
