@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import {
   ValuationTemplate,
   BaseField,
@@ -19,6 +20,7 @@ import {
   AttachmentCategoryDto
 } from '../../models/valuation-template.model';
 import { FormFieldComponent } from './form-fields/form-field';
+import { TemplateService } from '../../services/template.service';
 
 @Component({
   selector: 'app-new-report-form',
@@ -26,13 +28,19 @@ import { FormFieldComponent } from './form-fields/form-field';
   templateUrl: './new-report-form.html',
   styleUrl: './new-report-form.css',
 })
-export class NewReportForm {
+export class NewReportForm implements OnInit {
 
   collapsedMap: Record<string, boolean> = {};
   form = new FormGroup({});
   tableRows: Record<string, Record<string, any>[]> = {};
+  isLoading = true;
+  errorMessage: string | null = null;
 
-  template: ValuationTemplate = {
+  // Template will be loaded from API
+  template: ValuationTemplate | null = null;
+  
+  // Mock template for fallback (same as before)
+  private mockTemplate: ValuationTemplate = {
     templateId: 'SBI_LAND_001',
     templateName: 'SBI Land Property Valuation',
     templateDescription: 'Standard land property valuation template for SBI',
@@ -184,10 +192,228 @@ export class NewReportForm {
     ]
   };
 
-  constructor() {
-    this.buildFormControls(this.template.elements);
-    this.collectTables(this.template.elements);
-    this.initCollapsedState(this.template.elements);
+  constructor(
+    private templateService: TemplateService,
+    private route: ActivatedRoute
+  ) {}
+
+  ngOnInit() {
+    // Get bank code and property type from query params
+    this.route.queryParams.subscribe(params => {
+      const bankCode = params['bankCode'] || 'SBI';
+      const propertyType = params['propertyType'] || 'land';
+      
+      console.log('🔄 NewReportForm: Loading template', { bankCode, propertyType });
+      this.loadTemplate(bankCode, propertyType);
+    });
+  }
+
+  private loadTemplate(bankCode: string, propertyType: string) {
+    this.isLoading = true;
+    this.errorMessage = null;
+
+    this.templateService.getAggregatedTemplateFields(bankCode, propertyType).subscribe({
+      next: (response) => {
+        console.log('✅ Template loaded successfully', response);
+        // Convert the API response to ValuationTemplate format
+        this.template = this.convertApiResponseToTemplate(response);
+        this.buildFormControls(this.template.elements);
+        this.collectTables(this.template.elements);
+        this.initCollapsedState(this.template.elements);
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('❌ Failed to load template', error);
+        this.errorMessage = 'Failed to load template. Please try again.';
+        // Fallback to mock template
+        this.template = this.mockTemplate;
+        this.buildFormControls(this.template.elements);
+        this.collectTables(this.template.elements);
+        this.initCollapsedState(this.template.elements);
+        this.isLoading = false;
+      }
+    });
+  }
+
+  /**
+   * Convert TemplateService API response to ValuationTemplate format
+   * This bridges the old AggregatedTemplateResponse format to the new container-based format
+   */
+  private convertApiResponseToTemplate(apiResponse: any): ValuationTemplate {
+    const elements: BaseField[] = [];
+
+    // Add common fields as root-level input elements
+    if (apiResponse.commonFields && apiResponse.commonFields.length > 0) {
+      apiResponse.commonFields.forEach((field: any) => {
+        elements.push(this.convertFieldToBaseField(field));
+      });
+    }
+
+    // Add bank-specific tabs as TabGroup container
+    if (apiResponse.bankSpecificTabs && apiResponse.bankSpecificTabs.length > 0) {
+      const tabGroupChildren: TabField[] = [];
+      
+      apiResponse.bankSpecificTabs.forEach((tab: any) => {
+        const tabChildren: BaseField[] = [];
+        
+        // Add tab-level fields
+        if (tab.fields && tab.fields.length > 0) {
+          tab.fields.forEach((field: any) => {
+            tabChildren.push(this.convertFieldToBaseField(field));
+          });
+        }
+        
+        // Add sections
+        if (tab.sections && tab.sections.length > 0) {
+          tab.sections.forEach((section: any) => {
+            tabChildren.push(this.convertSectionToBaseField(section));
+          });
+        }
+        
+        // Create Tab container
+        const tabField: TabField = {
+          $type: 'container',
+          fieldId: tab.tabId,
+          label: tab.tabName,
+          displayOrder: tab.sortOrder || 0,
+          fieldType: FieldTypeDto.Tab,
+          isVisible: true,
+          container: ContainerTypeDto.Tab,
+          children: tabChildren
+        };
+        
+        tabGroupChildren.push(tabField);
+      });
+      
+      // Create TabGroup container
+      const tabGroup: TabsField = {
+        $type: 'container',
+        fieldId: 'bank_specific_details',
+        label: 'Bank Specific Details',
+        displayOrder: apiResponse.commonFields?.length || 0,
+        fieldType: FieldTypeDto.Container,
+        isVisible: true,
+        container: ContainerTypeDto.TabGroup,
+        children: tabGroupChildren
+      };
+      
+      elements.push(tabGroup);
+    }
+
+    return {
+      templateId: apiResponse.templateInfo.templateId,
+      templateName: apiResponse.templateInfo.templateName,
+      templateDescription: `${apiResponse.templateInfo.bankName} - ${apiResponse.templateInfo.propertyType} valuation template`,
+      bankDetails: {
+        bankName: apiResponse.templateInfo.bankName,
+        bankCode: apiResponse.templateInfo.bankCode
+      },
+      propertyType: this.mapPropertyType(apiResponse.templateInfo.propertyType),
+      isActive: true,
+      createdAt: apiResponse.aggregatedAt || new Date().toISOString(),
+      calculationRules: [],
+      elements: elements
+    };
+  }
+
+  private convertFieldToBaseField(field: any): BaseField {
+    const fieldType = this.mapFieldType(field.fieldType);
+    
+    if (field.fieldType === 'table') {
+      return {
+        $type: 'table',
+        fieldId: field.fieldId,
+        label: field.uiDisplayName || field.label,
+        displayOrder: field.displayOrder || field.sortOrder || 0,
+        fieldType: FieldTypeDto.Table,
+        isVisible: field.isActive !== false,
+        minRows: field.minRows || field.rows?.length || 1,
+        allowAddRows: field.allowAddRows !== false,
+        allowDeleteRows: field.allowDeleteRows !== false,
+        showFooter: field.showFooter !== false,
+        summaries: [],
+        columns: (field.columns || []).map((col: any) => ({
+          fieldId: col.fieldId,
+          label: col.label,
+          fieldType: this.mapFieldType(col.fieldType),
+          isReadonly: col.isReadonly || false,
+          options: col.options || undefined
+        })),
+        rows: field.rows || [] // ⭐ CRITICAL: Use rows from API
+      } as TableField;
+    } else if (field.fieldType === 'group' && field.subFields) {
+      return {
+        $type: 'container',
+        fieldId: field.fieldId,
+        label: field.uiDisplayName || field.label,
+        displayOrder: field.displayOrder || field.sortOrder || 0,
+        fieldType: FieldTypeDto.Container,
+        isVisible: field.isActive !== false,
+        container: ContainerTypeDto.Group,
+        isCollapsible: false,
+        isCollapsed: false,
+        children: field.subFields.map((sub: any) => this.convertFieldToBaseField(sub))
+      } as GroupField;
+    } else {
+      return {
+        $type: 'input',
+        fieldId: field.fieldId,
+        label: field.uiDisplayName || field.label,
+        displayOrder: field.displayOrder || field.sortOrder || 0,
+        fieldType: FieldTypeDto.Text,
+        isVisible: field.isActive !== false,
+        specificType: fieldType,
+        isRequired: field.isRequired || false,
+        isReadonly: field.isReadonly || false,
+        placeholderText: field.placeholder || '',
+        helpText: field.helpText || '',
+        defaultValue: field.defaultValue || undefined,
+        options: field.options?.map((opt: any) => opt.label || opt) || undefined,
+        validationRules: field.validation || undefined
+      } as InputField;
+    }
+  }
+
+  private convertSectionToBaseField(section: any): SectionField {
+    return {
+      $type: 'container',
+      fieldId: section.sectionId,
+      label: section.sectionName,
+      displayOrder: section.sortOrder || 0,
+      fieldType: FieldTypeDto.Container,
+      isVisible: true,
+      container: ContainerTypeDto.Section,
+      isCollapsible: true,
+      isCollapsed: false,
+      children: (section.fields || []).map((field: any) => this.convertFieldToBaseField(field))
+    };
+  }
+
+  private mapFieldType(type: string): FieldTypeDto {
+    const typeMap: Record<string, FieldTypeDto> = {
+      'text': FieldTypeDto.Text,
+      'number': FieldTypeDto.Number,
+      'date': FieldTypeDto.Date,
+      'select': FieldTypeDto.Dropdown,
+      'textarea': FieldTypeDto.Textarea,
+      'currency': FieldTypeDto.Currency,
+      'checkbox': FieldTypeDto.Checkbox,
+      'radio': FieldTypeDto.Radio,
+      'email': FieldTypeDto.Text, // Map email to Text
+      'phone': FieldTypeDto.Text,
+      'table': FieldTypeDto.Table
+    };
+    return typeMap[type] || FieldTypeDto.Text;
+  }
+
+  private mapPropertyType(type: string): PropertyTypeDto {
+    const typeMap: Record<string, PropertyTypeDto> = {
+      'land': PropertyTypeDto.Land,
+      'apartment': PropertyTypeDto.Apartment,
+      'house': PropertyTypeDto.House,
+      'commercial': PropertyTypeDto.Commercial
+    };
+    return typeMap[type] || PropertyTypeDto.Land;
   }
 
   private buildFormControls(fields: BaseField[]) {
@@ -222,9 +448,16 @@ export class NewReportForm {
     for (const field of fields) {
       if (field.$type === 'table') {
         const t = field as TableField;
-        this.tableRows[t.fieldId] = Array.from({ length: t.minRows }, () =>
-          Object.fromEntries(t.columns.map(c => [c.fieldId, '']))
-        );
+        // ⭐ Use rows from API if available, otherwise create empty rows
+        if (t.rows && t.rows.length > 0) {
+          this.tableRows[t.fieldId] = t.rows;
+          console.log(`📊 Table ${t.fieldId}: Using ${t.rows.length} rows from API`);
+        } else {
+          this.tableRows[t.fieldId] = Array.from({ length: t.minRows }, () =>
+            Object.fromEntries(t.columns.map(c => [c.fieldId, '']))
+          );
+          console.log(`📊 Table ${t.fieldId}: Created ${t.minRows} empty rows`);
+        }
       } else if (field.$type === 'container') {
         const c = field as ContainerField;
         if (c.container === ContainerTypeDto.TabGroup) {

@@ -65,14 +65,28 @@ export class TemplateService {
     elements.forEach((element: any, index: number) => {
       console.log(`🔍 Element ${index}: $type=${element.$type}, container=${element.container}, fieldId=${element.fieldId}`);
       
-      if (element.$type === 'tab') {
-        // Tab element = bank-specific tab (colleague's refactor uses $type: 'tab')
-        console.log(`📁 Found tab: ${element.fieldId} - ${element.label}`);
+      if (element.$type === 'container' && element.container === 'TabGroup') {
+        // New structure: TabGroup container with Tab children
+        console.log(`📂 Found TabGroup: ${element.fieldId} - ${element.label}`);
+        const tabs = element.children || [];
+        tabs.forEach((tab: any) => {
+          console.log(`  📁 Processing Tab: ${tab.fieldId} - ${tab.label}`);
+          const transformedTab = this.transformContainerToTab(tab);
+          bankSpecificTabs.push(transformedTab);
+        });
+      } else if (element.$type === 'container' && element.container === 'Tab') {
+        // Standalone Tab (shouldn't happen with new structure, but support for compatibility)
+        console.log(`📁 Found standalone tab: ${element.fieldId} - ${element.label}`);
+        const tab = this.transformContainerToTab(element);
+        bankSpecificTabs.push(tab);
+      } else if (element.$type === 'tab') {
+        // Old structure: Tab element (colleague's refactor uses $type: 'tab')
+        console.log(`📁 Found old tab: ${element.fieldId} - ${element.label}`);
         const tab = this.transformContainerToTab(element);
         bankSpecificTabs.push(tab);
       } else if (element.$type === 'tabgroup') {
-        // TabGroup element = bank-specific tab group (older structure)
-        console.log(`📂 Found tabgroup: ${element.fieldId} - ${element.label}`);
+        // Old structure: TabGroup element
+        console.log(`📂 Found old tabgroup: ${element.fieldId} - ${element.label}`);
         const tab = this.transformContainerToTab(element);
         bankSpecificTabs.push(tab);
       } else if (element.$type === 'input' || element.$type === 'group' || element.$type === 'table' || element.$type === 'attachment') {
@@ -152,21 +166,29 @@ export class TemplateService {
     children.forEach((child: any) => {
       console.log(`  🔍 Tab child: $type=${child.$type}, container=${child.container}, fieldId=${child.fieldId}`);
       
-      if (child.$type === 'section') {
-        // Section element (colleague's refactor)
-        console.log(`    📑 Processing section: ${child.fieldId}`);
+      if (child.$type === 'container' && child.container === 'Section') {
+        // New structure: Section container
+        console.log(`    📑 Processing section (new): ${child.fieldId}`);
+        sections.push(this.transformContainerToSection(child));
+      } else if (child.$type === 'container' && child.container === 'Group') {
+        // New structure: Group container at tab level - treat as a section
+        console.log(`    📦 Processing group as section (new): ${child.fieldId}`);
+        sections.push(this.transformGroupToField(child));
+      } else if (child.$type === 'section') {
+        // Old structure: Section element (colleague's refactor)
+        console.log(`    📑 Processing section (old): ${child.fieldId}`);
         sections.push(this.transformContainerToSection(child));
       } else if (child.$type === 'group') {
-        // Group element at tab level - treat as a section
-        console.log(`    📦 Processing group as section: ${child.fieldId}`);
+        // Old structure: Group element at tab level - treat as a section
+        console.log(`    📦 Processing group as section (old): ${child.fieldId}`);
         sections.push(this.transformGroupToField(child));
       } else if (child.$type === 'container') {
-        // Legacy container format
-        if (child.container === 3) {
-          // Container type 3 = Section
+        // Legacy container format with numeric types
+        if (child.container === 3 || child.container === 'Section') {
+          // Container type 3 or "Section" = Section
           sections.push(this.transformContainerToSection(child));
-        } else if (child.container === 2) {
-          // Container type 2 = Group - treat as section for now
+        } else if (child.container === 2 || child.container === 'Group') {
+          // Container type 2 or "Group" = Group - treat as section for now
           sections.push(this.transformGroupToField(child));
         } else {
           console.warn('⚠️ Unexpected nested container:', child);
@@ -205,15 +227,24 @@ export class TemplateService {
     const fields: any[] = [];
     
     children.forEach((child: any) => {
-      console.log(`      🔍 Section child: $type=${child.$type}, fieldId=${child.fieldId}`);
+      console.log(`      🔍 Section child: $type=${child.$type}, container=${child.container}, fieldId=${child.fieldId}`);
       
-      if (child.$type === 'group') {
-        // Group within Section - transform as group field
-        console.log(`        📦 Processing group: ${child.fieldId}`);
+      if (child.$type === 'container' && child.container === 'Group') {
+        // New structure: Group container within Section
+        console.log(`        📦 Processing group (new): ${child.fieldId}`);
+        fields.push(this.transformGroupToField(child));
+      } else if (child.$type === 'container' && child.container === 'Section') {
+        // New structure: Nested Section container
+        console.log(`        📑 Processing nested section (new): ${child.fieldId}`);
+        const nestedSection = this.transformContainerToSection(child);
+        fields.push(nestedSection);
+      } else if (child.$type === 'group') {
+        // Old structure: Group within Section
+        console.log(`        📦 Processing group (old): ${child.fieldId}`);
         fields.push(this.transformGroupToField(child));
       } else if (child.$type === 'section') {
-        // Nested Section - recursively process
-        console.log(`        📑 Processing nested section: ${child.fieldId}`);
+        // Old structure: Nested Section
+        console.log(`        📑 Processing nested section (old): ${child.fieldId}`);
         const nestedSection = this.transformContainerToSection(child);
         fields.push(nestedSection);
       } else if (child.$type === 'table') {
@@ -221,11 +252,11 @@ export class TemplateService {
         console.log(`        📊 Processing table: ${child.fieldId}`);
         fields.push(this.transformTableToField(child));
       } else if (child.$type === 'container') {
-        // Legacy container format
-        if (child.container === 2) {
-          // Container type 2 = Group
+        // Legacy container format with numeric types
+        if (child.container === 2 || child.container === 'Group') {
+          // Container type 2 or "Group" = Group
           fields.push(this.transformGroupToField(child));
-        } else if (child.container === 3) {
+        } else if (child.container === 3 || child.container === 'Section') {
           // Container type 3 = Section
           const nestedSection = this.transformContainerToSection(child);
           fields.push(nestedSection);
@@ -253,8 +284,11 @@ export class TemplateService {
   private transformGroupToField(container: any): any {
     const children = container.children || [];
     const subFields = children.map((child: any) => {
-      if (child.$type === 'group') {
-        // Nested group - recursive
+      if (child.$type === 'container' && child.container === 'Group') {
+        // New structure: Nested Group container - recursive
+        return this.transformGroupToField(child);
+      } else if (child.$type === 'group') {
+        // Old structure: Nested group - recursive
         return this.transformGroupToField(child);
       } else {
         return this.transformElementToField(child, false);
@@ -299,32 +333,20 @@ export class TemplateService {
       validationRules: col.validationRules || null
     }));
     
-    // Initialize rows based on minRows if no rows provided
+    // Initialize rows based on minRows if no rows provided by API
     let rows = table.rows || [];
     const minRows = table.minRows || 1;
     
-    if (rows.length === 0) {
-      // Special handling for boundaries/direction tables - always create 4 rows
-      const hasDirectionColumn = columns.some((col: any) => col.fieldId === 'direction');
-      const rowCount = hasDirectionColumn ? 4 : minRows;
-      
-      if (rowCount > 0) {
-        // Create empty rows with default values
-        rows = Array.from({ length: rowCount }, (_, index) => {
-          const row: any = {};
-          columns.forEach((col: any) => {
-            // Set default values - readonly columns get pre-filled values
-            if (col.isReadonly && col.fieldId === 'direction') {
-              // For direction column, set directional values
-              const directions = ['North', 'South', 'East', 'West'];
-              row[col.fieldId] = directions[index] || '';
-            } else {
-              row[col.fieldId] = '';
-            }
-          });
-          return row;
+    // Only create empty rows if API didn't provide any AND minRows > 0
+    if (rows.length === 0 && minRows > 0) {
+      // Create empty rows with default values
+      rows = Array.from({ length: minRows }, () => {
+        const row: any = {};
+        columns.forEach((col: any) => {
+          row[col.fieldId] = '';
         });
-      }
+        return row;
+      });
     }
     
     return {

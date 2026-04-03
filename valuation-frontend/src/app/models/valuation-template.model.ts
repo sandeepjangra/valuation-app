@@ -172,6 +172,7 @@ export interface GroupField extends ContainerField {
 export interface TableField extends BaseField {
   $type: 'table';
   columns: TableColumnDto[];
+  rows?: Record<string, any>[]; // ⭐ Add rows property for pre-filled data from API
   summaries: TableSummary[];
   minRows: number;
   maxRows?: number;

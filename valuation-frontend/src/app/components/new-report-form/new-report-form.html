@@ -1,21 +1,36 @@
 <div class="report-form-container">
 
-  <div class="form-header">
-    <div class="header-meta">
-      <span class="bank-badge">{{ template.bankDetails.bankCode }}</span>
-      <span class="template-name">{{ template.templateName }}</span>
-    </div>
-    <button class="submit-btn" (click)="onSubmit()">Submit Report</button>
+  <!-- Loading state -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Loading template...</p>
   </div>
 
-  <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
-    <app-form-field
-      *ngFor="let element of template.elements"
-      [field]="element"
-      [form]="form"
-      [tableRows]="tableRows"
-      [collapsedMap]="collapsedMap">
-    </app-form-field>
-  </form>
+  <!-- Error state -->
+  <div *ngIf="errorMessage && !isLoading" class="error-container">
+    <p class="error-message">{{ errorMessage }}</p>
+    <button (click)="ngOnInit()">Retry</button>
+  </div>
+
+  <!-- Template loaded -->
+  <ng-container *ngIf="!isLoading && !errorMessage && template">
+    <div class="form-header">
+      <div class="header-meta">
+        <span class="bank-badge">{{ template.bankDetails.bankCode }}</span>
+        <span class="template-name">{{ template.templateName }}</span>
+      </div>
+      <button class="submit-btn" (click)="onSubmit()">Submit Report</button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+      <app-form-field
+        *ngFor="let element of template.elements"
+        [field]="element"
+        [form]="form"
+        [tableRows]="tableRows"
+        [collapsedMap]="collapsedMap">
+      </app-form-field>
+    </form>
+  </ng-container>
 
 </div>

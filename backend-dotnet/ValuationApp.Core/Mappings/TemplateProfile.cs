@@ -134,6 +134,7 @@ public class TemplateProfile : Profile
             DisplayOrder     = src.DisplayOrder,
             IsVisible        = src.IsVisible,
             Columns          = src.Columns.Select(MapTableColumn).ToList(),
+            Rows             = src.Rows,  // Map the Rows property
             Summaries        = new List<TableSummary>(), // TODO: persist summaries in entity
             MinRows          = src.MinRows,
             MaxRows          = src.MaxRows,

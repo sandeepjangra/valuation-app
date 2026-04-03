@@ -30,14 +30,7 @@ public class ValuationTemplate
 /// <summary>
 /// Base class for all template fields with polymorphic JSON serialization
 /// </summary>
-[JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
-[JsonDerivedType(typeof(InputField), "input")]
-[JsonDerivedType(typeof(TableField), "table")]
-[JsonDerivedType(typeof(TabGroupField), "tabgroup")]
-[JsonDerivedType(typeof(SectionField), "section")]
-[JsonDerivedType(typeof(GroupField), "group")]
-[JsonDerivedType(typeof(TabField), "tab")]
-[JsonDerivedType(typeof(AttachmentField), "attachment")]
+[JsonConverter(typeof(ValuationApp.Core.Serialization.BaseFieldConverter))]
 public abstract class BaseField
 {
     public required string FieldId { get; set; }
@@ -270,6 +263,7 @@ public enum OperatorTypeDto
     Contains 
 }
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum ContainerTypeDto 
 { 
     TabGroup, 
