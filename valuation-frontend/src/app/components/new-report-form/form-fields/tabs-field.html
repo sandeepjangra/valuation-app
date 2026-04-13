@@ -9,17 +9,11 @@
       {{ tab.label }}
     </button>
   </div>
-  <div class="tab-panels">
-    <ng-container *ngFor="let tab of field.children; let i = index">
-      <div class="tab-panel" *ngIf="activeTab === i">
-        <app-form-field
-          *ngFor="let child of tab.children"
-          [field]="child"
-          [form]="form"
-          [tableRows]="tableRows"
-          [collapsedMap]="collapsedMap">
-        </app-form-field>
+  <div class="tab-panels" *ngIf="formFieldComponent">
+    <div class="tab-panel" *ngFor="let tab of field.children; let i = index" [hidden]="activeTab !== i">
+      <div *ngFor="let child of tab.children" class="field-item">
+        <ng-container *ngComponentOutlet="formFieldComponent; inputs: { field: child, form: form, tableRows: tableRows, collapsedMap: collapsedMap }"></ng-container>
       </div>
-    </ng-container>
+    </div>
   </div>
 </div>

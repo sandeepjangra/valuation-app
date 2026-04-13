@@ -1,14 +1,23 @@
-<div class="field-wrapper" [class.full-width]="field.specificType === FieldTypeDto.Textarea">
+<div class="field-wrapper">
 
-  <label class="field-label">
-    {{ field.label }}
-    <span class="required-star" *ngIf="field.isRequired">*</span>
-  </label>
+  <!-- Field Header with Label and Info Icon -->
+  <div class="field-header" *ngIf="field?.label && field.specificType !== FieldTypeDto.Checkbox">
+    <label class="field-label">
+      {{ field.label }}
+      <span class="required-star" *ngIf="field.isRequired">*</span>
+    </label>
+    <span class="field-info-icon" *ngIf="field.helpText">
+      <span class="info-icon">i</span>
+      <span class="info-tooltip">{{ field.helpText }}</span>
+    </span>
+  </div>
 
   <ng-container [ngSwitch]="field.specificType">
 
+    <!-- Text Input -->
     <ng-container *ngSwitchCase="FieldTypeDto.Text">
-      <input type="text" class="field-input"
+      <input type="text" 
+             class="field-input"
              [formControl]="$any(form.get(field.fieldId))"
              [placeholder]="field.placeholderText || ''"
              [readonly]="field.isReadonly"
@@ -16,8 +25,10 @@
              [class.error]="hasError()">
     </ng-container>
 
+    <!-- Number Input -->
     <ng-container *ngSwitchCase="FieldTypeDto.Number">
-      <input type="number" class="field-input"
+      <input type="number" 
+             class="field-input"
              [formControl]="$any(form.get(field.fieldId))"
              [placeholder]="field.placeholderText || ''"
              [readonly]="field.isReadonly"
@@ -25,10 +36,12 @@
              [class.error]="hasError()">
     </ng-container>
 
+    <!-- Currency Input -->
     <ng-container *ngSwitchCase="FieldTypeDto.Currency">
       <div class="input-prefix-wrapper" [class.error]="hasError()">
         <span class="input-prefix">₹</span>
-        <input type="number" class="field-input with-prefix"
+        <input type="number" 
+               class="field-input with-prefix"
                [formControl]="$any(form.get(field.fieldId))"
                [placeholder]="field.placeholderText || '0.00'"
                [readonly]="field.isReadonly"
@@ -36,14 +49,17 @@
       </div>
     </ng-container>
 
+    <!-- Date Input -->
     <ng-container *ngSwitchCase="FieldTypeDto.Date">
-      <input type="date" class="field-input"
+      <input type="date" 
+             class="field-input"
              [formControl]="$any(form.get(field.fieldId))"
              [readonly]="field.isReadonly"
              [class.readonly]="field.isReadonly"
              [class.error]="hasError()">
     </ng-container>
 
+    <!-- Dropdown -->
     <ng-container *ngSwitchCase="FieldTypeDto.Dropdown">
       <select class="field-input field-select"
               [formControl]="$any(form.get(field.fieldId))"
@@ -53,25 +69,29 @@
       </select>
     </ng-container>
 
+    <!-- Textarea -->
     <ng-container *ngSwitchCase="FieldTypeDto.Textarea">
       <textarea class="field-input field-textarea"
                 [formControl]="$any(form.get(field.fieldId))"
                 [placeholder]="field.placeholderText || ''"
                 [readonly]="field.isReadonly"
                 [class.readonly]="field.isReadonly"
-                [class.error]="hasError()"
-                rows="3"></textarea>
+                [class.error]="hasError()"></textarea>
     </ng-container>
 
+    <!-- Checkbox -->
     <ng-container *ngSwitchCase="FieldTypeDto.Checkbox">
-      <label class="checkbox-label">
-        <input type="checkbox" class="field-checkbox"
-               [formControl]="$any(form.get(field.fieldId))"
-               [attr.disabled]="field.isReadonly ? true : null">
-        <span>{{ field.placeholderText || 'Yes' }}</span>
-      </label>
+      <div class="checkbox-wrapper">
+        <label class="checkbox-label">
+          <input type="checkbox" class="field-checkbox"
+                 [formControl]="$any(form.get(field.fieldId))"
+                 [attr.disabled]="field.isReadonly ? true : null">
+          <span>{{ field.label }}</span>
+        </label>
+      </div>
     </ng-container>
 
+    <!-- Radio Buttons -->
     <ng-container *ngSwitchCase="FieldTypeDto.Radio">
       <div class="radio-group">
         <label class="radio-label" *ngFor="let opt of field.options">
@@ -93,7 +113,7 @@
 
   </ng-container>
 
-  <p class="help-text"  *ngIf="field.helpText">{{ field.helpText }}</p>
+  <!-- Only show error text, not help text -->
   <p class="error-text" *ngIf="hasError()">{{ getErrorMessage() }}</p>
 
 </div>

@@ -145,9 +145,8 @@ export class Header implements OnInit {
     const orgShortName = this.getCurrentOrgShortName();
     return {
       dashboard: `/org/${orgShortName}/dashboard`,
-      newReport: `/org/${orgShortName}/reports/new`,
+      createReport: `/org/${orgShortName}/reports/create`,
       reports: `/org/${orgShortName}/reports`,
-      newReportForm: `/org/${orgShortName}/reports/new-form`,
       banks: `/org/${orgShortName}/banks`,
       templates: `/org/${orgShortName}/custom-templates`,
       pdfTemplates: `/org/${orgShortName}/pdf-templates`,

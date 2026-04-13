@@ -1,28 +1,115 @@
-<div class="report-form-container">
+<!-- ========================================
+     VIEW 1: BANK & PROPERTY TYPE SELECTION
+     ======================================== -->
+<div *ngIf="currentView === 'selection'" class="selection-view">
+  <div class="view-header">
+    <h1>Create New Valuation Report</h1>
+    <p>Select a bank and property type to begin</p>
+  </div>
 
-  <!-- Loading state -->
+  <!-- Loading State -->
   <div *ngIf="isLoading" class="loading-container">
     <div class="spinner"></div>
-    <p>Loading template...</p>
+    <p>Loading available templates...</p>
   </div>
 
-  <!-- Error state -->
-  <div *ngIf="errorMessage && !isLoading" class="error-container">
-    <p class="error-message">{{ errorMessage }}</p>
-    <button (click)="ngOnInit()">Retry</button>
+  <!-- Error State -->
+  <div *ngIf="errorMessage" class="error-banner">
+    <p>{{ errorMessage }}</p>
   </div>
 
-  <!-- Template loaded -->
-  <ng-container *ngIf="!isLoading && !errorMessage && template">
-    <div class="form-header">
-      <div class="header-meta">
-        <span class="bank-badge">{{ template.bankDetails.bankCode }}</span>
-        <span class="template-name">{{ template.templateName }}</span>
+  <!-- Bank Grid -->
+  <div *ngIf="!isLoading && groupedBanks.length > 0" class="bank-selection-grid">
+    <div *ngFor="let bank of groupedBanks" class="selection-card">
+      <div class="bank-header">
+        <h3>{{ bank.bankName }}</h3>
+        <span class="bank-code">{{ bank.bankCode }}</span>
       </div>
-      <button class="submit-btn" (click)="onSubmit()">Submit Report</button>
+      <div class="property-types">
+        <button
+          *ngFor="let type of bank.availableTypes"
+          class="property-pill"
+          (click)="selectTemplate(bank.bankCode, bank.bankName, type)">
+          {{ type | titlecase }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!isLoading && groupedBanks.length === 0" class="empty-state">
+    <p>No templates available</p>
+  </div>
+</div>
+
+<!-- ========================================
+     VIEW 2: TEMPLATE CHOICE (Prefilled vs Blank)
+     ======================================== -->
+<div *ngIf="currentView === 'template-choice'" class="template-choice-view">
+  <div class="view-header">
+    <h1>{{ selectedBankName }} - {{ selectedPropertyType | titlecase }}</h1>
+    <p>Choose how you want to start your report</p>
+  </div>
+
+  <div class="choice-cards">
+    <div class="choice-card" (click)="loadForm(true)">
+      <div class="choice-icon">📋</div>
+      <h3>Prefilled Template</h3>
+      <p>Start with default values and standard data</p>
+      <div class="choice-features">
+        <span>✓ Common fields pre-populated</span>
+        <span>✓ Standard tables included</span>
+        <span>✓ Faster to complete</span>
+      </div>
     </div>
 
-    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+    <div class="choice-card" (click)="loadForm(false)">
+      <div class="choice-icon">📄</div>
+      <h3>Blank Form</h3>
+      <p>Start from scratch with an empty form</p>
+      <div class="choice-features">
+        <span>✓ All fields empty</span>
+        <span>✓ Complete flexibility</span>
+        <span>✓ Manual data entry</span>
+      </div>
+    </div>
+  </div>
+
+  <button class="back-button" (click)="goBackToSelection()">
+    ← Back to Selection
+  </button>
+</div>
+
+<!-- ========================================
+     VIEW 3: FORM (Actual Report Form)
+     ======================================== -->
+<div *ngIf="currentView === 'form'" class="form-view">
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Loading form...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="errorMessage" class="error-banner">
+    <p>{{ errorMessage }}</p>
+  </div>
+
+  <!-- Form Header -->
+  <div *ngIf="!isLoading && template" class="form-header">
+    <div class="header-top">
+      <div class="header-info">
+        <h1>{{ template.templateName }}</h1>
+        <p>{{ template.bankDetails.bankName }} - {{ template.propertyType }} Property</p>
+      </div>
+    </div>
+    <span class="prefill-badge" *ngIf="usePrefilledTemplate">✓ Using Prefilled Template</span>
+  </div>
+
+  <!-- Actual Form -->
+  <form *ngIf="!isLoading && template" [formGroup]="form" (ngSubmit)="onSubmit()">
+    <div class="form-content">
+      <!-- Render all fields using form-field component -->
       <app-form-field
         *ngFor="let element of template.elements"
         [field]="element"
@@ -30,7 +117,21 @@
         [tableRows]="tableRows"
         [collapsedMap]="collapsedMap">
       </app-form-field>
-    </form>
-  </ng-container>
+    </div>
 
+    <!-- Form Actions -->
+    <div class="form-actions">
+      <button type="button" class="button-secondary back-to-selection-btn" (click)="goBackToSelection()">
+        ← Back to Selection
+      </button>
+      <div class="action-buttons-right">
+        <button type="button" class="button-secondary" (click)="goBackToSelection()">
+          Cancel
+        </button>
+        <button type="submit" class="button-primary" [disabled]="form.invalid">
+          💾 Save Draft
+        </button>
+      </div>
+    </div>
+  </form>
 </div>

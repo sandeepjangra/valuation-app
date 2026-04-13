@@ -4,6 +4,7 @@ import { AttachmentField } from '../../../models/valuation-template.model';
 
 @Component({
   selector: 'app-attachment-field',
+  standalone: true,
   imports: [CommonModule],
   templateUrl: './attachment-field.html',
 })

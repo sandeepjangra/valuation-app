@@ -1,10 +1,462 @@
-/* ── Container ─────────────────────────────────────────────── */
-.report-form-container {
+/* ========================================
+   NEW: 3-VIEW LAYOUT STYLES
+   ======================================== */
+
+/* View Container */
+.selection-view,
+.template-choice-view,
+.form-view {
   max-width: 1100px;
   margin: 0 auto;
   padding: 24px 16px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   color: #1f2937;
+  min-height: 600px;
+}
+
+/* View Header */
+.view-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.view-header h1 {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+
+.view-header p {
+  font-size: 16px;
+  color: #6b7280;
+}
+
+/* ── Bank Selection Grid (View 1) ────────────────────────────── */
+.bank-selection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.selection-card {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.selection-card:hover {
+  border-color: #8b5cf6;
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.15);
+  transform: translateY(-4px);
+}
+
+.bank-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.bank-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.bank-code {
+  font-size: 12px;
+  font-weight: 600;
+  color: #8b5cf6;
+  background: #f3e8ff;
+  padding: 4px 10px;
+  border-radius: 12px;
+}
+
+.property-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.property-pill {
+  background: linear-gradient(135deg, #8b5cf6, #a855f7);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(139, 92, 246, 0.3);
+}
+
+.property-pill:hover {
+  background: linear-gradient(135deg, #7c3aed, #9333ea);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(139, 92, 246, 0.4);
+}
+
+/* ── Template Choice Cards (View 2) ──────────────────────────── */
+.choice-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  max-width: 800px;
+  margin: 0 auto 40px;
+}
+
+.choice-card {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 32px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.choice-card:hover {
+  border-color: #8b5cf6;
+  transform: translateY(-8px);
+  box-shadow: 0 12px 30px rgba(139, 92, 246, 0.2);
+}
+
+.choice-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.choice-card h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 12px;
+}
+
+.choice-card p {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 20px;
+}
+
+.choice-features {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+}
+
+.choice-features span {
+  font-size: 13px;
+  color: #059669;
+  font-weight: 500;
+}
+
+.back-button {
+  display: block;
+  margin: 0 auto;
+  background: white;
+  color: #6b7280;
+  border: 2px solid #e5e7eb;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.back-button:hover {
+  border-color: #8b5cf6;
+  color: #8b5cf6;
+  background: #faf5ff;
+}
+
+/* ── Form View (View 3) ──────────────────────────────────────── */
+.form-view {
+  max-width: 1400px;
+  width: 95%;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+.form-header {
+  background: white;
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.12);
+}
+
+.form-header .header-info h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 4px 0;
+}
+
+.form-header .header-info p {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0 0 12px 0;
+}
+
+.prefill-badge {
+  display: inline-block;
+  background: #dbeafe;
+  color: #1e40af;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 12px;
+}
+
+.form-content {
+  background: white;
+  border-radius: 12px;
+  padding: 28px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e5e7eb;
+  margin-bottom: 24px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+/* TabsField should take full width */
+.form-content > app-form-field:has(app-tabs-field) {
+  grid-column: 1 / -1;
+}
+
+/* Tables should take full width */
+.form-content > app-form-field:has(app-table-field) {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 1200px) {
+  .form-content {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .form-content {
+    grid-template-columns: 1fr;
+    padding: 20px;
+  }
+}
+
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0;
+}
+
+.action-buttons-right {
+  display: flex;
+  gap: 12px;
+}
+
+.back-to-selection-btn {
+  margin-right: auto;
+}
+
+.button-primary,
+.button-secondary {
+  padding: 12px 32px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.button-primary {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.button-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+
+.button-primary:disabled {
+  background: #d1d5db;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.button-secondary {
+  background: white;
+  color: #6b7280;
+  border: 2px solid #e5e7eb;
+}
+
+.button-secondary:hover {
+  border-color: #8b5cf6;
+  color: #8b5cf6;
+  background: #faf5ff;
+}
+
+/* ── Error Banner ────────────────────────────────────────────── */
+.error-banner {
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  padding: 12px 20px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.error-banner p {
+  color: #dc2626;
+  font-size: 14px;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* ── Empty State ─────────────────────────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #9ca3af;
+  font-size: 16px;
+}
+
+/* ========================================
+   LEGACY STYLES (KEEP FOR FORM FIELDS)
+   ======================================== */
+
+/* ── Selection UI ───────────────────────────────────────────── */
+.selection-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.selection-container h2 {
+  text-align: center;
+  font-size: 32px;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+
+.selection-container .subtitle {
+  text-align: center;
+  font-size: 16px;
+  color: #6b7280;
+  margin-bottom: 40px;
+}
+
+.selection-section {
+  margin-bottom: 40px;
+}
+
+.selection-section h3 {
+  font-size: 20px;
+  color: #374151;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+.selection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.selection-card {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.selection-card:hover {
+  border-color: #8b5cf6;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.15);
+  transform: translateY(-2px);
+}
+
+.selection-card.selected {
+  border-color: #8b5cf6;
+  background: linear-gradient(135deg, #faf5ff, #f3e8ff);
+  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.2);
+}
+
+.card-icon {
+  font-size: 36px;
+  margin-bottom: 12px;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 4px;
+}
+
+.card-code {
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.proceed-section {
+  display: flex;
+  justify-content: center;
+  margin-top: 40px;
+}
+
+.proceed-btn {
+  background: linear-gradient(135deg, #8b5cf6, #a855f7);
+  color: white;
+  border: none;
+  padding: 14px 40px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.proceed-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #7c3aed, #9333ea);
+  box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4);
+  transform: translateY(-2px);
+}
+
+.proceed-btn:disabled {
+  background: #d1d5db;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.selection-container .error-message {
+  text-align: center;
+  margin-top: 20px;
 }
 
 /* ── Loading State ──────────────────────────────────────────── */

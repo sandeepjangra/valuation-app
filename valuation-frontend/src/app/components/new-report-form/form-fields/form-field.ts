@@ -14,6 +14,7 @@ import { GroupFieldComponent }      from './group-field';
 
 @Component({
   selector: 'app-form-field',
+  standalone: true,
   imports: [
     CommonModule,
     InputFieldComponent,
@@ -41,17 +42,17 @@ import { GroupFieldComponent }      from './group-field';
       <ng-container *ngSwitchCase="'container'">
         <ng-container [ngSwitch]="asContainer(field).container">
 
-          <app-tabs-field *ngSwitchCase="ContainerTypeDto.TabGroup"
+          <app-tabs-field *ngSwitchCase="0"
             [field]="asTabs(field)" [form]="form"
             [tableRows]="tableRows" [collapsedMap]="collapsedMap">
           </app-tabs-field>
 
-          <app-section-field *ngSwitchCase="ContainerTypeDto.Section"
+          <app-section-field *ngSwitchCase="3"
             [field]="asSection(field)" [form]="form"
             [tableRows]="tableRows" [collapsedMap]="collapsedMap">
           </app-section-field>
 
-          <app-group-field *ngSwitchCase="ContainerTypeDto.Group"
+          <app-group-field *ngSwitchCase="2"
             [field]="asGroup(field)" [form]="form"
             [tableRows]="tableRows" [collapsedMap]="collapsedMap">
           </app-group-field>

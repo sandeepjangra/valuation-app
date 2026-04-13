@@ -1,8 +1,8 @@
-<div class="table-block">
+<div class="table-wrapper">
   <div class="table-header">
     <h4 class="table-title">{{ table.label }}</h4>
     <button type="button" class="add-row-btn" *ngIf="table.allowAddRows" (click)="addRow()">
-      + Add Row
+      ➕ Add Row
     </button>
   </div>
   <div class="table-scroll">
@@ -10,7 +10,7 @@
       <thead>
         <tr>
           <th *ngFor="let col of table.columns">{{ col.label }}</th>
-          <th *ngIf="table.allowDeleteRows" class="action-col"></th>
+          <th *ngIf="table.allowDeleteRows" class="action-col">Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -19,11 +19,11 @@
             <ng-container [ngSwitch]="col.fieldType">
 
               <select *ngSwitchCase="FieldTypeDto.Dropdown"
-                      class="table-input"
+                      class="table-input table-select"
                       [(ngModel)]="row[col.fieldId]"
                       [ngModelOptions]="{standalone: true}"
                       [disabled]="col.isReadonly">
-                <option value="">--</option>
+                <option value="">-- Select --</option>
                 <option *ngFor="let opt of col.options" [value]="opt">{{ opt }}</option>
               </select>
 
@@ -31,24 +31,27 @@
                      type="number" class="table-input"
                      [(ngModel)]="row[col.fieldId]"
                      [ngModelOptions]="{standalone: true}"
-                     [readonly]="col.isReadonly">
+                     [readonly]="col.isReadonly"
+                     placeholder="Enter number">
 
               <input *ngSwitchCase="FieldTypeDto.Currency"
                      type="number" class="table-input"
                      [(ngModel)]="row[col.fieldId]"
                      [ngModelOptions]="{standalone: true}"
-                     [readonly]="col.isReadonly">
+                     [readonly]="col.isReadonly"
+                     placeholder="₹ 0.00">
 
               <input *ngSwitchDefault
                      type="text" class="table-input"
                      [(ngModel)]="row[col.fieldId]"
                      [ngModelOptions]="{standalone: true}"
-                     [readonly]="col.isReadonly">
+                     [readonly]="col.isReadonly"
+                     placeholder="Enter text">
 
             </ng-container>
           </td>
           <td *ngIf="table.allowDeleteRows" class="action-col">
-            <button type="button" class="remove-row-btn" (click)="removeRow(ri)">✕</button>
+            <button type="button" class="remove-row-btn" (click)="removeRow(ri)" title="Remove row">✕</button>
           </td>
         </tr>
       </tbody>

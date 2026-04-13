@@ -1,19 +1,19 @@
-<div class="section-block">
+<div class="section-wrapper">
   <div class="section-header"
        [class.clickable]="field.isCollapsible"
        (click)="toggle()">
     <h3 class="section-title">{{ field.label }}</h3>
-    <span class="collapse-icon" *ngIf="field.isCollapsible">
-      {{ collapsed ? '▶' : '▼' }}
+    <span class="toggle-icon" [class.collapsed]="collapsed" *ngIf="field.isCollapsible">
+      ▼
     </span>
   </div>
-  <div class="section-body fields-grid" *ngIf="!collapsed">
-    <app-form-field
-      *ngFor="let child of field.children"
-      [field]="child"
-      [form]="form"
-      [tableRows]="tableRows"
-      [collapsedMap]="collapsedMap">
-    </app-form-field>
+  <div class="section-body" *ngIf="!collapsed && formFieldComponent">
+    <div class="fields-grid">
+      <div *ngFor="let child of field.children" 
+           class="field-item"
+           [class.table-field]="child.$type === 'table'">
+        <ng-container *ngComponentOutlet="formFieldComponent; inputs: { field: child, form: form, tableRows: tableRows, collapsedMap: collapsedMap }"></ng-container>
+      </div>
+    </div>
   </div>
 </div>

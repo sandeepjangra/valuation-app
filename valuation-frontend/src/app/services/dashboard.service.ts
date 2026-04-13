@@ -160,12 +160,16 @@ export class DashboardService {
   getBanks(limit: number = 8): Observable<DashboardBank[]> {
     console.log('🔄 DashboardService.getBanks called with limit:', limit);
     const headers = this.getHeaders();
-    const url = `${this.baseUrl}/dashboard/banks?limit=${limit}`;
+    const url = `${this.baseUrl}/banks`;
     
     return this.http.get<any>(url, { headers })
       .pipe(
         timeout(10000),
-        map(response => response.data || []),
+        map(response => {
+          const banks = response.data || [];
+          // Limit the results if needed
+          return limit ? banks.slice(0, limit) : banks;
+        }),
         catchError(error => {
           console.error('❌ Error fetching banks:', {
             status: error.status,

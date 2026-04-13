@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, catchError, throwError, map } from 'rxjs';
+import { Observable, catchError, throwError, map, forkJoin, of, switchMap } from 'rxjs';
 import { AggregatedTemplateResponse, ProcessedTemplateData, FieldGroup, TemplateField, BankSpecificField, BankSpecificTab, BankSpecificSection, FieldType, FieldOption } from '../models';
 import { environment } from '../../environments/environment';
 
@@ -11,6 +11,157 @@ export class TemplateService {
   private readonly API_BASE_URL = environment.apiUrl;
 
   constructor(private http: HttpClient) {}
+
+  /**
+   * Get all active templates from MongoDB
+   * Note: Currently using /templates/active endpoint, but it requires isActive field
+   * For now, we'll fetch by bank code or use a different approach
+   */
+  getAllTemplates(): Observable<any[]> {
+    // Get all templates by fetching from known banks
+    // This is a workaround until isActive field is added to all templates
+    const banks = ['SBI', 'HDFC', 'ICICI', 'AXIS', 'PNB', 'BOB', 'CANARA', 'UNION'];
+    const requests = banks.map(bank => 
+      this.http.get<any>(`${this.API_BASE_URL}/templates/bank/${bank}`).pipe(
+        map(response => response.data || []),
+        catchError(() => []) // Ignore errors for banks without templates
+      )
+    );
+    
+    return this.http.get<any>(`${this.API_BASE_URL}/templates/active`).pipe(
+      map((apiResponse: any) => {
+        const templates = apiResponse.data || apiResponse || [];
+        console.log('📦 Templates received:', templates.length);
+        
+        // If no active templates found, fallback to getting all by bank
+        if (templates.length === 0) {
+          console.log('⚠️ No active templates found, this might mean isActive field is not set');
+        }
+        
+        return templates;
+      }),
+      catchError(error => {
+        console.error('❌ TemplateService: Failed to fetch templates:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Get all banks with their templates from the backend
+   */
+  getAllBanks(): Observable<any[]> {
+    const url = `${this.API_BASE_URL}/banks`;
+    console.log(`🌐 TemplateService: Fetching all banks from ${url}`);
+    
+    return this.http.get<any>(url).pipe(
+      map((apiResponse: any) => {
+        const banks = apiResponse.data || [];
+        console.log('📦 Banks received:', banks.length);
+        console.log('📦 Banks data:', banks);
+        return banks;
+      }),
+      catchError(error => {
+        console.error('❌ TemplateService: Failed to fetch banks:', {
+          status: error.status,
+          statusText: error.statusText,
+          message: error.message,
+          url: url,
+          error: error
+        });
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Get all templates from all banks dynamically fetched from backend
+   */
+  getAllTemplatesFromAllBanks(): Observable<any[]> {
+    console.log('🔄 TemplateService: Fetching banks and their templates dynamically');
+    
+    // First, fetch all banks from the backend
+    return this.getAllBanks().pipe(
+      map((banks: any[]) => {
+        console.log('🔍 Processing banks:', banks.length, 'banks received');
+        console.log('🔍 Sample bank:', banks[0]);
+        
+        // Extract bank codes from the bank objects
+        const bankCodes = banks
+          .filter(bank => {
+            const hasTemplates = bank.isActive && bank.templates && bank.templates.length > 0;
+            console.log(`🔍 Bank ${bank.bankCode}: isActive=${bank.isActive}, hasTemplates=${bank.templates?.length || 0}`);
+            return hasTemplates;
+          })
+          .map(bank => bank.bankCode);
+        
+        console.log('🏦 Active banks with templates:', bankCodes);
+        return bankCodes;
+      }),
+      switchMap((bankCodes: string[]) => {
+        console.log('🔄 Fetching templates for', bankCodes.length, 'banks');
+        
+        if (bankCodes.length === 0) {
+          console.warn('⚠️ No active banks with templates found!');
+          return of([]);
+        }
+        
+        // Then fetch templates for each bank
+        const requests = bankCodes.map(bankCode => 
+          this.http.get<any>(`${this.API_BASE_URL}/templates/bank/${bankCode}`).pipe(
+            map(response => {
+              const templates = response.data || [];
+              console.log(`📦 Bank ${bankCode}: ${templates.length} templates`);
+              return templates;
+            }),
+            catchError(err => {
+              console.log(`⚠️ Bank ${bankCode}: No templates or error, skipping`, err);
+              return of([]); // Return Observable of empty array
+            })
+          )
+        );
+        
+        // Use forkJoin to wait for all requests
+        return forkJoin(requests).pipe(
+          map((results: any[][]) => {
+            // Flatten array of arrays
+            const allTemplates = results.flat();
+            console.log(`📦 Retrieved ${allTemplates.length} total templates from ${bankCodes.length} banks`);
+            console.log('📋 Template details:', allTemplates.map(t => ({
+              bank: t.bankDetails?.bankCode,
+              name: t.bankDetails?.bankName,
+              type: t.propertyType
+            })));
+            return allTemplates;
+          })
+        );
+      }),
+      catchError(error => {
+        console.error('❌ TemplateService.getAllTemplatesFromAllBanks: Complete failure:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Get all active templates from MongoDB
+   */
+  getActiveTemplates(): Observable<any[]> {
+    const url = `${this.API_BASE_URL}/templates/active`;
+    console.log(`🌐 TemplateService: Fetching all active templates from ${url}`);
+    
+    return this.http.get<any>(url).pipe(
+      map((apiResponse: any) => {
+        const templates = apiResponse.data || apiResponse;
+        console.log('📦 Active templates received:', templates.length);
+        return templates;
+      }),
+      catchError(error => {
+        console.error('❌ TemplateService: Failed to fetch active templates:', error);
+        return throwError(() => error);
+      })
+    );
+  }
 
   /**
    * Get aggregated template fields (common + bank-specific) for a specific bank and template
@@ -65,8 +216,9 @@ export class TemplateService {
     elements.forEach((element: any, index: number) => {
       console.log(`🔍 Element ${index}: $type=${element.$type}, container=${element.container}, fieldId=${element.fieldId}`);
       
-      if (element.$type === 'container' && element.container === 'TabGroup') {
-        // New structure: TabGroup container with Tab children
+      // Check for TabGroup - handles both with and without $type
+      if ((element.$type === 'container' || !element.$type) && element.container === 'TabGroup') {
+        // TabGroup container with Tab children
         console.log(`📂 Found TabGroup: ${element.fieldId} - ${element.label}`);
         const tabs = element.children || [];
         tabs.forEach((tab: any) => {
@@ -74,7 +226,12 @@ export class TemplateService {
           const transformedTab = this.transformContainerToTab(tab);
           bankSpecificTabs.push(transformedTab);
         });
-      } else if (element.$type === 'container' && element.container === 'Tab') {
+      } else if ((element.$type === 'container' || !element.$type) && element.container === 'Group') {
+        // Group container with child fields - treat as common field (will be rendered as GroupField)
+        console.log(`📦 Found Group container: ${element.fieldId} - ${element.label}`);
+        const field = this.transformElementToField(element, true);
+        commonFields.push(field);
+      } else if ((element.$type === 'container' || !element.$type) && element.container === 'Tab') {
         // Standalone Tab (shouldn't happen with new structure, but support for compatibility)
         console.log(`📁 Found standalone tab: ${element.fieldId} - ${element.label}`);
         const tab = this.transformContainerToTab(element);
@@ -93,6 +250,11 @@ export class TemplateService {
         // Non-container at root level = Common field (Basic Information)
         console.log(`📄 Found common field: ${element.fieldId} - ${element.label}`);
         const field = this.transformElementToField(element, true); // true = isCommonField, no grouping
+        commonFields.push(field);
+      } else if (!element.$type && !element.container) {
+        // Element without $type and container - assume it's an input field
+        console.log(`📄 Found field without $type: ${element.fieldId} - ${element.label}`);
+        const field = this.transformElementToField(element, true);
         commonFields.push(field);
       } else {
         console.warn('⚠️ Unknown element type at root level:', element.$type, element);
