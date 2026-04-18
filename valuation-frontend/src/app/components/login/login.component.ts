@@ -61,19 +61,19 @@ export class LoginComponent implements OnInit {
     this.authService.login(loginRequest).subscribe({
       next: (response) => {
         if (response.success) {
-          // Redirect based on user role
-          const user = response.data.user;
+          // Get the mapped user from auth service instead of response
+          const user = this.authService.currentUser();
           
           console.log('Login successful, user:', user);
           
           // Get organization short name from user data
-          const orgShortName = user.org_short_name || 'system-administration';
+          const orgShortName = user?.org_short_name || 'system-administration';
           
           // Redirect based on user role and organization
-          if (user.permissions?.is_admin || user.is_system_admin || user.role === 'admin') {
+          if (user?.permissions?.is_admin || user?.is_system_admin || user?.role === 'admin') {
             // System admin goes to admin dashboard
             this.router.navigate(['/admin']);
-          } else if (user.permissions?.is_manager || user.role === 'manager') {
+          } else if (user?.permissions?.is_manager || user?.role === 'manager') {
             // Manager goes to their organization dashboard
             this.router.navigate([`/org/${orgShortName}/dashboard`]);
           } else {

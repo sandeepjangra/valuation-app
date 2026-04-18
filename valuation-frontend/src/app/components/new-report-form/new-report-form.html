@@ -128,8 +128,11 @@
         <button type="button" class="button-secondary" (click)="goBackToSelection()">
           Cancel
         </button>
-        <button type="submit" class="button-primary" [disabled]="form.invalid">
-          💾 Save Draft
+        <button type="button" class="button-outline" (click)="onSaveAsDraft()" [disabled]="form.invalid || isSaving">
+          💾 Save as Draft
+        </button>
+        <button type="button" class="button-primary" (click)="onSubmitForReview()" [disabled]="form.invalid || isSaving">
+          � Submit for Review
         </button>
       </div>
     </div>

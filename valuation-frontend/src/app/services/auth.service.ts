@@ -78,12 +78,17 @@ export class AuthService {
     
     if (token && userStr) {
       try {
-        const user = JSON.parse(userStr);
+        const storedUser = JSON.parse(userStr);
+        // Map in case old format is stored
+        const user = this.mapUserData(storedUser);
+        
         this.tokenSubject.next(token);
         this.currentUserSubject.next(user);
         
         // Load permissions for this user
         this.permissionsService.setUserPermissions(user);
+        
+        console.log('✅ Restored auth for user:', user.email, 'Org:', user.org_short_name);
       } catch (error) {
         console.error('Error parsing stored user data:', error);
         this.clearStoredAuth();
@@ -108,29 +113,32 @@ export class AuthService {
       .pipe(
         tap(response => {
           if (response.success && response.data) {
+            // Map backend camelCase to frontend snake_case
+            const user = this.mapUserData(response.data.user);
+            
             // Store tokens
             localStorage.setItem('access_token', response.data.access_token);
             localStorage.setItem('id_token', response.data.id_token);
             localStorage.setItem('refresh_token', response.data.refresh_token);
-            localStorage.setItem('current_user', JSON.stringify(response.data.user));
+            localStorage.setItem('current_user', JSON.stringify(user));
             
             // Update subjects
             this.tokenSubject.next(response.data.access_token);
-            this.currentUserSubject.next(response.data.user);
+            this.currentUserSubject.next(user);
             
             // Load user permissions
-            this.permissionsService.setUserPermissions(response.data.user);
+            this.permissionsService.setUserPermissions(user);
             
             // Log login activity
             this.activityLoggingService.logAuthActivity(
-              response.data.user.user_id || response.data.user._id || 'unknown',
-              response.data.user.org_short_name || 'UNKNOWN',
+              user.user_id || user._id || 'unknown',
+              user.org_short_name || 'UNKNOWN',
               CommonActions.AUTHENTICATION.LOGIN,
-              `User ${response.data.user.email} logged in successfully`,
-              { role: response.data.user.role, email: response.data.user.email }
+              `User ${user.email} logged in successfully`,
+              { role: user.role, email: user.email }
             );
             
-            console.log('✅ User logged in:', response.data.user.email, 'Role:', response.data.user.role);
+            console.log('✅ User logged in:', user.email, 'Role:', user.role, 'Org:', user.org_short_name);
           }
         }),
         catchError(error => {
@@ -138,6 +146,41 @@ export class AuthService {
           return throwError(error);
         })
       );
+  }
+
+  /**
+   * Map backend user data (camelCase) to frontend format (snake_case)
+   */
+  private mapUserData(backendUser: any): User {
+    return {
+      _id: backendUser._id || backendUser.id,
+      user_id: backendUser.userId || backendUser.user_id,
+      organization_id: backendUser.organizationId || backendUser.organization_id,
+      org_short_name: backendUser.orgShortName || backendUser.org_short_name,
+      organization_name: backendUser.organizationName || backendUser.organization_name,
+      email: backendUser.email,
+      full_name: backendUser.fullName || backendUser.full_name,
+      first_name: backendUser.firstName || backendUser.first_name,
+      last_name: backendUser.lastName || backendUser.last_name,
+      role: backendUser.role,
+      roles: backendUser.roles || [],
+      status: backendUser.status,
+      department: backendUser.department,
+      phone: backendUser.phone,
+      phone_number: backendUser.phoneNumber || backendUser.phone_number,
+      is_active: backendUser.isActive !== undefined ? backendUser.isActive : backendUser.is_active,
+      is_system_admin: backendUser.isSystemAdmin !== undefined ? backendUser.isSystemAdmin : backendUser.is_system_admin,
+      last_login: backendUser.lastLogin || backendUser.last_login,
+      created_by: backendUser.createdBy || backendUser.created_by,
+      created_at: backendUser.createdAt || backendUser.created_at,
+      updated_at: backendUser.updatedAt || backendUser.updated_at,
+      permissions: backendUser.permissions || {
+        can_submit_reports: false,
+        can_manage_users: false,
+        is_manager: false,
+        is_admin: false
+      }
+    } as User;
   }
 
   logout(): Observable<any> {

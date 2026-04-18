@@ -48,6 +48,16 @@ public interface IReportService
     Task<bool> SubmitReportAsync(string orgShortName, string reportId, string submittedBy);
 
     /// <summary>
+    /// Approve a report (Manager only)
+    /// </summary>
+    Task<bool> ApproveReportAsync(string orgShortName, string reportId, string approvedBy);
+
+    /// <summary>
+    /// Reject a report (Manager only)
+    /// </summary>
+    Task<bool> RejectReportAsync(string orgShortName, string reportId, string rejectedBy, string rejectionReason);
+
+    /// <summary>
     /// Get reports created by a specific user
     /// </summary>
     Task<List<Report>> GetUserReportsAsync(string orgShortName, string userEmail, int page = 1, int pageSize = 50);

@@ -103,6 +103,68 @@ public class OrganizationsController : ControllerBase
     }
 
     /// <summary>
+    /// Create a new organization
+    /// POST /api/organizations
+    /// </summary>
+    /// <param name="request">Organization creation request</param>
+    /// <returns>Created organization ID</returns>
+    [HttpPost]
+    public async Task<IActionResult> CreateOrganization([FromBody] CreateOrganizationRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("Creating new organization: {OrganizationName}", request.Name);
+
+            if (request == null)
+            {
+                return BadRequest(ApiResponse<object>.ErrorResponse(
+                    "Request body is required"
+                ));
+            }
+
+            // Validate required fields
+            if (string.IsNullOrWhiteSpace(request.Name))
+            {
+                return BadRequest(ApiResponse<object>.ErrorResponse(
+                    "Organization name is required"
+                ));
+            }
+
+            if (string.IsNullOrWhiteSpace(request.ContactEmail))
+            {
+                return BadRequest(ApiResponse<object>.ErrorResponse(
+                    "Contact email is required"
+                ));
+            }
+
+            var createdOrganization = await _organizationService.CreateOrganizationAsync(request);
+
+            if (createdOrganization == null)
+            {
+                _logger.LogError("Failed to create organization: {OrganizationName}", request.Name);
+                return StatusCode(500, ApiResponse<object>.ErrorResponse(
+                    "Failed to create organization. Please try again."
+                ));
+            }
+
+            _logger.LogInformation("Organization created successfully: {OrgShortName}", createdOrganization.ShortName);
+
+            return Ok(ApiResponse<object>.SuccessResponse(
+                new { organization_id = createdOrganization.Id, org_short_name = createdOrganization.ShortName },
+                "Organization created successfully"
+            ));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating organization: {Message}", ex.Message);
+
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(
+                $"Failed to create organization: {ex.Message}"
+            ));
+        }
+    }
+
+    /// <summary>
     /// Update organization details
     /// PATCH /api/organizations/{orgShortName}
     /// </summary>

@@ -66,6 +66,8 @@ export interface User {
   _id?: string;
   user_id: string;
   organization_id: string;
+  org_short_name?: string;  // Added for organization access control
+  organization_name?: string;
   email: string;
   full_name: string;
   first_name?: string;
@@ -77,6 +79,7 @@ export interface User {
   phone?: string;
   phone_number?: string;
   is_active?: boolean;
+  is_system_admin?: boolean;
   last_login?: Date;
   created_by?: string;
   created_at?: Date;

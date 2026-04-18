@@ -92,6 +92,8 @@ builder.Services.AddScoped<ITemplateRepository, TemplateRepository>();
 builder.Services.AddScoped<ITemplateService, TemplateService>();
 builder.Services.AddScoped<IOrganizationRepository, OrganizationRepository>();
 builder.Services.AddScoped<IOrganizationService, OrganizationService>();
+builder.Services.AddScoped<IOrganizationDatabaseService, OrganizationDatabaseService>();
+builder.Services.AddScoped<IOrganizationDatabaseContext, OrganizationDatabaseContext>();
 builder.Services.AddScoped<ICustomTemplateService, CustomTemplateService>();
 builder.Services.AddScoped<IReportRepository, ReportRepository>();
 builder.Services.AddScoped<IReportService, ReportService>();

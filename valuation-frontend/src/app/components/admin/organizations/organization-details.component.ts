@@ -1135,7 +1135,11 @@ export class OrganizationDetailsComponent implements OnInit {
   }
 
   editUser(user: User) {
-    alert('Edit user functionality coming soon!');
+    // Navigate to manage users page
+    const org = this.organization();
+    if (org) {
+      this.router.navigate(['/org/system-administration/system-settings/organizations', org.org_short_name, 'users']);
+    }
   }
 
   toggleOrgStatus() {

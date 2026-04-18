@@ -597,27 +597,45 @@ export class OrganizationsListComponent implements OnInit {
   createOrganization() {
     this.creating.set(true);
 
-    // Transform the form data to match CreateOrganizationRequest format
+    // Transform the form data to match CreateOrganizationRequest format (PascalCase for C# backend)
     const createRequest: any = {
-      name: this.newOrg.name,
-      contact_email: this.newOrg.contact_email,
-      phone_number: this.newOrg.contact_phone,
-      address: this.newOrg.address,
-      max_users: this.newOrg.max_users,
-      subscription_plan: this.newOrg.plan,
-      report_reference_initials: this.newOrg.report_reference_initials
+      Name: this.newOrg.name,
+      ContactEmail: this.newOrg.contact_email,
+      PhoneNumber: this.newOrg.contact_phone,
+      Address: this.newOrg.address,
+      MaxUsers: this.newOrg.max_users,
+      SubscriptionPlan: this.newOrg.plan,
+      ReportReferenceInitials: this.newOrg.report_reference_initials
     };
+
+    console.log('🔵 Creating organization with data:', createRequest);
 
     this.organizationService.createOrganization(createRequest).subscribe({
       next: (organizationId) => {
         console.log('✅ Organization created with ID:', organizationId);
+        alert('Organization created successfully!');
         this.loadOrganizations();
         this.closeDialog();
         this.creating.set(false);
       },
       error: (err) => {
-        console.error('Failed to create organization:', err);
-        alert('Failed to create organization. Please try again.');
+        console.error('❌ Failed to create organization:', err);
+        console.error('Error status:', err.status);
+        console.error('Error message:', err.message);
+        console.error('Error details:', err.error);
+        
+        let errorMessage = 'Failed to create organization. ';
+        if (err.status === 0) {
+          errorMessage += 'Cannot connect to server. Please ensure the backend is running.';
+        } else if (err.error?.error) {
+          errorMessage += err.error.error;
+        } else if (err.error?.message) {
+          errorMessage += err.error.message;
+        } else {
+          errorMessage += 'Please try again.';
+        }
+        
+        alert(errorMessage);
         this.creating.set(false);
       }
     });
@@ -632,7 +650,8 @@ export class OrganizationsListComponent implements OnInit {
     // Find the organization to get its short name
     const org = this.organizations().find(o => o._id === orgId);
     if (org) {
-      this.router.navigate(['/admin/organizations', org.org_short_name]);
+      // Navigate to organization details in system settings using short name
+      this.router.navigate(['/org/system-administration/system-settings/organizations', org.org_short_name]);
     }
   }
 
@@ -640,7 +659,8 @@ export class OrganizationsListComponent implements OnInit {
     // Find the organization to get its short name
     const org = this.organizations().find(o => o._id === orgId);
     if (org) {
-      this.router.navigate(['/admin/organizations', org.org_short_name, 'users']);
+      // Navigate to manage users in system settings using short name
+      this.router.navigate(['/org/system-administration/system-settings/organizations', org.org_short_name, 'users']);
     }
   }
 

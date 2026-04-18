@@ -1,6 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -9,7 +9,7 @@ import { Router, RouterModule } from '@angular/router';
   template: `
     <div class="admin-dashboard">
       <div class="dashboard-header">
-        <h1>🏠 Admin Dashboard</h1>
+        <h1>🏠 System Settings</h1>
         <div class="system-status">
           <span class="status-label">System Status:</span>
           <span [class]="'status-badge status-' + systemStatus()">
@@ -164,6 +164,7 @@ import { Router, RouterModule } from '@angular/router';
 export class AdminDashboardComponent implements OnInit {
   activeTab = signal('overview');
   systemStatus = signal<'healthy' | 'degraded' | 'down'>('healthy');
+  orgShortName = 'system-administration'; // Default to system-administration
 
   tabs = [
     { id: 'overview', label: 'Overview', icon: '📊' },
@@ -173,23 +174,33 @@ export class AdminDashboardComponent implements OnInit {
     { id: 'health', label: 'Health Check', icon: '💚' }
   ];
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private route: ActivatedRoute
+  ) {}
 
   ngOnInit() {
+    // Get organization from route params
+    this.route.parent?.params.subscribe(params => {
+      if (params['orgShortName']) {
+        this.orgShortName = params['orgShortName'];
+      }
+    });
+
     // Load health status on init
     this.loadSystemStatus();
     
     // Set initial active tab based on current route
     const currentPath = this.router.url;
-    if (currentPath.includes('/admin/overview')) {
+    if (currentPath.includes('/system-settings/overview') || currentPath.includes('/admin/overview')) {
       this.activeTab.set('overview');
-    } else if (currentPath.includes('/admin/health')) {
+    } else if (currentPath.includes('/system-settings/health') || currentPath.includes('/admin/health')) {
       this.activeTab.set('health');
-    } else if (currentPath.includes('/admin/activity')) {
+    } else if (currentPath.includes('/system-settings/activity') || currentPath.includes('/admin/activity')) {
       this.activeTab.set('activity-logs');
-    } else if (currentPath.includes('/admin/organizations')) {
+    } else if (currentPath.includes('/system-settings/organizations') || currentPath.includes('/admin/organizations')) {
       this.activeTab.set('organizations');
-    } else if (currentPath.includes('/admin/server-logs')) {
+    } else if (currentPath.includes('/system-settings/server-logs') || currentPath.includes('/admin/server-logs')) {
       this.activeTab.set('server-logs');
     }
   }
@@ -197,17 +208,19 @@ export class AdminDashboardComponent implements OnInit {
   selectTab(tabId: string) {
     this.activeTab.set(tabId);
     
-    // Navigate to the appropriate route
+    // Navigate to the appropriate route using organization context
+    const basePath = `/org/${this.orgShortName}/system-settings`;
+    
     if (tabId === 'overview') {
-      this.router.navigate(['/admin', 'overview']);
+      this.router.navigate([basePath, 'overview']);
     } else if (tabId === 'health') {
-      this.router.navigate(['/admin', 'health']);
+      this.router.navigate([basePath, 'health']);
     } else if (tabId === 'activity-logs') {
-      this.router.navigate(['/admin', 'activity']);
+      this.router.navigate([basePath, 'activity']);
     } else if (tabId === 'organizations') {
-      this.router.navigate(['/admin', 'organizations']);
+      this.router.navigate([basePath, 'organizations']);
     } else if (tabId === 'server-logs') {
-      this.router.navigate(['/admin', 'server-logs']);
+      this.router.navigate([basePath, 'server-logs']);
     }
   }
 

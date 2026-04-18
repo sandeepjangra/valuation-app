@@ -34,9 +34,9 @@
         @if (isAuthenticated() || hasManagerPermissions() || isManager() || isSystemAdmin()) {
           <a [routerLink]="getNavLinks().pdfTemplates" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" (click)="closeMobileMenu()">PDF Template</a>
         }
-        <!-- Admin link only for system admin users -->
+        <!-- System Settings link only for system admin users -->
         @if (isSystemAdmin()) {
-          <a routerLink="/admin" routerLinkActive="active" (click)="closeMobileMenu()">Admin</a>
+          <a [routerLink]="getNavLinks().systemSettings" routerLinkActive="active" (click)="closeMobileMenu()">System Settings</a>
         }
         <!-- Manager-only links -->
         @if (hasManagerPermissions()) {

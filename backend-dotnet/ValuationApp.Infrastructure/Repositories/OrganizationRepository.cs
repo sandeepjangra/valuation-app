@@ -46,6 +46,12 @@ public class OrganizationRepository : IOrganizationRepository
         return await GetActiveOrganizationsAsync();
     }
 
+    public async Task<Organization> CreateAsync(Organization organization)
+    {
+        await _organizationsCollection.InsertOneAsync(organization);
+        return organization;
+    }
+
     public async Task IncrementReferenceNumberAsync(string shortName)
     {
         var filter = Builders<Organization>.Filter.Eq(org => org.ShortName, shortName);

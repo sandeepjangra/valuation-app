@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 """
-Check and fix admin user organization assignment
+Check and fix admin user organization assignment (MongoDB Atlas)
 """
 
 from pymongo import MongoClient
 from datetime import datetime
+import os
 
-# MongoDB connection
-client = MongoClient('mongodb://localhost:27017/')
+# MongoDB Atlas connection
+MONGODB_URI = "mongodb+srv://app_user:KOtsC5qeCc78icks@valuationreportcluster.5ixm1s7.mongodb.net/?retryWrites=true&w=majority&appName=ValuationReportCluster"
+
+print("🔌 Connecting to MongoDB Atlas...")
+client = MongoClient(MONGODB_URI)
 db = client['valuation_admin']
 users_collection = db['users']
 
@@ -73,7 +77,7 @@ else:
     # Check if org_short_name is missing or wrong
     if not user.get('org_short_name') or user.get('org_short_name') != 'system-administration':
         print(f"\n⚠️  ISSUE FOUND: org_short_name is '{user.get('org_short_name')}' but should be 'system-administration'")
-        print("\n🔧 Fixing user organization...")
+        print("\n�� Fixing user organization...")
         
         # Update the user
         update_result = users_collection.update_one(
@@ -115,7 +119,9 @@ else:
 
 print("\n" + "=" * 60)
 print("✅ Done!")
-print("\n�� You can now login with:")
+print("\n💡 You can now login with:")
 print(f"   Email: {admin_email}")
 print(f"   Password: Admin@123 (default)")
 print()
+
+client.close()

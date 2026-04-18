@@ -284,6 +284,26 @@ interface ReportFilters {
                 <span class="btn-icon">✏️</span>
                 Edit
               </button>
+
+              <!-- Approve button (Manager only, submitted reports) -->
+              <button 
+                *ngIf="canApproveReport(report)"
+                class="btn btn-success" 
+                [disabled]="isProcessingAction()"
+                (click)="approveReport(report)">
+                <span class="btn-icon">✅</span>
+                Approve
+              </button>
+
+              <!-- Reject button (Manager only, submitted reports) -->
+              <button 
+                *ngIf="canApproveReport(report)"
+                class="btn btn-danger" 
+                [disabled]="isProcessingAction()"
+                (click)="openRejectModal(report)">
+                <span class="btn-icon">❌</span>
+                Reject
+              </button>
               
               <!-- Delete functionality temporarily disabled
               <button 
@@ -385,6 +405,55 @@ interface ReportFilters {
             </button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <!-- Reject Report Modal -->
+    <div *ngIf="showRejectModal()" class="modal-overlay" (click)="closeRejectModal()">
+      <div class="modal-dialog reject-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>❌ Reject Report</h2>
+          <button class="modal-close" (click)="closeRejectModal()">×</button>
+        </div>
+        
+        <div class="modal-body">
+          <div class="alert alert-warning">
+            <strong>⚠️ Warning:</strong> This will reject report 
+            <strong>{{ selectedReportForAction()?.reference_number }}</strong>.
+            The report will be sent back to the creator for revisions.
+          </div>
+
+          <div class="form-group">
+            <label for="rejectionReason">Rejection Reason *</label>
+            <textarea 
+              id="rejectionReason"
+              [value]="rejectionReason()"
+              (input)="rejectionReason.set($any($event.target).value)"
+              placeholder="Please explain why this report is being rejected..."
+              rows="5"
+              class="form-input"
+              [disabled]="isProcessingAction()"></textarea>
+            <small class="form-hint">Provide clear feedback to help the creator improve the report.</small>
+          </div>
+        </div>
+        
+        <div class="modal-footer">
+          <button 
+            type="button" 
+            class="btn btn-outline" 
+            [disabled]="isProcessingAction()"
+            (click)="closeRejectModal()">
+            Cancel
+          </button>
+          <button 
+            type="button" 
+            class="btn btn-danger"
+            [disabled]="isProcessingAction() || !rejectionReason().trim()"
+            (click)="submitRejection()">
+            <span *ngIf="isProcessingAction()" class="btn-spinner"></span>
+            {{ isProcessingAction() ? 'Rejecting...' : 'Reject Report' }}
+          </button>
+        </div>
       </div>
     </div>
   `,
@@ -680,6 +749,9 @@ interface ReportFilters {
 
     .status-draft { background: #fef3c7; color: #92400e; }
     .status-in_progress { background: #dbeafe; color: #1e40af; }
+    .status-submitted { background: #e0e7ff; color: #3730a3; }
+    .status-approved { background: #d1fae5; color: #065f46; }
+    .status-rejected { background: #fee2e2; color: #991b1b; }
     .status-completed { background: #d1fae5; color: #065f46; }
     .status-reviewed { background: #e0e7ff; color: #3730a3; }
 
@@ -760,11 +832,23 @@ interface ReportFilters {
     .btn-danger {
       color: #dc2626;
       border-color: #fecaca;
+      background: white;
     }
 
     .btn-danger:hover:not(:disabled) {
       background: #fee2e2;
       border-color: #dc2626;
+    }
+
+    .btn-success {
+      background: #10b981;
+      color: white;
+      border: 2px solid #10b981;
+    }
+
+    .btn-success:hover:not(:disabled) {
+      background: #059669;
+      border-color: #059669;
     }
 
     .btn-icon {
@@ -858,6 +942,32 @@ interface ReportFilters {
       font-size: 0.875rem;
     }
 
+    .form-hint {
+      color: #6b7280;
+      font-size: 0.75rem;
+      margin-top: 4px;
+    }
+
+    .alert {
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: start;
+      gap: 8px;
+      font-size: 0.875rem;
+    }
+
+    .alert-warning {
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fbbf24;
+    }
+
+    .reject-modal {
+      max-width: 600px;
+    }
+
     .form-textarea {
       padding: 10px 12px;
       border: 2px solid #e5e7eb;
@@ -931,6 +1041,10 @@ export class ReportsComponent implements OnInit {
   readonly error = signal<string | null>(null);
   readonly isCreating = signal<boolean>(false);
   readonly showCreateModal = signal<boolean>(false);
+  readonly showRejectModal = signal<boolean>(false);
+  readonly selectedReportForAction = signal<ApiReport | null>(null);
+  readonly rejectionReason = signal<string>('');
+  readonly isProcessingAction = signal<boolean>(false);
 
   // Data
   readonly allReports = signal<ApiReport[]>([]);
@@ -1123,6 +1237,117 @@ export class ReportsComponent implements OnInit {
 
   canDeleteReport(report: ApiReport): boolean {
     return this.canEditReport(report);
+  }
+
+  /**
+   * Check if current user is a manager
+   */
+  isManager(): boolean {
+    const user = this.authService.currentUser();
+    return user?.role === 'manager' || user?.org_short_name === 'system-administration';
+  }
+
+  /**
+   * Check if report can be approved/rejected (must be submitted and user is manager)
+   */
+  canApproveReport(report: ApiReport): boolean {
+    return report.status === 'submitted' && this.isManager();
+  }
+
+  /**
+   * Approve a report
+   */
+  approveReport(report: ApiReport): void {
+    if (!confirm(`Are you sure you want to approve report ${report.reference_number}?`)) {
+      return;
+    }
+
+    const reportId = report.reportId || report.report_id || report.id;
+    if (!reportId) {
+      alert('Error: Report ID not found');
+      return;
+    }
+
+    this.isProcessingAction.set(true);
+    this.reportsService.approveReport(reportId).subscribe({
+      next: (response) => {
+        console.log('✅ Report approved successfully:', response);
+        alert('Report approved successfully!');
+        // Refresh reports list
+        this.loadReports();
+      },
+      error: (error) => {
+        console.error('❌ Error approving report:', error);
+        const errorMsg = error.error?.message || 'Failed to approve report. Please try again.';
+        alert(errorMsg);
+        this.isProcessingAction.set(false);
+      },
+      complete: () => {
+        this.isProcessingAction.set(false);
+      }
+    });
+  }
+
+  /**
+   * Open reject modal
+   */
+  openRejectModal(report: ApiReport): void {
+    this.selectedReportForAction.set(report);
+    this.rejectionReason.set('');
+    this.showRejectModal.set(true);
+  }
+
+  /**
+   * Close reject modal
+   */
+  closeRejectModal(): void {
+    this.showRejectModal.set(false);
+    this.selectedReportForAction.set(null);
+    this.rejectionReason.set('');
+  }
+
+  /**
+   * Submit rejection
+   */
+  submitRejection(): void {
+    const report = this.selectedReportForAction();
+    const reason = this.rejectionReason().trim();
+
+    if (!report) {
+      alert('Error: No report selected');
+      return;
+    }
+
+    if (!reason) {
+      alert('Please provide a rejection reason');
+      return;
+    }
+
+    const reportId = report.reportId || report.report_id || report.id;
+    if (!reportId) {
+      alert('Error: Report ID not found');
+      return;
+    }
+
+    this.isProcessingAction.set(true);
+    this.reportsService.rejectReport(reportId, reason).subscribe({
+      next: (response) => {
+        console.log('✅ Report rejected successfully:', response);
+        alert('Report rejected successfully!');
+        this.closeRejectModal();
+        // Refresh reports list
+        this.loadReports();
+      },
+      error: (error) => {
+        console.error('❌ Error rejecting report:', error);
+        const errorMsg = error.error?.message || 'Failed to reject report. Please try again.';
+        alert(errorMsg);
+        this.isProcessingAction.set(false);
+      },
+      complete: () => {
+        this.isProcessingAction.set(false);
+      }
+    });
   }
 
   /**
@@ -1338,6 +1563,9 @@ export class ReportsComponent implements OnInit {
     const labels: Record<string, string> = {
       'draft': 'Draft',
       'in_progress': 'In Progress',
+      'submitted': 'Submitted',
+      'approved': '✅ Approved',
+      'rejected': '❌ Rejected',
       'completed': 'Completed',
       'reviewed': 'Reviewed'
     };

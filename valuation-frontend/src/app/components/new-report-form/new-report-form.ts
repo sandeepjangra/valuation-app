@@ -21,6 +21,8 @@ import {
 } from '../../models/valuation-template.model';
 import { FormFieldComponent } from './form-fields/form-field';
 import { TemplateService } from '../../services/template.service';
+import { ReportsService } from '../../services/reports.service';
+import { AuthService } from '../../services/auth.service';
 
 // ========================================
 // DATA MODELS
@@ -53,6 +55,7 @@ export class NewReportForm implements OnInit {
   // ========================================
   currentView: 'selection' | 'template-choice' | 'form' = 'selection';
   isLoading = false;
+  isSaving = false;
   errorMessage: string | null = null;
   
   // ========================================
@@ -79,6 +82,8 @@ export class NewReportForm implements OnInit {
 
   constructor(
     private templateService: TemplateService,
+    private reportsService: ReportsService,
+    private authService: AuthService,
     private route: ActivatedRoute,
     private router: Router,
     private cdr: ChangeDetectorRef
@@ -641,7 +646,114 @@ export class NewReportForm implements OnInit {
 
   onSubmit() {
     console.log('📤 Form submitted:', this.form.value);
-    // TODO: Implement form submission
-    alert('Form submission not yet implemented');
+    // Default submit behavior - save as draft
+    this.onSaveAsDraft();
+  }
+
+  /**
+   * Save report as draft (can be incomplete)
+   */
+  onSaveAsDraft() {
+    if (this.isSaving) return;
+    
+    this.isSaving = true;
+    this.errorMessage = null;
+
+    const reportData = this.prepareReportData();
+    
+    console.log('💾 Saving as draft...', reportData);
+
+    this.reportsService.saveDraft(reportData).subscribe({
+      next: (response) => {
+        console.log('✅ Draft saved successfully:', response);
+        this.isSaving = false;
+        
+        // Show success message
+        alert('✅ Report saved as draft successfully!');
+        
+        // Navigate to reports list
+        const user = this.authService.currentUser();
+        const orgShortName = user?.org_short_name || 'system-administration';
+        this.router.navigate([`/org/${orgShortName}/reports`]);
+      },
+      error: (error) => {
+        console.error('❌ Error saving draft:', error);
+        this.isSaving = false;
+        this.errorMessage = error.error?.message || 'Failed to save draft';
+        alert('❌ Failed to save draft: ' + this.errorMessage);
+      }
+    });
+  }
+
+  /**
+   * Submit report for review (requires complete/valid form)
+   */
+  onSubmitForReview() {
+    if (this.isSaving || this.form.invalid) return;
+    
+    this.isSaving = true;
+    this.errorMessage = null;
+
+    const reportData = this.prepareReportData();
+    
+    console.log('📤 Submitting for review...', reportData);
+
+    // First save as draft, then submit
+    this.reportsService.saveDraft(reportData).subscribe({
+      next: (draftResponse) => {
+        console.log('✅ Draft saved, now submitting...', draftResponse);
+        
+        const reportId = draftResponse.data?.id || draftResponse.data?.reportId;
+        
+        if (!reportId) {
+          this.isSaving = false;
+          this.errorMessage = 'Could not get report ID from draft response';
+          alert('❌ Error: ' + this.errorMessage);
+          return;
+        }
+
+        // Now submit the report
+        this.reportsService.submitReport(reportId, reportData).subscribe({
+          next: (submitResponse) => {
+            console.log('✅ Report submitted successfully:', submitResponse);
+            this.isSaving = false;
+            
+            // Show success message
+            alert('✅ Report submitted for review successfully!');
+            
+            // Navigate to reports list
+            const user = this.authService.currentUser();
+            const orgShortName = user?.org_short_name || 'system-administration';
+            this.router.navigate([`/org/${orgShortName}/reports`]);
+          },
+          error: (error) => {
+            console.error('❌ Error submitting report:', error);
+            this.isSaving = false;
+            this.errorMessage = error.error?.message || 'Failed to submit report';
+            alert('❌ Failed to submit report: ' + this.errorMessage);
+          }
+        });
+      },
+      error: (error) => {
+        console.error('❌ Error saving draft before submit:', error);
+        this.isSaving = false;
+        this.errorMessage = error.error?.message || 'Failed to save draft';
+        alert('❌ Failed to save draft: ' + this.errorMessage);
+      }
+    });
+  }
+
+  /**
+   * Prepare report data from form values
+   */
+  private prepareReportData(): any {
+    return {
+      bankCode: this.selectedBank,
+      propertyType: this.selectedPropertyType,
+      templateId: this.template?.templateId,
+      reportData: this.form.value,
+      formData: this.form.value,
+      tableRows: this.tableRows
+    };
   }
 }

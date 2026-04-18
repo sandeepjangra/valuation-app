@@ -204,7 +204,7 @@ export class OrganizationDashboardComponent implements OnInit {
 
     // Add activity logs for managers and admins
     if (this.canViewAuditLogs()) {
-      const orgShortName = this.organizationContext()?.orgShortName;
+      const orgShortName = this.organizationContext?.orgShortName;
       if (orgShortName) {
         requests.push(
           this.activityLoggingService.getOrgActivity(orgShortName, 10).pipe(

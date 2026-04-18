@@ -19,6 +19,7 @@ interface User {
   role: 'manager' | 'employee';
   status: string;
   created_at: string;
+  department?: string;
 }
 
 @Component({
@@ -129,11 +130,7 @@ interface User {
             <div class="form-group">
               <label>Full Name *</label>
               <input type="text" [(ngModel)]="userForm.full_name" name="full_name" required
-                     [disabled]="!!editingUser()"
                      placeholder="John Doe">
-              @if (editingUser()) {
-                <small class="help-text">Name cannot be changed after creation</small>
-              }
             </div>
 
             <div class="form-group">
@@ -151,6 +148,12 @@ interface User {
               <label>Phone</label>
               <input type="tel" [(ngModel)]="userForm.phone" name="phone"
                      placeholder="+1-555-0123">
+            </div>
+
+            <div class="form-group">
+              <label>Department</label>
+              <input type="text" [(ngModel)]="userForm.department" name="department"
+                     placeholder="e.g., Valuation, Finance, Operations">
             </div>
 
             @if (!editingUser()) {
@@ -630,7 +633,8 @@ export class ManageUsersComponent implements OnInit {
     email: '',
     password: '',
     role: 'employee' as 'manager' | 'employee',
-    phone: ''
+    phone: '',
+    department: ''
   };
 
   ngOnInit() {
@@ -647,10 +651,22 @@ export class ManageUsersComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
 
-    this.http.get<any>(`${this.API_BASE}/admin/organizations/${orgId}/users`).subscribe({
+    this.http.get<any>(`${this.API_BASE}/org/${orgId}/users`).subscribe({
       next: (response) => {
-        if (response.success) {
-          this.users.set(response.data);
+        if (response.success && response.data) {
+          // Backend returns PascalCase, transform to snake_case for frontend
+          const users = (response.data.users || []).map((user: any) => ({
+            _id: user.Id || user._id,
+            user_id: user.UserId || user.user_id,
+            name: user.FullName || user.name,
+            email: user.Email || user.email,
+            phone: user.Phone || user.phone,
+            role: (user.Role || user.role || 'employee').toLowerCase(),
+            status: user.IsActive === false ? 'inactive' : 'active',
+            created_at: user.CreatedAt || user.created_at,
+            department: user.Department || user.department
+          }));
+          this.users.set(users);
         }
         this.loading.set(false);
       },
@@ -672,7 +688,8 @@ export class ManageUsersComponent implements OnInit {
     this.editingUser.set(user);
     this.userForm.full_name = user.name;
     this.userForm.email = user.email;
-    this.userForm.phone = user.phone || '';  // Use actual phone from user data
+    this.userForm.phone = user.phone || '';
+    this.userForm.department = user.department || '';
     this.userForm.role = user.role;
     this.userForm.password = ''; // Not needed for edit
     this.showDialog.set(true);
@@ -691,15 +708,17 @@ export class ManageUsersComponent implements OnInit {
     this.submitting.set(true);
 
     if (this.editingUser()) {
-      // Update user
+      // Update user - transform to PascalCase for C# backend
       const userId = this.editingUser()!.user_id;
       const updateData = {
-        phone: this.userForm.phone,
-        role: this.userForm.role
+        FullName: this.userForm.full_name,
+        Phone: this.userForm.phone,
+        Department: this.userForm.department,
+        Role: this.userForm.role
       };
       
       this.http.put<any>(
-        `${this.API_BASE}/admin/organizations/${this.organizationId()}/users/${userId}`,
+        `${this.API_BASE}/org/${this.organizationId()}/users/${userId}`,
         updateData
       ).subscribe({
         next: (response) => {
@@ -719,10 +738,19 @@ export class ManageUsersComponent implements OnInit {
         }
       });
     } else {
-      // Add new user
+      // Add new user - transform to PascalCase for C# backend
+      const createUserRequest = {
+        Email: this.userForm.email,
+        FullName: this.userForm.full_name,
+        Password: this.userForm.password,
+        Phone: this.userForm.phone,
+        Department: this.userForm.department,
+        Role: this.userForm.role
+      };
+
       this.http.post<any>(
-        `${this.API_BASE}/admin/organizations/${this.organizationId()}/users`,
-        this.userForm
+        `${this.API_BASE}/org/${this.organizationId()}/users`,
+        createUserRequest
       ).subscribe({
         next: (response) => {
           if (response.success) {
@@ -752,7 +780,7 @@ export class ManageUsersComponent implements OnInit {
     if (!confirm(confirmMsg)) return;
 
     this.http.put<any>(
-      `${this.API_BASE}/admin/organizations/${this.organizationId()}/users/${user.user_id}/status`,
+      `${this.API_BASE}/org/${this.organizationId()}/users/${user.user_id}/status`,
       { is_active: user.status !== 'active' }
     ).subscribe({
       next: (response) => {
@@ -787,7 +815,7 @@ export class ManageUsersComponent implements OnInit {
     this.deleting.set(true);
 
     this.http.delete<any>(
-      `${this.API_BASE}/admin/organizations/${this.organizationId()}/users/${user.user_id}`
+      `${this.API_BASE}/org/${this.organizationId()}/users/${user.user_id}`
     ).subscribe({
       next: (response) => {
         if (response.success) {
@@ -821,7 +849,8 @@ export class ManageUsersComponent implements OnInit {
       email: '',
       password: '',
       role: 'employee',
-      phone: ''
+      phone: '',
+      department: ''
     };
     this.editingUser.set(null);
   }

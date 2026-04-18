@@ -1,10 +1,15 @@
 import { Routes } from '@angular/router';
 // Import organization management guards as additional features
 import { authGuard, managerGuard, systemAdminGuard } from './guards/auth.guard';
+import { OrganizationAccessGuard } from './guards/organization-access.guard';
 
 export const routes: Routes = [
-  // Main valuation app routes - redirect to system admin by default
-  { path: '', redirectTo: '/org/system-administration/dashboard', pathMatch: 'full' },
+  // Root route - smart redirect based on user's organization
+  { 
+    path: '', 
+    loadComponent: () => import('./components/root-redirect/root-redirect.component').then(m => m.RootRedirectComponent),
+    pathMatch: 'full' 
+  },
   { 
     path: 'login', 
     loadComponent: () => import('./components/login/login.component').then(m => m.LoginComponent)
@@ -25,7 +30,7 @@ export const routes: Routes = [
   // Organization-based routes (NEW!)
   {
     path: 'org/:orgShortName',
-    canActivate: [authGuard],
+    canActivate: [authGuard, OrganizationAccessGuard], // Added OrganizationAccessGuard
     children: [
       {
         path: '',
@@ -151,79 +156,84 @@ export const routes: Routes = [
             title: 'Edit PDF Template Designer'
           }
         ]
-      }
-    ]
-  },
-
-  // Admin routes for system administrators
-  {
-    path: 'admin',
-    canActivate: [systemAdminGuard],
-    children: [
+      },
       {
-        path: '',
-        loadComponent: () => 
-          import('./components/admin/admin-dashboard.component')
-            .then(m => m.AdminDashboardComponent),
-        title: 'Admin Dashboard',
+        path: 'system-settings',
+        canActivate: [systemAdminGuard],
         children: [
           {
             path: '',
-            redirectTo: 'overview',
-            pathMatch: 'full'
-          },
-          {
-            path: 'overview',
             loadComponent: () => 
-              import('./components/admin/overview/admin-overview.component')
-                .then(m => m.AdminOverviewComponent),
-            title: 'Admin Overview'
-          },
-          {
-            path: 'health',
-            loadComponent: () => 
-              import('./components/admin/health-check/health-check.component')
-                .then(m => m.HealthCheckComponent),
-            title: 'Health Check - Admin'
-          },
-          {
-            path: 'activity',
-            loadComponent: () => 
-              import('./components/admin/activity-logs/activity-logs.component')
-                .then(m => m.ActivityLogsComponent),
-            title: 'Activity Logs - Admin'
-          },
-          {
-            path: 'server-logs',
-            loadComponent: () => 
-              import('./components/admin/server-logs/server-logs.component')
-                .then(m => m.ServerLogsComponent),
-            title: 'Server Logs - Admin'
-          },
-          {
-            path: 'organizations',
-            loadComponent: () => 
-              import('./components/admin/organizations/organizations-list.component')
-                .then(m => m.OrganizationsListComponent),
-            title: 'Organizations - System Admin'
-          },
-          {
-            path: 'organizations/:orgId',
-            loadComponent: () => 
-              import('./components/admin/organizations/organization-details.component')
-                .then(m => m.OrganizationDetailsComponent),
-            title: 'Organization Details - System Admin'
-          },
-          {
-            path: 'organizations/:orgId/users',
-            loadComponent: () => 
-              import('./components/admin/users/manage-users.component')
-                .then(m => m.ManageUsersComponent),
-            title: 'Manage Users - System Admin'
+              import('./components/admin/admin-dashboard.component')
+                .then(m => m.AdminDashboardComponent),
+            title: 'System Settings',
+            children: [
+              {
+                path: '',
+                redirectTo: 'overview',
+                pathMatch: 'full'
+              },
+              {
+                path: 'overview',
+                loadComponent: () => 
+                  import('./components/admin/overview/admin-overview.component')
+                    .then(m => m.AdminOverviewComponent),
+                title: 'System Overview'
+              },
+              {
+                path: 'health',
+                loadComponent: () => 
+                  import('./components/admin/health-check/health-check.component')
+                    .then(m => m.HealthCheckComponent),
+                title: 'Health Check'
+              },
+              {
+                path: 'activity',
+                loadComponent: () => 
+                  import('./components/admin/activity-logs/activity-logs.component')
+                    .then(m => m.ActivityLogsComponent),
+                title: 'Activity Logs'
+              },
+              {
+                path: 'server-logs',
+                loadComponent: () => 
+                  import('./components/admin/server-logs/server-logs.component')
+                    .then(m => m.ServerLogsComponent),
+                title: 'Server Logs'
+              },
+              {
+                path: 'organizations',
+                loadComponent: () => 
+                  import('./components/admin/organizations/organizations-list.component')
+                    .then(m => m.OrganizationsListComponent),
+                title: 'Organizations'
+              },
+              {
+                path: 'organizations/:orgId',
+                loadComponent: () => 
+                  import('./components/admin/organizations/organization-details.component')
+                    .then(m => m.OrganizationDetailsComponent),
+                title: 'Organization Details'
+              },
+              {
+                path: 'organizations/:orgId/users',
+                loadComponent: () => 
+                  import('./components/admin/users/manage-users.component')
+                    .then(m => m.ManageUsersComponent),
+                title: 'Manage Users'
+              }
+            ]
           }
         ]
       }
     ]
+  },
+
+  // OLD ADMIN ROUTES - Redirect to new organization-based system settings
+  {
+    path: 'admin',
+    redirectTo: '/org/system-administration/system-settings',
+    pathMatch: 'prefix'
   },
   
 

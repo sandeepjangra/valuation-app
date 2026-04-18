@@ -569,9 +569,31 @@ export class ServerLogsComponent implements OnInit {
         this.loading.set(false);
       },
       error: (err) => {
-        console.error('Error loading server logs:', err);
-        this.error.set(err.error?.detail || 'Failed to load server logs');
-        this.loading.set(false);
+        console.warn('Server logs endpoint not available (404), using mock data:', err.status);
+        if (err.status === 404) {
+          // Use mock data when endpoint is not available
+          this.logsData.set({
+            logs: [
+              {
+                timestamp: new Date().toISOString(),
+                level: 'INFO',
+                logger: 'System',
+                message: 'Server logs endpoint not implemented yet. This is mock data.',
+                raw: '[INFO] Server logs endpoint not implemented yet'
+              }
+            ],
+            total: 1,
+            error_count: 0,
+            warning_count: 0,
+            log_file: this.logType + '.log',
+            showing: 1
+          });
+          this.loading.set(false);
+        } else {
+          console.error('Error loading server logs:', err);
+          this.error.set(err.error?.detail || 'Failed to load server logs');
+          this.loading.set(false);
+        }
       }
     });
   }

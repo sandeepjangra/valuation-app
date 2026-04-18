@@ -222,6 +222,59 @@ export class ReportsService {
   }
 
   /**
+   * Approve a submitted report (Manager only)
+   */
+  approveReport(reportId: string): Observable<any> {
+    const headers = this.getHeaders();
+    const url = this.orgContext.getOrgApiUrl(`reports/${reportId}/approve`);
+    const user = this.authService.currentUser();
+    
+    if (!url) {
+      return throwError(() => new Error('Organization context not available'));
+    }
+    
+    const body = {
+      approvedBy: user?.email || ''
+    };
+    
+    return this.http.post<any>(url, body, { headers })
+      .pipe(
+        tap(response => console.log('✅ Report approved:', response)),
+        catchError(error => {
+          console.error('❌ Error approving report:', error);
+          return throwError(() => error);
+        })
+      );
+  }
+
+  /**
+   * Reject a submitted report (Manager only)
+   */
+  rejectReport(reportId: string, rejectionReason: string): Observable<any> {
+    const headers = this.getHeaders();
+    const url = this.orgContext.getOrgApiUrl(`reports/${reportId}/reject`);
+    const user = this.authService.currentUser();
+    
+    if (!url) {
+      return throwError(() => new Error('Organization context not available'));
+    }
+    
+    const body = {
+      rejectedBy: user?.email || '',
+      rejectionReason: rejectionReason
+    };
+    
+    return this.http.post<any>(url, body, { headers })
+      .pipe(
+        tap(response => console.log('✅ Report rejected:', response)),
+        catchError(error => {
+          console.error('❌ Error rejecting report:', error);
+          return throwError(() => error);
+        })
+      );
+  }
+
+  /**
    * Get available banks for filtering
    */
   getBanks(): Observable<any[]> {
@@ -358,6 +411,52 @@ export class ReportsService {
         timeout(15000),
         catchError(error => {
           console.error('❌ Error updating draft:', error);
+          return throwError(() => error);
+        })
+      );
+  }
+
+  /**
+   * Submit a report for review
+   * Changes status from 'draft' to 'submitted'
+   */
+  submitReport(reportId: string, reportData: any): Observable<any> {
+    console.log('📤 ReportsService.submitReport called for:', reportId);
+    const headers = this.getHeaders();
+    const url = this.orgContext.getOrgApiUrl(`reports/${reportId}/submit`);
+    
+    if (!url) {
+      console.error('❌ No organization context available');
+      return throwError(() => new Error('Organization context not available'));
+    }
+
+    // Get current user info
+    const currentUser = this.authService.currentUserValue;
+    
+    // Prepare submit payload with updated data and status change
+    const submitPayload = {
+      status: 'submitted',
+      reportData: reportData.reportData || reportData.report_data || reportData,
+      formData: reportData.formData || reportData.form_data || null,
+      submittedBy: currentUser?.user_id || '',
+      submittedByEmail: currentUser?.email || '',
+      submittedAt: new Date().toISOString()
+    };
+
+    console.log('📤 Submitting report to backend:', url);
+    
+    return this.http.post<any>(url, submitPayload, { headers })
+      .pipe(
+        timeout(15000),
+        tap(response => {
+          console.log('✅ Report submitted successfully:', response);
+        }),
+        catchError(error => {
+          console.error('❌ Error submitting report:', {
+            status: error.status,
+            message: error.message,
+            error: error.error
+          });
           return throwError(() => error);
         })
       );

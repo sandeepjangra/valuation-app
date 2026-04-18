@@ -150,7 +150,8 @@ export class Header implements OnInit {
       banks: `/org/${orgShortName}/banks`,
       templates: `/org/${orgShortName}/custom-templates`,
       pdfTemplates: `/org/${orgShortName}/pdf-templates`,
-      employeeActivities: `/org/${orgShortName}/organization/users`
+      employeeActivities: `/org/${orgShortName}/organization/users`,
+      systemSettings: `/org/${orgShortName}/system-settings`
     };
   }
 }

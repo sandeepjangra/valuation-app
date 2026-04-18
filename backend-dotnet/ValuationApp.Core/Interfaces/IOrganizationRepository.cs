@@ -30,6 +30,11 @@ public interface IOrganizationRepository
     Task<Organization?> GetByIdAsync(string id);
     
     /// <summary>
+    /// Create a new organization
+    /// </summary>
+    Task<Organization> CreateAsync(Organization organization);
+    
+    /// <summary>
     /// Increment the last reference number for an organization
     /// </summary>
     Task IncrementReferenceNumberAsync(string shortName);

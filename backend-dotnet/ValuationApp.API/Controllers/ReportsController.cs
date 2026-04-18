@@ -198,7 +198,7 @@ public class ReportsController : ControllerBase
     }
 
     /// <summary>
-    /// Delete a report
+    /// Delete a report (Manager only)
     /// DELETE /api/org/{orgShortName}/reports/{reportId}
     /// </summary>
     [HttpDelete("{reportId}")]
@@ -206,6 +206,21 @@ public class ReportsController : ControllerBase
     {
         try
         {
+            // Get user role from JWT claims
+            var userRole = User.FindFirst("role")?.Value;
+            var userOrg = User.FindFirst("org_short_name")?.Value;
+            var isSystemAdmin = userOrg == "system-administration";
+
+            // Check if user is manager or system admin
+            if (!isSystemAdmin && userRole != "manager")
+            {
+                _logger.LogWarning("User with role {Role} attempted to delete report {ReportId}", 
+                    userRole, reportId);
+                return StatusCode(403, ApiResponse<object>.ErrorResponse(
+                    "Only managers can delete reports"
+                ));
+            }
+
             _logger.LogInformation("Deleting report {ReportId} for organization {OrgShortName}", 
                 reportId, orgShortName);
 
@@ -219,7 +234,7 @@ public class ReportsController : ControllerBase
             }
 
             return Ok(ApiResponse<object>.SuccessResponse(
-                null,
+                new { report_id = reportId },
                 "Report deleted successfully"
             ));
         }
@@ -271,6 +286,131 @@ public class ReportsController : ControllerBase
                 reportId, orgShortName);
             return StatusCode(500, ApiResponse<object>.ErrorResponse(
                 "Failed to submit report. Please try again later."
+            ));
+        }
+    }
+
+    /// <summary>
+    /// Approve a submitted report (Manager only)
+    /// POST /api/org/{orgShortName}/reports/{reportId}/approve
+    /// </summary>
+    [HttpPost("{reportId}/approve")]
+    public async Task<IActionResult> ApproveReport(
+        string orgShortName, 
+        string reportId,
+        [FromBody] ApproveReportRequest request)
+    {
+        try
+        {
+            // Get user role from JWT claims
+            var userRole = User.FindFirst("role")?.Value;
+            var userOrg = User.FindFirst("org_short_name")?.Value;
+            var isSystemAdmin = userOrg == "system-administration";
+
+            // Check if user is manager or system admin
+            if (!isSystemAdmin && userRole != "manager")
+            {
+                _logger.LogWarning("User {Email} with role {Role} attempted to approve report {ReportId}", 
+                    request.ApprovedBy, userRole, reportId);
+                return StatusCode(403, ApiResponse<object>.ErrorResponse(
+                    "Only managers can approve reports"
+                ));
+            }
+
+            _logger.LogInformation("Approving report {ReportId} for organization {OrgShortName} by {ApprovedBy}", 
+                reportId, orgShortName, request.ApprovedBy);
+
+            var approved = await _reportService.ApproveReportAsync(
+                orgShortName, 
+                reportId, 
+                request.ApprovedBy);
+
+            if (!approved)
+            {
+                return NotFound(ApiResponse<object>.ErrorResponse(
+                    $"Report '{reportId}' not found"
+                ));
+            }
+
+            return Ok(ApiResponse<object>.SuccessResponse(
+                new { report_id = reportId, status = "approved" },
+                "Report approved successfully"
+            ));
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Invalid operation while approving report {ReportId}", reportId);
+            return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error approving report {ReportId} for organization {OrgShortName}", 
+                reportId, orgShortName);
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(
+                "Failed to approve report. Please try again later."
+            ));
+        }
+    }
+
+    /// <summary>
+    /// Reject a submitted report (Manager only)
+    /// POST /api/org/{orgShortName}/reports/{reportId}/reject
+    /// </summary>
+    [HttpPost("{reportId}/reject")]
+    public async Task<IActionResult> RejectReport(
+        string orgShortName, 
+        string reportId,
+        [FromBody] RejectReportRequest request)
+    {
+        try
+        {
+            // Get user role from JWT claims
+            var userRole = User.FindFirst("role")?.Value;
+            var userOrg = User.FindFirst("org_short_name")?.Value;
+            var isSystemAdmin = userOrg == "system-administration";
+
+            // Check if user is manager or system admin
+            if (!isSystemAdmin && userRole != "manager")
+            {
+                _logger.LogWarning("User {Email} with role {Role} attempted to reject report {ReportId}", 
+                    request.RejectedBy, userRole, reportId);
+                return StatusCode(403, ApiResponse<object>.ErrorResponse(
+                    "Only managers can reject reports"
+                ));
+            }
+
+            _logger.LogInformation("Rejecting report {ReportId} for organization {OrgShortName} by {RejectedBy}", 
+                reportId, orgShortName, request.RejectedBy);
+
+            var rejected = await _reportService.RejectReportAsync(
+                orgShortName, 
+                reportId, 
+                request.RejectedBy,
+                request.RejectionReason);
+
+            if (!rejected)
+            {
+                return NotFound(ApiResponse<object>.ErrorResponse(
+                    $"Report '{reportId}' not found"
+                ));
+            }
+
+            return Ok(ApiResponse<object>.SuccessResponse(
+                new { report_id = reportId, status = "rejected", rejection_reason = request.RejectionReason },
+                "Report rejected successfully"
+            ));
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Invalid operation while rejecting report {ReportId}", reportId);
+            return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error rejecting report {ReportId} for organization {OrgShortName}", 
+                reportId, orgShortName);
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(
+                "Failed to reject report. Please try again later."
             ));
         }
     }
@@ -572,4 +712,21 @@ public class ReportsController : ControllerBase
 public class SubmitReportRequest
 {
     public string SubmittedBy { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Request model for approving a report
+/// </summary>
+public class ApproveReportRequest
+{
+    public string ApprovedBy { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Request model for rejecting a report
+/// </summary>
+public class RejectReportRequest
+{
+    public string RejectedBy { get; set; } = string.Empty;
+    public string RejectionReason { get; set; } = string.Empty;
 }
